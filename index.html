@@ -14,6 +14,22 @@
 </head>
 <body>
 
+
+<!-- SPLASH SCREEN — Drapeau Gabonais -->
+<div id="splash-screen" class="splash">
+  <div class="splash-flag">
+    <div class="flag-band green"></div>
+    <div class="flag-band yellow"></div>
+    <div class="flag-band blue"></div>
+  </div>
+  <div class="splash-content">
+    <div class="splash-logo">GSC</div>
+    <div class="splash-title">Gabon Sport Connect</div>
+    <div class="splash-subtitle">Connecter les talents, développer le sport</div>
+    <div class="splash-spinner"></div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <!-- PAGE D'ACCUEIL -->
@@ -286,7 +302,7 @@
     <div class="content-header">
       <h1 class="content-title" id="content-title">Accueil</h1>
       <div class="content-actions">
-        <button class="btn-icon" id="btn-menu-toggle" style="display:none;">☰</button>
+        <button class="btn-icon" id="btn-menu-toggle">☰</button>
       </div>
     </div>
 
@@ -296,21 +312,21 @@
         <h2>Bienvenue sur Gabon Sport Connect</h2>
         <p>Gestion complète des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.</p>
         <div class="dashboard-stats">
-          <div class="stat-card">
+          <div class="stat-card" data-nav="fédérations" title="Voir les fédérations">
             <div class="stat-value" id="stat-fédérations">-</div>
-            <div class="stat-label">Fédérations</div>
+            <div class="stat-label">Fédérations →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-nav="clubs" title="Voir les clubs">
             <div class="stat-value" id="stat-clubs">-</div>
-            <div class="stat-label">Clubs</div>
+            <div class="stat-label">Clubs →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-nav="joueurs" title="Voir les joueurs">
             <div class="stat-value" id="stat-joueurs">-</div>
-            <div class="stat-label">Joueurs</div>
+            <div class="stat-label">Joueurs →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-nav="arbitres" title="Voir les arbitres">
             <div class="stat-value" id="stat-arbitres">-</div>
-            <div class="stat-label">Arbitres</div>
+            <div class="stat-label">Arbitres →</div>
           </div>
         </div>
       </div>
@@ -712,6 +728,13 @@
           <label class="form-label" for="joueur-statut">Statut</label>
           <select class="form-input" id="joueur-statut">
             <option>Actif</option><option>Inactif</option><option>Blessé</option><option>Suspendu</option><option>Retraité</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="joueur-genre">Genre</label>
+          <select class="form-input" id="joueur-genre">
+            <option value="Masculin">Masculin</option>
+            <option value="Féminin">Féminin</option>
           </select>
         </div>
         <div class="form-group">
