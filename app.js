@@ -465,16 +465,20 @@ async function deleteFederation(id) {
 // ═════════════════════════════════════════════════════════════
 
 async function populateFedSelect(selectId) {
-  const fedSnapshot = await getDocs(collection(db, COLLECTIONS.federations));
   const sel = document.getElementById(selectId);
   if (!sel) return;
   sel.innerHTML = '<option value="">-- Sélectionner une fédération --</option>';
-  fedSnapshot.docs.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d.id;
-    opt.textContent = d.data().nom;
-    sel.appendChild(opt);
-  });
+  try {
+    const fedSnapshot = await getDocs(collection(db, COLLECTIONS.federations));
+    fedSnapshot.docs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.data().nom;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.warn('Erreur chargement fédérations pour select:', e);
+  }
 }
 
 document.getElementById('btn-add-club')?.addEventListener('click', async () => {
@@ -581,16 +585,20 @@ async function deleteClub(id) {
 // ═════════════════════════════════════════════════════════════
 
 async function populateClubSelect(selectId) {
-  const snap = await getDocs(collection(db, COLLECTIONS.clubs));
   const sel = document.getElementById(selectId);
   if (!sel) return;
   sel.innerHTML = '<option value="">-- Sélectionner un club --</option>';
-  snap.docs.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d.id;
-    opt.textContent = d.data().nom;
-    sel.appendChild(opt);
-  });
+  try {
+    const snap = await getDocs(collection(db, COLLECTIONS.clubs));
+    snap.docs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.data().nom;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.warn('Erreur chargement clubs pour select:', e);
+  }
 }
 
 document.getElementById('btn-add-joueur')?.addEventListener('click', async () => {
@@ -611,7 +619,11 @@ document.getElementById('btn-add-joueur-f')?.addEventListener('click', async () 
   const genreEl = document.getElementById('joueur-genre');
   if (genreEl) genreEl.value = 'Féminin';
   document.querySelector('#joueur-modal .form-modal-title').textContent = 'Nouvelle joueuse';
-  document.getElementById('joueur-modal').classList.remove('hidden');
+  const modal = document.getElementById('joueur-modal');
+  modal.classList.remove('hidden');
+  // Remonter en haut du modal
+  const modalBody = modal.querySelector('.form-modal');
+  if (modalBody) modalBody.scrollTop = 0;
 });
 
 document.getElementById('btn-add-joueur-a')?.addEventListener('click', async () => {
@@ -661,8 +673,10 @@ async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
   container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
   try {
     let qry;
-    if (filter === 'Féminin') {
-      qry = query(collection(db, COLLECTIONS.joueurs), where('genre', '==', 'Féminin'), orderBy('createdAt', 'desc'));
+    // On évite where+orderBy ensemble (nécessite index composite Firestore)
+    // On filtre côté client après récupération
+    if (filter === 'Féminin' || filter === 'Amateur') {
+      qry = query(collection(db, COLLECTIONS.joueurs), where('genre', '==', filter));
     } else {
       qry = query(collection(db, COLLECTIONS.joueurs), orderBy('createdAt', 'desc'));
     }
@@ -705,7 +719,8 @@ async function editJoueur(id) {
     document.getElementById('joueur-nom').value = data.nom || '';
     document.getElementById('joueur-prenom').value = data.prenom || '';
     document.getElementById('joueur-date-naissance').value = data.dateNaissance || '';
-    document.getElementById('joueur-nationalité').value = data.nationalité || '';
+    const natEl = document.getElementById('joueur-nationalite') || document.getElementById('joueur-nationalité');
+    if (natEl) natEl.value = data.nationalité || data.nationalite || '';
     document.getElementById('joueur-position').value = data.position || 'Attaquant';
     document.getElementById('joueur-statut').value = data.statut || 'Actif';
     if (document.getElementById('joueur-genre')) document.getElementById('joueur-genre').value = data.genre || 'Masculin';
@@ -750,6 +765,8 @@ document.getElementById('arbitre-form')?.addEventListener('submit', async e => {
     niveau: document.getElementById('arbitre-niveau').value,
     statut: document.getElementById('arbitre-statut').value,
     dateNaissance: document.getElementById('arbitre-date-naissance').value || '',
+    nationalité: document.getElementById('arbitre-nationalité')?.value || 'Gabonaise',
+    fédération: document.getElementById('arbitre-fédération')?.value || '',
     updatedAt: serverTimestamp()
   };
   try {
@@ -811,6 +828,10 @@ async function editArbitre(id) {
     document.getElementById('arbitre-niveau').value = data.niveau || 'Amateur';
     document.getElementById('arbitre-statut').value = data.statut || 'Actif';
     document.getElementById('arbitre-date-naissance').value = data.dateNaissance || '';
+    const natEl = document.getElementById('arbitre-nationalité');
+    if (natEl) natEl.value = data.nationalité || 'Gabonaise';
+    const fedEl = document.getElementById('arbitre-fédération');
+    if (fedEl && data.fédération) fedEl.value = data.fédération;
     document.querySelector('#arbitre-modal .form-modal-title').textContent = 'Modifier arbitre';
     document.getElementById('arbitre-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
@@ -861,6 +882,8 @@ document.getElementById('comp-form')?.addEventListener('submit', async e => {
     dateDebut: document.getElementById('comp-date-debut').value || '',
     dateFin: document.getElementById('comp-date-fin').value || '',
     statut: document.getElementById('comp-statut').value,
+    fédération: document.getElementById('comp-fédération')?.value || '',
+    arbitreAssigné: document.getElementById('comp-arbitre-assigné')?.value || '',
     updatedAt: serverTimestamp()
   };
   try {
@@ -922,6 +945,21 @@ async function editComp(id) {
     document.getElementById('comp-date-debut').value = data.dateDebut || '';
     document.getElementById('comp-date-fin').value = data.dateFin || '';
     document.getElementById('comp-statut').value = data.statut || 'À venir';
+    // Charger arbitres puis sélectionner le bon
+    const arbSnap = await getDocs(collection(db, COLLECTIONS.arbitres));
+    const arbSelect = document.getElementById('comp-arbitre-assigné');
+    if (arbSelect) {
+      arbSelect.innerHTML = '<option value="">-- Aucun assigné --</option>';
+      arbSnap.docs.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = `${d.data().prenom} ${d.data().nom}`;
+        arbSelect.appendChild(opt);
+      });
+      if (data.arbitreAssigné) arbSelect.value = data.arbitreAssigné;
+    }
+    const fedEl = document.getElementById('comp-fédération');
+    if (fedEl && data.fédération) fedEl.value = data.fédération;
     document.querySelector('#comp-modal .form-modal-title').textContent = 'Modifier compétition';
     document.getElementById('comp-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
