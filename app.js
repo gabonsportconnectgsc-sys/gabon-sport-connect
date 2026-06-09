@@ -370,11 +370,11 @@ document.getElementById('federation-form')?.addEventListener('submit', async e =
     nom: document.getElementById('fed-nom').value,
     sport: document.getElementById('fed-sport').value,
     statut: document.getElementById('fed-statut').value,
-    ville: document.getElementById('fed-ville').value || '',
-    presNom: document.getElementById('fed-pres-nom').value || '',
-    presPrenom: document.getElementById('fed-pres-prenom').value || '',
-    email: document.getElementById('fed-email').value || '',
-    tel: document.getElementById('fed-tel').value || '',
+    president: document.getElementById('fed-president')?.value || '',
+    contact: document.getElementById('fed-contact')?.value || '',
+    email: document.getElementById('fed-email')?.value || '',
+    affiliation: document.getElementById('fed-affiliation')?.value || '',
+    annee: document.getElementById('fed-annee')?.value || '',
     updatedAt: serverTimestamp()
   };
   try {
@@ -436,11 +436,16 @@ async function editFederation(id) {
     document.getElementById('fed-nom').value = data.nom || '';
     document.getElementById('fed-sport').value = data.sport || '';
     document.getElementById('fed-statut').value = data.statut || 'En attente';
-    document.getElementById('fed-ville').value = data.ville || '';
-    document.getElementById('fed-pres-nom').value = data.presNom || '';
-    document.getElementById('fed-pres-prenom').value = data.presPrenom || '';
-    document.getElementById('fed-email').value = data.email || '';
-    document.getElementById('fed-tel').value = data.tel || '';
+    const presEl = document.getElementById('fed-president');
+    if (presEl) presEl.value = data.president || '';
+    const contactEl = document.getElementById('fed-contact');
+    if (contactEl) contactEl.value = data.contact || '';
+    const emailEl = document.getElementById('fed-email');
+    if (emailEl) emailEl.value = data.email || '';
+    const affEl = document.getElementById('fed-affiliation');
+    if (affEl) affEl.value = data.affiliation || '';
+    const anneeEl = document.getElementById('fed-annee');
+    if (anneeEl) anneeEl.value = data.annee || '';
     document.querySelector('#federation-modal .form-modal-title').textContent = 'Modifier fédération';
     document.getElementById('federation-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
@@ -491,10 +496,8 @@ document.getElementById('club-form')?.addEventListener('submit', async e => {
     ville: document.getElementById('club-ville').value || '',
     province: document.getElementById('club-province').value || '',
     sport: document.getElementById('club-sport').value,
-    catégorie: document.getElementById('club-catégorie').value,
-    genre: document.getElementById('club-genre').value,
-    division: document.getElementById('club-division').value,
-    stade: document.getElementById('club-stade').value || '',
+    division: document.getElementById('club-division')?.value || 'D1',
+    statut: document.getElementById('club-statut')?.value || 'Actif',
     updatedAt: serverTimestamp()
   };
   try {
@@ -555,10 +558,10 @@ async function editClub(id) {
     document.getElementById('club-ville').value = data.ville || '';
     document.getElementById('club-province').value = data.province || '';
     document.getElementById('club-sport').value = data.sport || 'Football';
-    document.getElementById('club-catégorie').value = data.catégorie || 'Professionnel';
-    document.getElementById('club-genre').value = data.genre || 'Masculin';
-    document.getElementById('club-division').value = data.division || 'D1';
-    document.getElementById('club-stade').value = data.stade || '';
+    const divEl = document.getElementById('club-division');
+    if (divEl) divEl.value = data.division || 'D1';
+    const statEl = document.getElementById('club-statut');
+    if (statEl) statEl.value = data.statut || 'Actif';
     document.querySelector('#club-modal .form-modal-title').textContent = 'Modifier club';
     document.getElementById('club-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
@@ -629,7 +632,7 @@ document.getElementById('joueur-form')?.addEventListener('submit', async e => {
     nom: document.getElementById('joueur-nom').value,
     prenom: document.getElementById('joueur-prenom').value,
     dateNaissance: document.getElementById('joueur-date-naissance').value,
-    nationalité: document.getElementById('joueur-nationalité').value || 'Gabonaise',
+    nationalité: (document.getElementById('joueur-nationalite') || document.getElementById('joueur-nationalité'))?.value || 'Gabonaise',
     position: document.getElementById('joueur-position').value,
     club: document.getElementById('joueur-club').value,
     statut: document.getElementById('joueur-statut').value,
@@ -1141,6 +1144,26 @@ async function loadReportData(type, win) {
     console.error('Erreur rapport', e);
   }
 }
+
+
+// ─── Feature cards landing (ouvrir modal connexion) ─────────
+document.querySelectorAll('.feature-card[data-action="login"]').forEach(card => {
+  card.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('auth-modal').classList.remove('hidden');
+  });
+});
+
+// ─── CTA register button ─────────────────────────────────────
+document.getElementById('btn-cta-register')?.addEventListener('click', () => {
+  document.getElementById('auth-modal').classList.remove('hidden');
+  // Switch to register tab
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('login-form').classList.add('hidden');
+  document.getElementById('register-form').classList.remove('hidden');
+  const regTab = document.querySelector('.auth-tab[data-tab="register"]');
+  if (regTab) regTab.classList.add('active');
+});
 
 // Footer login link
 document.getElementById('footer-login-link')?.addEventListener('click', e => {

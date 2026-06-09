@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gabon Sport Connect — Connecter les talents, développer le sport</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Gabon Sport Connect — Plateforme Nationale</title>
   <meta name="description" content="Plateforme nationale gabonaise de gestion sportive. Joueurs, clubs, compétitions et actualités." />
   <meta name="author" content="KOZANGUE ESSONO PATRICK BERTIN" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,8 +14,7 @@
 </head>
 <body>
 
-
-<!-- SPLASH SCREEN — Drapeau Gabonais -->
+<!-- SPLASH SCREEN -->
 <div id="splash-screen" class="splash">
   <div class="splash-flag">
     <div class="flag-band green"></div>
@@ -34,6 +33,8 @@
 
 <!-- PAGE D'ACCUEIL -->
 <div id="landing">
+
+  <!-- NAVBAR MOBILE -->
   <nav class="navbar" role="navigation">
     <div class="nav-brand">
       <div class="nav-logo-circle" aria-hidden="true">GSC</div>
@@ -42,150 +43,240 @@
         <span class="nav-brand-tag">Plateforme Nationale</span>
       </div>
     </div>
-    <div class="nav-links">
-      <a href="#fonctionnalites">Fonctionnalités</a>
-      <a href="#contact">Contact</a>
-      <a href="#" class="btn-nav-login" id="btn-open-login">Se connecter</a>
-    </div>
+    <a href="#" class="btn-nav-login" id="btn-open-login">Se connecter</a>
   </nav>
 
+  <!-- HERO SECTION -->
   <main class="hero" role="main">
-    <div class="hero-flag-stripes" aria-hidden="true">
-      <span></span><span></span><span></span>
+    <!-- Bandeau drapeau gabonais -->
+    <div class="flag-bar">
+      <div class="fb green"></div>
+      <div class="fb yellow"></div>
+      <div class="fb blue"></div>
     </div>
+
     <div class="hero-inner">
-      <div class="hero-content">
-        <div class="hero-eyebrow">
-          <span class="hero-eyebrow-dot"></span>
-          Plateforme Officielle · Gabon
-        </div>
-        <h1 class="hero-title">
-          Connecter les <span class="accent-vert">talents</span>,<br>
-          développer le <span class="accent-jaune">sport</span> gabonais
-        </h1>
-        <p class="hero-subtitle">
-          Gabon Sport Connect centralise la gestion complète : fédérations, clubs, joueurs, arbitres, compétitions et actualités sportives du Gabon sur une seule plateforme moderne et sécurisée.
-        </p>
-        <div class="hero-cta">
-          <button class="btn-primary" id="btn-hero-start">Accéder au tableau de bord</button>
-          <a href="#fonctionnalites" class="btn-outline">Découvrir les fonctionnalités</a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <div class="stat-number">9<span>+</span></div>
-            <div class="stat-label">Provinces couvertes</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">4<span>+</span></div>
-            <div class="stat-label">Sports gérés</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">100<span>%</span></div>
-            <div class="stat-label">Données sécurisées</div>
-          </div>
+      <div class="hero-eyebrow">
+        <span class="hero-dot"></span>
+        Plateforme Officielle · Gabon
+      </div>
+
+      <h1 class="hero-title">
+        Connecter les <span class="accent-vert">talents</span>,<br>
+        développer le <span class="accent-jaune">sport</span> gabonais
+      </h1>
+
+      <p class="hero-subtitle">
+        Gestion centralisée des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.
+      </p>
+
+      <!-- Carte joueur -->
+      <div class="player-card">
+        <div class="pc-icon">⚽</div>
+        <div class="pc-body">
+          <div class="pc-label">Joueur Enregistré</div>
+          <div class="pc-name">Pierre Obame</div>
+          <div class="pc-sub">Attaquant · Panthères FC</div>
+          <span class="pc-badge">🇬🇦 Équipe Nationale</span>
         </div>
       </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="hero-card-stack">
-          <div class="hcard hcard-back2"></div>
-          <div class="hcard hcard-back1"></div>
-          <div class="hcard hcard-main">
-            <div class="hcard-icon">⚽</div>
-            <div class="hcard-label">Joueur Enregistré</div>
-            <div class="hcard-name">Pierre Obame</div>
-            <div class="hcard-sub">Attaquant · Panthères FC</div>
-            <div class="hcard-badge">🇬🇦 Équipe Nationale</div>
-          </div>
+
+      <!-- Stats -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number">9<span>+</span></div>
+          <div class="stat-label">Provinces</div>
         </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">4<span>+</span></div>
+          <div class="stat-label">Sports</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">100<span>%</span></div>
+          <div class="stat-label">Sécurisé</div>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="hero-cta">
+        <button class="btn-primary" id="btn-hero-start">🚀 Accéder au tableau de bord</button>
+        <a href="#fonctionnalites" class="btn-outline">Voir les fonctionnalités</a>
       </div>
     </div>
   </main>
 
+  <!-- FONCTIONNALITÉS -->
   <section class="features" id="fonctionnalites">
     <div class="section-header">
-      <div class="section-eyebrow">Ce que vous pouvez faire</div>
-      <h2 class="section-title">Une plateforme complète pour le sport gabonais</h2>
-      <p class="section-subtitle">Tous les outils dont vous avez besoin pour gérer, suivre et développer le sport national.</p>
+      <div class="section-eyebrow">CE QUE VOUS POUVEZ FAIRE</div>
+      <h2 class="section-title">Une plateforme complète</h2>
+      <p class="section-subtitle">Tous les outils pour gérer le sport national gabonais.</p>
     </div>
+
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon green" aria-hidden="true">🏛️</div>
-        <div class="feature-title">Gestion des fédérations</div>
-        <p class="feature-desc">Enregistrez et validez les fédérations nationales, agréments, présidents et affiliations internationales.</p>
+      <a href="#" class="feature-card" id="fc-federations" data-action="login">
+        <div class="feature-icon-wrap green">🏛️</div>
+        <div class="feature-body">
+          <div class="feature-title">Fédérations</div>
+          <p class="feature-desc">Enregistrez fédérations, agréments et affiliations internationales.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-joueurs" data-action="login">
+        <div class="feature-icon-wrap yellow">⚽</div>
+        <div class="feature-body">
+          <div class="feature-title">Joueurs</div>
+          <p class="feature-desc">Profils complets : position, club, statistiques certifiées.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-clubs" data-action="login">
+        <div class="feature-icon-wrap blue">🏟️</div>
+        <div class="feature-body">
+          <div class="feature-title">Clubs</div>
+          <p class="feature-desc">Infrastructure, staff technique et effectif par catégorie.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-arbitres" data-action="login">
+        <div class="feature-icon-wrap green">👨‍⚖️</div>
+        <div class="feature-body">
+          <div class="feature-title">Arbitres</div>
+          <p class="feature-desc">Grades national, FIFA, CAF et historique des matchs.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-competitions" data-action="login">
+        <div class="feature-icon-wrap yellow">🏆</div>
+        <div class="feature-body">
+          <div class="feature-title">Compétitions</div>
+          <p class="feature-desc">Créez et suivez les championnats nationaux.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-feminin" data-action="login">
+        <div class="feature-icon-wrap blue">👩‍⚽</div>
+        <div class="feature-body">
+          <div class="feature-title">Football Féminin</div>
+          <p class="feature-desc">Panel dédié avec rapports d'état national.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-amateur" data-action="login">
+        <div class="feature-icon-wrap green">🎯</div>
+        <div class="feature-body">
+          <div class="feature-title">Football Amateur</div>
+          <p class="feature-desc">Passerelle vers le niveau professionnel.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+
+      <a href="#" class="feature-card" id="fc-rapports" data-action="login">
+        <div class="feature-icon-wrap yellow">🖨️</div>
+        <div class="feature-body">
+          <div class="feature-title">Rapports Officiels</div>
+          <p class="feature-desc">Documents A4 avec en-tête Ministère et cachet numérique.</p>
+        </div>
+        <span class="feature-arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- SECTION AVANTAGES -->
+  <section class="benefits-section">
+    <div class="section-header">
+      <div class="section-eyebrow">POURQUOI NOUS REJOINDRE</div>
+      <h2 class="section-title">La force du <span class="accent-vert">numérique</span></h2>
+    </div>
+    <div class="benefits-list">
+      <div class="benefit-item">
+        <div class="benefit-icon">🔒</div>
+        <div class="benefit-text">
+          <strong>Données sécurisées</strong>
+          <span>Hébergement Firebase certifié, accès contrôlé par rôles</span>
+        </div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon green" aria-hidden="true">⚽</div>
-        <div class="feature-title">Gestion des joueurs</div>
-        <p class="feature-desc">Profils complets des athlètes : position, club, nationalité, statistiques certifiées et parcours.</p>
+      <div class="benefit-item">
+        <div class="benefit-icon">📱</div>
+        <div class="benefit-text">
+          <strong>Accessible partout</strong>
+          <span>Sur mobile, tablette ou ordinateur, 24h/24</span>
+        </div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon blue" aria-hidden="true">🏟️</div>
-        <div class="feature-title">Gestion des clubs</div>
-        <p class="feature-desc">Infrastructure, staff technique, médical et administratif, effectif par catégorie.</p>
+      <div class="benefit-item">
+        <div class="benefit-icon">🇬🇦</div>
+        <div class="benefit-text">
+          <strong>Made in Gabon</strong>
+          <span>Conçu pour les 9 provinces du territoire national</span>
+        </div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon purple" aria-hidden="true">👨‍⚖️</div>
-        <div class="feature-title">Gestion des arbitres</div>
-        <p class="feature-desc">Fiche arbitre complète, grades (national, FIFA, CAF), historique des matchs arbitrés.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon yellow" aria-hidden="true">🏆</div>
-        <div class="feature-title">Compétitions</div>
-        <p class="feature-desc">Créez et suivez les compétitions avec assignation automatique des arbitres.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon pink" aria-hidden="true">👩‍⚽</div>
-        <div class="feature-title">Football féminin</div>
-        <p class="feature-desc">Panel séparé dédié au football féminin avec rapports d'état national.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon orange" aria-hidden="true">🎯</div>
-        <div class="feature-title">Football amateur</div>
-        <p class="feature-desc">Panel séparé pour football amateur avec passerelle vers le professionnel.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon red" aria-hidden="true">🖨️</div>
-        <div class="feature-title">Rapports imprimables</div>
-        <p class="feature-desc">Générez des rapports officiels format A4 avec en-tête Ministère et cachet numérique.</p>
+      <div class="benefit-item">
+        <div class="benefit-icon">📊</div>
+        <div class="benefit-text">
+          <strong>Rapports officiels</strong>
+          <span>Exports imprimables avec cachet numérique ministère</span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- CTA FINAL -->
+  <section class="cta-section">
+    <div class="cta-flag-bar">
+      <div class="fb green"></div>
+      <div class="fb yellow"></div>
+      <div class="fb blue"></div>
+    </div>
+    <div class="cta-inner">
+      <div class="cta-logo">GSC</div>
+      <h2>Prêt à rejoindre la plateforme ?</h2>
+      <p>Inscrivez-vous gratuitement et gérez votre entité sportive dès aujourd'hui.</p>
+      <button class="btn-primary btn-lg" id="btn-cta-register">Créer mon compte →</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
   <footer class="footer" id="contact">
-    <div>
+    <div class="footer-top">
       <div class="footer-brand">Gabon Sport <span>Connect</span></div>
-      <div style="margin-top:6px;font-size:.8rem;">
-        Porteur : KOZANGUE ESSONO PATRICK BERTIN<br>
-        <a href="mailto:gabonsportconnectgsc@gmail.com">gabonsportconnectgsc@gmail.com</a>
-        &nbsp;·&nbsp;
-        <a href="tel:+24160141924">+241 60 14 19 24</a>
-      </div>
+      <p class="footer-tagline">Connecter les talents, développer le sport</p>
     </div>
     <div class="footer-links">
       <a href="#fonctionnalites">Fonctionnalités</a>
       <a href="#" id="footer-login-link">Connexion</a>
+      <a href="mailto:gabonsportconnectgsc@gmail.com">Contact</a>
     </div>
-    <div class="footer-contact" style="text-align:right;">
-      © 2025 Gabon Sport Connect · Tous droits réservés<br>
-      <span style="color:#FCD116;font-size:.75rem;">Connecter les talents, développer le sport</span>
+    <div class="footer-contact">
+      <div>Porteur : <strong>KOZANGUE ESSONO PATRICK BERTIN</strong></div>
+      <a href="mailto:gabonsportconnectgsc@gmail.com">gabonsportconnectgsc@gmail.com</a>
+      <a href="tel:+24160141924">+241 60 14 19 24</a>
+    </div>
+    <div class="footer-copy">
+      © 2025 Gabon Sport Connect · Tous droits réservés
     </div>
   </footer>
 
-</div>
+</div><!-- end #landing -->
 
 <!-- MODAL AUTH -->
 <div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Authentification">
   <div class="modal">
     <div class="modal-header">
-      <div>
-        <div class="modal-logo">
-          <div class="modal-logo-circle" aria-hidden="true">GSC</div>
-          <span class="modal-logo-text">Gabon Sport Connect</span>
-        </div>
+      <div class="modal-logo">
+        <div class="modal-logo-circle">GSC</div>
+        <span class="modal-logo-text">Gabon Sport Connect</span>
       </div>
       <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
     </div>
-    <div class="modal-title">Connexion</div>
+    <div class="modal-title">Bienvenue</div>
     <div class="modal-body">
       <div class="auth-tabs" role="tablist">
         <button class="auth-tab active" data-tab="login" role="tab">Se connecter</button>
@@ -201,7 +292,7 @@
           <label class="form-label" for="login-password">Mot de passe *</label>
           <input class="form-input" type="password" id="login-password" placeholder="••••••••" required />
         </div>
-        <button type="submit" class="btn-submit" style="width:100%;">Se connecter</button>
+        <button type="submit" class="btn-submit">Se connecter</button>
       </form>
 
       <form id="register-form" class="hidden" novalidate>
@@ -221,14 +312,14 @@
           <label class="form-label" for="reg-role">Rôle *</label>
           <select class="form-input" id="reg-role" required>
             <option value="">Sélectionner un rôle</option>
-            <option value="fédération">Fédération</option>
-            <option value="club">Club</option>
-            <option value="joueur">Joueur</option>
-            <option value="arbitre">Arbitre</option>
-            <option value="organisation">Organisation</option>
+            <option value="fédération">🏛️ Fédération</option>
+            <option value="club">🏟️ Club</option>
+            <option value="joueur">⚽ Joueur</option>
+            <option value="arbitre">👨‍⚖️ Arbitre</option>
+            <option value="organisation">📊 Organisation</option>
           </select>
         </div>
-        <button type="submit" class="btn-submit" style="width:100%;">S'inscrire</button>
+        <button type="submit" class="btn-submit">S'inscrire</button>
       </form>
     </div>
   </div>
@@ -255,8 +346,7 @@
 
     <nav class="sidebar-nav">
       <button class="nav-item nav-admin-only" data-view="accueil">📊 Tableau de bord</button>
-      
-      <!-- SUPER ADMIN SECTION -->
+
       <div class="nav-section nav-admin-only">
         <div class="nav-section-title">ADMINISTRATION</div>
         <button class="nav-item" data-view="fédérations">🏛️ Fédérations</button>
@@ -266,21 +356,18 @@
         <button class="nav-item" data-view="compétitions">🏆 Compétitions</button>
       </div>
 
-      <!-- PANELS SÉPARÉS -->
       <div class="nav-section nav-admin-only">
         <div class="nav-section-title">SPÉCIALISÉS</div>
         <button class="nav-item" data-view="féminin">👩‍⚽ Football féminin</button>
         <button class="nav-item" data-view="amateur">🎯 Football amateur</button>
       </div>
 
-      <!-- RÔLES SPÉCIFIQUES -->
       <button class="nav-item nav-fédération-only" data-view="fed-dashboard">📊 Mon tableau</button>
       <button class="nav-item nav-fédération-only" data-view="fed-clubs">🏟️ Mes clubs</button>
       <button class="nav-item nav-club-only" data-view="club-dashboard">📊 Mon club</button>
       <button class="nav-item nav-joueur-only" data-view="joueur-profil">⚽ Mon profil</button>
       <button class="nav-item nav-arbitre-only" data-view="arbitre-profil">👨‍⚖️ Ma fiche arbitre</button>
 
-      <!-- ACTUALITÉS -->
       <div class="nav-section">
         <div class="nav-section-title">CONTENU</div>
         <button class="nav-item" data-view="actualités">📰 Actualités</button>
@@ -293,7 +380,7 @@
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn-logout" id="btn-logout">Déconnexion</button>
+      <button class="btn-logout" id="btn-logout">🚪 Déconnexion</button>
     </div>
   </aside>
 
@@ -309,7 +396,7 @@
     <!-- ACCUEIL -->
     <div id="view-accueil" class="view hidden">
       <div class="welcome-card">
-        <h2>Bienvenue sur Gabon Sport Connect</h2>
+        <h2>Bienvenue sur Gabon Sport Connect 🇬🇦</h2>
         <p>Gestion complète des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.</p>
         <div class="dashboard-stats">
           <div class="stat-card" data-nav="fédérations" title="Voir les fédérations">
@@ -453,106 +540,55 @@
     <div class="form-modal-body">
       <form id="federation-form" novalidate>
         <input type="hidden" id="federation-id" />
-        <h4>Informations officielles</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-nom">Nom officiel *</label>
-            <input class="form-input" type="text" id="fed-nom" placeholder="Fédération Gabonaise de Football" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-sport">Sport(s) géré(s) *</label>
-            <input class="form-input" type="text" id="fed-sport" placeholder="Football" required />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-date-creation">Date de création</label>
-            <input class="form-input" type="date" id="fed-date-creation" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-agrément">Numéro d'agrément officiel</label>
-            <input class="form-input" type="text" id="fed-agrément" placeholder="FGF-2024-001" />
-          </div>
-        </div>
-        <h4>Siège social</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-ville">Ville</label>
-            <input class="form-input" type="text" id="fed-ville" placeholder="Libreville" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-province">Province</label>
-            <input class="form-input" type="text" id="fed-province" placeholder="Estuaire" />
-          </div>
-        </div>
+        <h4>Informations générales</h4>
         <div class="form-group">
-          <label class="form-label" for="fed-adresse">Adresse</label>
-          <input class="form-input" type="text" id="fed-adresse" placeholder="Boulevard de l'Indépendance" />
+          <label class="form-label" for="fed-nom">Nom de la fédération *</label>
+          <input class="form-input" type="text" id="fed-nom" placeholder="Ex: Fédération Gabonaise de Football" required />
         </div>
-        <h4>Président</h4>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="fed-pres-nom">Nom</label>
-            <input class="form-input" type="text" id="fed-pres-nom" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-pres-prenom">Prénom</label>
-            <input class="form-input" type="text" id="fed-pres-prenom" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-pres-fonction">Prise de fonction</label>
-            <input class="form-input" type="date" id="fed-pres-fonction" />
-          </div>
-        </div>
-        <h4>Affiliation internationale</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-affil-org">Organisation</label>
-            <select class="form-input" id="fed-affil-org">
-              <option>FIFA</option><option>CAF</option><option>FIBA</option><option>FIVB</option><option>Autre</option>
+            <label class="form-label" for="fed-sport">Sport *</label>
+            <select class="form-input" id="fed-sport" required>
+              <option value="">Sélectionner</option>
+              <option>Football</option><option>Basketball</option><option>Volleyball</option>
+              <option>Athlétisme</option><option>Natation</option><option>Boxe</option>
+              <option>Tennis</option><option>Handball</option><option>Autre</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-affil-num">Numéro d'affiliation</label>
-            <input class="form-input" type="text" id="fed-affil-num" placeholder="GAB-001" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-clubs">Nombre de clubs affiliés</label>
-            <input class="form-input" type="number" id="fed-clubs" min="0" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-licences">Nombre de licenciés</label>
-            <input class="form-input" type="number" id="fed-licences" min="0" />
-          </div>
-        </div>
-        <h4>Contacts</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-email">Email officiel</label>
-            <input class="form-input" type="email" id="fed-email" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-tel">Téléphone</label>
-            <input class="form-input" type="tel" id="fed-tel" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="fed-website">Site web</label>
-          <input class="form-input" type="url" id="fed-website" placeholder="https://..." />
-        </div>
-        <h4>Statut administratif (Super Admin)</h4>
-        <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="fed-statut">Statut</label>
             <select class="form-input" id="fed-statut">
-              <option>En attente</option><option>Validée</option><option>Suspendue</option><option>Radiée</option>
+              <option>En attente</option><option>Validée</option><option>Suspendue</option>
+            </select>
+          </div>
+        </div>
+        <h4>Responsable</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fed-president">Président *</label>
+            <input class="form-input" type="text" id="fed-president" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fed-contact">Contact</label>
+            <input class="form-input" type="tel" id="fed-contact" placeholder="+241 xx xx xx xx" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fed-email">Email</label>
+          <input class="form-input" type="email" id="fed-email" placeholder="federation@gabon.sport" />
+        </div>
+        <h4>Affiliation</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fed-affiliation">Affiliation internationale</label>
+            <select class="form-input" id="fed-affiliation">
+              <option>Non affiliée</option><option>FIFA</option><option>CAF</option>
+              <option>FIBA</option><option>FIVB</option><option>IAAF</option><option>Autre</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="fed-date-validation">Date de validation</label>
-            <input class="form-input" type="date" id="fed-date-validation" />
+            <label class="form-label" for="fed-annee">Année de création</label>
+            <input class="form-input" type="number" id="fed-annee" placeholder="2000" min="1960" max="2025" />
           </div>
         </div>
         <div class="form-modal-actions">
@@ -564,25 +600,33 @@
   </div>
 </div>
 
-<!-- Modal Club (enrichi) -->
+<!-- Modal Club -->
 <div id="club-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
   <div class="form-modal">
     <div class="form-modal-header">
-      <div class="form-modal-title">Ajouter un club</div>
+      <div class="form-modal-title">Nouveau club</div>
       <button class="form-modal-close" id="club-modal-close" aria-label="Fermer">✕</button>
     </div>
     <div class="form-modal-body">
       <form id="club-form" novalidate>
         <input type="hidden" id="club-id" />
-        <h4>Identité</h4>
+        <h4>Informations du club</h4>
+        <div class="form-group">
+          <label class="form-label" for="club-nom">Nom du club *</label>
+          <input class="form-input" type="text" id="club-nom" placeholder="Ex: Panthères FC" required />
+        </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="club-nom">Nom du club *</label>
-            <input class="form-input" type="text" id="club-nom" placeholder="Panthères FC" required />
+            <label class="form-label" for="club-sport">Sport *</label>
+            <select class="form-input" id="club-sport" required>
+              <option>Football</option><option>Basketball</option><option>Volleyball</option>
+            </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="club-fédération">Fédération de rattachement</label>
-            <select class="form-input" id="club-fédération"></select>
+            <label class="form-label" for="club-division">Division</label>
+            <select class="form-input" id="club-division">
+              <option>D1</option><option>D2</option><option>Régionale</option><option>Amateur</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -592,63 +636,22 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="club-province">Province</label>
-            <input class="form-input" type="text" id="club-province" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-sport">Sport</label>
-            <select class="form-input" id="club-sport">
-              <option>Football</option><option>Basketball</option><option>Volleyball</option><option>Athlétisme</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-catégorie">Catégorie</label>
-            <select class="form-input" id="club-catégorie">
-              <option>Professionnel</option><option>Amateur</option>
+            <select class="form-input" id="club-province">
+              <option>Estuaire</option><option>Haut-Ogooué</option><option>Moyen-Ogooué</option>
+              <option>Ngounié</option><option>Nyanga</option><option>Ogooué-Ivindo</option>
+              <option>Ogooué-Lolo</option><option>Ogooué-Maritime</option><option>Woleu-Ntem</option>
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-genre">Genre</label>
-            <select class="form-input" id="club-genre">
-              <option>Masculin</option><option>Féminin</option><option>Mixte</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-division">Division</label>
-            <select class="form-input" id="club-division">
-              <option>D1</option><option>D2</option><option>D3</option><option>Régionale</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-annee">Année de fondation</label>
-            <input class="form-input" type="number" id="club-annee" placeholder="1985" min="1900" max="2030" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-website">Site web</label>
-            <input class="form-input" type="url" id="club-website" placeholder="https://..." />
-          </div>
-        </div>
-        <h4>Infrastructure</h4>
         <div class="form-group">
-          <label class="form-label" for="club-stade">Nom du stade</label>
-          <input class="form-input" type="text" id="club-stade" placeholder="Stade de la Paix" />
+          <label class="form-label" for="club-fédération">Fédération de rattachement</label>
+          <select class="form-input" id="club-fédération"></select>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-stade-capacite">Capacité</label>
-            <input class="form-input" type="number" id="club-stade-capacite" min="0" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-pelouse">Type de pelouse</label>
-            <select class="form-input" id="club-pelouse">
-              <option>Naturelle</option><option>Synthétique</option><option>Hybride</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="club-statut">Statut</label>
+          <select class="form-input" id="club-statut">
+            <option>Actif</option><option>Inactif</option><option>Suspendu</option>
+          </select>
         </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="club-modal-cancel">Annuler</button>
@@ -682,60 +685,54 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="joueur-date-naissance">Date de naissance *</label>
-            <input class="form-input" type="date" id="joueur-date-naissance" required />
+            <label class="form-label" for="joueur-date-naissance">Date de naissance</label>
+            <input class="form-input" type="date" id="joueur-date-naissance" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="joueur-nationalité">Nationalité</label>
-            <input class="form-input" type="text" id="joueur-nationalité" placeholder="Gabonaise" />
-          </div>
-        </div>
-        <h4>Caractéristiques physiques</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-taille">Taille (cm)</label>
-            <input class="form-input" type="number" id="joueur-taille" min="100" max="230" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-poids">Poids (kg)</label>
-            <input class="form-input" type="number" id="joueur-poids" min="40" max="150" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-pied">Pied fort</label>
-            <select class="form-input" id="joueur-pied">
-              <option>Droit</option><option>Gauche</option><option>Ambidextre</option>
-            </select>
+            <label class="form-label" for="joueur-nationalite">Nationalité</label>
+            <input class="form-input" type="text" id="joueur-nationalite" placeholder="Gabonaise" />
           </div>
         </div>
-        <h4>Professionnel</h4>
+        <h4>Profil sportif</h4>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="joueur-position">Position</label>
-            <select class="form-input" id="joueur-position">
+            <label class="form-label" for="joueur-position">Position *</label>
+            <select class="form-input" id="joueur-position" required>
               <option>Gardien</option><option>Défenseur</option><option>Milieu</option><option>Attaquant</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="joueur-numero">Numéro de maillot</label>
-            <input class="form-input" type="number" id="joueur-numero" min="1" max="99" />
+            <label class="form-label" for="joueur-pied">Pied fort</label>
+            <select class="form-input" id="joueur-pied">
+              <option>Droit</option><option>Gauche</option><option>Les deux</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-club">Club actuel</label>
+            <select class="form-input" id="joueur-club"></select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="joueur-club">Club actuel *</label>
-            <select class="form-input" id="joueur-club" required></select>
+            <label class="form-label" for="joueur-genre">Genre</label>
+            <select class="form-input" id="joueur-genre">
+              <option>Masculin</option><option>Féminin</option>
+            </select>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="joueur-statut">Statut</label>
-          <select class="form-input" id="joueur-statut">
-            <option>Actif</option><option>Inactif</option><option>Blessé</option><option>Suspendu</option><option>Retraité</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="joueur-genre">Genre</label>
-          <select class="form-input" id="joueur-genre">
-            <option value="Masculin">Masculin</option>
-            <option value="Féminin">Féminin</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-niveau">Niveau</label>
+            <select class="form-input" id="joueur-niveau">
+              <option>Amateur</option><option>Semi-pro</option><option>Professionnel</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-statut">Statut</label>
+            <select class="form-input" id="joueur-statut">
+              <option>Actif</option><option>Inactif</option><option>Blessé</option><option>Suspendu</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="joueur-bio">Biographie</label>
