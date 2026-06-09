@@ -392,45 +392,35 @@ async function loadAccueil() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MON PROFIL (joueur)
+// MON PROFIL (joueur) — carte pro, lecture seule
 // ═══════════════════════════════════════════════════════════════
 async function loadMonProfil() {
   const content = document.getElementById('mon-profil-content');
   if (!currentUser) return;
+  content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div>`;
   try {
     const snap = await getDocs(query(collection(db, 'joueurs'), where('email', '==', currentUser.email)));
     if (snap.empty) {
       content.innerHTML = `
-        <div style="color:#64748B;line-height:1.8;">
-          <p>Aucun profil joueur trouvé pour votre compte.</p>
-          <p style="margin-top:8px;">Email : <strong>${currentUser.email}</strong></p>
-          <p style="margin-top:8px;color:#009E60;">Contactez l'administrateur pour associer votre profil.</p>
+        <div style="color:#64748B;line-height:1.8;background:#F8FAFC;border-radius:16px;padding:28px;">
+          <p style="font-size:1.1rem;font-weight:600;color:#1E293B;">Aucun profil joueur associé</p>
+          <p style="margin-top:8px;">Email du compte : <strong>${currentUser.email}</strong></p>
+          <p style="margin-top:12px;padding:12px 16px;background:#DCFCE7;border-radius:10px;color:#15803D;font-size:.9rem;">
+            📋 Contactez l'administrateur de la fédération pour associer votre profil à ce compte.
+          </p>
         </div>`;
       return;
     }
-    snap.forEach(d => {
-      const data = d.data();
-      content.innerHTML = `
-        <div style="display:grid;gap:16px;">
-          <div style="display:flex;gap:20px;flex-wrap:wrap;">
-            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
-              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Nom complet</div>
-              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.nom || '—'} ${data.prenom || ''}</div>
-            </div>
-            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
-              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Position</div>
-              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.position || '—'}</div>
-            </div>
-            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
-              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Club</div>
-              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.club || '—'}</div>
-            </div>
-            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
-              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Statut</div>
-              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.statut || 'Actif'}</div>
-            </div>
-          </div>
-        </div>`;
+    snap.forEach(async (docSnap) => {
+      const data = docSnap.data();
+      const joueurId = docSnap.id;
+      // Charger les stats
+      let stats = {};
+      try {
+        const statsSnap = await getDoc(doc(db, 'joueurs', joueurId, 'stats', 'saison'));
+        if (statsSnap.exists()) stats = statsSnap.data();
+      } catch(e) { /* pas de stats */ }
+      content.innerHTML = buildFicheHtml(joueurId, data, stats, false);
     });
   } catch(e) {
     content.innerHTML = `<p style="color:red;">${e.message}</p>`;
@@ -486,15 +476,15 @@ async function loadMonClub() {
 // ═══════════════════════════════════════════════════════════════
 async function loadMesJoueurs() {
   const tbody = document.getElementById('mes-joueurs-tbody');
-  tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div></td></tr>`;
   if (!currentUserData?.nomClub) {
-    tbody.innerHTML = emptyRow(5, '🏟️', 'Aucun club associé', '');
+    tbody.innerHTML = emptyRow(6, '🏟️', 'Aucun club associé', '');
     return;
   }
   try {
     const snap = await getDocs(query(collection(db, 'joueurs'), where('club', '==', currentUserData.nomClub)));
     if (snap.empty) {
-      tbody.innerHTML = emptyRow(5, '⚽', 'Aucun joueur', 'Ajoutez des joueurs à votre club.');
+      tbody.innerHTML = emptyRow(6, '⚽', 'Aucun joueur', 'Ajoutez des joueurs à votre club.');
       document.getElementById('count-mes-joueurs').textContent = '0';
       return;
     }
@@ -502,20 +492,26 @@ async function loadMesJoueurs() {
     tbody.innerHTML = '';
     snap.forEach(docSnap => {
       const d = docSnap.data();
+      const photoHtml = d.photoUrl
+        ? `<img src="${d.photoUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">`
+        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#E2E8F0;font-size:.85rem;">⚽</span>`;
       tbody.innerHTML += `
         <tr>
-          <td><strong>${d.nom || '—'}</strong></td>
-          <td>${d.prenom || '—'}</td>
+          <td>${photoHtml}</td>
+          <td><strong>${d.nom || '—'}</strong> ${d.prenom || ''}</td>
           <td>${d.position || '—'}</td>
+          <td>${d.numeromaillot ? '#' + d.numeromaillot : '—'}</td>
           <td><span class="badge badge-${d.statut === 'Actif' ? 'green' : 'gray'}">${d.statut || 'Actif'}</span></td>
           <td>
-            <button class="action-btn action-edit" onclick="editJoueur('${docSnap.id}')">✏️</button>
+            <button class="action-btn" onclick="openFicheJoueur('${docSnap.id}')" title="Voir la fiche">👁️</button>
+            <button class="action-btn action-edit"   onclick="editJoueur('${docSnap.id}')">✏️</button>
             <button class="action-btn action-delete" onclick="deleteItem('joueurs','${docSnap.id}', loadMesJoueurs)">🗑️</button>
+            <button class="action-btn" onclick="openStatsModal('${docSnap.id}')" title="Statistiques" style="background:#EEF2FF;color:#6366F1;">📊</button>
           </td>
         </tr>`;
     });
   } catch(e) {
-    tbody.innerHTML = emptyRow(5, '❌', 'Erreur', e.message);
+    tbody.innerHTML = emptyRow(6, '❌', 'Erreur', e.message);
   }
 }
 
@@ -583,65 +579,139 @@ const joueursColl = () => collection(db, 'joueurs');
 
 async function loadJoueurs() {
   const tbody = document.getElementById('joueurs-tbody');
-  tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></td></tr>`;
   try {
     const snap = await getDocs(query(joueursColl(), orderBy('createdAt', 'desc')));
     if (snap.empty) {
-      tbody.innerHTML = emptyRow(6, '⚽', 'Aucun joueur enregistré', 'Ajoutez votre premier joueur.');
+      tbody.innerHTML = emptyRow(7, '⚽', 'Aucun joueur enregistré', 'Ajoutez votre premier joueur.');
       document.getElementById('count-joueurs').textContent = '0';
       return;
     }
     document.getElementById('count-joueurs').textContent = snap.size;
     tbody.innerHTML = '';
+    const canEdit = currentRole === 'admin' || currentRole === 'club';
     snap.forEach(docSnap => {
       const d = docSnap.data();
+      const photoHtml = d.photoUrl
+        ? `<img src="${d.photoUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">`
+        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#E2E8F0;font-size:.85rem;">⚽</span>`;
+      const actionsHtml = canEdit
+        ? `<button class="action-btn action-edit"   onclick="editJoueur('${docSnap.id}')">✏️</button>
+           <button class="action-btn action-delete" onclick="deleteItem('joueurs','${docSnap.id}', loadJoueurs)">🗑️</button>`
+        : '';
       tbody.innerHTML += `
         <tr>
-          <td><strong>${d.nom || '—'}</strong></td>
-          <td>${d.prenom || '—'}</td>
+          <td>${photoHtml}</td>
+          <td><strong>${d.nom || '—'}</strong> ${d.prenom || ''}</td>
           <td>${d.position || '—'}</td>
-          <td>${d.club || '—'}</td>
+          <td>${d.clubActuel || d.club || '—'}</td>
           <td>${d.nationalite || '—'}</td>
+          <td><span class="badge badge-${d.statut === 'Actif' ? 'green' : 'gray'}">${d.statut || 'Actif'}</span></td>
           <td>
-            <span class="badge badge-${d.statut === 'Actif' ? 'green' : 'gray'}">${d.statut || 'Actif'}</span>
-            <button class="action-btn action-edit"   onclick="editJoueur('${docSnap.id}')">✏️</button>
-            <button class="action-btn action-delete" onclick="deleteItem('joueurs','${docSnap.id}', loadJoueurs)">🗑️</button>
+            <button class="action-btn" onclick="openFicheJoueur('${docSnap.id}')" title="Voir la fiche">👁️</button>
+            ${actionsHtml}
           </td>
         </tr>`;
     });
   } catch (e) {
-    tbody.innerHTML = emptyRow(6, '❌', 'Erreur de chargement', e.message);
+    tbody.innerHTML = emptyRow(7, '❌', 'Erreur de chargement', e.message);
   }
 }
 
 document.getElementById('btn-add-joueur').addEventListener('click', () => openJoueurModal());
 
 function openJoueurModal(id = null, data = {}) {
+  // Joueurs : lecture seule, modification réservée admin et club
+  if (currentRole === 'joueur') {
+    showToast('Modification réservée à l\'administration.', 'error');
+    return;
+  }
   const modal = document.getElementById('joueur-modal');
   document.getElementById('joueur-modal-title').textContent = id ? 'Modifier le joueur' : 'Ajouter un joueur';
-  document.getElementById('joueur-id').value          = id || '';
-  document.getElementById('joueur-nom').value         = data.nom         || '';
-  document.getElementById('joueur-prenom').value      = data.prenom      || '';
-  document.getElementById('joueur-position').value    = data.position    || '';
-  document.getElementById('joueur-club').value        = data.club        || '';
-  document.getElementById('joueur-nationalite').value = data.nationalite || 'Gabonaise';
-  document.getElementById('joueur-statut').value      = data.statut      || 'Actif';
+  document.getElementById('joueur-id').value            = id || '';
+  // Identité
+  document.getElementById('joueur-nom').value           = data.nom           || '';
+  document.getElementById('joueur-prenom').value        = data.prenom        || '';
+  document.getElementById('joueur-date-naissance').value= data.dateNaissance || '';
+  document.getElementById('joueur-nationalite').value   = data.nationalite   || 'Gabonaise';
+  // Physique
+  document.getElementById('joueur-taille').value        = data.taille        || '';
+  document.getElementById('joueur-poids').value         = data.poids         || '';
+  document.getElementById('joueur-pied-fort').value     = data.piedFort      || 'Droit';
+  // Parcours clubs
+  document.getElementById('joueur-position').value      = data.position      || '';
+  document.getElementById('joueur-numero').value        = data.numeromaillot || '';
+  document.getElementById('joueur-club-formation').value= data.clubFormation || '';
+  document.getElementById('joueur-club-depart').value   = data.clubDepart    || '';
+  document.getElementById('joueur-club').value          = data.clubActuel || data.club || '';
+  document.getElementById('joueur-statut').value        = data.statut        || 'Actif';
+  // Photo
+  document.getElementById('joueur-photo-url').value     = data.photoUrl      || '';
+  document.getElementById('joueur-photo-preview').src   = data.photoUrl      || '';
+  document.getElementById('joueur-photo-preview').style.display = data.photoUrl ? 'block' : 'none';
   modal.classList.remove('hidden');
 }
+
+// Gestion upload photo → base64
+document.getElementById('joueur-photo-file')?.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Image trop lourde (max 2 Mo).', 'error');
+    this.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = e.target.result;
+    document.getElementById('joueur-photo-url').value = base64;
+    const preview = document.getElementById('joueur-photo-preview');
+    preview.src = base64;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+});
+
+// Aperçu depuis URL externe
+document.getElementById('joueur-photo-url')?.addEventListener('input', function() {
+  const preview = document.getElementById('joueur-photo-preview');
+  if (this.value.startsWith('http')) {
+    preview.src = this.value;
+    preview.style.display = 'block';
+  } else if (!this.value) {
+    preview.style.display = 'none';
+  }
+});
 
 document.getElementById('joueur-modal-close').addEventListener('click',  () => document.getElementById('joueur-modal').classList.add('hidden'));
 document.getElementById('joueur-modal-cancel').addEventListener('click', () => document.getElementById('joueur-modal').classList.add('hidden'));
 
 document.getElementById('joueur-form').addEventListener('submit', async e => {
   e.preventDefault();
+  if (currentRole === 'joueur') {
+    showToast('Modification réservée à l\'administration.', 'error');
+    return;
+  }
   const id   = document.getElementById('joueur-id').value;
   const data = {
-    nom:         document.getElementById('joueur-nom').value.trim(),
-    prenom:      document.getElementById('joueur-prenom').value.trim(),
-    position:    document.getElementById('joueur-position').value,
-    club:        document.getElementById('joueur-club').value.trim(),
-    nationalite: document.getElementById('joueur-nationalite').value.trim(),
-    statut:      document.getElementById('joueur-statut').value,
+    // Identité
+    nom:          document.getElementById('joueur-nom').value.trim(),
+    prenom:       document.getElementById('joueur-prenom').value.trim(),
+    dateNaissance:document.getElementById('joueur-date-naissance').value,
+    nationalite:  document.getElementById('joueur-nationalite').value.trim(),
+    // Physique
+    taille:       document.getElementById('joueur-taille').value || '',
+    poids:        document.getElementById('joueur-poids').value || '',
+    piedFort:     document.getElementById('joueur-pied-fort').value,
+    // Parcours
+    position:     document.getElementById('joueur-position').value,
+    numeromaillot:document.getElementById('joueur-numero').value || '',
+    clubFormation:document.getElementById('joueur-club-formation').value.trim(),
+    clubDepart:   document.getElementById('joueur-club-depart').value.trim(),
+    clubActuel:   document.getElementById('joueur-club').value.trim(),
+    club:         document.getElementById('joueur-club').value.trim(), // compatibilité
+    statut:       document.getElementById('joueur-statut').value,
+    photoUrl:     document.getElementById('joueur-photo-url').value || '',
   };
   try {
     if (id) {
@@ -919,8 +989,269 @@ window.editNews = async (id) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// UTILITAIRES PARTAGÉS
+// FICHE JOUEUR — carte pro (lecture seule)
 // ═══════════════════════════════════════════════════════════════
+function calcAge(dateNaissance) {
+  if (!dateNaissance) return null;
+  const dob = new Date(dateNaissance);
+  const diff = Date.now() - dob.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
+function statBox(icon, label, value) {
+  return `
+    <div style="background:#F8FAFC;border-radius:12px;padding:14px 10px;text-align:center;min-width:80px;flex:1;">
+      <div style="font-size:1.3rem;">${icon}</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#1E293B;margin:4px 0;">${value ?? '0'}</div>
+      <div style="font-size:.68rem;color:#94A3B8;text-transform:uppercase;font-weight:600;line-height:1.2;">${label}</div>
+    </div>`;
+}
+
+function buildFicheHtml(joueurId, data, stats, showEditStats) {
+  const age = calcAge(data.dateNaissance);
+  const photo = data.photoUrl
+    ? `<img src="${data.photoUrl}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);" onerror="this.style.display='none'">`
+    : `<div style="width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:3px solid rgba(255,255,255,.3);">⚽</div>`;
+  const statutColor = data.statut === 'Actif' ? '#22C55E' : data.statut === 'Suspendu' ? '#EF4444' : '#94A3B8';
+
+  const editStatsBtn = showEditStats
+    ? `<button onclick="openStatsModal('${joueurId}')" style="margin-top:14px;padding:8px 18px;background:#6366F1;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">📊 Saisir les statistiques</button>`
+    : '';
+
+  return `
+  <div style="max-width:680px;margin:0 auto;">
+    <!-- Bandeau identité -->
+    <div style="background:linear-gradient(135deg,#009E60 0%,#006B40 100%);border-radius:20px;padding:28px;color:#fff;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+      ${photo}
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;opacity:.7;font-weight:600;">Fiche joueur certifiée</div>
+        <div style="font-size:1.8rem;font-weight:900;line-height:1.1;margin:6px 0;">${data.nom || '—'} ${data.prenom || ''}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+          <span style="background:rgba(255,255,255,.18);padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;">${data.position || '—'}</span>
+          ${data.numeromaillot ? `<span style="background:rgba(255,255,255,.18);padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;">#${data.numeromaillot}</span>` : ''}
+          <span style="background:${statutColor}33;border:1px solid ${statutColor};color:#fff;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;">${data.statut || 'Actif'}</span>
+        </div>
+        <div style="margin-top:10px;font-size:.82rem;opacity:.85;">🏳️ ${data.nationalite || '—'} ${age ? `&nbsp;·&nbsp; ${age} ans` : ''}</div>
+      </div>
+    </div>
+
+    <!-- Physique & Parcours -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+      <div style="background:#F8FAFC;border-radius:16px;padding:20px;">
+        <div style="font-size:.7rem;text-transform:uppercase;font-weight:700;color:#94A3B8;margin-bottom:14px;letter-spacing:.08em;">Physique</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${infoLine('📏', 'Taille', data.taille ? data.taille + ' cm' : '—')}
+          ${infoLine('⚖️', 'Poids', data.poids ? data.poids + ' kg' : '—')}
+          ${infoLine('🦶', 'Pied fort', data.piedFort || '—')}
+          ${infoLine('🎂', 'Naissance', data.dateNaissance ? new Date(data.dateNaissance).toLocaleDateString('fr-FR') : '—')}
+        </div>
+      </div>
+      <div style="background:#F8FAFC;border-radius:16px;padding:20px;">
+        <div style="font-size:.7rem;text-transform:uppercase;font-weight:700;color:#94A3B8;margin-bottom:14px;letter-spacing:.08em;">Parcours</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${infoLine('🌱', 'Formation', data.clubFormation || '—')}
+          ${infoLine('🚀', 'Premier club', data.clubDepart || '—')}
+          ${infoLine('🏟️', 'Club actuel', data.clubActuel || data.club || '—')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques certifiées -->
+    <div style="background:#F8FAFC;border-radius:16px;padding:20px;margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:.7rem;text-transform:uppercase;font-weight:700;color:#94A3B8;letter-spacing:.08em;">Statistiques certifiées</div>
+        <span style="font-size:.7rem;background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:10px;font-weight:600;">🔒 Données fédération</span>
+        ${editStatsBtn}
+      </div>
+
+      <div style="font-size:.75rem;text-transform:uppercase;font-weight:700;color:#64748B;margin-bottom:8px;">Temps de jeu</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        ${statBox('🎮', 'Matchs joués', stats.matchsJoues)}
+        ${statBox('⏱️', 'Minutes', stats.minutesJouees)}
+        ${statBox('🟨', 'Cartons J.', stats.cartonsJaunes)}
+        ${statBox('🟥', 'Cartons R.', stats.cartonsRouges)}
+      </div>
+
+      <div style="font-size:.75rem;text-transform:uppercase;font-weight:700;color:#64748B;margin-bottom:8px;">Attaque</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        ${statBox('⚽', 'Buts (D)', stats.butsD)}
+        ${statBox('🦶', 'Buts (G)', stats.butsG)}
+        ${statBox('🤜', 'Buts tête', stats.butsTete)}
+        ${statBox('🎯', 'Coup franc', stats.butsFC)}
+        ${statBox('🥅', 'Penalty', stats.butsPen)}
+        ${statBox('🎁', 'Passes D.', stats.passesDecisives)}
+        ${statBox('🎰', 'Tirs cadrés', stats.tirsCadres)}
+      </div>
+
+      <div style="font-size:.75rem;text-transform:uppercase;font-weight:700;color:#64748B;margin-bottom:8px;">Défense</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${statBox('🛡️', 'Interceptions', stats.interceptions)}
+        ${statBox('⚔️', 'Tacles', stats.tacles)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function infoLine(icon, label, value) {
+  return `<div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:1rem;">${icon}</span>
+    <span style="font-size:.78rem;color:#94A3B8;min-width:80px;">${label}</span>
+    <span style="font-size:.88rem;font-weight:600;color:#1E293B;">${value}</span>
+  </div>`;
+}
+
+// ─── Modal fiche joueur (vue en popup) ───────────────────────
+window.openFicheJoueur = async (joueurId) => {
+  // Créer le modal s'il n'existe pas
+  let modal = document.getElementById('fiche-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'fiche-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:720px;max-height:90vh;overflow-y:auto;">
+        <div class="modal-header">
+          <span class="modal-title" id="fiche-modal-title">Fiche joueur</span>
+          <button class="modal-close" id="fiche-modal-close">✕</button>
+        </div>
+        <div class="modal-body" id="fiche-modal-body">
+          <div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('fiche-modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+  }
+  modal.classList.remove('hidden');
+  const body = document.getElementById('fiche-modal-body');
+  body.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div>`;
+  try {
+    const snap = await getDoc(doc(db, 'joueurs', joueurId));
+    if (!snap.exists()) { body.innerHTML = `<p style="color:red;">Joueur introuvable.</p>`; return; }
+    const data = snap.data();
+    let stats = {};
+    try {
+      const st = await getDoc(doc(db, 'joueurs', joueurId, 'stats', 'saison'));
+      if (st.exists()) stats = st.data();
+    } catch(e) {}
+    const canEditStats = currentRole === 'admin' || currentRole === 'club';
+    body.innerHTML = buildFicheHtml(joueurId, data, stats, canEditStats);
+  } catch(e) {
+    body.innerHTML = `<p style="color:red;">${e.message}</p>`;
+  }
+};
+
+// ─── Modal statistiques (admin + club uniquement) ────────────
+window.openStatsModal = async (joueurId) => {
+  if (currentRole === 'joueur') {
+    showToast('Modification des stats réservée à la fédération et aux clubs.', 'error');
+    return;
+  }
+  let modal = document.getElementById('stats-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'stats-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+        <div class="modal-header">
+          <span class="modal-title">📊 Statistiques du joueur</span>
+          <button class="modal-close" id="stats-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="stats-joueur-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="stats-grid">
+            ${statsField('stats-matchs',       'Matchs joués',    'number')}
+            ${statsField('stats-minutes',       'Minutes jouées',  'number')}
+            ${statsField('stats-cartons-j',     'Cartons jaunes',  'number')}
+            ${statsField('stats-cartons-r',     'Cartons rouges',  'number')}
+            ${statsField('stats-buts-d',        'Buts pied droit', 'number')}
+            ${statsField('stats-buts-g',        'Buts pied gauche','number')}
+            ${statsField('stats-buts-tete',     'Buts de la tête', 'number')}
+            ${statsField('stats-buts-fc',       'Buts coup franc', 'number')}
+            ${statsField('stats-buts-pen',      'Buts penalty',    'number')}
+            ${statsField('stats-passes',        'Passes décisives','number')}
+            ${statsField('stats-tirs',          'Tirs cadrés',     'number')}
+            ${statsField('stats-interceptions', 'Interceptions',   'number')}
+            ${statsField('stats-tacles',        'Tacles',          'number')}
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+            <button id="stats-cancel" class="btn btn-secondary">Annuler</button>
+            <button id="stats-save"   class="btn btn-primary">💾 Enregistrer</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('stats-modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('stats-cancel').addEventListener('click',      () => modal.classList.add('hidden'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    document.getElementById('stats-save').addEventListener('click', async () => {
+      const jId = document.getElementById('stats-joueur-id').value;
+      if (!jId) return;
+      const statsData = {
+        matchsJoues:      parseInt(document.getElementById('stats-matchs').value)       || 0,
+        minutesJouees:    parseInt(document.getElementById('stats-minutes').value)      || 0,
+        cartonsJaunes:    parseInt(document.getElementById('stats-cartons-j').value)    || 0,
+        cartonsRouges:    parseInt(document.getElementById('stats-cartons-r').value)    || 0,
+        butsD:            parseInt(document.getElementById('stats-buts-d').value)       || 0,
+        butsG:            parseInt(document.getElementById('stats-buts-g').value)       || 0,
+        butsTete:         parseInt(document.getElementById('stats-buts-tete').value)    || 0,
+        butsFC:           parseInt(document.getElementById('stats-buts-fc').value)      || 0,
+        butsPen:          parseInt(document.getElementById('stats-buts-pen').value)     || 0,
+        passesDecisives:  parseInt(document.getElementById('stats-passes').value)       || 0,
+        tirsCadres:       parseInt(document.getElementById('stats-tirs').value)         || 0,
+        interceptions:    parseInt(document.getElementById('stats-interceptions').value)|| 0,
+        tacles:           parseInt(document.getElementById('stats-tacles').value)       || 0,
+        updatedBy:        currentRole,
+        updatedAt:        serverTimestamp(),
+      };
+      try {
+        await setDoc(doc(db, 'joueurs', jId, 'stats', 'saison'), statsData);
+        showToast('Statistiques enregistrées.');
+        modal.classList.add('hidden');
+      } catch(err) {
+        showToast(err.message, 'error');
+      }
+    });
+  }
+
+  // Pré-remplir avec les stats existantes
+  document.getElementById('stats-joueur-id').value = joueurId;
+  modal.classList.remove('hidden');
+  // Reset
+  ['stats-matchs','stats-minutes','stats-cartons-j','stats-cartons-r',
+   'stats-buts-d','stats-buts-g','stats-buts-tete','stats-buts-fc',
+   'stats-buts-pen','stats-passes','stats-tirs','stats-interceptions','stats-tacles']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  try {
+    const st = await getDoc(doc(db, 'joueurs', joueurId, 'stats', 'saison'));
+    if (st.exists()) {
+      const s = st.data();
+      document.getElementById('stats-matchs').value       = s.matchsJoues    || '';
+      document.getElementById('stats-minutes').value      = s.minutesJouees  || '';
+      document.getElementById('stats-cartons-j').value    = s.cartonsJaunes  || '';
+      document.getElementById('stats-cartons-r').value    = s.cartonsRouges  || '';
+      document.getElementById('stats-buts-d').value       = s.butsD          || '';
+      document.getElementById('stats-buts-g').value       = s.butsG          || '';
+      document.getElementById('stats-buts-tete').value    = s.butsTete       || '';
+      document.getElementById('stats-buts-fc').value      = s.butsFC         || '';
+      document.getElementById('stats-buts-pen').value     = s.butsPen        || '';
+      document.getElementById('stats-passes').value       = s.passesDecisives|| '';
+      document.getElementById('stats-tirs').value         = s.tirsCadres     || '';
+      document.getElementById('stats-interceptions').value= s.interceptions  || '';
+      document.getElementById('stats-tacles').value       = s.tacles         || '';
+    }
+  } catch(e) { /* pas encore de stats */ }
+};
+
+function statsField(id, label, type = 'number') {
+  return `<div>
+    <label style="font-size:.75rem;font-weight:600;color:#64748B;display:block;margin-bottom:4px;">${label}</label>
+    <input id="${id}" type="${type}" min="0" class="form-input" placeholder="0" style="width:100%;box-sizing:border-box;">
+  </div>`;
+}
+
+
 async function loadAllCounts() {
   const counts = [
     { coll: 'joueurs',      id: 'stat-joueurs' },
