@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gabon Sport Connect — Connecter les talents, développer le sport</title>
+  <meta name="description" content="Plateforme nationale gabonaise de gestion sportive. Joueurs, clubs, compétitions et actualités." />
+  <meta name="author"      content="KOZANGUE ESSONO PATRICK BERTIN" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Favicon inline SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23009E60'/><text y='24' x='4' font-size='22'>⚽</text></svg>" />
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     TOAST CONTAINER
+════════════════════════════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE D'ACCUEIL
+════════════════════════════════════════════════════════════ -->
+<div id="landing">
+
+  <!-- Navbar -->
+  <nav class="navbar" role="navigation">
+    <div class="nav-brand">
+      <div class="nav-logo-circle" aria-hidden="true">GSC</div>
+      <div class="nav-brand-text">
+        <span class="nav-brand-name">Gabon Sport Connect</span>
+        <span class="nav-brand-tag">Plateforme Nationale</span>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#contact">Contact</a>
+      <a href="#" class="btn-nav-login" id="btn-open-login">Se connecter</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <main class="hero" role="main">
+    <div class="hero-flag-stripes" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="hero-inner">
+      <!-- Left -->
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-dot"></span>
+          Plateforme Officielle · Gabon
+        </div>
+        <h1 class="hero-title">
+          Connecter les <span class="accent-vert">talents</span>,<br>
+          développer le <span class="accent-jaune">sport</span> gabonais
+        </h1>
+        <p class="hero-subtitle">
+          Gabon Sport Connect centralise la gestion des joueurs, clubs, compétitions et actualités sportives du Gabon sur une seule plateforme moderne et sécurisée.
+        </p>
+        <div class="hero-cta">
+          <button class="btn-primary" id="btn-hero-start">Accéder au tableau de bord</button>
+          <a href="#fonctionnalites" class="btn-outline">Découvrir les fonctionnalités</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number">9<span>+</span></div>
+            <div class="stat-label">Provinces couvertes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">4<span>+</span></div>
+            <div class="stat-label">Sports gérés</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">100<span>%</span></div>
+            <div class="stat-label">Données sécurisées</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right visual -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-card-stack">
+          <div class="hcard hcard-back2"></div>
+          <div class="hcard hcard-back1"></div>
+          <div class="hcard hcard-main">
+            <div class="hcard-icon">⚽</div>
+            <div class="hcard-label">Joueur Enregistré</div>
+            <div class="hcard-name">Pierre Obame</div>
+            <div class="hcard-sub">Attaquant · Panthères FC</div>
+            <div class="hcard-badge">🇬🇦 Équipe Nationale</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Features -->
+  <section class="features" id="fonctionnalites">
+    <div class="section-header">
+      <div class="section-eyebrow">Ce que vous pouvez faire</div>
+      <h2 class="section-title">Une plateforme complète pour le sport gabonais</h2>
+      <p class="section-subtitle">Tous les outils dont vous avez besoin pour gérer, suivre et développer le sport national.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon green" aria-hidden="true">⚽</div>
+        <div class="feature-title">Gestion des joueurs</div>
+        <p class="feature-desc">Enregistrez les profils des athlètes, leur position, leur club, leur nationalité et suivez leur évolution.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon blue" aria-hidden="true">🏟️</div>
+        <div class="feature-title">Gestion des clubs</div>
+        <p class="feature-desc">Gérez les clubs sportifs gabonais : ville, sport pratiqué, division et historique.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon yellow" aria-hidden="true">🏆</div>
+        <div class="feature-title">Compétitions</div>
+        <p class="feature-desc">Créez et suivez les compétitions nationales avec statut en temps réel : en cours, à venir ou terminée.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon red" aria-hidden="true">📰</div>
+        <div class="feature-title">Actualités sportives</div>
+        <p class="feature-desc">Publiez les dernières nouvelles du sport gabonais, classées par catégorie et sport.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" id="contact">
+    <div>
+      <div class="footer-brand">Gabon Sport <span>Connect</span></div>
+      <div style="margin-top:6px;font-size:.8rem;">
+        Porteur : KOZANGUE ESSONO PATRICK BERTIN<br>
+        <a href="mailto:gabonsportconnectgsc@gmail.com">gabonsportconnectgsc@gmail.com</a>
+        &nbsp;·&nbsp;
+        <a href="tel:+24160141924">+241 60 14 19 24</a>
+      </div>
+    </div>
+    <div class="footer-links">
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#" id="footer-login-link">Connexion</a>
+    </div>
+    <div class="footer-contact" style="text-align:right;">
+      © 2025 Gabon Sport Connect · Tous droits réservés<br>
+      <span style="color:#FCD116;font-size:.75rem;">Connecter les talents, développer le sport</span>
+    </div>
+  </footer>
+
+</div><!-- /landing -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL AUTH
+════════════════════════════════════════════════════════════ -->
+<div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Authentification">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-logo">
+          <div class="modal-logo-circle" aria-hidden="true">GSC</div>
+          <span class="modal-logo-text">Gabon Sport Connect</span>
+        </div>
+      </div>
+      <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-title">Connexion</div>
+    <div class="modal-body">
+
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="login"    role="tab">Se connecter</button>
+        <button class="auth-tab"        data-tab="register" role="tab">S'inscrire</button>
+      </div>
+
+      <!-- Login form -->
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-email">Adresse email</label>
+          <input class="form-input" type="email" id="login-email" placeholder="votre@email.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-pass">Mot de passe</label>
+          <input class="form-input" type="password" id="login-pass" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <div id="login-error" class="form-error"></div>
+        <button type="submit" class="btn-submit">Se connecter</button>
+      </form>
+
+      <!-- Register form -->
+      <form id="register-form" class="hidden" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Adresse email</label>
+          <input class="form-input" type="email" id="reg-email" placeholder="votre@email.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-pass">Mot de passe</label>
+          <input class="form-input" type="password" id="reg-pass" placeholder="Minimum 6 caractères" required autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-pass2">Confirmer le mot de passe</label>
+          <input class="form-input" type="password" id="reg-pass2" placeholder="Répétez le mot de passe" required autocomplete="new-password" />
+        </div>
+        <div id="reg-error" class="form-error"></div>
+        <button type="submit" class="btn-submit">Créer mon compte</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<div id="dashboard" class="hidden">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principal">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-circle" aria-hidden="true">GSC</div>
+        <div>
+          <div class="sidebar-brand-name">Gabon Sport Connect</div>
+          <div class="sidebar-brand-sub">Administration</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Tableau de bord</div>
+      <div class="nav-item active" data-panel="accueil" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">📊</span> Vue d'ensemble
+      </div>
+
+      <div class="nav-section-label">Gestion</div>
+      <div class="nav-item" data-panel="joueurs" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">⚽</span> Joueurs
+      </div>
+      <div class="nav-item" data-panel="clubs" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">🏟️</span> Clubs
+      </div>
+      <div class="nav-item" data-panel="competitions" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">🏆</span> Compétitions
+      </div>
+
+      <div class="nav-section-label">Contenu</div>
+      <div class="nav-item" data-panel="actualites" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">📰</span> Actualités
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar-text" aria-hidden="true">AD</div>
+        <div>
+          <div class="user-name"  id="user-name-text">Administrateur</div>
+          <div class="user-role"  id="user-email-text">admin@gsc.ga</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">
+        <span aria-hidden="true">🚪</span> Se déconnecter
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 id="topbar-title">Tableau de bord</h1>
+        <p  id="topbar-subtitle">Vue d'ensemble de la plateforme</p>
+      </div>
+      <div class="topbar-right">
+        <button class="hamburger" id="hamburger-btn" aria-label="Ouvrir le menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Panel : Accueil ──────────────────────────────────── -->
+    <section class="page-panel active" id="panel-accueil">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-icon sic-green" aria-hidden="true">⚽</div>
+          <div class="stat-card-info">
+            <div class="stat-card-n" id="stat-joueurs">—</div>
+            <div class="stat-card-l">Joueurs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon sic-blue" aria-hidden="true">🏟️</div>
+          <div class="stat-card-info">
+            <div class="stat-card-n" id="stat-clubs">—</div>
+            <div class="stat-card-l">Clubs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon sic-yellow" aria-hidden="true">🏆</div>
+          <div class="stat-card-info">
+            <div class="stat-card-n" id="stat-competitions">—</div>
+            <div class="stat-card-l">Compétitions</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon sic-red" aria-hidden="true">📰</div>
+          <div class="stat-card-info">
+            <div class="stat-card-n" id="stat-news">—</div>
+            <div class="stat-card-l">Actualités</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">🇬🇦 Bienvenue sur Gabon Sport Connect</div>
+            <div class="section-card-sub">Plateforme nationale de gestion sportive</div>
+          </div>
+        </div>
+        <div style="padding:28px 24px; color:#64748B; line-height:1.7;">
+          <p>Utilisez la navigation à gauche pour :</p>
+          <ul style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:0;">
+            <li>⚽ &nbsp;<strong>Joueurs</strong> — Enregistrer et gérer les profils des athlètes</li>
+            <li>🏟️ &nbsp;<strong>Clubs</strong> — Gérer les clubs sportifs gabonais</li>
+            <li>🏆 &nbsp;<strong>Compétitions</strong> — Créer et suivre les compétitions nationales</li>
+            <li>📰 &nbsp;<strong>Actualités</strong> — Publier les dernières nouvelles sportives</li>
+          </ul>
+          <p style="margin-top:20px;font-size:.85rem;">
+            Contact : <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:#009E60;">gabonsportconnectgsc@gmail.com</a>
+            &nbsp;·&nbsp; <a href="tel:+24160141924" style="color:#009E60;">+241 60 14 19 24</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Joueurs ─────────────────────────────────── -->
+    <section class="page-panel" id="panel-joueurs">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">⚽ Joueurs</div>
+            <div class="section-card-sub" id="count-joueurs">—</div>
+          </div>
+          <button class="btn-add" id="btn-add-joueur">+ Ajouter un joueur</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Position</th>
+                <th>Club</th>
+                <th>Nationalité</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="joueurs-tbody">
+              <tr><td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-state-icon">⚽</div>
+                  <div class="empty-state-text">Aucun joueur enregistré</div>
+                  <div class="empty-state-sub">Ajoutez votre premier joueur.</div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Clubs ───────────────────────────────────── -->
+    <section class="page-panel" id="panel-clubs">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">🏟️ Clubs</div>
+            <div class="section-card-sub" id="count-clubs">—</div>
+          </div>
+          <button class="btn-add" id="btn-add-club">+ Ajouter un club</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom du club</th>
+                <th>Ville</th>
+                <th>Sport</th>
+                <th>Division</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clubs-tbody">
+              <tr><td colspan="5">
+                <div class="empty-state">
+                  <div class="empty-state-icon">🏟️</div>
+                  <div class="empty-state-text">Aucun club enregistré</div>
+                  <div class="empty-state-sub">Ajoutez votre premier club.</div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Compétitions ────────────────────────────── -->
+    <section class="page-panel" id="panel-competitions">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">🏆 Compétitions</div>
+            <div class="section-card-sub" id="count-competitions">—</div>
+          </div>
+          <button class="btn-add" id="btn-add-comp">+ Nouvelle compétition</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Sport</th>
+                <th>Saison</th>
+                <th>Date début</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="comp-tbody">
+              <tr><td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-state-icon">🏆</div>
+                  <div class="empty-state-text">Aucune compétition</div>
+                  <div class="empty-state-sub">Créez votre première compétition.</div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Actualités ──────────────────────────────── -->
+    <section class="page-panel" id="panel-actualites">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">📰 Actualités</div>
+            <div class="section-card-sub" id="count-news">—</div>
+          </div>
+          <button class="btn-add" id="btn-add-news">+ Nouvel article</button>
+        </div>
+        <div class="news-grid" id="news-grid">
+          <div class="empty-state">
+            <div class="empty-state-icon">📰</div>
+            <div class="empty-state-text">Aucune actualité</div>
+            <div class="empty-state-sub">Publiez votre premier article.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /main-content -->
+</div><!-- /dashboard -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     MODALS DE FORMULAIRES
+════════════════════════════════════════════════════════════ -->
+
+<!-- Modal Joueur -->
+<div id="joueur-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <div class="form-modal-title" id="joueur-modal-title">Ajouter un joueur</div>
+      <button class="form-modal-close" id="joueur-modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="joueur-form" novalidate>
+        <input type="hidden" id="joueur-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-nom">Nom *</label>
+            <input class="form-input" type="text" id="joueur-nom" placeholder="OBAME" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-prenom">Prénom *</label>
+            <input class="form-input" type="text" id="joueur-prenom" placeholder="Pierre" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-position">Position</label>
+            <select class="form-input" id="joueur-position">
+              <option>Attaquant</option>
+              <option>Milieu</option>
+              <option>Défenseur</option>
+              <option>Gardien</option>
+              <option>Ailier</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-statut">Statut</label>
+            <select class="form-input" id="joueur-statut">
+              <option>Actif</option>
+              <option>Inactif</option>
+              <option>Blessé</option>
+              <option>Suspendu</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-club">Club</label>
+            <input class="form-input" type="text" id="joueur-club" placeholder="Panthères FC" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-nationalite">Nationalité</label>
+            <input class="form-input" type="text" id="joueur-nationalite" value="Gabonaise" />
+          </div>
+        </div>
+        <div class="form-modal-actions">
+          <button type="button" class="btn-cancel" id="joueur-modal-cancel">Annuler</button>
+          <button type="submit"  class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Club -->
+<div id="club-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <div class="form-modal-title" id="club-modal-title">Ajouter un club</div>
+      <button class="form-modal-close" id="club-modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="club-form" novalidate>
+        <input type="hidden" id="club-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="club-nom">Nom du club *</label>
+            <input class="form-input" type="text" id="club-nom" placeholder="Panthères FC" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="club-ville">Ville</label>
+            <input class="form-input" type="text" id="club-ville" placeholder="Libreville" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="club-sport">Sport</label>
+            <select class="form-input" id="club-sport">
+              <option>Football</option>
+              <option>Basketball</option>
+              <option>Volleyball</option>
+              <option>Athlétisme</option>
+              <option>Natation</option>
+              <option>Handball</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="club-division">Division</label>
+            <select class="form-input" id="club-division">
+              <option>D1</option>
+              <option>D2</option>
+              <option>D3</option>
+              <option>Régionale</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="club-annee">Année de fondation</label>
+          <input class="form-input" type="number" id="club-annee" placeholder="1985" min="1900" max="2030" />
+        </div>
+        <div class="form-modal-actions">
+          <button type="button" class="btn-cancel" id="club-modal-cancel">Annuler</button>
+          <button type="submit"  class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Compétition -->
+<div id="comp-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <div class="form-modal-title" id="comp-modal-title">Nouvelle compétition</div>
+      <button class="form-modal-close" id="comp-modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="comp-form" novalidate>
+        <input type="hidden" id="comp-id" />
+        <div class="form-group">
+          <label class="form-label" for="comp-nom">Nom de la compétition *</label>
+          <input class="form-input" type="text" id="comp-nom" placeholder="Championnat National D1" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="comp-sport">Sport</label>
+            <select class="form-input" id="comp-sport">
+              <option>Football</option>
+              <option>Basketball</option>
+              <option>Volleyball</option>
+              <option>Athlétisme</option>
+              <option>Natation</option>
+              <option>Handball</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comp-saison">Saison</label>
+            <input class="form-input" type="text" id="comp-saison" placeholder="2024-2025" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="comp-date-debut">Date de début</label>
+            <input class="form-input" type="date" id="comp-date-debut" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comp-date-fin">Date de fin</label>
+            <input class="form-input" type="date" id="comp-date-fin" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="comp-statut">Statut</label>
+          <select class="form-input" id="comp-statut">
+            <option>À venir</option>
+            <option>En cours</option>
+            <option>Terminée</option>
+            <option>Suspendue</option>
+          </select>
+        </div>
+        <div class="form-modal-actions">
+          <button type="button" class="btn-cancel" id="comp-modal-cancel">Annuler</button>
+          <button type="submit"  class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Actualité -->
+<div id="news-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <div class="form-modal-title" id="news-modal-title">Nouvel article</div>
+      <button class="form-modal-close" id="news-modal-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <form id="news-form" novalidate>
+        <input type="hidden" id="news-id" />
+        <div class="form-group">
+          <label class="form-label" for="news-titre">Titre de l'article *</label>
+          <input class="form-input" type="text" id="news-titre" placeholder="Titre de l'actualité" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="news-categorie">Catégorie</label>
+          <select class="form-input" id="news-categorie">
+            <option>Général</option>
+            <option>Football</option>
+            <option>Basketball</option>
+            <option>Athlétisme</option>
+            <option>Natation</option>
+            <option>Compétitions</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="news-contenu">Contenu</label>
+          <textarea class="form-input" id="news-contenu" rows="5" placeholder="Rédigez votre article ici…" style="resize:vertical;"></textarea>
+        </div>
+        <div class="form-modal-actions">
+          <button type="button" class="btn-cancel" id="news-modal-cancel">Annuler</button>
+          <button type="submit"  class="btn-save">Publier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script type="module" src="app.js"></script>
+</body>
+</html>
