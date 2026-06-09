@@ -223,12 +223,15 @@ registerForm.addEventListener('submit', async e => {
 
   // Récupérer le rôle sélectionné
   const roleInput = registerForm.querySelector('input[name="reg-role"]:checked');
-  const role = roleInput ? roleInput.value : null;
+  let role = roleInput ? roleInput.value : null;
 
   err.textContent = '';
 
   if (pass !== pass2) { err.textContent = 'Les mots de passe ne correspondent pas.'; return; }
   if (!role) { err.textContent = 'Veuillez choisir un rôle.'; return; }
+
+  // Sécurité : empêcher toute attribution du rôle admin via le formulaire
+  if (role === 'admin') { role = 'joueur'; }
 
   btn.disabled = true; btn.textContent = 'Création…';
   try {
