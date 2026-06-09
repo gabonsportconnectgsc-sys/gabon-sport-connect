@@ -19,9 +19,7 @@
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════════════
-     TOAST CONTAINER
-════════════════════════════════════════════════════════════ -->
+<!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
 <!-- ════════════════════════════════════════════════════════════
@@ -51,7 +49,6 @@
       <span></span><span></span><span></span>
     </div>
     <div class="hero-inner">
-      <!-- Left -->
       <div class="hero-content">
         <div class="hero-eyebrow">
           <span class="hero-eyebrow-dot"></span>
@@ -207,6 +204,50 @@
           <label class="form-label" for="reg-pass2">Confirmer le mot de passe</label>
           <input class="form-input" type="password" id="reg-pass2" placeholder="Répétez le mot de passe" required autocomplete="new-password" />
         </div>
+
+        <!-- ★ NOUVEAU : Sélection du rôle -->
+        <div class="form-group">
+          <label class="form-label">Votre rôle</label>
+          <div class="role-selector">
+            <label class="role-option" data-role="joueur">
+              <input type="radio" name="reg-role" value="joueur" />
+              <div class="role-card">
+                <div class="role-icon">⚽</div>
+                <div class="role-label">Joueur</div>
+                <div class="role-desc">Gérer mon profil</div>
+              </div>
+            </label>
+            <label class="role-option" data-role="club">
+              <input type="radio" name="reg-role" value="club" />
+              <div class="role-card">
+                <div class="role-icon">🏟️</div>
+                <div class="role-label">Club</div>
+                <div class="role-desc">Gérer mon club</div>
+              </div>
+            </label>
+            <label class="role-option" data-role="admin">
+              <input type="radio" name="reg-role" value="admin" />
+              <div class="role-card">
+                <div class="role-icon">🛡️</div>
+                <div class="role-label">Admin</div>
+                <div class="role-desc">Accès complet</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Champ nom du club (visible uniquement si rôle = club) -->
+        <div class="form-group hidden" id="reg-club-group">
+          <label class="form-label" for="reg-club-nom">Nom de votre club</label>
+          <input class="form-input" type="text" id="reg-club-nom" placeholder="Ex: Panthères FC" />
+        </div>
+
+        <!-- Champ nom du joueur (visible uniquement si rôle = joueur) -->
+        <div class="form-group hidden" id="reg-joueur-group">
+          <label class="form-label" for="reg-joueur-nom">Votre nom complet</label>
+          <input class="form-input" type="text" id="reg-joueur-nom" placeholder="Ex: Pierre OBAME" />
+        </div>
+
         <div id="reg-error" class="form-error"></div>
         <button type="submit" class="btn-submit">Créer mon compte</button>
       </form>
@@ -231,7 +272,7 @@
         <div class="sidebar-logo-circle" aria-hidden="true">GSC</div>
         <div>
           <div class="sidebar-brand-name">Gabon Sport Connect</div>
-          <div class="sidebar-brand-sub">Administration</div>
+          <div class="sidebar-brand-sub" id="sidebar-role-label">Administration</div>
         </div>
       </div>
     </div>
@@ -242,20 +283,40 @@
         <span class="nav-icon" aria-hidden="true">📊</span> Vue d'ensemble
       </div>
 
-      <div class="nav-section-label">Gestion</div>
-      <div class="nav-item" data-panel="joueurs" role="button" tabindex="0">
+      <!-- Visible pour admin seulement -->
+      <div class="nav-section-label nav-admin-only">Gestion complète</div>
+      <div class="nav-item nav-admin-only" data-panel="joueurs" role="button" tabindex="0">
         <span class="nav-icon" aria-hidden="true">⚽</span> Joueurs
       </div>
-      <div class="nav-item" data-panel="clubs" role="button" tabindex="0">
+      <div class="nav-item nav-admin-only" data-panel="clubs" role="button" tabindex="0">
         <span class="nav-icon" aria-hidden="true">🏟️</span> Clubs
       </div>
-      <div class="nav-item" data-panel="competitions" role="button" tabindex="0">
+      <div class="nav-item nav-admin-only" data-panel="competitions" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">🏆</span> Compétitions
+      </div>
+      <div class="nav-item nav-admin-only" data-panel="actualites" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">📰</span> Actualités
+      </div>
+
+      <!-- Visible pour club seulement -->
+      <div class="nav-section-label nav-club-only">Mon club</div>
+      <div class="nav-item nav-club-only" data-panel="mon-club" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">🏟️</span> Mon club
+      </div>
+      <div class="nav-item nav-club-only" data-panel="mes-joueurs" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">⚽</span> Mes joueurs
+      </div>
+      <div class="nav-item nav-club-only" data-panel="competitions" role="button" tabindex="0">
         <span class="nav-icon" aria-hidden="true">🏆</span> Compétitions
       </div>
 
-      <div class="nav-section-label">Contenu</div>
-      <div class="nav-item" data-panel="actualites" role="button" tabindex="0">
-        <span class="nav-icon" aria-hidden="true">📰</span> Actualités
+      <!-- Visible pour joueur seulement -->
+      <div class="nav-section-label nav-joueur-only">Mon espace</div>
+      <div class="nav-item nav-joueur-only" data-panel="mon-profil" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">👤</span> Mon profil
+      </div>
+      <div class="nav-item nav-joueur-only" data-panel="competitions" role="button" tabindex="0">
+        <span class="nav-icon" aria-hidden="true">🏆</span> Compétitions
       </div>
     </nav>
 
@@ -263,10 +324,11 @@
       <div class="user-info">
         <div class="user-avatar" id="user-avatar-text" aria-hidden="true">AD</div>
         <div>
-          <div class="user-name"  id="user-name-text">Administrateur</div>
-          <div class="user-role"  id="user-email-text">admin@gsc.ga</div>
+          <div class="user-name"  id="user-name-text">Utilisateur</div>
+          <div class="user-role"  id="user-email-text">email@gsc.ga</div>
         </div>
       </div>
+      <div id="user-role-badge" class="role-badge-sidebar"></div>
       <button class="btn-logout" id="btn-logout">
         <span aria-hidden="true">🚪</span> Se déconnecter
       </button>
@@ -291,7 +353,8 @@
 
     <!-- ── Panel : Accueil ──────────────────────────────────── -->
     <section class="page-panel active" id="panel-accueil">
-      <div class="stats-row">
+      <!-- Stats (admin uniquement) -->
+      <div class="stats-row admin-only-block">
         <div class="stat-card">
           <div class="stat-card-icon sic-green" aria-hidden="true">⚽</div>
           <div class="stat-card-info">
@@ -322,30 +385,31 @@
         </div>
       </div>
 
-      <div class="section-card">
+      <!-- Message de bienvenue personnalisé -->
+      <div class="section-card" id="welcome-card">
         <div class="section-card-header">
           <div>
-            <div class="section-card-title">🇬🇦 Bienvenue sur Gabon Sport Connect</div>
-            <div class="section-card-sub">Plateforme nationale de gestion sportive</div>
+            <div class="section-card-title" id="welcome-title">🇬🇦 Bienvenue</div>
+            <div class="section-card-sub" id="welcome-sub">Plateforme nationale de gestion sportive</div>
           </div>
+          <!-- Badge de rôle -->
+          <div id="welcome-role-badge"></div>
         </div>
-        <div style="padding:28px 24px; color:#64748B; line-height:1.7;">
-          <p>Utilisez la navigation à gauche pour :</p>
-          <ul style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:0;">
-            <li>⚽ &nbsp;<strong>Joueurs</strong> — Enregistrer et gérer les profils des athlètes</li>
-            <li>🏟️ &nbsp;<strong>Clubs</strong> — Gérer les clubs sportifs gabonais</li>
-            <li>🏆 &nbsp;<strong>Compétitions</strong> — Créer et suivre les compétitions nationales</li>
-            <li>📰 &nbsp;<strong>Actualités</strong> — Publier les dernières nouvelles sportives</li>
-          </ul>
-          <p style="margin-top:20px;font-size:.85rem;">
-            Contact : <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:#009E60;">gabonsportconnectgsc@gmail.com</a>
-            &nbsp;·&nbsp; <a href="tel:+24160141924" style="color:#009E60;">+241 60 14 19 24</a>
-          </p>
+        <div style="padding:28px 24px; color:#64748B; line-height:1.7;" id="welcome-body">
+        </div>
+      </div>
+
+      <!-- En attente de validation (joueur/club non encore approuvé) -->
+      <div class="section-card hidden" id="pending-card">
+        <div style="padding:28px 24px; text-align:center;">
+          <div style="font-size:3rem;">⏳</div>
+          <div style="font-size:1.2rem;font-weight:700;margin:12px 0 8px;">Compte en attente de validation</div>
+          <div style="color:#64748B;">L'administrateur va bientôt valider votre compte. Vous recevrez un accès complet à votre espace dès validation.</div>
         </div>
       </div>
     </section>
 
-    <!-- ── Panel : Joueurs ─────────────────────────────────── -->
+    <!-- ── Panel : Joueurs (admin) ────────────────────────────── -->
     <section class="page-panel" id="panel-joueurs">
       <div class="section-card">
         <div class="section-card-header">
@@ -359,29 +423,18 @@
           <table>
             <thead>
               <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Position</th>
-                <th>Club</th>
-                <th>Nationalité</th>
-                <th>Actions</th>
+                <th>Nom</th><th>Prénom</th><th>Position</th><th>Club</th><th>Nationalité</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="joueurs-tbody">
-              <tr><td colspan="6">
-                <div class="empty-state">
-                  <div class="empty-state-icon">⚽</div>
-                  <div class="empty-state-text">Aucun joueur enregistré</div>
-                  <div class="empty-state-sub">Ajoutez votre premier joueur.</div>
-                </div>
-              </td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⚽</div><div class="empty-state-text">Aucun joueur enregistré</div><div class="empty-state-sub">Ajoutez votre premier joueur.</div></div></td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ── Panel : Clubs ───────────────────────────────────── -->
+    <!-- ── Panel : Clubs (admin) ───────────────────────────────── -->
     <section class="page-panel" id="panel-clubs">
       <div class="section-card">
         <div class="section-card-header">
@@ -395,23 +448,67 @@
           <table>
             <thead>
               <tr>
-                <th>Nom du club</th>
-                <th>Ville</th>
-                <th>Sport</th>
-                <th>Division</th>
-                <th>Actions</th>
+                <th>Nom du club</th><th>Ville</th><th>Sport</th><th>Division</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="clubs-tbody">
-              <tr><td colspan="5">
-                <div class="empty-state">
-                  <div class="empty-state-icon">🏟️</div>
-                  <div class="empty-state-text">Aucun club enregistré</div>
-                  <div class="empty-state-sub">Ajoutez votre premier club.</div>
-                </div>
-              </td></tr>
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🏟️</div><div class="empty-state-text">Aucun club enregistré</div><div class="empty-state-sub">Ajoutez votre premier club.</div></div></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Mon Club (rôle club) ──────────────────────── -->
+    <section class="page-panel" id="panel-mon-club">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">🏟️ Mon Club</div>
+            <div class="section-card-sub">Informations de votre club</div>
+          </div>
+        </div>
+        <div id="mon-club-content" style="padding:24px; color:#64748B;">
+          <div class="empty-state"><div class="empty-state-icon">🏟️</div><div class="empty-state-text">Chargement…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Mes Joueurs (rôle club) ──────────────────── -->
+    <section class="page-panel" id="panel-mes-joueurs">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">⚽ Mes Joueurs</div>
+            <div class="section-card-sub" id="count-mes-joueurs">—</div>
+          </div>
+          <button class="btn-add" id="btn-add-mon-joueur">+ Ajouter un joueur</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Prénom</th><th>Position</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="mes-joueurs-tbody">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⚽</div><div class="empty-state-text">Aucun joueur</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Mon Profil (rôle joueur) ──────────────────── -->
+    <section class="page-panel" id="panel-mon-profil">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">👤 Mon Profil</div>
+            <div class="section-card-sub">Vos informations personnelles</div>
+          </div>
+          <button class="btn-add" id="btn-edit-profil">✏️ Modifier</button>
+        </div>
+        <div id="mon-profil-content" style="padding:24px;">
+          <div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-text">Chargement…</div></div>
         </div>
       </div>
     </section>
@@ -424,28 +521,15 @@
             <div class="section-card-title">🏆 Compétitions</div>
             <div class="section-card-sub" id="count-competitions">—</div>
           </div>
-          <button class="btn-add" id="btn-add-comp">+ Nouvelle compétition</button>
+          <button class="btn-add admin-only-block" id="btn-add-comp">+ Nouvelle compétition</button>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Sport</th>
-                <th>Saison</th>
-                <th>Date début</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Nom</th><th>Sport</th><th>Saison</th><th>Date début</th><th>Statut</th><th class="admin-only-block">Actions</th></tr>
             </thead>
             <tbody id="comp-tbody">
-              <tr><td colspan="6">
-                <div class="empty-state">
-                  <div class="empty-state-icon">🏆</div>
-                  <div class="empty-state-text">Aucune compétition</div>
-                  <div class="empty-state-sub">Créez votre première compétition.</div>
-                </div>
-              </td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🏆</div><div class="empty-state-text">Aucune compétition</div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -468,6 +552,28 @@
             <div class="empty-state-text">Aucune actualité</div>
             <div class="empty-state-sub">Publiez votre premier article.</div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel : Utilisateurs (admin) ─────────────────────── -->
+    <section class="page-panel" id="panel-utilisateurs">
+      <div class="section-card">
+        <div class="section-card-header">
+          <div>
+            <div class="section-card-title">👥 Utilisateurs</div>
+            <div class="section-card-sub" id="count-users">—</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Rôle</th><th>Nom</th><th>Date inscription</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">Chargement…</div></div></td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -504,21 +610,14 @@
           <div class="form-group">
             <label class="form-label" for="joueur-position">Position</label>
             <select class="form-input" id="joueur-position">
-              <option>Attaquant</option>
-              <option>Milieu</option>
-              <option>Défenseur</option>
-              <option>Gardien</option>
-              <option>Ailier</option>
-              <option>Autre</option>
+              <option>Attaquant</option><option>Milieu</option><option>Défenseur</option>
+              <option>Gardien</option><option>Ailier</option><option>Autre</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label" for="joueur-statut">Statut</label>
             <select class="form-input" id="joueur-statut">
-              <option>Actif</option>
-              <option>Inactif</option>
-              <option>Blessé</option>
-              <option>Suspendu</option>
+              <option>Actif</option><option>Inactif</option><option>Blessé</option><option>Suspendu</option>
             </select>
           </div>
         </div>
@@ -534,7 +633,7 @@
         </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="joueur-modal-cancel">Annuler</button>
-          <button type="submit"  class="btn-save">Enregistrer</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
         </div>
       </form>
     </div>
@@ -565,22 +664,14 @@
           <div class="form-group">
             <label class="form-label" for="club-sport">Sport</label>
             <select class="form-input" id="club-sport">
-              <option>Football</option>
-              <option>Basketball</option>
-              <option>Volleyball</option>
-              <option>Athlétisme</option>
-              <option>Natation</option>
-              <option>Handball</option>
-              <option>Autre</option>
+              <option>Football</option><option>Basketball</option><option>Volleyball</option>
+              <option>Athlétisme</option><option>Natation</option><option>Handball</option><option>Autre</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label" for="club-division">Division</label>
             <select class="form-input" id="club-division">
-              <option>D1</option>
-              <option>D2</option>
-              <option>D3</option>
-              <option>Régionale</option>
+              <option>D1</option><option>D2</option><option>D3</option><option>Régionale</option>
             </select>
           </div>
         </div>
@@ -590,7 +681,7 @@
         </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="club-modal-cancel">Annuler</button>
-          <button type="submit"  class="btn-save">Enregistrer</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
         </div>
       </form>
     </div>
@@ -615,13 +706,8 @@
           <div class="form-group">
             <label class="form-label" for="comp-sport">Sport</label>
             <select class="form-input" id="comp-sport">
-              <option>Football</option>
-              <option>Basketball</option>
-              <option>Volleyball</option>
-              <option>Athlétisme</option>
-              <option>Natation</option>
-              <option>Handball</option>
-              <option>Autre</option>
+              <option>Football</option><option>Basketball</option><option>Volleyball</option>
+              <option>Athlétisme</option><option>Natation</option><option>Handball</option><option>Autre</option>
             </select>
           </div>
           <div class="form-group">
@@ -642,15 +728,12 @@
         <div class="form-group">
           <label class="form-label" for="comp-statut">Statut</label>
           <select class="form-input" id="comp-statut">
-            <option>À venir</option>
-            <option>En cours</option>
-            <option>Terminée</option>
-            <option>Suspendue</option>
+            <option>À venir</option><option>En cours</option><option>Terminée</option><option>Suspendue</option>
           </select>
         </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="comp-modal-cancel">Annuler</button>
-          <button type="submit"  class="btn-save">Enregistrer</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
         </div>
       </form>
     </div>
@@ -674,12 +757,8 @@
         <div class="form-group">
           <label class="form-label" for="news-categorie">Catégorie</label>
           <select class="form-input" id="news-categorie">
-            <option>Général</option>
-            <option>Football</option>
-            <option>Basketball</option>
-            <option>Athlétisme</option>
-            <option>Natation</option>
-            <option>Compétitions</option>
+            <option>Général</option><option>Football</option><option>Basketball</option>
+            <option>Athlétisme</option><option>Natation</option><option>Compétitions</option>
           </select>
         </div>
         <div class="form-group">
@@ -688,7 +767,7 @@
         </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="news-modal-cancel">Annuler</button>
-          <button type="submit"  class="btn-save">Publier</button>
+          <button type="submit" class="btn-save">Publier</button>
         </div>
       </form>
     </div>

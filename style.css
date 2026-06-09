@@ -686,3 +686,77 @@ tbody tr:hover td { background: rgba(0,158,96,.03); }
   .page-panel { padding: 20px 16px; }
   .topbar { padding: 0 16px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SYSTÈME DE RÔLES — styles ajoutés
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Sélecteur de rôle à l'inscription ─────────────────── */
+.role-selector {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.role-option {
+  flex: 1;
+  cursor: pointer;
+}
+
+.role-option input[type="radio"] {
+  display: none;
+}
+
+.role-card {
+  border: 2px solid var(--gris-bord);
+  border-radius: var(--radius);
+  padding: 14px 8px;
+  text-align: center;
+  transition: var(--trans);
+  background: var(--blanc);
+}
+
+.role-option:hover .role-card {
+  border-color: var(--vert);
+  background: #009E6008;
+}
+
+.role-option.selected .role-card {
+  border-color: var(--vert);
+  background: #009E6012;
+  box-shadow: 0 0 0 3px #009E6022;
+}
+
+.role-icon {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.role-label {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--texte);
+}
+
+.role-desc {
+  font-size: .72rem;
+  color: var(--texte-2);
+  margin-top: 2px;
+}
+
+/* ── Badge rôle sidebar ─────────────────────────────────── */
+.role-badge-sidebar {
+  margin: 4px 0 8px;
+}
+
+/* ── Badges couleur jaune (joueur) ──────────────────────── */
+.badge-yellow {
+  background: #FEF9C3;
+  color: #92400E;
+}
+
+/* ── Profil info cards ───────────────────────────────────── */
+#mon-profil-content,
+#mon-club-content {
+  line-height: 1.7;
+}

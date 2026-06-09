@@ -1,5 +1,5 @@
 // ============================================================
-// app.js — Gabon Sport Connect
+// app.js — Gabon Sport Connect — Système de rôles
 // ============================================================
 
 import { auth, db } from './firebase-config.js';
@@ -11,10 +11,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   collection, addDoc, getDocs, deleteDoc,
-  doc, updateDoc, serverTimestamp, query, orderBy
+  doc, updateDoc, setDoc, getDoc,
+  serverTimestamp, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ─── Toast ──────────────────────────────────────────────────
+// ─── État global ─────────────────────────────────────────────
+let currentUser = null;
+let currentRole = null;  // 'admin' | 'club' | 'joueur'
+let currentUserData = null;
+
+const ADMIN_EMAIL = 'gabonsportconnectgsc@gmail.com'; // L'admin principal
+
+// ─── Toast ───────────────────────────────────────────────────
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
@@ -25,10 +33,40 @@ function showToast(message, type = 'success') {
 }
 
 // ─── Auth state ──────────────────────────────────────────────
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   if (user) {
+    currentUser = user;
+    // Forcer admin si c'est l'email principal
+    if (user.email === ADMIN_EMAIL) {
+      currentRole = 'admin';
+      currentUserData = { role: 'admin', email: user.email, nom: 'Administrateur' };
+      // S'assurer que le doc existe dans Firestore
+      const ref = doc(db, 'users', user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { role: 'admin', email: user.email, nom: 'Administrateur', createdAt: serverTimestamp() });
+      }
+    } else {
+      // Charger le rôle depuis Firestore
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          currentUserData = userDoc.data();
+          currentRole = currentUserData.role || 'joueur';
+        } else {
+          currentRole = 'joueur';
+          currentUserData = { role: 'joueur', email: user.email };
+        }
+      } catch (e) {
+        currentRole = 'joueur';
+        currentUserData = { role: 'joueur', email: user.email };
+      }
+    }
     showDashboard(user);
   } else {
+    currentUser = null;
+    currentRole = null;
+    currentUserData = null;
     showLanding();
   }
 });
@@ -41,15 +79,74 @@ function showLanding() {
 function showDashboard(user) {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('dashboard').classList.remove('hidden');
-  // Update user info in sidebar
+
+  // Infos utilisateur dans la sidebar
   const email = user.email || '';
   const initials = email.slice(0, 2).toUpperCase();
   document.getElementById('user-avatar-text').textContent = initials;
-  document.getElementById('user-name-text').textContent = email.split('@')[0];
+  document.getElementById('user-name-text').textContent = currentUserData?.nom || email.split('@')[0];
   document.getElementById('user-email-text').textContent = email;
-  // Load default panel
+
+  // Appliquer le rôle à l'interface
+  applyRoleUI();
   navigateTo('accueil');
-  loadAllCounts();
+}
+
+// ─── Appliquer le rôle à l'interface ─────────────────────────
+function applyRoleUI() {
+  const role = currentRole;
+
+  // Masquer/afficher les éléments selon le rôle
+  document.querySelectorAll('.nav-admin-only').forEach(el => {
+    el.classList.toggle('hidden', role !== 'admin');
+  });
+  document.querySelectorAll('.nav-club-only').forEach(el => {
+    el.classList.toggle('hidden', role !== 'club');
+  });
+  document.querySelectorAll('.nav-joueur-only').forEach(el => {
+    el.classList.toggle('hidden', role !== 'joueur');
+  });
+  document.querySelectorAll('.admin-only-block').forEach(el => {
+    el.classList.toggle('hidden', role !== 'admin');
+  });
+
+  // Ajouter le menu utilisateurs pour admin
+  const sidebar = document.querySelector('.sidebar-nav');
+  const existingUsersItem = document.querySelector('[data-panel="utilisateurs"]');
+  if (role === 'admin' && !existingUsersItem) {
+    const label = document.createElement('div');
+    label.className = 'nav-section-label';
+    label.textContent = 'Administration';
+    const item = document.createElement('div');
+    item.className = 'nav-item';
+    item.dataset.panel = 'utilisateurs';
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.innerHTML = '<span class="nav-icon">👥</span> Utilisateurs';
+    item.addEventListener('click', () => { navigateTo('utilisateurs'); closeSidebar(); });
+    sidebar.appendChild(label);
+    sidebar.appendChild(item);
+  }
+
+  // Badge de rôle
+  const roleLabels = { admin: '🛡️ Administrateur', club: '🏟️ Club', joueur: '⚽ Joueur' };
+  const roleColors = { admin: '#009E60', club: '#3B82F6', joueur: '#F59E0B' };
+  const badge = document.getElementById('user-role-badge');
+  if (badge) {
+    badge.textContent = roleLabels[role] || role;
+    badge.style.cssText = `
+      background:${roleColors[role] || '#64748B'}22;
+      color:${roleColors[role] || '#64748B'};
+      border:1px solid ${roleColors[role] || '#64748B'}44;
+      padding:4px 10px; border-radius:20px; font-size:.75rem;
+      font-weight:600; margin:6px 0 10px; display:inline-block;
+    `;
+  }
+  const sidebarSub = document.getElementById('sidebar-role-label');
+  if (sidebarSub) {
+    const subs = { admin: 'Administration', club: 'Espace Club', joueur: 'Espace Joueur' };
+    sidebarSub.textContent = subs[role] || '';
+  }
 }
 
 // ─── Auth Modal ──────────────────────────────────────────────
@@ -84,7 +181,19 @@ function switchTab(tab) {
     tab === 'login' ? 'Connexion' : 'Créer un compte';
 }
 
-// Login
+// ─── Sélecteur de rôle à l'inscription ───────────────────────
+document.querySelectorAll('.role-option').forEach(option => {
+  option.addEventListener('click', () => {
+    document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+    option.classList.add('selected');
+    option.querySelector('input').checked = true;
+    const role = option.dataset.role;
+    document.getElementById('reg-club-group').classList.toggle('hidden', role !== 'club');
+    document.getElementById('reg-joueur-group').classList.toggle('hidden', role !== 'joueur');
+  });
+});
+
+// ─── Login ───────────────────────────────────────────────────
 loginForm.addEventListener('submit', async e => {
   e.preventDefault();
   const btn   = loginForm.querySelector('.btn-submit');
@@ -103,7 +212,7 @@ loginForm.addEventListener('submit', async e => {
   btn.disabled = false; btn.textContent = 'Se connecter';
 });
 
-// Register
+// ─── Register avec rôle ──────────────────────────────────────
 registerForm.addEventListener('submit', async e => {
   e.preventDefault();
   const btn   = registerForm.querySelector('.btn-submit');
@@ -111,20 +220,46 @@ registerForm.addEventListener('submit', async e => {
   const pass  = document.getElementById('reg-pass').value;
   const pass2 = document.getElementById('reg-pass2').value;
   const err   = document.getElementById('reg-error');
+
+  // Récupérer le rôle sélectionné
+  const roleInput = registerForm.querySelector('input[name="reg-role"]:checked');
+  const role = roleInput ? roleInput.value : null;
+
   err.textContent = '';
+
   if (pass !== pass2) { err.textContent = 'Les mots de passe ne correspondent pas.'; return; }
+  if (!role) { err.textContent = 'Veuillez choisir un rôle.'; return; }
+
   btn.disabled = true; btn.textContent = 'Création…';
   try {
-    await createUserWithEmailAndPassword(auth, email, pass);
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+    // Données supplémentaires selon le rôle
+    const extraData = {};
+    if (role === 'club') {
+      extraData.nomClub = document.getElementById('reg-club-nom').value.trim() || '';
+    }
+    if (role === 'joueur') {
+      extraData.nom = document.getElementById('reg-joueur-nom').value.trim() || '';
+    }
+
+    // Sauvegarder le profil dans Firestore
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      email,
+      role,
+      ...extraData,
+      createdAt: serverTimestamp()
+    });
+
     authModal.classList.add('hidden');
-    showToast('Compte créé avec succès !');
+    showToast(`Compte ${role} créé avec succès !`);
   } catch (error) {
     err.textContent = firebaseError(error.code);
   }
   btn.disabled = false; btn.textContent = 'Créer mon compte';
 });
 
-// Logout
+// ─── Logout ──────────────────────────────────────────────────
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await signOut(auth);
   showToast('Déconnexion réussie.', 'info');
@@ -154,24 +289,32 @@ document.querySelectorAll('.nav-item[data-panel]').forEach(item => {
 function navigateTo(panel) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.panel === panel));
   document.querySelectorAll('.page-panel').forEach(p => p.classList.toggle('active', p.id === `panel-${panel}`));
-  // Update topbar title
+
   const titles = {
-    accueil:      ['Tableau de bord',  'Vue d\'ensemble de la plateforme'],
-    joueurs:      ['Gestion des joueurs', 'Ajouter, modifier et suivre les joueurs'],
-    clubs:        ['Gestion des clubs',   'Gérer les clubs sportifs'],
-    competitions: ['Compétitions',        'Organiser et suivre les compétitions'],
-    actualites:   ['Actualités',          'Publier et gérer les actualités'],
+    accueil:      ['Tableau de bord',     'Vue d\'ensemble'],
+    joueurs:      ['Joueurs',             'Gérer tous les joueurs'],
+    clubs:        ['Clubs',               'Gérer tous les clubs'],
+    competitions: ['Compétitions',        'Compétitions nationales'],
+    actualites:   ['Actualités',          'Actualités sportives'],
+    utilisateurs: ['Utilisateurs',        'Gérer les comptes'],
+    'mon-club':   ['Mon Club',            'Informations de votre club'],
+    'mes-joueurs':['Mes Joueurs',         'Joueurs de votre club'],
+    'mon-profil': ['Mon Profil',          'Vos informations personnelles'],
   };
   if (titles[panel]) {
     document.getElementById('topbar-title').textContent    = titles[panel][0];
     document.getElementById('topbar-subtitle').textContent = titles[panel][1];
   }
-  // Load data
-  if (panel === 'joueurs')      loadJoueurs();
-  if (panel === 'clubs')        loadClubs();
-  if (panel === 'competitions') loadCompetitions();
-  if (panel === 'actualites')   loadActualites();
-  if (panel === 'accueil')      loadAllCounts();
+
+  if (panel === 'joueurs')       loadJoueurs();
+  if (panel === 'clubs')         loadClubs();
+  if (panel === 'competitions')  loadCompetitions();
+  if (panel === 'actualites')    loadActualites();
+  if (panel === 'accueil')       loadAccueil();
+  if (panel === 'utilisateurs')  loadUtilisateurs();
+  if (panel === 'mon-club')      loadMonClub();
+  if (panel === 'mes-joueurs')   loadMesJoueurs();
+  if (panel === 'mon-profil')    loadMonProfil();
 }
 
 // ─── Mobile sidebar ───────────────────────────────────────────
@@ -191,7 +334,247 @@ window.addEventListener('scroll', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// JOUEURS
+// ACCUEIL — message personnalisé selon le rôle
+// ═══════════════════════════════════════════════════════════════
+async function loadAccueil() {
+  const role = currentRole;
+  const roleLabels = { admin: '🛡️ Administrateur', club: '🏟️ Club', joueur: '⚽ Joueur' };
+  const roleColors = { admin: '#009E60', club: '#3B82F6', joueur: '#F59E0B' };
+
+  // Badge dans le welcome card
+  const welcomeBadge = document.getElementById('welcome-role-badge');
+  if (welcomeBadge) {
+    welcomeBadge.innerHTML = `<span style="background:${roleColors[role]}22;color:${roleColors[role]};border:1px solid ${roleColors[role]}44;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:700;">${roleLabels[role] || role}</span>`;
+  }
+
+  const welcomeTitle = document.getElementById('welcome-title');
+  const welcomeSub   = document.getElementById('welcome-sub');
+  const welcomeBody  = document.getElementById('welcome-body');
+
+  const nom = currentUserData?.nom || currentUserData?.nomClub || currentUser?.email?.split('@')[0] || '';
+
+  if (role === 'admin') {
+    if (welcomeTitle) welcomeTitle.textContent = '🇬🇦 Tableau de bord Administrateur';
+    if (welcomeSub)   welcomeSub.textContent   = 'Accès complet à toutes les fonctionnalités';
+    if (welcomeBody)  welcomeBody.innerHTML    = `
+      <p>Bienvenue <strong>${nom}</strong>. Vous avez accès à toutes les fonctionnalités :</p>
+      <ul style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:0;">
+        <li>⚽ &nbsp;<strong>Joueurs</strong> — Gérer tous les athlètes</li>
+        <li>🏟️ &nbsp;<strong>Clubs</strong> — Gérer tous les clubs</li>
+        <li>🏆 &nbsp;<strong>Compétitions</strong> — Créer et suivre les compétitions</li>
+        <li>📰 &nbsp;<strong>Actualités</strong> — Publier les actualités</li>
+        <li>👥 &nbsp;<strong>Utilisateurs</strong> — Gérer les comptes inscrits</li>
+      </ul>`;
+    loadAllCounts();
+  } else if (role === 'club') {
+    if (welcomeTitle) welcomeTitle.textContent = `🏟️ Espace Club`;
+    if (welcomeSub)   welcomeSub.textContent   = currentUserData?.nomClub || nom;
+    if (welcomeBody)  welcomeBody.innerHTML    = `
+      <p>Bienvenue <strong>${currentUserData?.nomClub || nom}</strong>. Votre espace club vous permet de :</p>
+      <ul style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:0;">
+        <li>🏟️ &nbsp;<strong>Mon club</strong> — Consulter les informations de votre club</li>
+        <li>⚽ &nbsp;<strong>Mes joueurs</strong> — Gérer les joueurs de votre club</li>
+        <li>🏆 &nbsp;<strong>Compétitions</strong> — Consulter les compétitions</li>
+      </ul>`;
+  } else if (role === 'joueur') {
+    if (welcomeTitle) welcomeTitle.textContent = `⚽ Espace Joueur`;
+    if (welcomeSub)   welcomeSub.textContent   = nom;
+    if (welcomeBody)  welcomeBody.innerHTML    = `
+      <p>Bienvenue <strong>${nom}</strong>. Votre espace joueur vous permet de :</p>
+      <ul style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:0;">
+        <li>👤 &nbsp;<strong>Mon profil</strong> — Consulter et modifier vos informations</li>
+        <li>🏆 &nbsp;<strong>Compétitions</strong> — Voir les compétitions en cours</li>
+      </ul>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MON PROFIL (joueur)
+// ═══════════════════════════════════════════════════════════════
+async function loadMonProfil() {
+  const content = document.getElementById('mon-profil-content');
+  if (!currentUser) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'joueurs'), where('email', '==', currentUser.email)));
+    if (snap.empty) {
+      content.innerHTML = `
+        <div style="color:#64748B;line-height:1.8;">
+          <p>Aucun profil joueur trouvé pour votre compte.</p>
+          <p style="margin-top:8px;">Email : <strong>${currentUser.email}</strong></p>
+          <p style="margin-top:8px;color:#009E60;">Contactez l'administrateur pour associer votre profil.</p>
+        </div>`;
+      return;
+    }
+    snap.forEach(d => {
+      const data = d.data();
+      content.innerHTML = `
+        <div style="display:grid;gap:16px;">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Nom complet</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.nom || '—'} ${data.prenom || ''}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Position</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.position || '—'}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Club</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.club || '—'}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Statut</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.statut || 'Actif'}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+  } catch(e) {
+    content.innerHTML = `<p style="color:red;">${e.message}</p>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MON CLUB (rôle club)
+// ═══════════════════════════════════════════════════════════════
+async function loadMonClub() {
+  const content = document.getElementById('mon-club-content');
+  if (!currentUserData?.nomClub) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏟️</div><div class="empty-state-text">Aucun club associé à votre compte.</div></div>`;
+    return;
+  }
+  try {
+    const snap = await getDocs(query(collection(db, 'clubs'), where('nom', '==', currentUserData.nomClub)));
+    if (snap.empty) {
+      content.innerHTML = `<div style="color:#64748B;padding:8px;"><p>Club <strong>${currentUserData.nomClub}</strong> non encore enregistré dans la base.</p><p style="margin-top:8px;color:#009E60;">Contactez l'administrateur.</p></div>`;
+      return;
+    }
+    snap.forEach(d => {
+      const data = d.data();
+      content.innerHTML = `
+        <div style="display:grid;gap:16px;">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Nom du club</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.nom || '—'}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Ville</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.ville || '—'}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Sport</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.sport || '—'}</div>
+            </div>
+            <div style="background:#F8FAFC;border-radius:12px;padding:16px 24px;flex:1;min-width:180px;">
+              <div style="font-size:.75rem;color:#94A3B8;text-transform:uppercase;font-weight:600;">Division</div>
+              <div style="font-size:1.1rem;font-weight:700;margin-top:4px;">${data.division || '—'}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+  } catch(e) {
+    content.innerHTML = `<p style="color:red;">${e.message}</p>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MES JOUEURS (rôle club)
+// ═══════════════════════════════════════════════════════════════
+async function loadMesJoueurs() {
+  const tbody = document.getElementById('mes-joueurs-tbody');
+  tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div></td></tr>`;
+  if (!currentUserData?.nomClub) {
+    tbody.innerHTML = emptyRow(5, '🏟️', 'Aucun club associé', '');
+    return;
+  }
+  try {
+    const snap = await getDocs(query(collection(db, 'joueurs'), where('club', '==', currentUserData.nomClub)));
+    if (snap.empty) {
+      tbody.innerHTML = emptyRow(5, '⚽', 'Aucun joueur', 'Ajoutez des joueurs à votre club.');
+      document.getElementById('count-mes-joueurs').textContent = '0';
+      return;
+    }
+    document.getElementById('count-mes-joueurs').textContent = snap.size + ' joueur(s)';
+    tbody.innerHTML = '';
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      tbody.innerHTML += `
+        <tr>
+          <td><strong>${d.nom || '—'}</strong></td>
+          <td>${d.prenom || '—'}</td>
+          <td>${d.position || '—'}</td>
+          <td><span class="badge badge-${d.statut === 'Actif' ? 'green' : 'gray'}">${d.statut || 'Actif'}</span></td>
+          <td>
+            <button class="action-btn action-edit" onclick="editJoueur('${docSnap.id}')">✏️</button>
+            <button class="action-btn action-delete" onclick="deleteItem('joueurs','${docSnap.id}', loadMesJoueurs)">🗑️</button>
+          </td>
+        </tr>`;
+    });
+  } catch(e) {
+    tbody.innerHTML = emptyRow(5, '❌', 'Erreur', e.message);
+  }
+}
+
+document.getElementById('btn-add-mon-joueur').addEventListener('click', () => {
+  openJoueurModal();
+  // Pré-remplir le club
+  setTimeout(() => {
+    if (currentUserData?.nomClub) {
+      document.getElementById('joueur-club').value = currentUserData.nomClub;
+    }
+  }, 50);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// UTILISATEURS (admin)
+// ═══════════════════════════════════════════════════════════════
+async function loadUtilisateurs() {
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⏳</div><div>Chargement…</div></div></td></tr>`;
+  try {
+    const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')));
+    if (snap.empty) {
+      tbody.innerHTML = emptyRow(5, '👥', 'Aucun utilisateur', '');
+      return;
+    }
+    document.getElementById('count-users').textContent = snap.size + ' compte(s)';
+    tbody.innerHTML = '';
+    const roleColors = { admin: 'green', club: 'blue', joueur: 'yellow' };
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('fr-FR') : '—';
+      tbody.innerHTML += `
+        <tr>
+          <td>${d.email || '—'}</td>
+          <td><span class="badge badge-${roleColors[d.role] || 'gray'}">${d.role || '—'}</span></td>
+          <td>${d.nom || d.nomClub || '—'}</td>
+          <td>${date}</td>
+          <td>
+            <select class="form-input" style="padding:4px 8px;font-size:.8rem;width:auto;" onchange="changeUserRole('${docSnap.id}', this.value)">
+              <option value="joueur" ${d.role === 'joueur' ? 'selected' : ''}>Joueur</option>
+              <option value="club"   ${d.role === 'club'   ? 'selected' : ''}>Club</option>
+              <option value="admin"  ${d.role === 'admin'  ? 'selected' : ''}>Admin</option>
+            </select>
+          </td>
+        </tr>`;
+    });
+  } catch(e) {
+    tbody.innerHTML = emptyRow(5, '❌', 'Erreur', e.message);
+  }
+}
+
+window.changeUserRole = async (userId, newRole) => {
+  try {
+    await updateDoc(doc(db, 'users', userId), { role: newRole });
+    showToast('Rôle mis à jour.', 'success');
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// JOUEURS (admin)
 // ═══════════════════════════════════════════════════════════════
 const joueursColl = () => collection(db, 'joueurs');
 
@@ -218,8 +601,8 @@ async function loadJoueurs() {
           <td>${d.nationalite || '—'}</td>
           <td>
             <span class="badge badge-${d.statut === 'Actif' ? 'green' : 'gray'}">${d.statut || 'Actif'}</span>
-            <button class="action-btn action-edit"    onclick="editJoueur('${docSnap.id}')">✏️</button>
-            <button class="action-btn action-delete"  onclick="deleteItem('joueurs','${docSnap.id}', loadJoueurs)">🗑️</button>
+            <button class="action-btn action-edit"   onclick="editJoueur('${docSnap.id}')">✏️</button>
+            <button class="action-btn action-delete" onclick="deleteItem('joueurs','${docSnap.id}', loadJoueurs)">🗑️</button>
           </td>
         </tr>`;
     });
@@ -232,15 +615,14 @@ document.getElementById('btn-add-joueur').addEventListener('click', () => openJo
 
 function openJoueurModal(id = null, data = {}) {
   const modal = document.getElementById('joueur-modal');
-  const title = document.getElementById('joueur-modal-title');
-  title.textContent = id ? 'Modifier le joueur' : 'Ajouter un joueur';
-  document.getElementById('joueur-id').value         = id || '';
-  document.getElementById('joueur-nom').value        = data.nom        || '';
-  document.getElementById('joueur-prenom').value     = data.prenom     || '';
-  document.getElementById('joueur-position').value   = data.position   || '';
-  document.getElementById('joueur-club').value       = data.club       || '';
-  document.getElementById('joueur-nationalite').value= data.nationalite|| 'Gabonaise';
-  document.getElementById('joueur-statut').value     = data.statut     || 'Actif';
+  document.getElementById('joueur-modal-title').textContent = id ? 'Modifier le joueur' : 'Ajouter un joueur';
+  document.getElementById('joueur-id').value          = id || '';
+  document.getElementById('joueur-nom').value         = data.nom         || '';
+  document.getElementById('joueur-prenom').value      = data.prenom      || '';
+  document.getElementById('joueur-position').value    = data.position    || '';
+  document.getElementById('joueur-club').value        = data.club        || '';
+  document.getElementById('joueur-nationalite').value = data.nationalite || 'Gabonaise';
+  document.getElementById('joueur-statut').value      = data.statut      || 'Actif';
   modal.classList.remove('hidden');
 }
 
@@ -249,8 +631,8 @@ document.getElementById('joueur-modal-cancel').addEventListener('click', () => d
 
 document.getElementById('joueur-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const id    = document.getElementById('joueur-id').value;
-  const data  = {
+  const id   = document.getElementById('joueur-id').value;
+  const data = {
     nom:         document.getElementById('joueur-nom').value.trim(),
     prenom:      document.getElementById('joueur-prenom').value.trim(),
     position:    document.getElementById('joueur-position').value,
@@ -267,7 +649,7 @@ document.getElementById('joueur-form').addEventListener('submit', async e => {
       showToast('Joueur ajouté.');
     }
     document.getElementById('joueur-modal').classList.add('hidden');
-    loadJoueurs();
+    if (currentRole === 'club') loadMesJoueurs(); else loadJoueurs();
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -382,6 +764,9 @@ async function loadCompetitions() {
     snap.forEach(docSnap => {
       const d = docSnap.data();
       const col = statusColor[d.statut] || 'gray';
+      const actionsHtml = currentRole === 'admin'
+        ? `<td><button class="action-btn action-edit" onclick="editComp('${docSnap.id}')">✏️</button><button class="action-btn action-delete" onclick="deleteItem('competitions','${docSnap.id}', loadCompetitions)">🗑️</button></td>`
+        : '';
       tbody.innerHTML += `
         <tr>
           <td><strong>${d.nom || '—'}</strong></td>
@@ -389,10 +774,7 @@ async function loadCompetitions() {
           <td>${d.saison || '—'}</td>
           <td>${d.dateDebut || '—'}</td>
           <td><span class="badge badge-${col}">${d.statut || '—'}</span></td>
-          <td>
-            <button class="action-btn action-edit"   onclick="editComp('${docSnap.id}')">✏️</button>
-            <button class="action-btn action-delete" onclick="deleteItem('competitions','${docSnap.id}', loadCompetitions)">🗑️</button>
-          </td>
+          ${actionsHtml}
         </tr>`;
     });
   } catch (e) {
@@ -405,13 +787,13 @@ document.getElementById('btn-add-comp').addEventListener('click', () => openComp
 function openCompModal(id = null, data = {}) {
   const modal = document.getElementById('comp-modal');
   document.getElementById('comp-modal-title').textContent = id ? 'Modifier la compétition' : 'Nouvelle compétition';
-  document.getElementById('comp-id').value        = id || '';
-  document.getElementById('comp-nom').value       = data.nom       || '';
-  document.getElementById('comp-sport').value     = data.sport     || 'Football';
-  document.getElementById('comp-saison').value    = data.saison    || '';
-  document.getElementById('comp-date-debut').value= data.dateDebut || '';
-  document.getElementById('comp-date-fin').value  = data.dateFin   || '';
-  document.getElementById('comp-statut').value    = data.statut    || 'À venir';
+  document.getElementById('comp-id').value         = id || '';
+  document.getElementById('comp-nom').value        = data.nom       || '';
+  document.getElementById('comp-sport').value      = data.sport     || 'Football';
+  document.getElementById('comp-saison').value     = data.saison    || '';
+  document.getElementById('comp-date-debut').value = data.dateDebut || '';
+  document.getElementById('comp-date-fin').value   = data.dateFin   || '';
+  document.getElementById('comp-statut').value     = data.statut    || 'À venir';
   modal.classList.remove('hidden');
 }
 
@@ -471,6 +853,9 @@ async function loadActualites() {
       const d = docSnap.data();
       const emoji = newsEmojis[d.categorie] || '📰';
       const date  = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('fr-FR') : '—';
+      const actionsHtml = currentRole === 'admin'
+        ? `<button class="action-btn action-edit" onclick="editNews('${docSnap.id}')">✏️ Modifier</button><button class="action-btn action-delete" onclick="deleteItem('actualites','${docSnap.id}', loadActualites)">🗑️</button>`
+        : '';
       grid.innerHTML += `
         <div class="news-card">
           <div class="news-card-img">${emoji}</div>
@@ -479,10 +864,7 @@ async function loadActualites() {
             <div class="news-card-title">${d.titre || '—'}</div>
             <div class="news-card-date">📅 ${date}</div>
           </div>
-          <div class="news-card-actions">
-            <button class="action-btn action-edit"   onclick="editNews('${docSnap.id}')">✏️ Modifier</button>
-            <button class="action-btn action-delete" onclick="deleteItem('actualites','${docSnap.id}', loadActualites)">🗑️</button>
-          </div>
+          ${actionsHtml ? `<div class="news-card-actions">${actionsHtml}</div>` : ''}
         </div>`;
     });
   } catch (e) {
@@ -576,3 +958,4 @@ window.loadJoueurs      = loadJoueurs;
 window.loadClubs        = loadClubs;
 window.loadCompetitions = loadCompetitions;
 window.loadActualites   = loadActualites;
+window.loadMesJoueurs   = loadMesJoueurs;
