@@ -9,7 +9,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 
 // Configuration Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyB22T0CQAss4C3UlmTGeEtprJGcEEmFuW",
+  apiKey: "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw",
   authDomain: "gabon-sport-connect.firebaseapp.com",
   projectId: "gabon-sport-connect",
   storageBucket: "gabon-sport-connect.appspot.com",
