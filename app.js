@@ -35,6 +35,44 @@ const COLLECTIONS = {
   actualites: 'actualites'
 };
 
+// ─── Fédérations gabonaises officielles ──────────────────────
+const FEDERATIONS_GABON = [
+  { nom: 'Fédération Gabonaise de Football (FEGAFOOT)', sport: 'Football', statut: 'Validée', affiliation: 'FIFA', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Basketball (FEGABASKET)', sport: 'Basketball', statut: 'Validée', affiliation: 'FIBA', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Volleyball (FEGAVOL)', sport: 'Volleyball', statut: 'Validée', affiliation: 'FIVB', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise d\'Athlétisme (FÉGATH)', sport: 'Athlétisme', statut: 'Validée', affiliation: 'IAAF', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Handball (FEGAHAND)', sport: 'Handball', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Natation (FEGANAT)', sport: 'Natation', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Boxe (FEGABOX)', sport: 'Boxe', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Tennis (FÉGATEN)', sport: 'Tennis', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Judo (FEGAJUDO)', sport: 'Judo', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Cyclisme (FEGACYCLO)', sport: 'Cyclisme', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Taekwondo (FEGATK)', sport: 'Taekwondo', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+  { nom: 'Fédération Gabonaise de Rugby (FEGARUGBY)', sport: 'Rugby', statut: 'Validée', affiliation: 'Autre', president: '', contact: '', email: '' },
+];
+
+// ─── Initialiser les fédérations dans Firestore si absent ────
+async function initFederationsIfEmpty() {
+  try {
+    const snap = await getDocs(collection(db, COLLECTIONS.federations));
+    if (snap.empty) {
+      console.log('🏛️ Initialisation des fédérations gabonaises...');
+      for (const fed of FEDERATIONS_GABON) {
+        await addDoc(collection(db, COLLECTIONS.federations), {
+          ...fed,
+          annee: '',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      console.log('✅ Fédérations initialisées');
+      showToast('✅ Fédérations gabonaises chargées !');
+    }
+  } catch (e) {
+    console.warn('Init fédérations:', e);
+  }
+}
+
 // ─── Fonctions globales (inline onclick) ─────────────────────
 window.editFederation = editFederation;
 window.deleteFederation = deleteFederation;
@@ -71,6 +109,8 @@ onAuthStateChanged(auth, async user => {
       if (!snap.exists()) {
         await setDoc(ref, { role: 'super-admin', email: user.email, nom: 'Administrateur', createdAt: serverTimestamp() });
       }
+      // Initialiser les fédérations gabonaises si la base est vide
+      await initFederationsIfEmpty();
     } else {
       try {
         const userDoc = await getDoc(doc(db, COLLECTIONS.users, user.uid));
@@ -398,7 +438,20 @@ async function loadFederations() {
     const qry = query(collection(db, COLLECTIONS.federations), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(qry);
     if (snapshot.empty) {
-      container.innerHTML = '<div class="empty-state">🏛️ Aucune fédération enregistrée<br><small>Cliquez sur "Nouvelle fédération" pour commencer</small></div>';
+      // Afficher les fédérations gabonaises connues localement
+      container.innerHTML = FEDERATIONS_GABON.map((fed, i) => `
+        <div class="data-card">
+          <div class="card-header">
+            <h3>🏛️ ${fed.nom}</h3>
+            <span class="badge badge-success">${fed.statut}</span>
+          </div>
+          <div class="card-content">
+            <p><strong>Sport:</strong> ${fed.sport} · <strong>Affiliation:</strong> ${fed.affiliation}</p>
+          </div>
+          <div class="card-actions">
+            ${currentRole === 'super-admin' ? `<small style="color:#9ca3af;">Cliquez "Nouvelle fédération" pour enrichir les données</small>` : ''}
+          </div>
+        </div>`).join('');
       return;
     }
     container.innerHTML = snapshot.docs.map(d => {
@@ -470,14 +523,31 @@ async function populateFedSelect(selectId) {
   sel.innerHTML = '<option value="">-- Sélectionner une fédération --</option>';
   try {
     const fedSnapshot = await getDocs(collection(db, COLLECTIONS.federations));
-    fedSnapshot.docs.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.id;
-      opt.textContent = d.data().nom;
-      sel.appendChild(opt);
-    });
+    if (!fedSnapshot.empty) {
+      fedSnapshot.docs.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.data().nom;
+        sel.appendChild(opt);
+      });
+    } else {
+      // Fallback : afficher les fédérations connues localement
+      FEDERATIONS_GABON.forEach((fed, i) => {
+        const opt = document.createElement('option');
+        opt.value = 'local_' + i;
+        opt.textContent = fed.nom;
+        sel.appendChild(opt);
+      });
+    }
   } catch (e) {
     console.warn('Erreur chargement fédérations pour select:', e);
+    // Fallback même en cas d'erreur
+    FEDERATIONS_GABON.forEach((fed, i) => {
+      const opt = document.createElement('option');
+      opt.value = 'local_' + i;
+      opt.textContent = fed.nom;
+      sel.appendChild(opt);
+    });
   }
 }
 
