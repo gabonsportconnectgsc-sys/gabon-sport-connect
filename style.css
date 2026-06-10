@@ -168,15 +168,50 @@ img { max-width: 100%; }
 .btn-nav-login:hover  { background: var(--green-dark); }
 
 /* ════════════════════════════════════════════════════════
-   HERO
+   HERO — AMBIANCE GABONAISE PREMIUM
 ════════════════════════════════════════════════════════ */
 
 .hero {
-  background: linear-gradient(160deg, #f0faf5 0%, #fefce8 50%, #eef2ff 100%);
+  background:
+    linear-gradient(160deg,
+      rgba(0,158,96,.08) 0%,
+      rgba(252,209,22,.06) 45%,
+      rgba(0,49,137,.08) 100%);
   padding: 32px 16px 40px;
   position: relative;
   overflow: hidden;
 }
+
+/* ── Silhouette joueur de football gabonais (SVG inline) ── */
+.hero::before {
+  content: '';
+  position: absolute;
+  right: -20px; bottom: 0;
+  width: 220px; height: 320px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Cg opacity='0.07' fill='%23009E60'%3E%3C!-- Tête --%3E%3Ccircle cx='100' cy='30' r='22'/%3E%3C!-- Corps --%3E%3Cellipse cx='100' cy='85' rx='22' ry='32'/%3E%3C!-- Bras gauche dribble --%3E%3Cpath d='M78 65 Q50 80 40 105 Q38 115 48 112 Q58 100 72 88Z'/%3E%3C!-- Bras droit --%3E%3Cpath d='M122 65 Q148 75 158 95 Q162 105 152 108 Q140 95 128 85Z'/%3E%3C!-- Jambe gauche --%3E%3Cpath d='M88 115 Q80 150 75 185 Q73 198 83 200 Q93 198 95 185 Q100 155 100 135Z'/%3E%3C!-- Jambe droite avec ballon --%3E%3Cpath d='M112 115 Q118 148 122 180 Q125 195 115 197 Q105 195 104 180 Q102 155 100 135Z'/%3E%3C!-- Ballon --%3E%3Ccircle cx='130' cy='210' r='20'/%3E%3Ccircle cx='130' cy='210' r='20' fill='none' stroke='%23FCD116' stroke-width='2' opacity='0.5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Silhouette arbre okoumé (arbre national) ── */
+.hero::after {
+  content: '';
+  position: absolute;
+  left: -30px; bottom: 0;
+  width: 180px; height: 260px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 260'%3E%3Cg opacity='0.05' fill='%23003189'%3E%3C!-- Tronc --%3E%3Crect x='68' y='200' width='24' height='60' rx='4'/%3E%3C!-- Couronne arbre okoumé niveau 3 --%3E%3Cellipse cx='80' cy='200' rx='55' ry='35'/%3E%3C!-- Couronne niveau 2 --%3E%3Cellipse cx='80' cy='155' rx='45' ry='32'/%3E%3C!-- Couronne niveau 1 sommet --%3E%3Cellipse cx='80' cy='110' rx='30' ry='28'/%3E%3C!-- Petite cime --%3E%3Cellipse cx='80' cy='72' rx='18' ry='20'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* S'assurer que le contenu hero est au-dessus des silhouettes */
+.hero-inner { position: relative; z-index: 1; }
 
 /* Bandeau drapeau en haut du hero */
 .flag-bar {
@@ -313,13 +348,27 @@ img { max-width: 100%; }
 .btn-primary.btn-lg { font-size: 16px; padding: 16px 24px; }
 
 /* ════════════════════════════════════════════════════════
-   FEATURES
+   FEATURES — FOND MOTIF GÉOMÉTRIQUE AFRICAIN
 ════════════════════════════════════════════════════════ */
 
 .features {
   padding: 40px 16px;
   background: white;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Motif géométrique inspiré du tissu gabonais en filigrane */
+.features::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%23009E60' stroke-width='0.4' opacity='0.12'%3E%3Cpolygon points='30,2 58,16 58,44 30,58 2,44 2,16'/%3E%3Cpolygon points='30,10 50,20 50,40 30,50 10,40 10,20'/%3E%3Ccircle cx='30' cy='30' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+.features .section-header,
+.features .features-grid { position: relative; z-index: 1; }
 
 .section-header {
   text-align: center;
@@ -391,13 +440,29 @@ img { max-width: 100%; }
 .feature-card:hover .feature-arrow { transform: translateX(4px); color: var(--green); }
 
 /* ════════════════════════════════════════════════════════
-   BENEFITS
+   BENEFITS — FOND TEXTURÉ GABONAIS
 ════════════════════════════════════════════════════════ */
 
 .benefits-section {
   padding: 40px 16px;
-  background: var(--bg);
+  background:
+    linear-gradient(135deg, rgba(0,158,96,.04) 0%, rgba(252,209,22,.05) 50%, rgba(0,49,137,.04) 100%),
+    #f8fafc;
+  position: relative; overflow: hidden;
 }
+
+/* Silhouettes sportives en arrière-plan */
+.benefits-section::before {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Cg opacity='0.05' fill='%23003189'%3E%3C!-- Arbitre sifflant --%3E%3Ccircle cx='200' cy='60' r='20'/%3E%3Cellipse cx='200' cy='115' rx='18' ry='28'/%3E%3Cpath d='M182 90 Q160 110 155 135 Q153 145 163 142'/%3E%3Cpath d='M218 90 Q238 105 240 125Q242 135 232 133'/%3E%3Cpath d='M188 140 Q182 175 178 210 Q176 222 186 224 Q196 222 198 210 Q200 180 200 160Z'/%3E%3Cpath d='M212 140 Q218 172 222 205 Q224 218 214 220Q204 218 202 205 Q200 178 200 160Z'/%3E%3C!-- Basketteur sautant --%3E%3Ccircle cx='80' cy='200' r='18'/%3E%3Cellipse cx='80' cy='248' rx='16' ry='25'/%3E%3Cpath d='M64 220 Q42 230 35 245 Q33 253 43 250 L60 238Z'/%3E%3Cpath d='M96 218 Q118 215 130 225 Q136 232 128 238 L110 232Z'/%3E%3Cpath d='M70 270 Q64 300 62 330 Q60 342 70 344 Q80 342 82 330 Q84 305 80 285Z'/%3E%3Cpath d='M90 270 Q96 298 100 325Q102 338 92 340Q82 338 80 325Q78 302 80 285Z'/%3E%3C!-- Ballon basket --%3E%3Ccircle cx='140' cy='270' r='18'/%3E%3Cline x1='122' y1='270' x2='158' y2='270' stroke='%23f8fafc' stroke-width='1.5'/%3E%3Cpath d='M140 252 Q155 261 155 270 Q155 279 140 288' fill='none' stroke='%23f8fafc' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center right;
+  pointer-events: none;
+}
+.benefits-section .section-header,
+.benefits-section .benefits-list { position: relative; z-index: 1; }
 
 .benefits-list {
   display: flex; flex-direction: column; gap: 12px;
@@ -622,19 +687,22 @@ img { max-width: 100%; }
 .btn-submit:hover { background: var(--green-dark); }
 
 /* ════════════════════════════════════════════════════════
-   DASHBOARD
+   DASHBOARD — FOND ENRICHI GABONAIS
 ════════════════════════════════════════════════════════ */
 
 .dashboard {
   display: flex; min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0,158,96,.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(0,49,137,.04) 0%, transparent 60%),
+    #f4f7f5;
 }
 .dashboard.hidden { display: none; }
 
-/* Sidebar */
+/* Sidebar enrichie */
 .sidebar {
   width: 260px;
-  background: white;
+  background: linear-gradient(180deg, #fff 0%, rgba(0,158,96,.02) 100%);
   border-right: 1px solid var(--border);
   padding: 20px;
   position: fixed;
@@ -642,6 +710,19 @@ img { max-width: 100%; }
   overflow-y: auto;
   display: flex; flex-direction: column;
   z-index: 200;
+  box-shadow: 2px 0 12px rgba(0,0,0,.04);
+}
+
+/* Motif décoratif sidebar bas */
+.sidebar::after {
+  content: '';
+  position: absolute; bottom: 70px; left: 0; right: 0; height: 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 180'%3E%3Cg opacity='0.04' fill='%23009E60'%3E%3Cellipse cx='130' cy='180' rx='100' ry='70'/%3E%3Cellipse cx='130' cy='140' rx='70' ry='50'/%3E%3Cellipse cx='130' cy='100' rx='45' ry='40'/%3E%3Cellipse cx='130' cy='65' rx='25' ry='28'/%3E%3Crect x='118' y='170' width='24' height='10' rx='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .sidebar-brand {
@@ -738,12 +819,21 @@ img { max-width: 100%; }
 .view { }
 .view.hidden { display: none !important; }
 
-/* Welcome card */
+/* Welcome card enrichie */
 .welcome-card {
-  background: white; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #fff 60%, rgba(0,158,96,.04) 100%);
+  border-radius: var(--radius-lg);
   padding: 24px; margin-bottom: 24px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+.welcome-card::after {
+  content: '';
+  position: absolute; right: -20px; top: -20px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(0,158,96,.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 .welcome-card h2 { font-size: 18px; margin-bottom: 8px; }
 .welcome-card p  { font-size: 14px; color: var(--text-2); margin-bottom: 20px; }
@@ -753,17 +843,35 @@ img { max-width: 100%; }
 }
 
 .stat-card {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
   text-align: center;
-  cursor: pointer; transition: all .2s;
+  cursor: pointer;
+  transition: all .25s;
+  position: relative; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--green), var(--yellow));
+  opacity: 0; transition: opacity .2s;
 }
 .stat-card[data-nav]:hover {
   border-color: var(--green);
-  box-shadow: 0 4px 16px rgba(0,158,96,.12);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,158,96,.15);
+  transform: translateY(-3px);
 }
-.stat-value { font-size: 28px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
+.stat-card[data-nav]:hover::before { opacity: 1; }
+.stat-value {
+  font-size: 32px; font-weight: 900; color: var(--green);
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .stat-label { font-size: 12px; color: var(--text-2); font-weight: 600; }
 
 /* Buttons in dashboard */
@@ -788,13 +896,28 @@ img { max-width: 100%; }
 .btn-danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
 .btn-danger:hover { background: #fee2e2; border-color: var(--danger); color: var(--danger); }
 
-/* Data list / cards */
-.data-list { display: flex; flex-direction: column; gap: 10px; }
+/* Data list / cards enrichies */
+.data-list { display: flex; flex-direction: column; gap: 12px; }
 .data-card {
-  background: white; border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-  box-shadow: var(--shadow-sm);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  transition: box-shadow .2s, transform .2s;
+  position: relative; overflow: hidden;
 }
+.data-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, var(--green), var(--blue));
+  opacity: 0; transition: opacity .2s;
+}
+.data-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.09);
+  transform: translateY(-1px);
+}
+.data-card:hover::before { opacity: 1; }
 .card-header {
   display: flex; justify-content: space-between; align-items: flex-start;
   gap: 10px; margin-bottom: 10px;

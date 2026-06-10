@@ -70,14 +70,14 @@
         Gestion centralisée des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.
       </p>
 
-      <!-- Carte joueur -->
-      <div class="player-card">
-        <div class="pc-icon">⚽</div>
+      <!-- Carte joueur dynamique — meilleur joueur réel -->
+      <div class="player-card" id="hero-player-card">
+        <div class="pc-icon" id="hero-player-icon">⚽</div>
         <div class="pc-body">
           <div class="pc-label">Joueur Enregistré</div>
-          <div class="pc-name">Pierre Obame</div>
-          <div class="pc-sub">Attaquant · Panthères FC</div>
-          <span class="pc-badge">🇬🇦 Équipe Nationale</span>
+          <div class="pc-name" id="hero-player-name">Chargement…</div>
+          <div class="pc-sub" id="hero-player-sub">— · —</div>
+          <span class="pc-badge" id="hero-player-badge">🇬🇦 GSC</span>
         </div>
       </div>
 
@@ -389,6 +389,10 @@
     <div class="content-header">
       <h1 class="content-title" id="content-title">Accueil</h1>
       <div class="content-actions">
+        <button class="btn-icon" id="btn-notifs" style="position:relative;" title="Notifications">
+          🔔
+          <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;align-items:center;justify-content:center;">0</span>
+        </button>
         <button class="btn-icon" id="btn-menu-toggle">☰</button>
       </div>
     </div>
@@ -653,6 +657,25 @@
             <option>Actif</option><option>Inactif</option><option>Suspendu</option>
           </select>
         </div>
+        <h4>📍 Localisation du stade / siège</h4>
+        <div class="form-group">
+          <label class="form-label" for="club-stade-nom">Nom du stade</label>
+          <input class="form-input" type="text" id="club-stade-nom" placeholder="Ex: Stade Omar Bongo" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="club-gps-lat">Latitude GPS</label>
+            <input class="form-input" type="text" id="club-gps-lat" placeholder="0.000000" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="club-gps-lng">Longitude GPS</label>
+            <input class="form-input" type="text" id="club-gps-lng" placeholder="9.000000" readonly />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button type="button" id="btn-club-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('club-gps-lat','club-gps-lng','btn-club-gps')">📍 Localiser via GPS</button>
+          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('club-gps-lat').value && document.getElementById('club-gps-lng').value){ window.open('https://maps.google.com/?q='+document.getElementById('club-gps-lat').value+','+document.getElementById('club-gps-lng').value,'_blank') } else { alert('Capturez d\'abord le GPS'); }">🗺️ Voir Maps</button>
+        </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="club-modal-cancel">Annuler</button>
           <button type="submit" class="btn-save">💾 Enregistrer</button>
@@ -866,6 +889,25 @@
           <label class="form-label" for="comp-arbitre-assigné">Arbitre assigné</label>
           <select class="form-input" id="comp-arbitre-assigné"></select>
         </div>
+        <h4>📍 Lieu principal de la compétition</h4>
+        <div class="form-group">
+          <label class="form-label" for="comp-lieu">Stade / Lieu principal</label>
+          <input class="form-input" type="text" id="comp-lieu" placeholder="Ex: Stade de l'Amitié" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="comp-gps-lat">Latitude GPS</label>
+            <input class="form-input" type="text" id="comp-gps-lat" placeholder="0.000000" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comp-gps-lng">Longitude GPS</label>
+            <input class="form-input" type="text" id="comp-gps-lng" placeholder="9.000000" readonly />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button type="button" id="btn-comp-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('comp-gps-lat','comp-gps-lng','btn-comp-gps')">📍 Localiser via GPS</button>
+          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('comp-gps-lat').value){ window.open('https://maps.google.com/?q='+document.getElementById('comp-gps-lat').value+','+document.getElementById('comp-gps-lng').value,'_blank') } else { alert('Capturez d\'abord le GPS'); }">🗺️ Voir Maps</button>
+        </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="comp-modal-cancel">Annuler</button>
           <button type="submit" class="btn-save">💾 Enregistrer</button>
@@ -905,6 +947,82 @@
           <button type="submit" class="btn-save">📰 Publier</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal NOTIFICATIONS ═══ -->
+<div id="notif-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal" style="max-width:520px;">
+    <div class="form-modal-header">
+      <div class="form-modal-title">🔔 Notifications — Alertes Doublons</div>
+      <button class="form-modal-close" id="notif-modal-close">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <div id="notif-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal CALENDRIER COMPÉTITION ═══ -->
+<div id="calendrier-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal" style="max-width:580px;max-height:95vh;">
+    <div class="form-modal-header">
+      <div class="form-modal-title" id="calendrier-comp-title">📅 Calendrier</div>
+      <button class="form-modal-close" id="calendrier-modal-close">✕</button>
+    </div>
+    <div class="form-modal-body">
+      <!-- Liste des matchs -->
+      <div id="calendrier-list" style="margin-bottom:24px;"></div>
+
+      <!-- Formulaire ajout match -->
+      <div style="border-top:2px solid var(--border);padding-top:20px;">
+        <h4 style="font-size:13px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:16px;">➕ Ajouter un match</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Équipe domicile *</label>
+            <input class="form-input" type="text" id="match-domicile" placeholder="Club A" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Équipe visiteur *</label>
+            <input class="form-input" type="text" id="match-visiteur" placeholder="Club B" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input class="form-input" type="date" id="match-date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heure</label>
+            <input class="form-input" type="time" id="match-heure" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom du stade / lieu</label>
+          <input class="form-input" type="text" id="match-lieu" placeholder="Ex: Stade Omar Bongo" />
+        </div>
+        <!-- GPS du lieu du match -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Latitude GPS</label>
+            <input class="form-input" type="text" id="match-lieu-lat" placeholder="0.000000" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude GPS</label>
+            <input class="form-input" type="text" id="match-lieu-lng" placeholder="9.000000" readonly />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button type="button" id="btn-match-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('match-lieu-lat','match-lieu-lng','btn-match-gps')">📍 GPS du lieu</button>
+          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('match-lieu-lat').value){window.open('https://maps.google.com/?q='+document.getElementById('match-lieu-lat').value+','+document.getElementById('match-lieu-lng').value,'_blank')}else{alert('Capturez d\'abord le GPS');}">🗺️ Voir Maps</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Résultat (si terminé)</label>
+          <input class="form-input" type="text" id="match-resultat" placeholder="Ex: 2-1" />
+        </div>
+        <button type="button" class="btn-save" style="width:100%;" onclick="ajouterMatch()">✅ Ajouter ce match</button>
+      </div>
     </div>
   </div>
 </div>

@@ -32,7 +32,9 @@ const COLLECTIONS = {
   joueurs: 'joueurs',
   arbitres: 'arbitres',
   competences: 'competences',
-  actualites: 'actualites'
+  actualites: 'actualites',
+  matchs: 'matchs',
+  notifications: 'notifications'
 };
 
 // ─── Fédérations gabonaises officielles ──────────────────────
@@ -572,6 +574,10 @@ document.getElementById('club-form')?.addEventListener('submit', async e => {
     sport: document.getElementById('club-sport').value,
     division: document.getElementById('club-division')?.value || 'D1',
     statut: document.getElementById('club-statut')?.value || 'Actif',
+    stadeNom: document.getElementById('club-stade-nom')?.value || '',
+    gpsLat: document.getElementById('club-gps-lat')?.value || '',
+    gpsLng: document.getElementById('club-gps-lng')?.value || '',
+    fédération: document.getElementById('club-fédération')?.value || '',
     updatedAt: serverTimestamp()
   };
   try {
@@ -606,10 +612,10 @@ async function loadClubs() {
             <span class="badge">${data.division}</span>
           </div>
           <div class="card-content">
-            <p><strong>Sport:</strong> ${data.sport} · <strong>Genre:</strong> ${data.genre}</p>
+            <p><strong>Sport:</strong> ${data.sport} ${data.division ? '· <strong>Division:</strong> '+data.division : ''}</p>
             <p><strong>Ville:</strong> ${data.ville || '—'} ${data.province ? '· ' + data.province : ''}</p>
-            ${data.stade ? `<p><strong>Stade:</strong> ${data.stade}</p>` : ''}
-            <p><strong>Catégorie:</strong> ${data.catégorie}</p>
+            ${data.stadeNom ? `<p><strong>Stade:</strong> ${data.stadeNom}</p>` : ''}
+            ${data.gpsLat && data.gpsLng ? `<p><a href="https://maps.google.com/?q=${data.gpsLat},${data.gpsLng}" target="_blank" style="color:var(--green);font-size:12px;font-weight:600;">📍 Voir sur Maps</a> &nbsp; <a href="https://wa.me/?text=${encodeURIComponent('📍 '+data.nom+'\nhttps://maps.google.com/?q='+data.gpsLat+','+data.gpsLng)}" target="_blank" style="color:#25D366;font-size:12px;font-weight:600;">📲 WhatsApp</a></p>` : '<p style="color:#9ca3af;font-size:12px;">📍 Non géolocalisé</p>'}
           </div>
           <div class="card-actions">
             <button class="btn-small" onclick="editClub('${d.id}')">✏️ Éditer</button>
@@ -993,6 +999,7 @@ async function loadCompetences() {
             ${data.dateDebut ? `<p><strong>Dates:</strong> ${data.dateDebut} → ${data.dateFin || '?'}</p>` : ''}
           </div>
           <div class="card-actions">
+            <button class="btn-small" style="background:var(--blue);color:white;" onclick="openCalendrierComp('${d.id}','${data.nom.replace(/'/g,"\\'")}')">📅 Calendrier</button>
             <button class="btn-small" onclick="editComp('${d.id}')">✏️ Éditer</button>
             ${currentRole === 'super-admin' ? `<button class="btn-small btn-danger" onclick="deleteComp('${d.id}')">🗑️ Supprimer</button>` : ''}
           </div>
@@ -1288,3 +1295,355 @@ window.addEventListener('load', () => {
     }, 2500);
   }
 });
+
+// ═════════════════════════════════════════════════════════════
+// GÉOLOCALISATION — STADES & CLUBS
+// ═════════════════════════════════════════════════════════════
+
+window.openMapLink = openMapLink;
+window.captureGPS = captureGPS;
+window.openCalendrierComp = openCalendrierComp;
+window.ajouterMatch = ajouterMatch;
+window.supprimerMatch = supprimerMatch;
+window.ouvrirNotifications = ouvrirNotifications;
+window.validerJoueurAdmin = validerJoueurAdmin;
+window.refuserJoueurAdmin = refuserJoueurAdmin;
+
+function openMapLink(lat, lng, nom) {
+  if (!lat || !lng) { showToast('Coordonnées GPS non disponibles', 'error'); return; }
+  window.open(`https://www.google.com/maps?q=${lat},${lng}&label=${encodeURIComponent(nom)}`, '_blank');
+}
+
+function captureGPS(latFieldId, lngFieldId, btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.textContent = '📡 Localisation…'; btn.disabled = true; }
+  if (!navigator.geolocation) {
+    showToast('GPS non disponible', 'error');
+    if (btn) { btn.textContent = '📍 Localiser'; btn.disabled = false; }
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById(latFieldId).value = pos.coords.latitude.toFixed(6);
+      document.getElementById(lngFieldId).value = pos.coords.longitude.toFixed(6);
+      if (btn) { btn.textContent = '✅ Localisé !'; btn.disabled = false; }
+      showToast('✅ Position GPS capturée');
+    },
+    err => {
+      showToast('Erreur GPS : ' + err.message, 'error');
+      if (btn) { btn.textContent = '📍 Localiser'; btn.disabled = false; }
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// ═════════════════════════════════════════════════════════════
+// DÉTECTION DE DOUBLONS / FRAUDES JOUEURS
+// ═════════════════════════════════════════════════════════════
+
+async function verifierDoublonJoueur(nom, prenom, dateNaissance, clubCibleId, joueurIdExistant) {
+  try {
+    const snap = await getDocs(collection(db, COLLECTIONS.joueurs));
+    const nomN = nom.trim().toLowerCase();
+    const prenomN = prenom.trim().toLowerCase();
+    for (const d of snap.docs) {
+      if (d.id === joueurIdExistant) continue;
+      const data = d.data();
+      if ((data.nom||'').trim().toLowerCase() === nomN &&
+          (data.prenom||'').trim().toLowerCase() === prenomN &&
+          dateNaissance && data.dateNaissance === dateNaissance) {
+        if ((data.statut||'') === 'Actif' && data.club && data.club !== clubCibleId) {
+          return { doublon: true, sousScontrat: true,
+            message: `⚠️ ${prenom} ${nom} est ACTIF dans un autre club. Transfert bloqué — admin requis.`,
+            joueurId: d.id, clubActuel: data.club };
+        }
+        return { doublon: true, sousScontrat: false,
+          message: `ℹ️ Un joueur similaire existe déjà (statut: ${data.statut||'?'}).`,
+          joueurId: d.id };
+      }
+    }
+    return { doublon: false };
+  } catch(e) { return { doublon: false }; }
+}
+
+async function envoyerNotificationDoublon(joueurNom, joueurPrenom, joueurId, clubCibleId, message) {
+  try {
+    await addDoc(collection(db, COLLECTIONS.notifications), {
+      type: 'doublon', joueurNom, joueurPrenom, joueurId, clubCibleId,
+      message, statut: 'en_attente', createdAt: serverTimestamp(), lueParAdmin: false
+    });
+  } catch(e) {}
+}
+
+async function validerJoueurAdmin(notifId, joueurId) {
+  try {
+    if (joueurId) await updateDoc(doc(db, COLLECTIONS.joueurs, joueurId), { statut: 'Actif', doublon: false, updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, COLLECTIONS.notifications, notifId), { statut: 'approuvé', lueParAdmin: true });
+    showToast('✅ Joueur validé'); ouvrirNotifications();
+  } catch(e) { showToast('Erreur', 'error'); }
+}
+
+async function refuserJoueurAdmin(notifId, joueurId) {
+  try {
+    if (joueurId) await updateDoc(doc(db, COLLECTIONS.joueurs, joueurId), { statut: 'Refusé — Doublon', updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, COLLECTIONS.notifications, notifId), { statut: 'refusé', lueParAdmin: true });
+    showToast('🚫 Joueur refusé'); ouvrirNotifications();
+  } catch(e) { showToast('Erreur', 'error'); }
+}
+
+async function ouvrirNotifications() {
+  const modal = document.getElementById('notif-modal');
+  const container = document.getElementById('notif-list');
+  if (!modal || !container) return;
+  modal.classList.remove('hidden');
+  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.notifications), orderBy('createdAt', 'desc')));
+    if (snap.empty) { container.innerHTML = '<div class="empty-state">✅ Aucune notification</div>'; return; }
+    container.innerHTML = snap.docs.map(d => {
+      const n = d.data();
+      const couleur = n.statut === 'en_attente' ? '#f59e0b' : n.statut === 'approuvé' ? '#10b981' : '#ef4444';
+      const badgeTxt = n.statut === 'en_attente' ? 'En attente' : n.statut === 'approuvé' ? 'Approuvé' : 'Refusé';
+      return `<div class="data-card" style="border-left:4px solid ${couleur}">
+        <div class="card-header"><h3>⚠️ ${n.joueurPrenom||''} ${n.joueurNom||''}</h3><span class="badge" style="background:${couleur}20;color:${couleur}">${badgeTxt}</span></div>
+        <div class="card-content"><p>${n.message||''}</p></div>
+        ${n.statut === 'en_attente' && currentRole === 'super-admin' ? `<div class="card-actions">
+          <button class="btn-small" onclick="validerJoueurAdmin('${d.id}','${n.joueurId||''}')">✅ Valider</button>
+          <button class="btn-small btn-danger" onclick="refuserJoueurAdmin('${d.id}','${n.joueurId||''}')">🚫 Refuser</button>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = `<div class="error-state">❌ ${e.message}</div>`; }
+}
+
+document.getElementById('notif-modal-close')?.addEventListener('click', () => document.getElementById('notif-modal')?.classList.add('hidden'));
+document.getElementById('btn-notifs')?.addEventListener('click', () => ouvrirNotifications());
+
+async function updateNotifBadge() {
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.notifications), where('statut','==','en_attente')));
+    const badge = document.getElementById('notif-badge');
+    if (badge) { badge.textContent = snap.size > 0 ? snap.size : ''; badge.style.display = snap.size > 0 ? 'flex' : 'none'; }
+  } catch(e) {}
+}
+
+// ═════════════════════════════════════════════════════════════
+// CALENDRIER DES MATCHS PAR COMPÉTITION
+// ═════════════════════════════════════════════════════════════
+
+async function openCalendrierComp(compId, compNom) {
+  const modal = document.getElementById('calendrier-modal');
+  if (!modal) return;
+  modal.dataset.compId = compId;
+  const title = document.getElementById('calendrier-comp-title');
+  if (title) title.textContent = `📅 Calendrier — ${compNom}`;
+  modal.classList.remove('hidden');
+  await chargerMatchs(compId);
+}
+
+async function chargerMatchs(compId) {
+  const container = document.getElementById('calendrier-list');
+  if (!container) return;
+  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.matchs), where('compId','==',compId), orderBy('date','asc')));
+    if (snap.empty) { container.innerHTML = '<div class="empty-state">📅 Aucun match — Ajoutez-en ci-dessous</div>'; return; }
+    container.innerHTML = snap.docs.map(d => {
+      const m = d.data();
+      const mapsUrl = m.lieuLat && m.lieuLng ? `https://www.google.com/maps?q=${m.lieuLat},${m.lieuLng}` : null;
+      const waUrl = mapsUrl ? `https://wa.me/?text=${encodeURIComponent('📍 Match : '+m.domicile+' vs '+m.visiteur+' le '+m.date+' à '+m.heure+'\n📍 '+m.lieu+'\n'+mapsUrl)}` : null;
+      return `<div class="data-card">
+        <div class="card-header"><h3>⚽ ${m.domicile} vs ${m.visiteur}</h3><span class="badge">${m.date||'?'}</span></div>
+        <div class="card-content">
+          <p><strong>Heure:</strong> ${m.heure||'—'} &nbsp;·&nbsp; <strong>Lieu:</strong> ${m.lieu||'—'}</p>
+          ${m.resultat ? `<p><strong>Score:</strong> ${m.resultat}</p>` : ''}
+          <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
+            ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" style="color:var(--green);font-size:12px;font-weight:600;">📍 Google Maps</a>` : '<span style="color:#9ca3af;font-size:12px;">📍 Non géolocalisé</span>'}
+            ${waUrl ? `<a href="${waUrl}" target="_blank" style="color:#25D366;font-size:12px;font-weight:600;">📲 WhatsApp</a>` : ''}
+          </div>
+        </div>
+        ${currentRole === 'super-admin' ? `<div class="card-actions"><button class="btn-small btn-danger" onclick="supprimerMatch('${d.id}','${m.compId}')">🗑️ Supprimer</button></div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = `<div class="error-state">❌ ${e.message}</div>`; }
+}
+
+async function verifierConflitCalendrier(date, heure, lieuNom) {
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.matchs), where('date','==',date)));
+    for (const d of snap.docs) {
+      const m = d.data();
+      if (m.lieu && lieuNom && m.lieu.toLowerCase() === lieuNom.toLowerCase()) {
+        if (m.heure === heure) return { conflit: true, message: `🚫 Stade "${lieuNom}" déjà réservé le ${date} à ${heure} : ${m.domicile} vs ${m.visiteur}` };
+        if (heure && m.heure) {
+          const h1 = parseInt(heure.split(':')[0]);
+          const h2 = parseInt(m.heure.split(':')[0]);
+          if (Math.abs(h1-h2) < 2) return { conflit: true, message: `⚠️ Chevauchement au stade "${lieuNom}" : match à ${m.heure} le ${date}. Trop proche de ${heure}.` };
+        }
+      }
+    }
+    return { conflit: false };
+  } catch(e) { return { conflit: false }; }
+}
+
+async function ajouterMatch() {
+  const compId = document.getElementById('calendrier-modal')?.dataset.compId;
+  if (!compId) return;
+  const domicile = document.getElementById('match-domicile')?.value.trim();
+  const visiteur = document.getElementById('match-visiteur')?.value.trim();
+  const date = document.getElementById('match-date')?.value;
+  const heure = document.getElementById('match-heure')?.value;
+  const lieu = document.getElementById('match-lieu')?.value.trim();
+  const lieuLat = document.getElementById('match-lieu-lat')?.value;
+  const lieuLng = document.getElementById('match-lieu-lng')?.value;
+  const resultat = document.getElementById('match-resultat')?.value.trim();
+  if (!domicile || !visiteur || !date) { showToast('Équipes et date obligatoires', 'error'); return; }
+  if (lieu) {
+    const conflit = await verifierConflitCalendrier(date, heure, lieu);
+    if (conflit.conflit) { showToast(conflit.message, 'error'); alert(conflit.message); return; }
+  }
+  try {
+    await addDoc(collection(db, COLLECTIONS.matchs), {
+      compId, domicile, visiteur, date, heure: heure||'', lieu: lieu||'',
+      lieuLat: lieuLat||'', lieuLng: lieuLng||'', resultat: resultat||'',
+      createdBy: currentUser?.uid||'', createdAt: serverTimestamp()
+    });
+    showToast('✅ Match ajouté');
+    ['match-domicile','match-visiteur','match-date','match-heure','match-lieu','match-lieu-lat','match-lieu-lng','match-resultat'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    await chargerMatchs(compId);
+  } catch(e) { showToast('Erreur : '+e.message, 'error'); }
+}
+
+async function supprimerMatch(matchId, compId) {
+  if (!confirm('Supprimer ce match ?')) return;
+  try { await deleteDoc(doc(db, COLLECTIONS.matchs, matchId)); showToast('✅ Match supprimé'); chargerMatchs(compId); }
+  catch(e) { showToast('Erreur', 'error'); }
+}
+
+document.getElementById('calendrier-modal-close')?.addEventListener('click', () => document.getElementById('calendrier-modal')?.classList.add('hidden'));
+
+// Vérification doublon lors de la soumission joueur
+// Patch du submit original
+(function patchJoueurSubmit() {
+  const form = document.getElementById('joueur-form');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.stopImmediatePropagation();
+    // la vérification doublon est ajoutée ici en plus du traitement normal
+    const nom = document.getElementById('joueur-nom')?.value.trim() || '';
+    const prenom = document.getElementById('joueur-prenom')?.value.trim() || '';
+    const dateNaissance = document.getElementById('joueur-date-naissance')?.value || '';
+    const clubId = document.getElementById('joueur-club')?.value || '';
+    const docId = document.getElementById('joueur-id')?.value || '';
+    if (nom && prenom && dateNaissance) {
+      const check = await verifierDoublonJoueur(nom, prenom, dateNaissance, clubId, docId || null);
+      if (check.doublon && check.sousScontrat) {
+        e.preventDefault();
+        showToast(check.message, 'error');
+        const confirmer = confirm('🚨 ALERTE DOUBLON\n\n' + check.message + '\n\nSoumettre une demande d\'exception à l\'admin ?');
+        if (confirmer) {
+          await addDoc(collection(db, COLLECTIONS.joueurs), {
+            nom, prenom, dateNaissance,
+            nationalite: document.getElementById('joueur-nationalite')?.value || 'Gabonaise',
+            position: document.getElementById('joueur-position')?.value || 'Attaquant',
+            club: clubId,
+            statut: 'En attente — Doublon signalé',
+            genre: document.getElementById('joueur-genre')?.value || 'Masculin',
+            doublon: true, doublonRef: check.joueurId,
+            createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+          });
+          await envoyerNotificationDoublon(nom, prenom, null, clubId, check.message);
+          showToast('⏳ Demande soumise à l\'admin');
+          document.getElementById('joueur-modal')?.classList.add('hidden');
+        }
+        return false;
+      }
+      if (check.doublon && !check.sousScontrat) {
+        const ok = confirm(check.message + '\n\nContinuer quand même ?');
+        if (!ok) { e.preventDefault(); return false; }
+      }
+    }
+  }, true); // capture phase avant l'autre listener
+})();
+
+// Appel updateNotifBadge après connexion
+const _origShowDash = window._origShowDash;
+setTimeout(() => { updateNotifBadge(); }, 3000);
+
+
+// ═════════════════════════════════════════════════════════════
+// CARTE JOUEUR HERO — CHARGEMENT DYNAMIQUE
+// ═════════════════════════════════════════════════════════════
+
+async function loadHeroPlayerCard() {
+  const nameEl  = document.getElementById('hero-player-name');
+  const subEl   = document.getElementById('hero-player-sub');
+  const badgeEl = document.getElementById('hero-player-badge');
+  const iconEl  = document.getElementById('hero-player-icon');
+  if (!nameEl) return;
+
+  try {
+    // Priorité 1 : joueur Actif le plus récent
+    // Priorité 2 : n'importe quel joueur
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.joueurs), orderBy('createdAt', 'desc'))
+    );
+
+    if (snap.empty) {
+      nameEl.textContent  = 'Aucun joueur encore';
+      subEl.textContent   = 'Rejoignez la plateforme';
+      badgeEl.textContent = '🇬🇦 GSC';
+      return;
+    }
+
+    // Chercher d'abord un joueur Actif
+    let choisi = null;
+    for (const d of snap.docs) {
+      const j = d.data();
+      if ((j.statut || '') === 'Actif') { choisi = j; break; }
+    }
+    // Sinon prendre le premier
+    if (!choisi) choisi = snap.docs[0].data();
+
+    const nom    = `${choisi.prenom || ''} ${choisi.nom || ''}`.trim() || 'Joueur';
+    const sport  = choisi.sport || 'Football';
+    const poste  = choisi.position || 'Joueur';
+    const club   = choisi.club || '';
+    const niveau = choisi.niveau || '';
+
+    // Emoji selon sport
+    const sportIcon = {
+      'Football': '⚽', 'Basketball': '🏀', 'Volleyball': '🏐',
+      'Athlétisme': '🏃', 'Natation': '🏊', 'Boxe': '🥊',
+      'Tennis': '🎾', 'Judo': '🥋', 'Rugby': '🏉',
+      'Cyclisme': '🚴', 'Handball': '🤾'
+    }[sport] || '🏅';
+
+    // Récupérer le nom du club si c'est un ID Firestore
+    let clubNom = club;
+    if (club && club.length === 20) { // ID Firestore
+      try {
+        const clubDoc = await getDoc(doc(db, COLLECTIONS.clubs, club));
+        if (clubDoc.exists()) clubNom = clubDoc.data().nom;
+      } catch(e) {}
+    }
+
+    if (iconEl)  iconEl.textContent  = sportIcon;
+    nameEl.textContent  = nom;
+    subEl.textContent   = `${poste}${clubNom ? ' · ' + clubNom : ''}`;
+    badgeEl.textContent = `🇬🇦 ${niveau || 'Actif'}`;
+
+  } catch(e) {
+    console.warn('Hero card:', e);
+    // Garder le placeholder
+  }
+}
+
+// Charger la carte joueur au démarrage (landing page)
+loadHeroPlayerCard();
+
+// Recharger aussi après connexion au cas où de nouveaux joueurs ont été ajoutés
+document.addEventListener('gscUserReady', () => {
+  loadHeroPlayerCard();
+});
+
