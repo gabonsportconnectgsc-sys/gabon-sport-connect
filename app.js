@@ -104,54 +104,57 @@ function showToast(message, type = 'success') {
 
 // ─── Auth state ──────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
-  if (user) {
-    currentUser = user;
-    if (user.email === ADMIN_EMAIL) {
-      currentRole = 'super-admin';
-      currentUserData = { role: 'super-admin', email: user.email, nom: 'Administrateur' };
-      const ref = doc(db, COLLECTIONS.users, user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        await setDoc(ref, { role: 'super-admin', email: user.email, nom: 'Administrateur', createdAt: serverTimestamp() });
-      }
-      // Initialiser les fédérations gabonaises si la base est vide
-      await initFederationsIfEmpty();
-    } else {
-      try {
-        const userDoc = await getDoc(doc(db, COLLECTIONS.users, user.uid));
-        if (userDoc.exists()) {
-          currentUserData = userDoc.data();
-          currentRole = currentUserData.role || 'joueur';
-        } else {
+  try {
+    if (user) {
+      currentUser = user;
+      if (user.email === ADMIN_EMAIL) {
+        currentRole = 'super-admin';
+        currentUserData = { role: 'super-admin', email: user.email, nom: 'Administrateur' };
+        const ref = doc(db, COLLECTIONS.users, user.uid);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+          await setDoc(ref, { role: 'super-admin', email: user.email, nom: 'Administrateur', createdAt: serverTimestamp() });
+        }
+        // Initialiser les fédérations gabonaises si la base est vide
+        await initFederationsIfEmpty();
+      } else {
+        try {
+          const userDoc = await getDoc(doc(db, COLLECTIONS.users, user.uid));
+          if (userDoc.exists()) {
+            currentUserData = userDoc.data();
+            currentRole = currentUserData.role || 'joueur';
+          } else {
+            currentRole = 'joueur';
+            currentUserData = { role: 'joueur', email: user.email, nom: user.email.split('@')[0] };
+          }
+        } catch (e) {
           currentRole = 'joueur';
           currentUserData = { role: 'joueur', email: user.email, nom: user.email.split('@')[0] };
         }
-      } catch (e) {
-        currentRole = 'joueur';
-        currentUserData = { role: 'joueur', email: user.email, nom: user.email.split('@')[0] };
       }
+      showDashboard(user);
+    } else {
+      currentUser = null;
+      currentRole = null;
+      currentUserData = null;
+      showLanding();
     }
-    showDashboard(user);
-  } else {
-    currentUser = null;
-    currentRole = null;
-    currentUserData = null;
+  } catch (e) {
+    // En cas d'erreur inattendue, s'assurer que le splash disparaît quand même
+    console.error('Erreur auth state:', e);
+    hideSplash();
     showLanding();
   }
 });
 
 function showLanding() {
+  hideSplash();
   document.getElementById('landing').classList.remove('hidden');
   document.getElementById('dashboard').classList.add('hidden');
-  // Masquer le splash si visible
-  const splash = document.getElementById('splash-screen');
-  if (splash) splash.classList.add('hidden');
 }
 
 function showDashboard(user) {
-  // Cacher le splash
-  const splash = document.getElementById('splash-screen');
-  if (splash) splash.classList.add('hidden');
+  hideSplash();
 
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('dashboard').classList.remove('hidden');
@@ -383,25 +386,42 @@ document.getElementById('btn-menu-toggle')?.addEventListener('click', () => {
   document.getElementById('sidebar')?.classList.toggle('open');
 });
 
+// ─── Cache mémoire léger (TTL 60 s) ──────────────────────────
+const _cache = {};
+function cacheGet(key) {
+  const entry = _cache[key];
+  if (!entry) return null;
+  if (Date.now() - entry.ts > 60_000) { delete _cache[key]; return null; }
+  return entry.data;
+}
+function cacheSet(key, data) { _cache[key] = { data, ts: Date.now() }; }
+function cacheClear(key) { if (key) delete _cache[key]; else Object.keys(_cache).forEach(k => delete _cache[k]); }
+
 // ─── Dashboard Stats ─────────────────────────────────────────
 async function loadDashboardStats() {
   try {
-    const [fedSnap, clubSnap, jouSnap, arbSnap] = await Promise.all([
-      getDocs(collection(db, COLLECTIONS.federations)),
-      getDocs(collection(db, COLLECTIONS.clubs)),
-      getDocs(collection(db, COLLECTIONS.joueurs)),
-      getDocs(collection(db, COLLECTIONS.arbitres))
-    ]);
+    // Utiliser le cache si disponible (TTL 60 s)
+    let stats = cacheGet('dashStats');
+    if (!stats) {
+      const [fedSnap, clubSnap, jouSnap, arbSnap] = await Promise.all([
+        getDocs(collection(db, COLLECTIONS.federations)),
+        getDocs(collection(db, COLLECTIONS.clubs)),
+        getDocs(collection(db, COLLECTIONS.joueurs)),
+        getDocs(collection(db, COLLECTIONS.arbitres))
+      ]);
+      stats = { fed: fedSnap.size, club: clubSnap.size, jou: jouSnap.size, arb: arbSnap.size };
+      cacheSet('dashStats', stats);
+    }
 
     const fedEl = document.getElementById('stat-fédérations');
     const clubEl = document.getElementById('stat-clubs');
     const jouEl = document.getElementById('stat-joueurs');
     const arbEl = document.getElementById('stat-arbitres');
 
-    if (fedEl) fedEl.textContent = fedSnap.size;
-    if (clubEl) clubEl.textContent = clubSnap.size;
-    if (jouEl) jouEl.textContent = jouSnap.size;
-    if (arbEl) arbEl.textContent = arbSnap.size;
+    if (fedEl) fedEl.textContent = stats.fed;
+    if (clubEl) clubEl.textContent = stats.club;
+    if (jouEl) jouEl.textContent = stats.jou;
+    if (arbEl) arbEl.textContent = stats.arb;
   } catch (e) {
     console.error('Erreur stats', e);
   }
@@ -448,6 +468,7 @@ document.getElementById('federation-form')?.addEventListener('submit', async e =
       await addDoc(collection(db, COLLECTIONS.federations), { ...data, createdAt: serverTimestamp() });
       showToast('✅ Fédération créée');
     }
+    cacheClear('dashStats');
     document.getElementById('federation-modal').classList.add('hidden');
     loadFederations();
   } catch (err) { showToast('Erreur : ' + err.message, 'error'); }
@@ -531,6 +552,7 @@ async function deleteFederation(id) {
   if (!confirm('Supprimer cette fédération ?')) return;
   try {
     await deleteDoc(doc(db, COLLECTIONS.federations, id));
+    cacheClear('dashStats');
     showToast('✅ Fédération supprimée');
     loadFederations();
   } catch (e) { showToast('Erreur suppression', 'error'); }
@@ -609,6 +631,7 @@ document.getElementById('club-form')?.addEventListener('submit', async e => {
       await addDoc(collection(db, COLLECTIONS.clubs), { ...data, createdAt: serverTimestamp() });
       showToast('✅ Club créé');
     }
+    cacheClear('dashStats');
     document.getElementById('club-modal').classList.add('hidden');
     loadClubs();
   } catch (err) { showToast('Erreur : ' + err.message, 'error'); }
@@ -672,6 +695,7 @@ async function deleteClub(id) {
   if (!confirm('Supprimer ce club ?')) return;
   try {
     await deleteDoc(doc(db, COLLECTIONS.clubs, id));
+    cacheClear('dashStats');
     showToast('✅ Club supprimé');
     loadClubs();
   } catch (e) { showToast('Erreur suppression', 'error'); }
@@ -759,6 +783,7 @@ document.getElementById('joueur-form')?.addEventListener('submit', async e => {
       await addDoc(collection(db, COLLECTIONS.joueurs), { ...data, userId: currentUser?.uid || '', createdAt: serverTimestamp() });
       showToast('✅ Joueur enregistré');
     }
+    cacheClear('dashStats');
     document.getElementById('joueur-modal').classList.add('hidden');
     // Recharger la vue actuelle
     if (currentView === 'joueurs') loadJoueurs(null, 'list-joueurs');
@@ -787,21 +812,30 @@ async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
     }
     container.innerHTML = snapshot.docs.map(d => {
       const data = d.data();
+      const age = calcAge(data.dateNaissance);
       const statusClass = data.statut === 'Actif' ? 'badge-success' : data.statut === 'Blessé' ? 'badge-danger' : 'badge-warning';
+      const isOwner = currentUser?.uid === data.userId || currentRole === 'super-admin';
+      const avatarHtml = data.photo
+        ? `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        : `<span style="font-size:20px;">${data.genre === 'Féminin' ? '👩' : '👨'}</span>`;
       return `
         <div class="data-card">
-          <div class="card-header">
-            <h3>⚽ ${data.prenom} ${data.nom}</h3>
-            <span class="badge ${statusClass}">${data.statut}</span>
+          <div class="card-header-with-avatar">
+            <div class="card-avatar">${avatarHtml}</div>
+            <div>
+              <h3 style="font-size:15px;font-weight:700;">⚽ ${data.prenom} ${data.nom}</h3>
+              <p style="font-size:12px;color:var(--text-3);">${data.genre || '—'} · ${age ? age + ' ans' : '—'} · ${data.position || '—'}</p>
+            </div>
+            <span class="badge ${statusClass}" style="margin-left:auto;">${data.statut}</span>
           </div>
           <div class="card-content">
-            <p><strong>Position:</strong> ${data.position} · <strong>Genre:</strong> ${data.genre || '—'}</p>
-            <p><strong>Nationalité:</strong> ${data.nationalité}</p>
-            <p><strong>Naissance:</strong> ${data.dateNaissance || '—'}</p>
+            <p><strong>Nationalité :</strong> ${data.nationalité || data.nationalite || '—'}</p>
+            <p><strong>Naissance :</strong> ${data.dateNaissance || '—'} ${age ? `(${age} ans)` : ''}</p>
+            ${data.telephone ? `<p><strong>📞 Tél :</strong> <a href="tel:${data.telephone}" style="color:var(--green);font-weight:600;">${data.telephone}</a></p>` : ''}
           </div>
           <div class="card-actions">
-            <button class="btn-small" onclick="editJoueur('${d.id}')">✏️ Éditer</button>
-            <button class="btn-small btn-danger" onclick="deleteJoueur('${d.id}')">🗑️ Supprimer</button>
+            ${isOwner ? `<button class="btn-small" onclick="editJoueur('${d.id}')">✏️ Éditer</button>` : ''}
+            ${currentRole === 'super-admin' ? `<button class="btn-small btn-danger" onclick="deleteJoueur('${d.id}')">🗑️ Supprimer</button>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -846,6 +880,7 @@ async function deleteJoueur(id) {
   if (!confirm('Supprimer ce joueur ?')) return;
   try {
     await deleteDoc(doc(db, COLLECTIONS.joueurs, id));
+    cacheClear('dashStats');
     showToast('✅ Joueur supprimé');
     if (currentView === 'joueurs') loadJoueurs(null, 'list-joueurs');
     else if (currentView === 'féminin') loadJoueurs('Féminin', 'list-féminin');
@@ -894,6 +929,7 @@ document.getElementById('arbitre-form')?.addEventListener('submit', async e => {
       await addDoc(collection(db, COLLECTIONS.arbitres), { ...data, createdAt: serverTimestamp() });
       showToast('✅ Arbitre enregistré');
     }
+    cacheClear('dashStats');
     document.getElementById('arbitre-modal').classList.add('hidden');
     loadArbitres();
   } catch (err) { showToast('Erreur : ' + err.message, 'error'); }
@@ -983,6 +1019,7 @@ async function deleteArbitre(id) {
   if (!confirm('Supprimer cet arbitre ?')) return;
   try {
     await deleteDoc(doc(db, COLLECTIONS.arbitres, id));
+    cacheClear('dashStats');
     showToast('✅ Arbitre supprimé');
     loadArbitres();
   } catch (e) { showToast('Erreur suppression', 'error'); }
@@ -1352,14 +1389,20 @@ document.getElementById('footer-login-link')?.addEventListener('click', e => {
   document.getElementById('auth-modal').classList.remove('hidden');
 });
 
-// Splash screen auto-hide
-window.addEventListener('load', () => {
+// ─── Splash screen — masquage robuste ────────────────────────
+// Le splash se ferme dès que onAuthStateChanged répond,
+// ou au plus tard après 5 s (garde-fou contre connexion lente / erreur Firebase).
+let _splashDone = false;
+function hideSplash() {
+  if (_splashDone) return;
+  _splashDone = true;
   const splash = document.getElementById('splash-screen');
-  if (splash) {
-    setTimeout(() => {
-      if (!currentUser) splash.classList.add('hidden');
-    }, 2500);
-  }
+  if (splash) splash.classList.add('hidden');
+}
+
+// Garde-fou absolu : peu importe ce qui se passe, le splash disparaît après 5 s
+window.addEventListener('load', () => {
+  setTimeout(hideSplash, 5000);
 });
 
 // ═════════════════════════════════════════════════════════════
@@ -1633,8 +1676,7 @@ document.getElementById('calendrier-modal-close')?.addEventListener('click', () 
 })();
 
 // Appel updateNotifBadge après connexion
-const _origShowDash = window._origShowDash;
-setTimeout(() => { updateNotifBadge(); }, 3000);
+setTimeout(() => { if (currentUser) updateNotifBadge(); }, 3000);
 
 
 // ═════════════════════════════════════════════════════════════
@@ -2017,54 +2059,5 @@ async function loadSupporterProfil() {
 }
 
 // Mise à jour photo dans les fiches joueur (afficher avec age dans la liste)
-// Surcharge loadJoueurs pour inclure photo et âge
-const _origLoadJoueurs = loadJoueurs;
-async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
-  try {
-    let qry;
-    if (filter === 'Féminin' || filter === 'Amateur') {
-      qry = query(collection(db, COLLECTIONS.joueurs), where('genre', '==', filter));
-    } else {
-      qry = query(collection(db, COLLECTIONS.joueurs), orderBy('createdAt', 'desc'));
-    }
-    const snapshot = await getDocs(qry);
-    if (snapshot.empty) {
-      container.innerHTML = `<div class="empty-state">⚽ Aucun joueur enregistré</div>`;
-      return;
-    }
-    container.innerHTML = snapshot.docs.map(d => {
-      const data = d.data();
-      const age = calcAge(data.dateNaissance);
-      const statusClass = data.statut === 'Actif' ? '' : data.statut === 'Blessé' ? 'badge-red' : 'badge-yellow';
-      const isOwner = currentUser?.uid === data.userId || currentRole === 'super-admin';
-      const avatarHtml = data.photo
-        ? `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
-        : `<span style="font-size:20px;">${data.genre === 'Féminin' ? '👩' : '👨'}</span>`;
-      return `
-        <div class="data-card">
-          <div class="card-header-with-avatar">
-            <div class="card-avatar">${avatarHtml}</div>
-            <div>
-              <h3 style="font-size:15px;font-weight:700;">⚽ ${data.prenom} ${data.nom}</h3>
-              <p style="font-size:12px;color:var(--text-3);">${data.genre || '—'} · ${age ? age + ' ans' : '—'} · ${data.position || '—'}</p>
-            </div>
-            <span class="badge ${statusClass}" style="margin-left:auto;">${data.statut}</span>
-          </div>
-          <div class="card-content">
-            <p><strong>Nationalité :</strong> ${data.nationalité || data.nationalite || '—'}</p>
-            <p><strong>Naissance :</strong> ${data.dateNaissance || '—'} ${age ? `(${age} ans)` : ''}</p>
-            ${data.telephone ? `<p><strong>📞 Tél :</strong> <a href="tel:${data.telephone}" style="color:var(--green);font-weight:600;">${data.telephone}</a></p>` : ''}
-          </div>
-          <div class="card-actions">
-            ${isOwner ? `<button class="btn-small" onclick="editJoueur('${d.id}')">✏️ Éditer</button>` : ''}
-            ${currentRole === 'super-admin' ? `<button class="btn-small btn-danger" onclick="deleteJoueur('${d.id}')">🗑️ Supprimer</button>` : ''}
-          </div>
-        </div>`;
-    }).join('');
-  } catch (err) {
-    container.innerHTML = `<div class="empty-state error-state">❌ ${err.message}</div>`;
-  }
-}
+// NOTE : loadJoueurs est défini une seule fois dans le fichier (voir section GESTION DES JOUEURS).
+// La version ci-dessous était un doublon supprimé pour éviter le conflit.
