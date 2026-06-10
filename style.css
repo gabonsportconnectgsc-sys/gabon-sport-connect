@@ -1241,3 +1241,122 @@ img { max-width: 100%; }
   background: #eff6ff; color: #1d4ed8;
 }
 .assoc-badge.non { background: #f3f4f6; color: #6b7280; }
+
+/* ════════════════════════════════════════════════════════
+   AMÉLIORATIONS v4.0
+════════════════════════════════════════════════════════ */
+
+/* Footer privacy link */
+.footer-privacy {
+  text-align: center;
+  margin-top: 12px;
+  padding-bottom: 8px;
+}
+.footer-privacy a {
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Confidentialité modale */
+.confidentialite-content { font-size: 13px; line-height: 1.7; }
+.conf-section { margin-bottom: 20px; }
+.conf-section h4 {
+  font-size: 13px; font-weight: 800; color: var(--green);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+.conf-section ul { padding-left: 18px; }
+.conf-section ul li { margin-bottom: 5px; color: var(--text-2); }
+.conf-section p { color: var(--text-2); margin-bottom: 4px; }
+
+/* ─── Liste compacte joueurs ─── */
+.joueurs-toolbar {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.joueurs-list-compact { display: flex; flex-direction: column; gap: 0; }
+
+.joueur-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+  border-radius: 0;
+  font-size: 13px;
+}
+.joueur-row:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.joueur-row:last-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm); border-bottom: none; }
+.joueur-row:hover { background: rgba(0,158,96,.06); }
+
+.joueur-row-nom { flex: 2; font-weight: 500; color: var(--text); }
+.joueur-row-nom strong { font-weight: 700; }
+.joueur-row-club { flex: 2; color: var(--text-2); font-size: 12px; }
+.joueur-row-pos { flex: 1; color: var(--blue); font-size: 12px; font-weight: 600; }
+.joueur-row-age { flex: 0 0 50px; text-align: right; color: var(--text-3); font-size: 12px; }
+
+/* Filtres déployables */
+.joueurs-filtres {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: flex-start;
+  padding: 12px; background: var(--bg);
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.filtre-section { display: flex; flex-direction: column; gap: 4px; }
+.filtre-toggle {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--text); transition: all .15s;
+}
+.filtre-toggle:hover { border-color: var(--green); color: var(--green); }
+.filtre-body {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 6px; max-width: 200px;
+}
+.filtre-checkbox {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 6px; padding: 2px 8px;
+  white-space: nowrap;
+}
+.filtre-checkbox input { accent-color: var(--green); }
+
+/* Fiche joueur modale */
+.fiche-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) { .fiche-grid { grid-template-columns: 1fr; } }
+.fiche-section {
+  background: var(--bg); border-radius: var(--radius-sm);
+  padding: 12px; font-size: 13px;
+}
+.fiche-section h5 {
+  font-size: 12px; font-weight: 800; color: var(--green);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+.fiche-section p { margin-bottom: 4px; color: var(--text-2); }
+
+/* Dashboard admin extras */
+.admin-dashboard-extra { margin-top: 0; }
+.dash-alert {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.3); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 13px;
+}
+.dash-alert:hover { background: rgba(245,158,11,.15); }
+
+/* Profile details grid */
+.profile-public-details {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; margin-top: 12px; font-size: 13px;
+}
+.profile-public-details div { color: var(--text-2); }

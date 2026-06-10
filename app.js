@@ -213,6 +213,16 @@ function applyRoleUI() {
   });
 }
 
+// ─── Contrôle accès admin ─────────────────────────────────────
+function checkAdminAccess() {
+  if (currentRole !== 'super-admin') {
+    showToast('🚫 Accès réservé aux administrateurs', 'danger');
+    navigateTo('accueil');
+    return false;
+  }
+  return true;
+}
+
 function getRoleLabel(role) {
   const labels = {
     'super-admin': '👑 Super Admin',
@@ -351,6 +361,10 @@ function navigateTo(view) {
   document.getElementById('content-title').textContent = titles[view] || 'Tableau de bord';
 
   if (view === 'accueil') loadDashboardStats();
+  else if (view === 'rapports') {
+    if (!checkAdminAccess()) return;
+    // rapports already shown above
+  }
   else if (view === 'fédérations') loadFederations();
   else if (view === 'clubs') loadClubs();
   else if (view === 'joueurs') loadJoueurs(null, 'list-joueurs');
@@ -400,31 +414,345 @@ function cacheClear(key) { if (key) delete _cache[key]; else Object.keys(_cache)
 // ─── Dashboard Stats ─────────────────────────────────────────
 async function loadDashboardStats() {
   try {
-    // Utiliser le cache si disponible (TTL 60 s)
-    let stats = cacheGet('dashStats');
-    if (!stats) {
-      const [fedSnap, clubSnap, jouSnap, arbSnap] = await Promise.all([
-        getDocs(collection(db, COLLECTIONS.federations)),
-        getDocs(collection(db, COLLECTIONS.clubs)),
-        getDocs(collection(db, COLLECTIONS.joueurs)),
-        getDocs(collection(db, COLLECTIONS.arbitres))
-      ]);
-      stats = { fed: fedSnap.size, club: clubSnap.size, jou: jouSnap.size, arb: arbSnap.size };
-      cacheSet('dashStats', stats);
+    // Dashboard selon le rôle
+    if (currentRole === 'super-admin') {
+      await loadDashboardAdmin();
+    } else if (currentRole === 'joueur') {
+      await loadDashboardJoueur();
+    } else if (currentRole === 'club') {
+      await loadDashboardClub();
+    } else if (currentRole === 'arbitre') {
+      await loadDashboardArbitre();
+    } else if (currentRole === 'fédération') {
+      await loadDashboardFederation();
+    } else if (currentRole === 'supporter') {
+      await loadDashboardSupporter();
+    } else {
+      await loadDashboardDefault();
     }
-
-    const fedEl = document.getElementById('stat-fédérations');
-    const clubEl = document.getElementById('stat-clubs');
-    const jouEl = document.getElementById('stat-joueurs');
-    const arbEl = document.getElementById('stat-arbitres');
-
-    if (fedEl) fedEl.textContent = stats.fed;
-    if (clubEl) clubEl.textContent = stats.club;
-    if (jouEl) jouEl.textContent = stats.jou;
-    if (arbEl) arbEl.textContent = stats.arb;
   } catch (e) {
     console.error('Erreur stats', e);
   }
+}
+
+async function loadDashboardAdmin() {
+  // Utiliser le cache si disponible
+  let stats = cacheGet('dashStats');
+  if (!stats) {
+    const [fedSnap, clubSnap, jouSnap, arbSnap, compSnap, supSnap] = await Promise.all([
+      getDocs(collection(db, COLLECTIONS.federations)),
+      getDocs(collection(db, COLLECTIONS.clubs)),
+      getDocs(collection(db, COLLECTIONS.joueurs)),
+      getDocs(collection(db, COLLECTIONS.arbitres)),
+      getDocs(collection(db, COLLECTIONS.competences)),
+      getDocs(collection(db, COLLECTIONS.supporters))
+    ]);
+    stats = { fed: fedSnap.size, club: clubSnap.size, jou: jouSnap.size, arb: arbSnap.size, comp: compSnap.size, sup: supSnap.size };
+    cacheSet('dashStats', stats);
+  }
+  // Mettre à jour les stats cards existantes
+  const fedEl = document.getElementById('stat-fédérations');
+  const clubEl = document.getElementById('stat-clubs');
+  const jouEl = document.getElementById('stat-joueurs');
+  const arbEl = document.getElementById('stat-arbitres');
+  if (fedEl) fedEl.textContent = stats.fed;
+  if (clubEl) clubEl.textContent = stats.club;
+  if (jouEl) jouEl.textContent = stats.jou;
+  if (arbEl) arbEl.textContent = stats.arb;
+
+  // Enrichir le dashboard accueil
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  const existingExtra = view.querySelector('.admin-dashboard-extra');
+  if (existingExtra) existingExtra.remove();
+
+  // Récupérer 10 derniers enregistrements
+  let dernierInscrits = '';
+  try {
+    const recentsSnap = await getDocs(query(collection(db, COLLECTIONS.joueurs), orderBy('createdAt', 'desc')));
+    const recents = recentsSnap.docs.slice(0, 10);
+    if (recents.length) {
+      dernierInscrits = recents.map(d => {
+        const r = d.data();
+        const ts = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR') : '—';
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <span>⚽ ${r.prenom} ${r.nom}</span><span style="color:var(--text-3);">${ts}</span>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {}
+
+  // Vérifier notifications en attente
+  let notifAlerts = '';
+  try {
+    const notifSnap = await getDocs(query(collection(db, COLLECTIONS.notifications), where('statut','==','en_attente')));
+    if (notifSnap.size > 0) {
+      notifAlerts = `<div class="dash-alert" onclick="ouvrirNotifications()">
+        <span>⚠️ ${notifSnap.size} doublon(s) en attente de validation</span>
+        <span style="color:var(--green);font-weight:600;">Voir →</span>
+      </div>`;
+    }
+  } catch(e) {}
+
+  const extra = document.createElement('div');
+  extra.className = 'admin-dashboard-extra';
+  extra.innerHTML = `
+    <div class="welcome-card" style="margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">📊 STATISTIQUES GLOBALES</h3>
+      <div class="dashboard-stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card" data-nav="compétitions" title="Voir les compétitions" style="cursor:pointer;" onclick="navigateTo('compétitions')">
+          <div class="stat-value">${stats.comp}</div>
+          <div class="stat-label">Compétitions →</div>
+        </div>
+        <div class="stat-card" title="Supporters">
+          <div class="stat-value">${stats.sup}</div>
+          <div class="stat-label">Supporters</div>
+        </div>
+        <div class="stat-card" title="Total">
+          <div class="stat-value">${stats.fed + stats.club + stats.jou + stats.arb}</div>
+          <div class="stat-label">Total entités</div>
+        </div>
+      </div>
+    </div>
+    ${notifAlerts ? `<div class="welcome-card" style="margin-top:12px;"><h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">🔔 ALERTES</h3>${notifAlerts}</div>` : ''}
+    <div class="welcome-card" style="margin-top:12px;">
+      <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">⚡ ACCÈS RAPIDE</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="btn-secondary" style="font-size:12px;" onclick="document.getElementById('btn-add-federation').click();navigateTo('fédérations')">➕ Fédération</button>
+        <button class="btn-secondary" style="font-size:12px;" onclick="document.getElementById('btn-add-club').click();navigateTo('clubs')">➕ Club</button>
+        <button class="btn-secondary" style="font-size:12px;" onclick="document.getElementById('btn-add-joueur').click();navigateTo('joueurs')">➕ Joueur</button>
+        <button class="btn-secondary" style="font-size:12px;" onclick="document.getElementById('btn-add-arbitre').click();navigateTo('arbitres')">➕ Arbitre</button>
+        <button class="btn-secondary" style="font-size:12px;" onclick="document.getElementById('btn-add-comp').click();navigateTo('compétitions')">➕ Compétition</button>
+        <button class="btn-primary" style="font-size:12px;" onclick="navigateTo('rapports')">📊 Rapports</button>
+      </div>
+    </div>
+    ${dernierInscrits ? `<div class="welcome-card" style="margin-top:12px;">
+      <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">📜 DERNIÈRES INSCRIPTIONS</h3>
+      ${dernierInscrits}
+    </div>` : ''}`;
+  view.appendChild(extra);
+  await updateNotifBadge();
+}
+
+async function loadDashboardJoueur() {
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  view.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.joueurs), where('userId','==', currentUser.uid)));
+    if (snap.empty) {
+      view.innerHTML = `<div class="welcome-card">
+        <h2>Bienvenue ${currentUserData?.nom || ''} ⚽</h2>
+        <p style="margin-bottom:16px;">Votre profil joueur n'est pas encore créé.</p>
+        <button class="btn-primary" onclick="document.getElementById('btn-add-joueur').click();navigateTo('joueurs')">➕ Créer mon profil joueur</button>
+      </div>`;
+      return;
+    }
+    const d = snap.docs[0].data();
+    const age = calcAge(d.dateNaissance);
+    const clubNom = d.club ? await getClubNom(d.club) : '—';
+    view.innerHTML = `
+      <div class="welcome-card">
+        <h2>👤 MON PROFIL</h2>
+        <div class="profile-public-details">
+          <div><b>Nom :</b> ${d.nom} ${d.prenom}</div>
+          <div><b>Club :</b> ${clubNom}</div>
+          <div><b>Position :</b> ${d.position || '—'}</div>
+          <div><b>Âge :</b> ${age ? age + ' ans' : '—'}</div>
+        </div>
+        <button class="btn-primary" style="margin-top:12px;width:100%;" onclick="editJoueur('${snap.docs[0].id}')">✏️ Modifier mon profil</button>
+      </div>
+      <div class="welcome-card" style="margin-top:16px;">
+        <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">⚽ MES STATISTIQUES</h3>
+        <div class="dashboard-stats">
+          <div class="stat-card"><div class="stat-value">${d.matchsJoues ?? 0}</div><div class="stat-label">Matchs</div></div>
+          <div class="stat-card"><div class="stat-value">${d.buts ?? 0}</div><div class="stat-label">Buts</div></div>
+          <div class="stat-card"><div class="stat-value">${d.passes ?? 0}</div><div class="stat-label">Passes</div></div>
+          <div class="stat-card"><div class="stat-value">${d.cartonsJ ?? 0}🟡 / ${d.cartonsR ?? 0}🔴</div><div class="stat-label">Cartons</div></div>
+        </div>
+        ${d.appreciation ? `<p style="margin-top:12px;font-size:14px;"><b>Appréciation :</b> ${d.appreciation}</p>` : ''}
+      </div>`;
+  } catch(e) {
+    view.innerHTML = `<div class="welcome-card"><p>Erreur chargement profil.</p></div>`;
+  }
+}
+
+async function loadDashboardClub() {
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  view.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const clubSnap = await getDocs(query(collection(db, COLLECTIONS.clubs), where('userId','==', currentUser.uid)));
+    const club = clubSnap.empty ? null : { id: clubSnap.docs[0].id, ...clubSnap.docs[0].data() };
+    const clubNom = club?.nom || currentUserData?.nom || 'Mon club';
+    const clubId = club?.id || '';
+
+    const [joueursSnap, compsSnap] = await Promise.all([
+      clubId ? getDocs(query(collection(db, COLLECTIONS.joueurs), where('club','==', clubId))) : Promise.resolve({size:0}),
+      clubId ? getDocs(query(collection(db, COLLECTIONS.competences), where('fédération','!=',''))) : Promise.resolve({docs:[]})
+    ]);
+
+    view.innerHTML = `
+      <div class="welcome-card">
+        <h2>🏟️ ${clubNom}</h2>
+        <div class="dashboard-stats">
+          <div class="stat-card" onclick="navigateTo('joueurs')" style="cursor:pointer;"><div class="stat-value">${joueursSnap.size}</div><div class="stat-label">Joueurs →</div></div>
+          <div class="stat-card" onclick="navigateTo('compétitions')" style="cursor:pointer;"><div class="stat-value">${compsSnap.docs?.length ?? 0}</div><div class="stat-label">Compétitions →</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
+          <button class="btn-secondary" onclick="document.getElementById('btn-add-joueur').click();navigateTo('joueurs')">➕ Joueur</button>
+          <button class="btn-secondary" onclick="document.getElementById('btn-add-comp').click();navigateTo('compétitions')">➕ Compétition</button>
+          ${club ? `<button class="btn-primary" style="grid-column:1/-1;" onclick="editClub('${club.id}')">👤 Modifier mon club</button>` : ''}
+        </div>
+      </div>`;
+  } catch(e) {
+    view.innerHTML = `<div class="welcome-card"><p>Erreur chargement.</p></div>`;
+  }
+}
+
+async function loadDashboardArbitre() {
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  view.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.arbitres), where('userId','==', currentUser.uid)));
+    if (snap.empty) {
+      view.innerHTML = `<div class="welcome-card">
+        <h2>Bienvenue 👨‍⚖️</h2>
+        <p style="margin-bottom:16px;">Votre fiche arbitre n'est pas encore créée.</p>
+        <button class="btn-primary" onclick="document.getElementById('btn-add-arbitre').click();navigateTo('arbitres')">➕ Créer ma fiche</button>
+      </div>`;
+      return;
+    }
+    const d = snap.docs[0].data();
+    const matchsSnap = await getDocs(query(collection(db, COLLECTIONS.matchs)));
+    const mesMatchs = matchsSnap.docs.filter(m => m.data().arbitreId === snap.docs[0].id);
+    view.innerHTML = `
+      <div class="welcome-card">
+        <h2>👨‍⚖️ MON PROFIL</h2>
+        <div class="profile-public-details">
+          <div><b>Nom :</b> ${d.nom} ${d.prenom}</div>
+          <div><b>Grade national :</b> ${d.grade || '—'}</div>
+          <div><b>Statut :</b> ${d.statut || '—'}</div>
+        </div>
+        <button class="btn-primary" style="margin-top:12px;width:100%;" onclick="editArbitre('${snap.docs[0].id}')">✏️ Modifier mon profil</button>
+      </div>
+      <div class="welcome-card" style="margin-top:16px;">
+        <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">📊 MES STATISTIQUES</h3>
+        <div class="dashboard-stats">
+          <div class="stat-card"><div class="stat-value">${mesMatchs.length}</div><div class="stat-label">Matchs dirigés</div></div>
+        </div>
+      </div>`;
+  } catch(e) {
+    view.innerHTML = `<div class="welcome-card"><p>Erreur chargement.</p></div>`;
+  }
+}
+
+async function loadDashboardFederation() {
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  view.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const fedSnap = await getDocs(query(collection(db, COLLECTIONS.federations), where('userId','==', currentUser.uid)));
+    const fed = fedSnap.empty ? null : { id: fedSnap.docs[0].id, ...fedSnap.docs[0].data() };
+    const fedNom = fed?.nom || currentUserData?.nom || 'Ma Fédération';
+    const fedId = fed?.id || '';
+
+    const [clubsSnap, compsSnap, joueursSnap, arbSnap] = await Promise.all([
+      fedId ? getDocs(query(collection(db, COLLECTIONS.clubs), where('fédération','==',fedId))) : getDocs(collection(db, COLLECTIONS.clubs)),
+      fedId ? getDocs(query(collection(db, COLLECTIONS.competences), where('fédération','==',fedId))) : getDocs(collection(db, COLLECTIONS.competences)),
+      getDocs(collection(db, COLLECTIONS.joueurs)),
+      getDocs(collection(db, COLLECTIONS.arbitres))
+    ]);
+    const actives = compsSnap.docs.filter(d => d.data().statut === 'En cours').length;
+    const archivees = compsSnap.docs.filter(d => d.data().statut === 'Terminée').length;
+
+    view.innerHTML = `
+      <div class="welcome-card">
+        <h2>🏛️ ${fedNom}</h2>
+        <div class="dashboard-stats">
+          <div class="stat-card" onclick="navigateTo('clubs')" style="cursor:pointer;"><div class="stat-value">${clubsSnap.size}</div><div class="stat-label">Clubs affiliés →</div></div>
+          <div class="stat-card" onclick="navigateTo('compétitions')" style="cursor:pointer;"><div class="stat-value">${actives}</div><div class="stat-label">Compétitions actives →</div></div>
+          <div class="stat-card" onclick="navigateTo('joueurs')" style="cursor:pointer;"><div class="stat-value">${joueursSnap.size}</div><div class="stat-label">Joueurs →</div></div>
+          <div class="stat-card" onclick="navigateTo('arbitres')" style="cursor:pointer;"><div class="stat-value">${arbSnap.size}</div><div class="stat-label">Arbitres →</div></div>
+        </div>
+        ${archivees > 0 ? `<p style="margin-top:8px;font-size:13px;color:var(--text-3);">Compétitions archivées : ${archivees}</p>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
+          <button class="btn-secondary" onclick="navigateTo('clubs')">🏟️ Tous les clubs</button>
+          <button class="btn-secondary" onclick="navigateTo('compétitions')">🏆 Calendrier</button>
+        </div>
+      </div>`;
+  } catch(e) {
+    view.innerHTML = `<div class="welcome-card"><p>Erreur chargement.</p></div>`;
+  }
+}
+
+async function loadDashboardSupporter() {
+  const view = document.getElementById('view-accueil');
+  if (!view) return;
+  view.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.supporters), where('userId','==', currentUser.uid)));
+    const profil = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+    const newsSnap = await getDocs(query(collection(db, COLLECTIONS.actualites), orderBy('createdAt','desc')));
+    const recentsNews = newsSnap.docs.slice(0, 5);
+
+    view.innerHTML = `
+      <div class="welcome-card">
+        <h2>⚽ MON PROFIL FAN</h2>
+        ${profil ? `
+        <div class="profile-public-details">
+          <div><b>Nom :</b> ${profil.nom} ${profil.prenom}</div>
+          <div><b>Club favori :</b> ${profil.clubFan || '—'}</div>
+        </div>
+        <button class="btn-primary" style="margin-top:12px;width:100%;" onclick="editSupporter('${profil.id}')">✏️ Modifier mon profil</button>
+        ` : `<p style="margin-bottom:16px;">Profil non créé.</p>
+        <button class="btn-primary" onclick="document.getElementById('btn-add-supporter').click()">➕ Créer mon profil</button>`}
+      </div>
+      ${recentsNews.length ? `<div class="welcome-card" style="margin-top:16px;">
+        <h3 style="font-size:14px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:12px;">📰 ACTUALITÉS RÉCENTES</h3>
+        ${recentsNews.map(d => {
+          const n = d.data();
+          return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:13px;font-weight:600;">${n.titre}</div>
+            <div style="font-size:11px;color:var(--text-3);">${n.categorie}</div>
+          </div>`;
+        }).join('')}
+        <button class="btn-secondary" style="margin-top:12px;width:100%;" onclick="navigateTo('actualités')">Voir toutes les actualités →</button>
+      </div>` : ''}`;
+  } catch(e) {
+    view.innerHTML = `<div class="welcome-card"><p>Erreur chargement.</p></div>`;
+  }
+}
+
+async function loadDashboardDefault() {
+  // Garder le dashboard par défaut avec les stats de base
+  let stats = cacheGet('dashStats');
+  if (!stats) {
+    const [fedSnap, clubSnap, jouSnap, arbSnap] = await Promise.all([
+      getDocs(collection(db, COLLECTIONS.federations)),
+      getDocs(collection(db, COLLECTIONS.clubs)),
+      getDocs(collection(db, COLLECTIONS.joueurs)),
+      getDocs(collection(db, COLLECTIONS.arbitres))
+    ]);
+    stats = { fed: fedSnap.size, club: clubSnap.size, jou: jouSnap.size, arb: arbSnap.size };
+    cacheSet('dashStats', stats);
+  }
+  const fedEl = document.getElementById('stat-fédérations');
+  const clubEl = document.getElementById('stat-clubs');
+  const jouEl = document.getElementById('stat-joueurs');
+  const arbEl = document.getElementById('stat-arbitres');
+  if (fedEl) fedEl.textContent = stats.fed;
+  if (clubEl) clubEl.textContent = stats.club;
+  if (jouEl) jouEl.textContent = stats.jou;
+  if (arbEl) arbEl.textContent = stats.arb;
+}
+
+async function getClubNom(clubId) {
+  try {
+    const snap = await getDoc(doc(db, COLLECTIONS.clubs, clubId));
+    return snap.exists() ? snap.data().nom : '—';
+  } catch(e) { return '—'; }
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -772,6 +1100,22 @@ document.getElementById('joueur-form')?.addEventListener('submit', async e => {
     statut: document.getElementById('joueur-statut').value,
     genre: document.getElementById('joueur-genre')?.value || 'Masculin',
     telephone: document.getElementById('joueur-telephone')?.value.trim() || '',
+    licence: document.getElementById('joueur-licence')?.value.trim() || '',
+    taille: parseInt(document.getElementById('joueur-taille')?.value) || null,
+    poids: parseInt(document.getElementById('joueur-poids')?.value) || null,
+    pied: document.getElementById('joueur-pied')?.value || 'Droit',
+    ville: document.getElementById('joueur-ville')?.value.trim() || '',
+    quartier: document.getElementById('joueur-quartier')?.value.trim() || '',
+    arrondissement: document.getElementById('joueur-arrondissement')?.value.trim() || '',
+    village: document.getElementById('joueur-village')?.value.trim() || '',
+    matchsJoues: parseInt(document.getElementById('joueur-matchs')?.value) || 0,
+    buts: parseInt(document.getElementById('joueur-buts')?.value) || 0,
+    passes: parseInt(document.getElementById('joueur-passes')?.value) || 0,
+    cartonsJ: parseInt(document.getElementById('joueur-cartons-j')?.value) || 0,
+    cartonsR: parseInt(document.getElementById('joueur-cartons-r')?.value) || 0,
+    appreciation: document.getElementById('joueur-appreciation')?.value || '',
+    commentaire: document.getElementById('joueur-commentaire')?.value.trim() || '',
+    bio: document.getElementById('joueur-bio')?.value.trim() || '',
     updatedAt: serverTimestamp()
   };
   if (photoInput?._base64) data.photo = photoInput._base64;
@@ -792,14 +1136,172 @@ document.getElementById('joueur-form')?.addEventListener('submit', async e => {
   } catch (err) { showToast('Erreur : ' + err.message, 'error'); }
 });
 
+// ─── État filtres joueurs ─────────────────────────────────────
+let _joueursData = [];
+let _joueursSort = 'az';
+let _joueursFiltres = { discipline: [], club: [], ville: [], quartier: [], arrondissement: [] };
+
+window.toggleFiltre = function(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden');
+};
+
+window.sortJoueurs = function(order) {
+  _joueursSort = order;
+  renderJoueursList();
+};
+
+window.resetFiltresJoueurs = function() {
+  _joueursFiltres = { discipline: [], club: [], ville: [], quartier: [], arrondissement: [] };
+  document.querySelectorAll('#joueurs-filtres input[type=checkbox]').forEach(cb => cb.checked = false);
+  renderJoueursList();
+};
+
+window.ouvrirFicheJoueur = function(id) {
+  const joueur = _joueursData.find(j => j.id === id);
+  if (!joueur) return;
+  const d = joueur.data;
+  const age = calcAge(d.dateNaissance);
+  const body = document.getElementById('fiche-joueur-body');
+  if (!body) return;
+  const avatarHtml = d.photo
+    ? `<img src="${d.photo}" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:3px solid var(--green);display:block;margin:0 auto 12px;" />`
+    : `<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;">${d.genre === 'Féminin' ? '👩' : '👨'}</div>`;
+  body.innerHTML = `
+    <div style="text-align:center;margin-bottom:16px;">${avatarHtml}
+      <div style="font-size:18px;font-weight:800;">${d.prenom} ${d.nom}</div>
+      <div style="font-size:13px;color:var(--text-3);">${d.position || '—'} · ${d.statut || '—'}</div>
+    </div>
+    <div class="fiche-grid">
+      <div class="fiche-section"><h5>🪪 Identité</h5>
+        <p><b>Nationalité :</b> ${d.nationalité || d.nationalite || '—'}</p>
+        <p><b>Date naissance :</b> ${d.dateNaissance || '—'}${age ? ` (${age} ans)` : ''}</p>
+        <p><b>Genre :</b> ${d.genre || '—'}</p>
+        ${d.telephone ? `<p><b>📞 Tél :</b> <a href="tel:${d.telephone}" style="color:var(--green);">${d.telephone}</a></p>` : ''}
+        ${d.licence ? `<p><b>N° Licence :</b> ${d.licence}</p>` : ''}
+      </div>
+      <div class="fiche-section"><h5>⚽ Profil sportif</h5>
+        <p><b>Club :</b> ${joueur.clubNom || d.club || '—'}</p>
+        <p><b>Position :</b> ${d.position || '—'}</p>
+        <p><b>Pied fort :</b> ${d.pied || '—'}</p>
+        <p><b>Niveau :</b> ${d.niveau || '—'}</p>
+        ${d.taille ? `<p><b>Taille :</b> ${d.taille} cm</p>` : ''}
+        ${d.poids ? `<p><b>Poids :</b> ${d.poids} kg</p>` : ''}
+      </div>
+      <div class="fiche-section"><h5>📍 Localisation</h5>
+        <p><b>Ville :</b> ${d.ville || '—'}</p>
+        <p><b>Quartier :</b> ${d.quartier || '—'}</p>
+        <p><b>Arrondissement :</b> ${d.arrondissement || '—'}</p>
+        <p><b>Village :</b> ${d.village || '—'}</p>
+      </div>
+      <div class="fiche-section"><h5>📊 Statistiques</h5>
+        <p><b>Matchs joués :</b> ${d.matchsJoues ?? '—'}</p>
+        <p><b>Buts :</b> ${d.buts ?? '—'}</p>
+        <p><b>Passes décisives :</b> ${d.passes ?? '—'}</p>
+        <p><b>Cartons 🟡 :</b> ${d.cartonsJ ?? '—'} &nbsp; 🔴 : ${d.cartonsR ?? '—'}</p>
+      </div>
+      ${d.appreciation ? `<div class="fiche-section" style="grid-column:1/-1"><h5>🏅 Évaluation</h5>
+        <p><b>Appréciation :</b> ${d.appreciation}</p>
+        ${d.commentaire ? `<p><b>Commentaire :</b> ${d.commentaire}</p>` : ''}
+      </div>` : ''}
+      ${d.bio ? `<div class="fiche-section" style="grid-column:1/-1"><h5>📝 Biographie</h5><p style="font-style:italic;">"${d.bio}"</p></div>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      ${(currentUser?.uid === joueur.data.userId || currentRole === 'super-admin') ? `<button class="btn-save" style="flex:1;" onclick="document.getElementById('fiche-joueur-modal').classList.add('hidden');editJoueur('${id}')">✏️ Modifier</button>` : ''}
+      ${currentRole === 'super-admin' ? `<button class="btn-cancel" style="flex:1;background:var(--danger);color:white;" onclick="document.getElementById('fiche-joueur-modal').classList.add('hidden');deleteJoueur('${id}')">🗑️ Supprimer</button>` : ''}
+    </div>`;
+  document.getElementById('fiche-joueur-modal').classList.remove('hidden');
+};
+
+document.getElementById('fiche-joueur-close')?.addEventListener('click', () => document.getElementById('fiche-joueur-modal').classList.add('hidden'));
+
+function buildFiltresUI(joueurs) {
+  const disciplines = [...new Set(joueurs.map(j => j.data.position).filter(Boolean))];
+  const clubs = [...new Set(joueurs.map(j => j.clubNom || j.data.club).filter(Boolean))];
+  const villes = [...new Set(joueurs.map(j => j.data.ville).filter(Boolean))];
+  const quartiers = [...new Set(joueurs.map(j => j.data.quartier).filter(Boolean))];
+  const arrondissements = [...new Set(joueurs.map(j => j.data.arrondissement).filter(Boolean))];
+
+  function buildCheckboxes(containerId, values, filtreKey) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = values.map(v => `
+      <label class="filtre-checkbox">
+        <input type="checkbox" value="${v}" onchange="onFiltreChange('${filtreKey}',this)" ${_joueursFiltres[filtreKey].includes(v) ? 'checked' : ''} />
+        ${v}
+      </label>`).join('');
+  }
+  buildCheckboxes('filtre-discipline', disciplines, 'discipline');
+  buildCheckboxes('filtre-club', clubs, 'club');
+  buildCheckboxes('filtre-ville', villes, 'ville');
+  buildCheckboxes('filtre-quartier', quartiers, 'quartier');
+  buildCheckboxes('filtre-arrondissement', arrondissements, 'arrondissement');
+}
+
+window.onFiltreChange = function(key, checkbox) {
+  const val = checkbox.value;
+  if (checkbox.checked) {
+    if (!_joueursFiltres[key].includes(val)) _joueursFiltres[key].push(val);
+  } else {
+    _joueursFiltres[key] = _joueursFiltres[key].filter(v => v !== val);
+  }
+  renderJoueursList();
+};
+
+function renderJoueursList() {
+  const container = document.getElementById('list-joueurs');
+  if (!container) return;
+  const search = (document.getElementById('joueur-search')?.value || '').toLowerCase().trim();
+
+  let filtered = _joueursData.filter(j => {
+    const d = j.data;
+    // Search filter
+    if (search) {
+      const fullName = `${d.nom} ${d.prenom}`.toLowerCase();
+      if (!fullName.includes(search)) return false;
+    }
+    // Discipline (position)
+    if (_joueursFiltres.discipline.length && !_joueursFiltres.discipline.includes(d.position)) return false;
+    // Club
+    if (_joueursFiltres.club.length && !_joueursFiltres.club.includes(j.clubNom || d.club)) return false;
+    // Ville
+    if (_joueursFiltres.ville.length && !_joueursFiltres.ville.includes(d.ville)) return false;
+    // Quartier
+    if (_joueursFiltres.quartier.length && !_joueursFiltres.quartier.includes(d.quartier)) return false;
+    // Arrondissement
+    if (_joueursFiltres.arrondissement.length && !_joueursFiltres.arrondissement.includes(d.arrondissement)) return false;
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    const na = (a.data.nom + ' ' + a.data.prenom).toLowerCase();
+    const nb = (b.data.nom + ' ' + b.data.prenom).toLowerCase();
+    return _joueursSort === 'az' ? na.localeCompare(nb, 'fr') : nb.localeCompare(na, 'fr');
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-state">⚽ Aucun joueur trouvé</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(j => {
+    const d = j.data;
+    const age = calcAge(d.dateNaissance);
+    return `<div class="joueur-row" onclick="ouvrirFicheJoueur('${j.id}')">
+      <span class="joueur-row-nom">${d.nom} <strong>${d.prenom}</strong></span>
+      <span class="joueur-row-club">${j.clubNom || '—'}</span>
+      <span class="joueur-row-pos">${d.position || '—'}</span>
+      <span class="joueur-row-age">${age ? age + ' ans' : '—'}</span>
+    </div>`;
+  }).join('');
+}
+
 async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
   try {
     let qry;
-    // On évite where+orderBy ensemble (nécessite index composite Firestore)
-    // On filtre côté client après récupération
     if (filter === 'Féminin' || filter === 'Amateur') {
       qry = query(collection(db, COLLECTIONS.joueurs), where('genre', '==', filter));
     } else {
@@ -810,6 +1312,34 @@ async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
       container.innerHTML = `<div class="empty-state">⚽ Aucun joueur enregistré</div>`;
       return;
     }
+
+    // Pour la vue joueurs principale, utiliser la liste compacte avec filtres
+    if (containerId === 'list-joueurs' && !filter) {
+      // Récupérer les clubs
+      const clubsSnap = await getDocs(collection(db, COLLECTIONS.clubs));
+      const clubsMap = {};
+      clubsSnap.docs.forEach(d => clubsMap[d.id] = d.data().nom);
+
+      _joueursData = snapshot.docs.map(d => ({
+        id: d.id,
+        data: d.data(),
+        clubNom: clubsMap[d.data().club] || ''
+      }));
+
+      buildFiltresUI(_joueursData);
+
+      // Search listener
+      const searchEl = document.getElementById('joueur-search');
+      if (searchEl && !searchEl._listenerSet) {
+        searchEl.addEventListener('input', () => renderJoueursList());
+        searchEl._listenerSet = true;
+      }
+
+      renderJoueursList();
+      return;
+    }
+
+    // Pour féminin / amateur : affichage cards classique
     container.innerHTML = snapshot.docs.map(d => {
       const data = d.data();
       const age = calcAge(data.dateNaissance);
@@ -860,6 +1390,38 @@ async function editJoueur(id) {
     if (document.getElementById('joueur-genre')) document.getElementById('joueur-genre').value = data.genre || 'Masculin';
     const telEl = document.getElementById('joueur-telephone');
     if (telEl) telEl.value = data.telephone || '';
+    const licenceEl = document.getElementById('joueur-licence');
+    if (licenceEl) licenceEl.value = data.licence || '';
+    const tailleEl = document.getElementById('joueur-taille');
+    if (tailleEl) tailleEl.value = data.taille || '';
+    const poidsEl = document.getElementById('joueur-poids');
+    if (poidsEl) poidsEl.value = data.poids || '';
+    const piedEl = document.getElementById('joueur-pied');
+    if (piedEl) piedEl.value = data.pied || 'Droit';
+    const villeEl = document.getElementById('joueur-ville');
+    if (villeEl) villeEl.value = data.ville || '';
+    const quartierEl = document.getElementById('joueur-quartier');
+    if (quartierEl) quartierEl.value = data.quartier || '';
+    const arrEl = document.getElementById('joueur-arrondissement');
+    if (arrEl) arrEl.value = data.arrondissement || '';
+    const villageEl = document.getElementById('joueur-village');
+    if (villageEl) villageEl.value = data.village || '';
+    const matchsEl = document.getElementById('joueur-matchs');
+    if (matchsEl) matchsEl.value = data.matchsJoues || 0;
+    const butsEl = document.getElementById('joueur-buts');
+    if (butsEl) butsEl.value = data.buts || 0;
+    const passesEl = document.getElementById('joueur-passes');
+    if (passesEl) passesEl.value = data.passes || 0;
+    const cartJEl = document.getElementById('joueur-cartons-j');
+    if (cartJEl) cartJEl.value = data.cartonsJ || 0;
+    const cartREl = document.getElementById('joueur-cartons-r');
+    if (cartREl) cartREl.value = data.cartonsR || 0;
+    const appEl = document.getElementById('joueur-appreciation');
+    if (appEl) appEl.value = data.appreciation || '';
+    const commEl = document.getElementById('joueur-commentaire');
+    if (commEl) commEl.value = data.commentaire || '';
+    const bioEl = document.getElementById('joueur-bio');
+    if (bioEl) bioEl.value = data.bio || '';
     // Restore photo preview
     if (data.photo) {
       const prev = document.getElementById('joueur-photo-preview');

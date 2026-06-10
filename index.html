@@ -262,6 +262,9 @@
     <div class="footer-copy">
       © 2025 Gabon Sport Connect · Tous droits réservés
     </div>
+    <div class="footer-privacy">
+      <a href="#" id="btn-confidentialite" onclick="document.getElementById('confidentialite-modal').classList.remove('hidden');return false;">🔒 Règles &amp; Confidentialité</a>
+    </div>
   </footer>
 
 </div><!-- end #landing -->
@@ -447,7 +450,38 @@
         <button class="btn-primary" id="btn-add-joueur">➕ Nouveau joueur</button>
         <button class="btn-secondary nav-admin-only" id="btn-print-joueurs">🖨️ Imprimer rapport</button>
       </div>
-      <div id="list-joueurs" class="data-list"></div>
+      <!-- Barre de recherche + tri -->
+      <div class="joueurs-toolbar">
+        <input type="text" id="joueur-search" class="form-input" placeholder="🔍 Rechercher par nom ou prénom…" style="flex:1;" />
+        <button class="btn-small" id="joueur-sort-az" onclick="sortJoueurs('az')">A→Z</button>
+        <button class="btn-small" id="joueur-sort-za" onclick="sortJoueurs('za')">Z→A</button>
+      </div>
+      <!-- Filtres déployables -->
+      <div id="joueurs-filtres" class="joueurs-filtres">
+        <div class="filtre-section">
+          <button class="filtre-toggle" onclick="toggleFiltre('filtre-discipline')">🔽 DISCIPLINE</button>
+          <div id="filtre-discipline" class="filtre-body hidden"></div>
+        </div>
+        <div class="filtre-section">
+          <button class="filtre-toggle" onclick="toggleFiltre('filtre-club')">🔽 CLUB</button>
+          <div id="filtre-club" class="filtre-body hidden"></div>
+        </div>
+        <div class="filtre-section">
+          <button class="filtre-toggle" onclick="toggleFiltre('filtre-ville')">🔽 VILLE</button>
+          <div id="filtre-ville" class="filtre-body hidden"></div>
+        </div>
+        <div class="filtre-section">
+          <button class="filtre-toggle" onclick="toggleFiltre('filtre-quartier')">🔽 QUARTIER</button>
+          <div id="filtre-quartier" class="filtre-body hidden"></div>
+        </div>
+        <div class="filtre-section">
+          <button class="filtre-toggle" onclick="toggleFiltre('filtre-arrondissement')">🔽 ARRONDISSEMENT</button>
+          <div id="filtre-arrondissement" class="filtre-body hidden"></div>
+        </div>
+        <button class="btn-small" id="btn-reset-filtres" onclick="resetFiltresJoueurs()">🔄 Réinitialiser filtres</button>
+      </div>
+      <!-- Liste compacte -->
+      <div id="list-joueurs" class="data-list joueurs-list-compact"></div>
     </div>
 
     <!-- ARBITRES -->
@@ -761,12 +795,110 @@
           <label class="form-label" for="joueur-bio">Biographie</label>
           <textarea class="form-input" id="joueur-bio" rows="3" style="resize:vertical;"></textarea>
         </div>
+
+        <h4>📞 Contact &amp; Licence</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-telephone">Téléphone</label>
+            <input class="form-input" type="tel" id="joueur-telephone" placeholder="+241 xx xx xx xx" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-licence">N° de licence</label>
+            <input class="form-input" type="text" id="joueur-licence" placeholder="Numéro de licence" />
+          </div>
+        </div>
+
+        <h4>💪 Profil physique</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-taille">Taille (cm)</label>
+            <input class="form-input" type="number" id="joueur-taille" placeholder="175" min="100" max="250" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-poids">Poids (kg)</label>
+            <input class="form-input" type="number" id="joueur-poids" placeholder="70" min="30" max="200" />
+          </div>
+        </div>
+
+        <h4>📍 Localisation</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-ville">Ville</label>
+            <input class="form-input" type="text" id="joueur-ville" placeholder="Libreville" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-quartier">Quartier</label>
+            <input class="form-input" type="text" id="joueur-quartier" placeholder="Akébé" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-arrondissement">Arrondissement</label>
+            <input class="form-input" type="text" id="joueur-arrondissement" placeholder="2ème" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-village">Village</label>
+            <input class="form-input" type="text" id="joueur-village" placeholder="Village d'origine" />
+          </div>
+        </div>
+
+        <h4>📊 Statistiques de jeu</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-matchs">Matchs joués</label>
+            <input class="form-input" type="number" id="joueur-matchs" placeholder="0" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-buts">Buts marqués</label>
+            <input class="form-input" type="number" id="joueur-buts" placeholder="0" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-passes">Passes décisives</label>
+            <input class="form-input" type="number" id="joueur-passes" placeholder="0" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="joueur-cartons-j">Cartons jaunes</label>
+            <input class="form-input" type="number" id="joueur-cartons-j" placeholder="0" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="joueur-cartons-r">Cartons rouges</label>
+            <input class="form-input" type="number" id="joueur-cartons-r" placeholder="0" min="0" />
+          </div>
+        </div>
+
+        <h4>🏅 Évaluation technique</h4>
+        <div class="form-group">
+          <label class="form-label" for="joueur-appreciation">Appréciation technique</label>
+          <select class="form-input" id="joueur-appreciation">
+            <option value="">-- Sélectionner --</option>
+            <option>Excellent</option><option>Bon</option><option>Moyen</option><option>À développer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="joueur-commentaire">Commentaire entraîneur</label>
+          <textarea class="form-input" id="joueur-commentaire" rows="3" style="resize:vertical;" placeholder="Observations techniques…"></textarea>
+        </div>
         <div class="form-modal-actions">
           <button type="button" class="btn-cancel" id="joueur-modal-cancel">Annuler</button>
           <button type="submit" class="btn-save">💾 Enregistrer</button>
         </div>
       </form>
     </div>
+  </div>
+</div>
+
+<!-- Modal Fiche Joueur (lecture seule) -->
+<div id="fiche-joueur-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal" style="max-width:600px;max-height:92vh;">
+    <div class="form-modal-header">
+      <div class="form-modal-title">📋 Fiche biographique</div>
+      <button class="form-modal-close" id="fiche-joueur-close">✕</button>
+    </div>
+    <div class="form-modal-body" id="fiche-joueur-body" style="overflow-y:auto;max-height:70vh;"></div>
   </div>
 </div>
 
@@ -1023,6 +1155,60 @@
         </div>
         <button type="button" class="btn-save" style="width:100%;" onclick="ajouterMatch()">✅ Ajouter ce match</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal CONFIDENTIALITÉ ═══ -->
+<div id="confidentialite-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="form-modal" style="max-width:580px;max-height:90vh;">
+    <div class="form-modal-header">
+      <div class="form-modal-title">🔒 Conditions &amp; Confidentialité</div>
+      <button class="form-modal-close" onclick="document.getElementById('confidentialite-modal').classList.add('hidden')" aria-label="Fermer">✕</button>
+    </div>
+    <div class="form-modal-body" style="overflow-y:auto;max-height:65vh;">
+      <div class="confidentialite-content">
+        <div class="conf-section">
+          <h4>📜 CONDITIONS D'UTILISATION</h4>
+          <ul>
+            <li>La plateforme GSC est réservée à la gestion officielle du sport gabonais</li>
+            <li>Tous les utilisateurs acceptent les conditions avant de créer un compte</li>
+            <li>Les données saisies doivent être exactes et complètes</li>
+            <li><strong>Interdiction stricte :</strong> données falsifiées, contenus offensants, spamming</li>
+          </ul>
+        </div>
+        <div class="conf-section">
+          <h4>⚖️ PROTECTION DES DONNÉES (RGPD simplifié)</h4>
+          <ul>
+            <li>Vos données personnelles sont chiffrées et stockées en toute sécurité</li>
+            <li>Nous collectons : nom, email, téléphone, données sportives (joueurs, arbitres)</li>
+            <li>Conservation : pendant 7 ans après fermeture de compte (conformité légale)</li>
+            <li>Vos données ne sont <strong>JAMAIS</strong> vendues à des tiers</li>
+            <li>Accès : seuls les administrateurs autorisés voient vos informations complètes</li>
+            <li>Transparence : vous pouvez demander l'export de vos données à tout moment</li>
+          </ul>
+        </div>
+        <div class="conf-section">
+          <h4>👤 VOS DROITS</h4>
+          <ul>
+            <li><strong>Droit d'accès :</strong> consultez vos données personnelles</li>
+            <li><strong>Droit de rectification :</strong> modifiez vos données incorrectes</li>
+            <li><strong>Droit à l'oubli :</strong> demandez la suppression (sauf obligation légale)</li>
+            <li><strong>Droit de portabilité :</strong> téléchargez vos données en format standard</li>
+            <li><strong>Opposition :</strong> refusez le traitement de vos données pour certains usages</li>
+            <li><strong>Réclamation :</strong> adressez-vous à l'autorité de protection des données</li>
+          </ul>
+        </div>
+        <div class="conf-section">
+          <h4>📧 CONTACT — DPO (Responsable Protection Données)</h4>
+          <p>Email : <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:var(--green);font-weight:600;">gabonsportconnectgsc@gmail.com</a></p>
+          <p>Nous répondons à toute demande en 30 jours maximum</p>
+        </div>
+        <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">Dernière mise à jour : 2024</p>
+      </div>
+    </div>
+    <div class="form-modal-actions">
+      <button class="btn-save" onclick="document.getElementById('confidentialite-modal').classList.add('hidden')">✅ Je comprends et j'accepte</button>
     </div>
   </div>
 </div>
