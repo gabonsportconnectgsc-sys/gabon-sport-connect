@@ -34,7 +34,8 @@ const COLLECTIONS = {
   competences: 'competences',
   actualites: 'actualites',
   matchs: 'matchs',
-  notifications: 'notifications'
+  notifications: 'notifications',
+  supporters: 'supporters'
 };
 
 // ─── Fédérations gabonaises officielles ──────────────────────
@@ -88,6 +89,8 @@ window.editComp = editComp;
 window.deleteComp = deleteComp;
 window.editNews = editNews;
 window.deleteNews = deleteNews;
+window.editSupporter = editSupporter;
+window.deleteSupporter = deleteSupporter;
 
 // ─── Toast ───────────────────────────────────────────────────
 function showToast(message, type = 'success') {
@@ -170,6 +173,14 @@ function showDashboard(user) {
   document.getElementById('user-name-text').textContent = currentUserData?.nom || email.split('@')[0];
   document.getElementById('user-email-text').textContent = email;
   document.getElementById('user-role-badge').textContent = getRoleLabel(currentRole);
+  // Afficher téléphone si disponible
+  const phoneEl = document.getElementById('user-phone-text');
+  if (phoneEl && currentUserData?.telephone) {
+    phoneEl.textContent = '📞 ' + currentUserData.telephone;
+    phoneEl.style.display = '';
+  } else if (phoneEl) {
+    phoneEl.style.display = 'none';
+  }
 
   applyRoleUI();
   loadDashboardStats();
@@ -194,6 +205,9 @@ function applyRoleUI() {
   document.querySelectorAll('.nav-arbitre-only').forEach(el => {
     el.style.display = role === 'arbitre' ? '' : 'none';
   });
+  document.querySelectorAll('.nav-supporter-only').forEach(el => {
+    el.style.display = role === 'supporter' ? '' : 'none';
+  });
 }
 
 function getRoleLabel(role) {
@@ -203,7 +217,8 @@ function getRoleLabel(role) {
     'club': '🏟️ Club',
     'joueur': '⚽ Joueur',
     'arbitre': '👨‍⚖️ Arbitre',
-    'organisation': '📊 Organisation'
+    'organisation': '📊 Organisation',
+    'supporter': '🎽 Supporter'
   };
   return labels[role] || 'Utilisateur';
 }
@@ -237,9 +252,11 @@ document.getElementById('register-form')?.addEventListener('submit', async e => 
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   const nom = document.getElementById('reg-nom').value.trim();
+  const telephone = document.getElementById('reg-telephone').value.trim();
   const role = document.getElementById('reg-role').value;
 
   if (!role) { showToast('Veuillez sélectionner un rôle', 'error'); return; }
+  if (!telephone) { showToast('Le numéro de téléphone est requis', 'error'); return; }
   if (password.length < 6) { showToast('Le mot de passe doit faire au moins 6 caractères', 'error'); return; }
 
   const btn = e.target.querySelector('button[type=submit]');
@@ -248,7 +265,7 @@ document.getElementById('register-form')?.addEventListener('submit', async e => 
   try {
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, COLLECTIONS.users, userCred.user.uid), {
-      role, email, nom, createdAt: serverTimestamp()
+      role, email, nom, telephone, createdAt: serverTimestamp()
     });
     showToast('✅ Inscription réussie ! Bienvenue ' + nom);
     document.getElementById('auth-modal').classList.add('hidden');
@@ -323,6 +340,8 @@ function navigateTo(view) {
     'compétitions': 'Gestion des compétitions',
     'féminin': 'Football féminin',
     'amateur': 'Football amateur',
+    'supporters': 'Supporters',
+    'supporter-profil': 'Mon profil supporter',
     'actualités': 'Actualités sportives',
     'rapports': 'Rapports imprimables'
   };
@@ -334,6 +353,8 @@ function navigateTo(view) {
   else if (view === 'joueurs') loadJoueurs(null, 'list-joueurs');
   else if (view === 'féminin') loadJoueurs('Féminin', 'list-féminin');
   else if (view === 'amateur') loadJoueurs('Amateur', 'list-amateur');
+  else if (view === 'supporters') loadSupporters();
+  else if (view === 'supporter-profil') loadSupporterProfil();
   else if (view === 'arbitres') loadArbitres();
   else if (view === 'compétitions') loadCompetences();
   else if (view === 'actualités') loadActualites();
@@ -716,6 +737,7 @@ document.getElementById('joueur-modal-cancel')?.addEventListener('click', () => 
 document.getElementById('joueur-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   const docId = document.getElementById('joueur-id').value;
+  const photoInput = document.getElementById('joueur-photo-input');
   const data = {
     nom: document.getElementById('joueur-nom').value,
     prenom: document.getElementById('joueur-prenom').value,
@@ -725,14 +747,16 @@ document.getElementById('joueur-form')?.addEventListener('submit', async e => {
     club: document.getElementById('joueur-club').value,
     statut: document.getElementById('joueur-statut').value,
     genre: document.getElementById('joueur-genre')?.value || 'Masculin',
+    telephone: document.getElementById('joueur-telephone')?.value.trim() || '',
     updatedAt: serverTimestamp()
   };
+  if (photoInput?._base64) data.photo = photoInput._base64;
   try {
     if (docId) {
       await updateDoc(doc(db, COLLECTIONS.joueurs, docId), data);
       showToast('✅ Joueur mis à jour');
     } else {
-      await addDoc(collection(db, COLLECTIONS.joueurs), { ...data, createdAt: serverTimestamp() });
+      await addDoc(collection(db, COLLECTIONS.joueurs), { ...data, userId: currentUser?.uid || '', createdAt: serverTimestamp() });
       showToast('✅ Joueur enregistré');
     }
     document.getElementById('joueur-modal').classList.add('hidden');
@@ -800,6 +824,19 @@ async function editJoueur(id) {
     document.getElementById('joueur-position').value = data.position || 'Attaquant';
     document.getElementById('joueur-statut').value = data.statut || 'Actif';
     if (document.getElementById('joueur-genre')) document.getElementById('joueur-genre').value = data.genre || 'Masculin';
+    const telEl = document.getElementById('joueur-telephone');
+    if (telEl) telEl.value = data.telephone || '';
+    // Restore photo preview
+    if (data.photo) {
+      const prev = document.getElementById('joueur-photo-preview');
+      if (prev) {
+        let img = prev.querySelector('img');
+        if (!img) { img = document.createElement('img'); prev.appendChild(img); }
+        img.src = data.photo;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+        const sp = document.getElementById('joueur-photo-placeholder'); if(sp) sp.style.display='none';
+      }
+    }
     document.querySelector('#joueur-modal .form-modal-title').textContent = 'Modifier joueur';
     document.getElementById('joueur-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
@@ -834,6 +871,7 @@ document.getElementById('arbitre-modal-cancel')?.addEventListener('click', () =>
 document.getElementById('arbitre-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   const docId = document.getElementById('arbitre-id').value;
+  const photoInput = document.getElementById('arbitre-photo-input');
   const data = {
     nom: document.getElementById('arbitre-nom').value,
     prenom: document.getElementById('arbitre-prenom').value,
@@ -842,9 +880,12 @@ document.getElementById('arbitre-form')?.addEventListener('submit', async e => {
     statut: document.getElementById('arbitre-statut').value,
     dateNaissance: document.getElementById('arbitre-date-naissance').value || '',
     nationalité: document.getElementById('arbitre-nationalité')?.value || 'Gabonaise',
+    genre: document.getElementById('arbitre-genre')?.value || 'Masculin',
     fédération: document.getElementById('arbitre-fédération')?.value || '',
+    telephone: document.getElementById('arbitre-telephone')?.value.trim() || '',
     updatedAt: serverTimestamp()
   };
+  if (photoInput?._base64) data.photo = photoInput._base64;
   try {
     if (docId) {
       await updateDoc(doc(db, COLLECTIONS.arbitres, docId), data);
@@ -870,16 +911,26 @@ async function loadArbitres() {
     }
     container.innerHTML = snapshot.docs.map(d => {
       const data = d.data();
-      const statusClass = data.statut === 'Actif' ? 'badge-success' : data.statut === 'Suspendu' ? 'badge-danger' : 'badge-warning';
+      const age = calcAge(data.dateNaissance);
+      const statusClass = data.statut === 'Actif' ? '' : data.statut === 'Suspendu' ? 'badge-red' : 'badge-yellow';
+      const avatarHtml = data.photo
+        ? `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        : `<span style="font-size:20px;">${data.genre === 'Féminin' ? '👩‍⚖️' : '👨‍⚖️'}</span>`;
       return `
         <div class="data-card">
-          <div class="card-header">
-            <h3>👨‍⚖️ ${data.prenom} ${data.nom}</h3>
-            <span class="badge">${data.grade}</span>
+          <div class="card-header-with-avatar">
+            <div class="card-avatar">${avatarHtml}</div>
+            <div>
+              <h3 style="font-size:15px;font-weight:700;">${data.prenom} ${data.nom}</h3>
+              <p style="font-size:12px;color:var(--text-3);">${data.genre || '—'} · ${age ? age + ' ans' : '—'}</p>
+            </div>
+            <span class="badge" style="margin-left:auto;">${data.grade}</span>
           </div>
           <div class="card-content">
-            <p><strong>Niveau:</strong> ${data.niveau}</p>
-            <p><strong>Statut:</strong> <span class="badge ${statusClass}">${data.statut}</span></p>
+            <p><strong>Niveau :</strong> ${data.niveau}</p>
+            <p><strong>Statut :</strong> <span class="badge ${statusClass}">${data.statut}</span></p>
+            ${data.dateNaissance ? `<p><strong>Naissance :</strong> ${data.dateNaissance}${age ? ` (${age} ans)` : ''}</p>` : ''}
+            ${data.telephone ? `<p><strong>📞 Tél :</strong> <a href="tel:${data.telephone}" style="color:var(--green);font-weight:600;">${data.telephone}</a></p>` : ''}
           </div>
           <div class="card-actions">
             <button class="btn-small" onclick="editArbitre('${d.id}')">✏️ Éditer</button>
@@ -904,10 +955,25 @@ async function editArbitre(id) {
     document.getElementById('arbitre-niveau').value = data.niveau || 'Amateur';
     document.getElementById('arbitre-statut').value = data.statut || 'Actif';
     document.getElementById('arbitre-date-naissance').value = data.dateNaissance || '';
+    const genreEl = document.getElementById('arbitre-genre');
+    if (genreEl) genreEl.value = data.genre || 'Masculin';
     const natEl = document.getElementById('arbitre-nationalité');
     if (natEl) natEl.value = data.nationalité || 'Gabonaise';
     const fedEl = document.getElementById('arbitre-fédération');
     if (fedEl && data.fédération) fedEl.value = data.fédération;
+    const arbTelEl = document.getElementById('arbitre-telephone');
+    if (arbTelEl) arbTelEl.value = data.telephone || '';
+    // Photo
+    if (data.photo) {
+      const prev = document.getElementById('arbitre-photo-preview');
+      if (prev) {
+        let img = prev.querySelector('img');
+        if (!img) { img = document.createElement('img'); prev.appendChild(img); }
+        img.src = data.photo;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+        const sp = document.getElementById('arbitre-photo-placeholder'); if(sp) sp.style.display='none';
+      }
+    }
     document.querySelector('#arbitre-modal .form-modal-title').textContent = 'Modifier arbitre';
     document.getElementById('arbitre-modal').classList.remove('hidden');
   } catch (e) { showToast('Erreur chargement', 'error'); }
@@ -1647,3 +1713,358 @@ document.addEventListener('gscUserReady', () => {
   loadHeroPlayerCard();
 });
 
+
+// ═════════════════════════════════════════════════════════════
+// UTILITAIRES PROFIL
+// ═════════════════════════════════════════════════════════════
+
+// Calcul âge depuis dateNaissance (YYYY-MM-DD)
+function calcAge(dateStr) {
+  if (!dateStr) return null;
+  const dob = new Date(dateStr);
+  const diff = Date.now() - dob.getTime();
+  return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
+}
+
+// Avatar par défaut selon genre
+function defaultAvatar(genre) {
+  if (!genre) return '👤';
+  const g = genre.toLowerCase();
+  if (g === 'féminin' || g === 'feminin') return '👩';
+  return '👨';
+}
+
+// Encoder image en base64 (pour stockage Firestore — petite image seulement)
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Resize image avant base64 (max 200px)
+function resizeImage(file, maxSize = 200) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = url;
+  });
+}
+
+// Setup photo preview for a modal
+function setupPhotoPreview(inputId, previewId, placeholderSelector) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  if (!input || !preview) return;
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const dataUrl = await resizeImage(file, 200);
+    const placeholder = preview.querySelector(placeholderSelector || 'span');
+    if (placeholder) placeholder.style.display = 'none';
+    let img = preview.querySelector('img');
+    if (!img) { img = document.createElement('img'); preview.appendChild(img); }
+    img.src = dataUrl;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+    input._base64 = dataUrl;
+  });
+}
+
+// Init photo previews
+setupPhotoPreview('joueur-photo-input', 'joueur-photo-preview', '#joueur-photo-placeholder');
+setupPhotoPreview('arbitre-photo-input', 'arbitre-photo-preview', '#arbitre-photo-placeholder');
+setupPhotoPreview('supporter-photo-input', 'supporter-photo-preview', '#supporter-photo-placeholder');
+
+// Afficher photo dans la sidebar user-avatar
+function updateSidebarAvatar(photoUrl) {
+  const avatarEl = document.getElementById('user-avatar-text');
+  if (!avatarEl || !photoUrl) return;
+  avatarEl.innerHTML = `<img src="${photoUrl}" class="user-avatar-photo" alt="Photo profil" />`;
+}
+
+// ─── Mise à jour photo dans joueur-form submit ───────────────
+// Patch joueur form pour inclure photo
+const _origJoueurForm = document.getElementById('joueur-form');
+if (_origJoueurForm) {
+  _origJoueurForm.addEventListener('submit', async e => {
+    const photoInput = document.getElementById('joueur-photo-input');
+    if (photoInput?._base64) {
+      const docId = document.getElementById('joueur-id').value;
+      if (docId) {
+        try { await updateDoc(doc(db, COLLECTIONS.joueurs, docId), { photo: photoInput._base64 }); } catch(er) {}
+      }
+    }
+  }, true); // capture before main handler — non-blocking
+}
+
+// ═════════════════════════════════════════════════════════════
+// SUPPORTERS — CRUD COMPLET
+// ═════════════════════════════════════════════════════════════
+
+// Afficher/masquer champ nom association
+document.getElementById('sup-association')?.addEventListener('change', function() {
+  const wrap = document.getElementById('sup-association-nom-wrap');
+  if (wrap) wrap.style.display = this.value === 'oui' ? '' : 'none';
+});
+
+// Ouvrir modal supporter (admin)
+document.getElementById('btn-add-supporter')?.addEventListener('click', async () => {
+  await populateClubSelect('sup-club-fan');
+  document.getElementById('supporter-id').value = '';
+  document.getElementById('supporter-form').reset();
+  const photoInput = document.getElementById('supporter-photo-input');
+  if (photoInput) photoInput._base64 = null;
+  const prev = document.getElementById('supporter-photo-preview');
+  if (prev) { const img = prev.querySelector('img'); if(img) img.remove(); const sp = document.getElementById('supporter-photo-placeholder'); if(sp) sp.style.display=''; }
+  document.getElementById('sup-association-nom-wrap').style.display = 'none';
+  document.getElementById('supporter-modal').classList.remove('hidden');
+});
+
+document.getElementById('supporter-modal-close')?.addEventListener('click', () =>
+  document.getElementById('supporter-modal').classList.add('hidden'));
+document.getElementById('supporter-modal-cancel')?.addEventListener('click', () =>
+  document.getElementById('supporter-modal').classList.add('hidden'));
+
+document.getElementById('supporter-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const docId = document.getElementById('supporter-id').value;
+  const photoInput = document.getElementById('supporter-photo-input');
+  const photoUrl = photoInput?._base64 || '';
+  const data = {
+    nom: document.getElementById('sup-nom').value.trim(),
+    prenom: document.getElementById('sup-prenom').value.trim(),
+    age: parseInt(document.getElementById('sup-age').value) || null,
+    sexe: document.getElementById('sup-sexe').value,
+    clubFan: document.getElementById('sup-club-fan').value,
+    sportFav: document.getElementById('sup-sport-fav').value,
+    association: document.getElementById('sup-association').value,
+    associationNom: document.getElementById('sup-association-nom').value.trim(),
+    ville: document.getElementById('sup-ville').value.trim(),
+    province: document.getElementById('sup-province').value,
+    contact: document.getElementById('sup-contact').value.trim(),
+    bio: document.getElementById('sup-bio').value.trim(),
+    updatedAt: serverTimestamp()
+  };
+  if (photoUrl) data.photo = photoUrl;
+  if (!data.nom || !data.prenom) { showToast('Nom et prénom requis', 'error'); return; }
+  if (!data.sexe) { showToast('Veuillez sélectionner le sexe', 'error'); return; }
+  if (!data.ville) { showToast('Ville de résidence requise', 'error'); return; }
+  try {
+    if (docId) {
+      await updateDoc(doc(db, COLLECTIONS.supporters, docId), data);
+      showToast('✅ Supporter mis à jour');
+    } else {
+      await addDoc(collection(db, COLLECTIONS.supporters), { ...data, userId: currentUser?.uid || '', createdAt: serverTimestamp() });
+      showToast('✅ Supporter enregistré');
+    }
+    document.getElementById('supporter-modal').classList.add('hidden');
+    loadSupporters();
+  } catch (err) { showToast('Erreur : ' + err.message, 'error'); }
+});
+
+async function loadSupporters() {
+  const container = document.getElementById('list-supporters');
+  if (!container) return;
+  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snapshot = await getDocs(query(collection(db, COLLECTIONS.supporters), orderBy('createdAt', 'desc')));
+    if (snapshot.empty) {
+      container.innerHTML = '<div class="empty-state">🎽 Aucun supporter enregistré</div>';
+      return;
+    }
+    // Récupérer les noms de clubs
+    const clubsSnap = await getDocs(collection(db, COLLECTIONS.clubs));
+    const clubsMap = {};
+    clubsSnap.docs.forEach(d => clubsMap[d.id] = d.data().nom);
+
+    container.innerHTML = snapshot.docs.map(d => {
+      const s = d.data();
+      const clubNom = clubsMap[s.clubFan] || s.clubFan || '—';
+      const avatar = s.photo
+        ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        : `<span style="font-size:22px;">${s.sexe === 'Féminin' ? '👩' : '👨'}</span>`;
+      const assocBadge = s.association === 'oui'
+        ? `<span class="assoc-badge">🏳️ ${s.associationNom || 'Association'}</span>`
+        : `<span class="assoc-badge non">Pas d'association</span>`;
+      return `
+        <div class="data-card">
+          <div class="card-header-with-avatar">
+            <div class="card-avatar">${avatar}</div>
+            <div>
+              <h3 style="font-size:15px;font-weight:700;">🎽 ${s.prenom} ${s.nom}</h3>
+              <p style="font-size:12px;color:var(--text-3);">${s.sexe || '—'} · ${s.age ? s.age + ' ans' : '—'} · ${s.ville || '—'}</p>
+            </div>
+            <span class="badge badge-blue" style="margin-left:auto;">Fan</span>
+          </div>
+          <div class="card-content">
+            <p><strong>Club favori :</strong> ${clubNom}</p>
+            <p><strong>Province :</strong> ${s.province || '—'}</p>
+            ${s.contact ? `<p><strong>📞 Tél :</strong> <a href="tel:${s.contact}" style="color:var(--green);font-weight:600;">${s.contact}</a></p>` : ''}
+            <p style="margin-top:6px;">${assocBadge}</p>
+            ${s.bio ? `<p style="margin-top:8px;font-size:12px;color:var(--text-2);font-style:italic;">"${s.bio}"</p>` : ''}
+          </div>
+          <div class="card-actions">
+            <button class="btn-small" onclick="editSupporter('${d.id}')">✏️ Éditer</button>
+            ${currentRole === 'super-admin' ? `<button class="btn-small btn-danger" onclick="deleteSupporter('${d.id}')">🗑️ Supprimer</button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state error-state">❌ ${err.message}</div>`;
+  }
+}
+
+async function editSupporter(id) {
+  try {
+    await populateClubSelect('sup-club-fan');
+    const snap = await getDoc(doc(db, COLLECTIONS.supporters, id));
+    const s = snap.data();
+    document.getElementById('supporter-id').value = id;
+    document.getElementById('sup-nom').value = s.nom || '';
+    document.getElementById('sup-prenom').value = s.prenom || '';
+    document.getElementById('sup-age').value = s.age || '';
+    document.getElementById('sup-sexe').value = s.sexe || '';
+    document.getElementById('sup-club-fan').value = s.clubFan || '';
+    document.getElementById('sup-sport-fav').value = s.sportFav || 'Football';
+    document.getElementById('sup-association').value = s.association || 'non';
+    const wrap = document.getElementById('sup-association-nom-wrap');
+    if (wrap) wrap.style.display = s.association === 'oui' ? '' : 'none';
+    document.getElementById('sup-association-nom').value = s.associationNom || '';
+    document.getElementById('sup-ville').value = s.ville || '';
+    document.getElementById('sup-province').value = s.province || 'Estuaire';
+    document.getElementById('sup-contact').value = s.contact || '';
+    document.getElementById('sup-bio').value = s.bio || '';
+    // Photo
+    const prev = document.getElementById('supporter-photo-preview');
+    if (prev && s.photo) {
+      let img = prev.querySelector('img');
+      if (!img) { img = document.createElement('img'); prev.appendChild(img); }
+      img.src = s.photo;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+      const sp = document.getElementById('supporter-photo-placeholder'); if(sp) sp.style.display='none';
+    }
+    document.querySelector('#supporter-modal .form-modal-title').textContent = 'Modifier supporter';
+    document.getElementById('supporter-modal').classList.remove('hidden');
+  } catch (e) { showToast('Erreur chargement', 'error'); }
+}
+
+async function deleteSupporter(id) {
+  if (!confirm('Supprimer ce supporter ?')) return;
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.supporters, id));
+    showToast('✅ Supporter supprimé');
+    loadSupporters();
+  } catch (e) { showToast('Erreur suppression', 'error'); }
+}
+
+// Profil supporter perso (vue du compte)
+async function loadSupporterProfil() {
+  const container = document.getElementById('supporter-profil-container');
+  if (!container || !currentUser) return;
+  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.supporters), where('userId', '==', currentUser.uid)));
+    if (snap.empty) {
+      container.innerHTML = `
+        <div class="profile-public-card">
+          <div style="font-size:48px;margin-bottom:12px;">🎽</div>
+          <p style="color:var(--text-2);margin-bottom:16px;">Votre profil supporter n'est pas encore complété.</p>
+          <button class="btn-primary" onclick="document.getElementById('btn-add-supporter').click()">Compléter mon profil</button>
+        </div>`;
+      return;
+    }
+    const s = snap.docs[0].data();
+    const id = snap.docs[0].id;
+    const clubsSnap = await getDocs(collection(db, COLLECTIONS.clubs));
+    const clubsMap = {};
+    clubsSnap.docs.forEach(d => clubsMap[d.id] = d.data().nom);
+    const clubNom = clubsMap[s.clubFan] || s.clubFan || '—';
+    const avatarHtml = s.photo
+      ? `<img src="${s.photo}" style="width:90px;height:90px;object-fit:cover;border-radius:50%;border:3px solid var(--green);" />`
+      : `<div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);display:flex;align-items:center;justify-content:center;font-size:36px;border:3px solid var(--green);margin:0 auto;">${s.sexe === 'Féminin' ? '👩' : '👨'}</div>`;
+    container.innerHTML = `
+      <div class="profile-public-card">
+        <div style="margin-bottom:12px;">${avatarHtml}</div>
+        <div class="profile-public-name">${s.prenom} ${s.nom}</div>
+        <div class="profile-public-role">🎽 Supporter</div>
+        <div class="profile-public-details" style="margin-bottom:16px;">
+          <div><strong>Âge :</strong> ${s.age ? s.age + ' ans' : '—'}</div>
+          <div><strong>Sexe :</strong> ${s.sexe || '—'}</div>
+          <div><strong>Club fan :</strong> ${clubNom}</div>
+          <div><strong>Sport fav :</strong> ${s.sportFav || '—'}</div>
+          <div><strong>Ville :</strong> ${s.ville || '—'}</div>
+          <div><strong>Province :</strong> ${s.province || '—'}</div>
+          ${s.association === 'oui' ? `<div style="grid-column:span 2;"><strong>Association :</strong> ${s.associationNom || 'Oui'}</div>` : ''}
+          ${s.contact ? `<div style="grid-column:span 2;"><strong>📞 Téléphone :</strong> <a href="tel:${s.contact}" style="color:var(--green);font-weight:600;">${s.contact}</a></div>` : ''}
+        </div>
+        ${s.bio ? `<p style="font-size:13px;color:var(--text-2);font-style:italic;margin-bottom:16px;">"${s.bio}"</p>` : ''}
+        <button class="btn-primary" onclick="editSupporter('${id}')" style="width:100%;">✏️ Modifier mon profil</button>
+      </div>`;
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state error-state">❌ ${err.message}</div>`;
+  }
+}
+
+// Mise à jour photo dans les fiches joueur (afficher avec age dans la liste)
+// Surcharge loadJoueurs pour inclure photo et âge
+const _origLoadJoueurs = loadJoueurs;
+async function loadJoueurs(filter = null, containerId = 'list-joueurs') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '<div class="loading-state">⏳ Chargement…</div>';
+  try {
+    let qry;
+    if (filter === 'Féminin' || filter === 'Amateur') {
+      qry = query(collection(db, COLLECTIONS.joueurs), where('genre', '==', filter));
+    } else {
+      qry = query(collection(db, COLLECTIONS.joueurs), orderBy('createdAt', 'desc'));
+    }
+    const snapshot = await getDocs(qry);
+    if (snapshot.empty) {
+      container.innerHTML = `<div class="empty-state">⚽ Aucun joueur enregistré</div>`;
+      return;
+    }
+    container.innerHTML = snapshot.docs.map(d => {
+      const data = d.data();
+      const age = calcAge(data.dateNaissance);
+      const statusClass = data.statut === 'Actif' ? '' : data.statut === 'Blessé' ? 'badge-red' : 'badge-yellow';
+      const isOwner = currentUser?.uid === data.userId || currentRole === 'super-admin';
+      const avatarHtml = data.photo
+        ? `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        : `<span style="font-size:20px;">${data.genre === 'Féminin' ? '👩' : '👨'}</span>`;
+      return `
+        <div class="data-card">
+          <div class="card-header-with-avatar">
+            <div class="card-avatar">${avatarHtml}</div>
+            <div>
+              <h3 style="font-size:15px;font-weight:700;">⚽ ${data.prenom} ${data.nom}</h3>
+              <p style="font-size:12px;color:var(--text-3);">${data.genre || '—'} · ${age ? age + ' ans' : '—'} · ${data.position || '—'}</p>
+            </div>
+            <span class="badge ${statusClass}" style="margin-left:auto;">${data.statut}</span>
+          </div>
+          <div class="card-content">
+            <p><strong>Nationalité :</strong> ${data.nationalité || data.nationalite || '—'}</p>
+            <p><strong>Naissance :</strong> ${data.dateNaissance || '—'} ${age ? `(${age} ans)` : ''}</p>
+            ${data.telephone ? `<p><strong>📞 Tél :</strong> <a href="tel:${data.telephone}" style="color:var(--green);font-weight:600;">${data.telephone}</a></p>` : ''}
+          </div>
+          <div class="card-actions">
+            ${isOwner ? `<button class="btn-small" onclick="editJoueur('${d.id}')">✏️ Éditer</button>` : ''}
+            ${currentRole === 'super-admin' ? `<button class="btn-small btn-danger" onclick="deleteJoueur('${d.id}')">🗑️ Supprimer</button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state error-state">❌ ${err.message}</div>`;
+  }
+}
