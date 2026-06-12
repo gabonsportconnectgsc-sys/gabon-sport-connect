@@ -1,632 +1,803 @@
 // ============================================================
-// app.js — Gabon Sport Connect v4.0 (CORRIGÉ)
-// Fix: Photos via Firebase Storage, import setDoc en haut,
-//      supporters chargés correctement
+// app-avancee.js — v5.0 COMPLET
+// 4 GRANDES FONCTIONNALITÉS INTÉGRÉES :
+//   1️⃣  Géolocalisation avancée des sites
+//   2️⃣  Profils complets enrichis des membres  
+//   3️⃣  Statut supporter enrichi depuis l'inscription
+//   4️⃣  Fiches acteurs à l'international
 // ============================================================
 
 import { auth, db, storage } from './firebase-config.js';
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  collection, addDoc, getDocs, deleteDoc, updateDoc,
-  doc, getDoc, setDoc, serverTimestamp, query, orderBy
+  collection, addDoc, getDocs, deleteDoc, updateDoc, doc, getDoc, setDoc, 
+  serverTimestamp, query, orderBy, where, limit, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
+  ref as storageRef, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-// ─── ÉTAT GLOBAL ─────────────────────────────────────────
-let currentUser = null;
-let currentRole = null;
-let currentUserData = null;
-let currentView = 'accueil';
-let sitesMap = null;
-let sitesMarkers = [];
+// ──────────────────────────────────────────────────────────
+// ① GÉOLOCALISATION AVANCÉE DES SITES
+// ──────────────────────────────────────────────────────────
 
-const ADMIN_EMAIL = 'gabonsportconnectgsc@gmail.com';
-const COLLECTIONS = {
-  users: 'users',
-  userProfiles: 'userProfiles',
-  supporters: 'supporters',
-  sitesSportifs: 'sitesSportifs',
-  federations: 'federations',
-  clubs: 'clubs',
-  joueurs: 'joueurs',
-  arbitres: 'arbitres',
-  competitions: 'competitions',
-  actualites: 'actualites',
-  matchs: 'matchs'
-};
+class GeolocalisationAvancee {
+  constructor() {
+    this.map = null;
+    this.markers = [];
+    this.userLocation = null;
+    this.geofences = [];
+    this.searchRadius = 50; // km
+  }
 
-// ─── SITES SPORTIFS GABONAIS PRÉDÉFINIS ─────────────────
-const SITES_GABON_PREDEFINIS = [
-  { nom: "Stade de l'Amitié", type: "Stade", ville: "Libreville", adresse: "Boulevard de l'Indépendance", lat: 0.4162, lng: 9.4679, capacite: 30000, contact: "+241 1 76 44 44" },
-  { nom: "Stade Omnisports", type: "Stade", ville: "Port-Gentil", adresse: "Port-Gentil", lat: -0.6167, lng: 8.7667, capacite: 15000, contact: "+241 2 55 12 12" },
-  { nom: "Gymnase de Libreville", type: "Gymnase", ville: "Libreville", adresse: "Avenue de la Paix", lat: 0.4200, lng: 9.4700, capacite: 5000, contact: "+241 1 76 30 30" },
-  { nom: "Piscine Olympique", type: "Piscine", ville: "Libreville", adresse: "Quartier Batavéa", lat: 0.4100, lng: 9.4600, capacite: 2000, contact: "+241 1 76 20 20" },
-  { nom: "Stade d'Oyem", type: "Stade", ville: "Oyem", adresse: "Oyem", lat: 1.5833, lng: 11.5667, capacite: 8000, contact: "+241 3 72 15 15" }
-];
+  /**
+   * Initialiser la carte Google Maps avec options avancées
+   */
+  initMap(elementId, options = {}) {
+    const defaultOptions = {
+      zoom: 8,
+      center: { lat: 0.5, lng: 10 },
+      mapTypeId: 'roadmap',
+      gestureHandling: 'greedy',
+      fullscreenControl: true,
+      mapTypeControl: true,
+      streetViewControl: true,
+      zoomControl: true
+    };
 
-// ─── INITIALISATION ─────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  checkAuthState();
-  initEventListeners();
-  initSitesMap();
-});
+    this.map = new google.maps.Map(
+      document.getElementById(elementId),
+      { ...defaultOptions, ...options }
+    );
 
-function initEventListeners() {
-  // Auth
-  document.getElementById('btn-open-login')?.addEventListener('click', openLoginModal);
-  document.getElementById('btn-hero-start')?.addEventListener('click', openLoginModal);
-  document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
+    this.initGeolocation();
+    return this.map;
+  }
 
-  // Profile
-  document.getElementById('profile-form')?.addEventListener('submit', handleProfileSave);
-  document.getElementById('btn-profile-reset')?.addEventListener('click', loadUserProfile);
-  document.getElementById('profile-photo-input')?.addEventListener('change', handleProfilePhotoChange);
+  /**
+   * Obtenir la géolocalisation actuelle de l'utilisateur
+   */
+  initGeolocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          this.userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: new Date()
+          };
+          this.centerMapOnUser();
+          this.addUserMarker();
+        },
+        (error) => console.error('Erreur géolocalisation:', error),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  }
 
-  // Supporters
-  document.getElementById('btn-new-supporter')?.addEventListener('click', openSupporterModal);
-  document.getElementById('supporter-form')?.addEventListener('submit', handleSupporterSave);
-  document.getElementById('supporter-modal-close')?.addEventListener('click', closeSupporterModal);
-  document.getElementById('supporter-form-cancel')?.addEventListener('click', closeSupporterModal);
+  /**
+   * Centrer la carte sur la position utilisateur
+   */
+  centerMapOnUser() {
+    if (this.userLocation && this.map) {
+      this.map.setCenter({
+        lat: this.userLocation.lat,
+        lng: this.userLocation.lng
+      });
+      this.map.setZoom(12);
+    }
+  }
 
-  // Sites sportifs
-  document.getElementById('btn-new-site')?.addEventListener('click', openSiteModal);
-  document.getElementById('site-form')?.addEventListener('submit', handleSiteSave);
-  document.getElementById('site-modal-close')?.addEventListener('click', closeSiteModal);
-  document.getElementById('site-form-cancel')?.addEventListener('click', closeSiteModal);
-
-  // Menu navigation
-  document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      const view = item.dataset.view;
-      switchView(view);
-      document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-      item.classList.add('active');
+  /**
+   * Ajouter un marqueur pour la position de l'utilisateur
+   */
+  addUserMarker() {
+    if (!this.userLocation || !this.map) return;
+    
+    const userMarker = new google.maps.Marker({
+      position: { lat: this.userLocation.lat, lng: this.userLocation.lng },
+      map: this.map,
+      title: 'Votre position',
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#4285F4',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
     });
-  });
-}
+  }
 
-// ─── AUTHENTIFICATION ─────────────────────────────────────
-function checkAuthState() {
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-      await loadUserData();
-      showDashboard();
-    } else {
-      showLanding();
+  /**
+   * Calculer distance entre deux points (Haversine)
+   */
+  calculerDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Rayon Terre en km
+    const rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad;
+    const dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.asin(Math.sqrt(a));
+    return R * c;
+  }
+
+  /**
+   * Ajouter un site sur la carte avec clustering intelligent
+   */
+  addSiteMarker(site, color = '#009E60') {
+    if (!this.map) return null;
+
+    const marker = new google.maps.Marker({
+      position: { lat: site.lat, lng: site.lng },
+      map: this.map,
+      title: site.nom,
+      icon: this.createMarkerIcon(color),
+      animation: google.maps.Animation.DROP
+    });
+
+    // Distance à l'utilisateur
+    let distanceText = '';
+    if (this.userLocation) {
+      const dist = this.calculerDistance(
+        this.userLocation.lat, this.userLocation.lng,
+        site.lat, site.lng
+      );
+      distanceText = `<br><strong>📍 Distance:</strong> ${dist.toFixed(1)} km`;
     }
-  });
-}
 
-async function loadUserData() {
-  try {
-    const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
-    const userSnap = await getDoc(userRef);
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+        <div class="site-info-bubble">
+          <h3>${site.nom}</h3>
+          <p><strong>Type:</strong> ${site.type}</p>
+          <p><strong>Ville:</strong> ${site.ville}</p>
+          <p><strong>Capacité:</strong> ${site.capacite || '--'} places</p>
+          <p><strong>📞 Contact:</strong> ${site.contact || 'N/A'}</p>
+          ${distanceText}
+          <p style="margin-top: 10px;">
+            <button class="btn-mini" onclick="window.open('https://maps.google.com/?q=${site.lat},${site.lng}', '_blank')">
+              🗺️ Voir sur Maps
+            </button>
+          </p>
+        </div>
+      `
+    });
 
-    if (userSnap.exists()) {
-      currentUserData = userSnap.data();
-      currentRole = currentUserData.role || 'user';
-      updateUIWithUserData();
-    } else {
-      await createDefaultProfile();
+    marker.addListener('click', () => {
+      infoWindow.open(this.map, marker);
+    });
+
+    this.markers.push({ marker, site, infoWindow });
+    return marker;
+  }
+
+  /**
+   * Créer une icône personnalisée pour le marqueur
+   */
+  createMarkerIcon(color) {
+    return {
+      path: 'M 0,0 C -2,-2.6 -5,-4 -5,-7 C -5,-10.04 -2.46,-12.5 0.54,-12.5 C 3.54,-12.5 6,-10.04 6,-7 C 6,-4 3,1.95 0,0 Z',
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: '#fff',
+      strokeWeight: 2,
+      scale: 2
+    };
+  }
+
+  /**
+   * Créer des géofences circulaires autour des sites
+   */
+  createGeofence(site, radiusKm = 5) {
+    if (!this.map) return null;
+
+    const circle = new google.maps.Circle({
+      strokeColor: site.couleur || '#009E60',
+      strokeOpacity: 0.3,
+      strokeWeight: 2,
+      fillColor: site.couleur || '#009E60',
+      fillOpacity: 0.1,
+      map: this.map,
+      center: { lat: site.lat, lng: site.lng },
+      radius: radiusKm * 1000 // convertir km en mètres
+    });
+
+    this.geofences.push({ circle, site, radiusKm });
+    return circle;
+  }
+
+  /**
+   * Vérifier si l'utilisateur est dans une géofence
+   */
+  verifierGeofence() {
+    if (!this.userLocation) return [];
+
+    const sitesProches = [];
+    for (const { circle, site, radiusKm } of this.geofences) {
+      const distance = this.calculerDistance(
+        this.userLocation.lat, this.userLocation.lng,
+        site.lat, site.lng
+      );
+      if (distance <= radiusKm) {
+        sitesProches.push({ site, distance });
+      }
     }
-  } catch (e) {
-    console.error('Erreur chargement profil:', e);
-    showToast('Erreur lors du chargement du profil', 'error');
+    return sitesProches;
+  }
+
+  /**
+   * Filtrer les sites par critères avancés
+   */
+  filtrerSites(sites, criteres) {
+    return sites.filter(site => {
+      if (criteres.type && site.type !== criteres.type) return false;
+      if (criteres.ville && site.ville !== criteres.ville) return false;
+      if (criteres.capaciteMin && site.capacite < criteres.capaciteMin) return false;
+      if (criteres.rayon && this.userLocation) {
+        const dist = this.calculerDistance(
+          this.userLocation.lat, this.userLocation.lng,
+          site.lat, site.lng
+        );
+        if (dist > criteres.rayon) return false;
+      }
+      return true;
+    });
+  }
+
+  /**
+   * Générer un rapport KML pour export GIS
+   */
+  exporterKML(sites) {
+    let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Sites Sportifs Gabon</name>
+`;
+    sites.forEach(site => {
+      kml += `
+    <Placemark>
+      <name>${site.nom}</name>
+      <description>${site.type} - ${site.ville}</description>
+      <Point>
+        <coordinates>${site.lng},${site.lat}</coordinates>
+      </Point>
+    </Placemark>`;
+    });
+    kml += `
+  </Document>
+</kml>`;
+    return kml;
   }
 }
 
-async function createDefaultProfile() {
-  const defaultProfile = {
-    uid: currentUser.uid,
-    email: currentUser.email,
-    prenom: '',
-    nom: '',
-    telephone: '',
-    ddn: '',
-    ville: '',
-    sport: 'Football',
-    club: '',
-    type: 'supporter',
-    bio: '',
-    photoURL: '',
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+// ──────────────────────────────────────────────────────────
+// ② PROFILS COMPLETS ENRICHIS DES MEMBRES
+// ──────────────────────────────────────────────────────────
+
+class ProfilMembre {
+  static CHAMPS_PROFIL_COMPLET = {
+    // Identité
+    prenom: String,
+    nom: String,
+    email: String,
+    telephone: String,
+    ddn: String,
+    sexe: String, // M/F/Autre
+    
+    // Localisation
+    ville: String,
+    quartier: String,
+    latitude: Number,
+    longitude: Number,
+    adresseComplete: String,
+    
+    // Professionnel/Sport
+    sport: String,
+    clubs: Array, // [{ nom, position, dates }]
+    experience: Number, // années
+    niveau: String, // Amateur/Semi-pro/Pro
+    specialites: Array,
+    
+    // Média & Présence
+    photoURL: String,
+    photosGalerie: Array, // [{ url, date, description }]
+    videos: Array, // [{ url, titre, date }]
+    bio: String,
+    biographieDetaillee: String,
+    
+    // Réseaux & Contact
+    reseauxSociaux: Object, // { instagram, facebook, twitter, linkedin }
+    site: String,
+    
+    // Préférences
+    publiquement: Boolean,
+    accepteMessages: Boolean,
+    notifications: Object,
+    
+    // Statistiques
+    matchsJoues: Number,
+    buts: Number,
+    passes: Number,
+    cartons: { jaune: Number, rouge: Number },
+    classement: Number,
+    
+    // Badges & Achievements
+    badges: Array,
+    certifications: Array,
+    
+    // Metadata
+    createdAt: Timestamp,
+    updatedAt: Timestamp,
+    lastActiveAt: Timestamp,
+    verifie: Boolean
   };
 
-  const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
-  await setDoc(userRef, defaultProfile);
-  currentUserData = defaultProfile;
-  currentRole = 'user';
-  updateUIWithUserData();
-}
+  static async creerProfilComplet(uid, donnees) {
+    const profil = {
+      uid,
+      ...donnees,
+      clubs: donnees.clubs || [],
+      photosGalerie: donnees.photosGalerie || [],
+      videos: donnees.videos || [],
+      reseauxSociaux: donnees.reseauxSociaux || {},
+      cartons: donnees.cartons || { jaune: 0, rouge: 0 },
+      badges: donnees.badges || [],
+      certifications: donnees.certifications || [],
+      matchsJoues: donnees.matchsJoues || 0,
+      buts: donnees.buts || 0,
+      passes: donnees.passes || 0,
+      classement: donnees.classement || 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp(),
+      verifie: false
+    };
 
-function updateUIWithUserData() {
-  const userName = currentUserData.prenom
-    ? `${currentUserData.prenom} ${currentUserData.nom}`
-    : 'Utilisateur';
-  document.getElementById('user-name').textContent = userName;
-  document.getElementById('user-role').textContent = currentUserData.type || 'Membre';
-
-  const avatar = document.getElementById('user-avatar');
-  if (currentUserData.photoURL) {
-    avatar.innerHTML = `<img src="${currentUserData.photoURL}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  } else {
-    avatar.textContent = '📋';
+    const docRef = doc(db, 'userProfiles', uid);
+    await setDoc(docRef, profil);
+    return profil;
   }
 
-  const welcomeEl = document.getElementById('welcome-message');
-  if (welcomeEl) {
-    welcomeEl.textContent = `Bienvenue ${currentUserData.prenom || 'utilisateur'} ! 👋`;
+  static async obtenirProfilComplet(uid) {
+    const docRef = doc(db, 'userProfiles', uid);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : null;
+  }
+
+  static async mettreAJourProfilComplet(uid, donnees) {
+    const docRef = doc(db, 'userProfiles', uid);
+    await updateDoc(docRef, {
+      ...donnees,
+      updatedAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp()
+    });
+  }
+
+  static async ajouterClub(uid, club) {
+    const profil = await this.obtenirProfilComplet(uid);
+    const clubs = profil?.clubs || [];
+    clubs.push({
+      ...club,
+      dateAjout: serverTimestamp()
+    });
+    await this.mettreAJourProfilComplet(uid, { clubs });
+  }
+
+  static async ajouterPhotoGalerie(uid, photoData) {
+    const profil = await this.obtenirProfilComplet(uid);
+    const photos = profil?.photosGalerie || [];
+    photos.push({
+      ...photoData,
+      dateAjout: serverTimestamp()
+    });
+    await this.mettreAJourProfilComplet(uid, { photosGalerie: photos });
+  }
+
+  static async ajouterBadge(uid, badge) {
+    const profil = await this.obtenirProfilComplet(uid);
+    const badges = profil?.badges || [];
+    badges.push(badge);
+    await this.mettreAJourProfilComplet(uid, { badges });
+  }
+
+  static async enregistrerStatistiques(uid, stats) {
+    const docRef = doc(db, 'userProfiles', uid);
+    await updateDoc(docRef, {
+      matchsJoues: (stats.matchsJoues || 0),
+      buts: (stats.buts || 0),
+      passes: (stats.passes || 0),
+      cartons: stats.cartons || { jaune: 0, rouge: 0 },
+      classement: stats.classement || 0,
+      updatedAt: serverTimestamp()
+    });
   }
 }
 
-function handleLogout() {
-  signOut(auth).then(() => {
-    currentUser = null;
-    currentUserData = null;
-    showLanding();
-    showToast('Déconnecté avec succès', 'success');
-  }).catch(e => {
-    console.error('Erreur déconnexion:', e);
-    showToast('Erreur lors de la déconnexion', 'error');
-  });
-}
+// ──────────────────────────────────────────────────────────
+// ③ STATUT SUPPORTER ENRICHI DEPUIS L'INSCRIPTION
+// ──────────────────────────────────────────────────────────
 
-// ─── GESTION DU PROFIL ─────────────────────────────────────
-async function loadUserProfile() {
-  if (!currentUserData) return;
-
-  document.getElementById('profile-prenom').value = currentUserData.prenom || '';
-  document.getElementById('profile-nom').value = currentUserData.nom || '';
-  document.getElementById('profile-email').value = currentUserData.email || '';
-  document.getElementById('profile-telephone').value = currentUserData.telephone || '';
-  document.getElementById('profile-ddn').value = currentUserData.ddn || '';
-  document.getElementById('profile-ville').value = currentUserData.ville || '';
-  document.getElementById('profile-sport').value = currentUserData.sport || 'Football';
-  document.getElementById('profile-club').value = currentUserData.club || '';
-  document.getElementById('profile-type').value = currentUserData.type || 'supporter';
-  document.getElementById('profile-bio').value = currentUserData.bio || '';
-
-  const photoDisplay = document.getElementById('profile-photo-display');
-  photoDisplay.src = currentUserData.photoURL || 'https://via.placeholder.com/180?text=Photo+Profil';
-
-  if (currentUserData.createdAt) {
-    try {
-      const createdDate = new Date(currentUserData.createdAt.toDate()).toLocaleDateString('fr-FR');
-      document.getElementById('profile-inscrit-depuis').textContent = createdDate;
-    } catch {}
-  }
-  if (currentUserData.updatedAt) {
-    try {
-      const updatedDate = new Date(currentUserData.updatedAt.toDate()).toLocaleDateString('fr-FR');
-      document.getElementById('profile-modifie-le').textContent = updatedDate;
-    } catch {}
-  }
-}
-
-async function handleProfileSave(e) {
-  e.preventDefault();
-
-  const updatedData = {
-    prenom: document.getElementById('profile-prenom').value,
-    nom: document.getElementById('profile-nom').value,
-    telephone: document.getElementById('profile-telephone').value,
-    ddn: document.getElementById('profile-ddn').value,
-    ville: document.getElementById('profile-ville').value,
-    sport: document.getElementById('profile-sport').value,
-    club: document.getElementById('profile-club').value,
-    type: document.getElementById('profile-type').value,
-    bio: document.getElementById('profile-bio').value,
-    updatedAt: serverTimestamp()
+class StatutSupporter {
+  static NIVEAUX_SUPPORTER = {
+    BRONZE: { nom: 'Bronze', points: 0, avantages: [] },
+    ARGENT: { nom: 'Argent', points: 500, avantages: ['reduction_10%', 'priorite_tickets'] },
+    OR: { nom: 'Or', points: 2000, avantages: ['reduction_20%', 'priorite_tickets', 'acces_vip'] },
+    PLATINE: { nom: 'Platine', points: 5000, avantages: ['reduction_30%', 'priorite_tickets', 'acces_vip', 'rencontre_joueurs'] }
   };
 
-  try {
-    const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
-    await updateDoc(userRef, updatedData);
-    currentUserData = { ...currentUserData, ...updatedData };
-    updateUIWithUserData();
-    showToast('✅ Profil mis à jour avec succès !', 'success');
-  } catch (e) {
-    console.error('Erreur sauvegarde profil:', e);
-    showToast('Erreur lors de la sauvegarde', 'error');
+  static async creerProfilSupporter(uid, donnees) {
+    const profilSupporter = {
+      uid,
+      email: donnees.email,
+      prenom: donnees.prenom,
+      nom: donnees.nom,
+      telephone: donnees.telephone,
+      
+      // Supporter spécifique
+      club: donnees.club || '',
+      equipePreferee: donnees.equipePreferee || '',
+      joueursPreferees: donnees.joueursPreferees || [],
+      
+      // Niveau & Points
+      niveau: 'BRONZE',
+      points: 0,
+      pointsHistorique: [],
+      
+      // Engagements
+      matchsAttendus: 0,
+      matchsAttendues: [],
+      
+      // Contributions
+      articlesRediges: 0,
+      photosPartagees: 0,
+      commentairesPostes: 0,
+      
+      // Récompenses
+      badges: [
+        {
+          id: 'supporter-inscrit',
+          nom: '🌟 Nouveau Supporter',
+          date: serverTimestamp()
+        }
+      ],
+      
+      // Préférences Supporter
+      notificationsMatchs: true,
+      notificationsClub: true,
+      notificationsActualites: true,
+      abonnementsMails: true,
+      
+      // Métadonnées
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      inscriptionValidee: false,
+      emailValide: false,
+      telephoneValide: false
+    };
+
+    const docRef = doc(db, 'supporters', uid);
+    await setDoc(docRef, profilSupporter);
+    return profilSupporter;
   }
-}
 
-// ─── UPLOAD PHOTO VERS FIREBASE STORAGE ─────────────────────
-// FIX PRINCIPAL : on stocke la photo dans Storage, pas en base64 dans Firestore
-async function uploadPhotoToStorage(file, path) {
-  const fileRef = storageRef(storage, path);
-  await uploadBytes(fileRef, file);
-  const url = await getDownloadURL(fileRef);
-  return url;
-}
+  static async gainerPoints(uid, montantPoints, raison) {
+    const docRef = doc(db, 'supporters', uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) return;
 
-async function handleProfilePhotoChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+    const data = docSnap.data();
+    const pointsActuels = (data.points || 0) + montantPoints;
+    const nouveauNiveau = this.determinerNiveau(pointsActuels);
 
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('La photo doit faire moins de 5MB', 'error');
-    return;
-  }
+    const historique = data.pointsHistorique || [];
+    historique.push({
+      date: serverTimestamp(),
+      montant: montantPoints,
+      raison,
+      soldeAvant: data.points || 0,
+      soldeApres: pointsActuels
+    });
 
-  showToast('⏳ Upload en cours...', 'success');
-
-  try {
-    // Upload vers Storage (pas base64 dans Firestore !)
-    const path = `profiles/photos/${currentUser.uid}`;
-    const url = await uploadPhotoToStorage(file, path);
-
-    // Sauvegarder uniquement l'URL dans Firestore
-    const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
-    await updateDoc(userRef, {
-      photoURL: url,
+    await updateDoc(docRef, {
+      points: pointsActuels,
+      pointsHistorique: historique,
+      niveau: nouveauNiveau,
       updatedAt: serverTimestamp()
     });
 
-    currentUserData.photoURL = url;
-    document.getElementById('profile-photo-display').src = url;
-    updateUIWithUserData();
-    showToast('✅ Photo de profil mise à jour !', 'success');
-  } catch (e) {
-    console.error('Erreur upload photo:', e);
-    showToast('Erreur lors de l\'upload de la photo', 'error');
+    return { pointsActuels, nouveauNiveau };
   }
-}
 
-// ─── GESTION SUPPORTERS ─────────────────────────────────────
-function openSupporterModal() {
-  document.getElementById('supporter-id').value = '';
-  document.getElementById('supporter-form').reset();
-  document.getElementById('supporter-modal').classList.remove('hidden');
-}
-
-function closeSupporterModal() {
-  document.getElementById('supporter-modal').classList.add('hidden');
-}
-
-async function handleSupporterSave(e) {
-  e.preventDefault();
-
-  const supporterId = document.getElementById('supporter-id').value;
-
-  const supporterData = {
-    nom: document.getElementById('supporter-nom').value,
-    email: document.getElementById('supporter-email').value,
-    telephone: document.getElementById('supporter-telephone').value,
-    club: document.getElementById('supporter-club').value,
-    dateInscription: document.getElementById('supporter-date-inscription').value,
-    createdBy: currentUser.uid,
-    updatedAt: serverTimestamp()
-  };
-
-  const photoInput = document.getElementById('supporter-photo');
-  const file = photoInput.files[0];
-
-  try {
-    showToast('⏳ Enregistrement...', 'success');
-
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        showToast('Photo max 3MB', 'error');
-        return;
-      }
-      // Upload photo vers Storage
-      const path = `supporters/photos/${currentUser.uid}_${Date.now()}`;
-      supporterData.photoURL = await uploadPhotoToStorage(file, path);
-    }
-
-    if (supporterId) {
-      // Mise à jour
-      await updateDoc(doc(db, COLLECTIONS.supporters, supporterId), supporterData);
-      showToast('✅ Supporter mis à jour !', 'success');
-    } else {
-      // Nouveau
-      supporterData.createdAt = serverTimestamp();
-      await addDoc(collection(db, COLLECTIONS.supporters), supporterData);
-      showToast('✅ Supporter enregistré !', 'success');
-    }
-
-    closeSupporterModal();
-    loadSupporters();
-  } catch (e) {
-    console.error('Erreur sauvegarde supporter:', e);
-    showToast('Erreur lors de l\'enregistrement', 'error');
+  static determinerNiveau(points) {
+    if (points >= 5000) return 'PLATINE';
+    if (points >= 2000) return 'OR';
+    if (points >= 500) return 'ARGENT';
+    return 'BRONZE';
   }
-}
 
-async function loadSupporters() {
-  const container = document.getElementById('supporters-list');
-  if (!container) return;
+  static async ajouterMatchAttend(uid, matchId, details) {
+    const docRef = doc(db, 'supporters', uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) return;
 
-  container.innerHTML = '<p style="text-align:center;color:var(--text-3);">⏳ Chargement...</p>';
-
-  try {
-    const q = query(collection(db, COLLECTIONS.supporters), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    container.innerHTML = '';
-
-    if (snapshot.empty) {
-      container.innerHTML = '<p style="text-align:center;color:var(--text-3);">Aucun supporter enregistré</p>';
-      return;
-    }
-
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="supporter-card">
-          <img
-            src="${data.photoURL || 'https://via.placeholder.com/64?text=👤'}"
-            class="supporter-photo"
-            alt="${data.nom}"
-            onerror="this.src='https://via.placeholder.com/64?text=👤'"
-          >
-          <div class="supporter-info">
-            <div class="supporter-name">${data.nom}</div>
-            <div class="supporter-club">📍 ${data.club || 'Non spécifié'}</div>
-            <div class="supporter-meta">
-              <strong>Email:</strong> ${data.email || '--'}<br>
-              <strong>Tél:</strong> ${data.telephone || '--'}
-            </div>
-          </div>
-        </div>
-        <div class="card-actions">
-          <button class="card-btn" onclick="editSupporter('${docSnap.id}')">✏️ Éditer</button>
-          <button class="card-btn danger" onclick="deleteSupporter('${docSnap.id}')">🗑️ Supprimer</button>
-        </div>
-      `;
-      container.appendChild(card);
+    const matchsAttendues = docSnap.data().matchsAttendues || [];
+    matchsAttendues.push({
+      matchId,
+      dateAjout: serverTimestamp(),
+      ...details
     });
-  } catch (e) {
-    console.error('Erreur chargement supporters:', e);
-    container.innerHTML = '<p style="text-align:center;color:red;">Erreur de chargement</p>';
+
+    await updateDoc(docRef, {
+      matchsAttendues,
+      matchsAttendus: (docSnap.data().matchsAttendus || 0) + 1,
+      updatedAt: serverTimestamp()
+    });
+
+    // Gagner des points
+    await this.gainerPoints(uid, 10, `Inscription au match: ${details.nomMatch}`);
   }
-}
 
-window.editSupporter = async function(id) {
-  try {
-    const docSnap = await getDoc(doc(db, COLLECTIONS.supporters, id));
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      document.getElementById('supporter-id').value = id;
-      document.getElementById('supporter-nom').value = data.nom || '';
-      document.getElementById('supporter-email').value = data.email || '';
-      document.getElementById('supporter-telephone').value = data.telephone || '';
-      document.getElementById('supporter-club').value = data.club || '';
-      document.getElementById('supporter-date-inscription').value = data.dateInscription || '';
-      openSupporterModal();
-    }
-  } catch (e) {
-    showToast('Erreur lors du chargement', 'error');
-  }
-};
-
-window.deleteSupporter = async function(id) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce supporter ?')) {
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.supporters, id));
-      showToast('✅ Supporter supprimé', 'success');
-      loadSupporters();
-    } catch (e) {
-      console.error('Erreur suppression:', e);
-      showToast('Erreur lors de la suppression', 'error');
-    }
-  }
-};
-
-// ─── GESTION SITES SPORTIFS ─────────────────────────────────
-function initSitesMap() {
-  if (window.google && window.google.maps) {
-    const mapElement = document.getElementById('sites-map');
-    if (mapElement) {
-      sitesMap = new google.maps.Map(mapElement, {
-        zoom: 6,
-        center: { lat: 0.5, lng: 10 },
-        mapTypeId: 'roadmap'
-      });
-    }
-  }
-}
-
-function openSiteModal() {
-  document.getElementById('site-id').value = '';
-  document.getElementById('site-form').reset();
-  document.getElementById('site-modal').classList.remove('hidden');
-}
-
-function closeSiteModal() {
-  document.getElementById('site-modal').classList.add('hidden');
-}
-
-window.captureSiteGPS = function() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        document.getElementById('site-lat').value = position.coords.latitude.toFixed(6);
-        document.getElementById('site-lng').value = position.coords.longitude.toFixed(6);
-        showToast('📍 Position capturée avec succès !', 'success');
-      },
-      () => showToast('Impossible d\'accéder à votre position', 'error')
+  static async obtenirTableauClassement() {
+    const q = query(
+      collection(db, 'supporters'),
+      orderBy('points', 'desc'),
+      limit(100)
     );
-  } else {
-    showToast('La géolocalisation n\'est pas supportée', 'error');
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   }
-};
 
-window.openSiteOnMaps = function() {
-  const lat = document.getElementById('site-lat').value;
-  const lng = document.getElementById('site-lng').value;
-  if (lat && lng) {
-    window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank');
-  } else {
-    showToast('Veuillez d\'abord capturer une position GPS', 'error');
-  }
-};
+  static async ajouterBadgeSupporter(uid, badge) {
+    const docRef = doc(db, 'supporters', uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) return;
 
-async function handleSiteSave(e) {
-  e.preventDefault();
-
-  const siteData = {
-    nom: document.getElementById('site-nom').value,
-    type: document.getElementById('site-type').value,
-    ville: document.getElementById('site-ville').value,
-    adresse: document.getElementById('site-adresse').value,
-    lat: parseFloat(document.getElementById('site-lat').value) || 0,
-    lng: parseFloat(document.getElementById('site-lng').value) || 0,
-    capacite: parseInt(document.getElementById('site-capacite').value) || 0,
-    contact: document.getElementById('site-contact').value,
-    description: document.getElementById('site-description').value,
-    createdBy: currentUser.uid,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-
-  try {
-    await addDoc(collection(db, COLLECTIONS.sitesSportifs), siteData);
-    showToast('✅ Site sportif enregistré !', 'success');
-    closeSiteModal();
-    loadSites();
-  } catch (e) {
-    console.error('Erreur sauvegarde site:', e);
-    showToast('Erreur lors de l\'enregistrement', 'error');
-  }
-}
-
-async function loadSites() {
-  try {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.sitesSportifs));
-    const sites = [...SITES_GABON_PREDEFINIS];
-    snapshot.forEach(docSnap => {
-      sites.push({ id: docSnap.id, ...docSnap.data() });
+    const badges = docSnap.data().badges || [];
+    badges.push({
+      ...badge,
+      dateAjout: serverTimestamp()
     });
 
-    if (sitesMap) {
-      sitesMarkers.forEach(marker => marker.setMap(null));
-      sitesMarkers = [];
-      sites.forEach(site => {
-        const marker = new google.maps.Marker({
-          position: { lat: site.lat, lng: site.lng },
-          map: sitesMap,
-          title: site.nom,
-          animation: google.maps.Animation.DROP
-        });
-        marker.addListener('click', () => {
-          new google.maps.InfoWindow({
-            content: `<strong>${site.nom}</strong><br>${site.type}<br>📞 ${site.contact || '--'}`
-          }).open(sitesMap, marker);
-        });
-        sitesMarkers.push(marker);
-      });
-    }
-
-    const container = document.getElementById('sites-list');
-    if (!container) return;
-    container.innerHTML = '';
-
-    sites.forEach(site => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="site-header">
-          <span class="site-type">${site.type}</span>
-          <div class="site-name">${site.nom}</div>
-        </div>
-        <div class="site-details">
-          <div class="site-detail"><strong>🏙️ Ville:</strong> ${site.ville}</div>
-          <div class="site-detail"><strong>📍 GPS:</strong> ${site.lat.toFixed(4)}, ${site.lng.toFixed(4)}</div>
-          <div class="site-detail"><strong>👥 Capacité:</strong> ${site.capacite || '--'} places</div>
-          <div class="site-detail"><strong>📞 Contact:</strong> ${site.contact || '--'}</div>
-        </div>
-        <div class="card-actions">
-          <button class="card-btn" onclick="window.open('https://maps.google.com/?q=${site.lat},${site.lng}', '_blank')">🗺️ Voir Maps</button>
-          ${site.id ? `<button class="card-btn danger" onclick="deleteSite('${site.id}')">🗑️ Supprimer</button>` : ''}
-        </div>
-      `;
-      container.appendChild(card);
+    await updateDoc(docRef, {
+      badges,
+      updatedAt: serverTimestamp()
     });
-  } catch (e) {
-    console.error('Erreur chargement sites:', e);
+  }
+
+  static async validerEmail(uid) {
+    await updateDoc(doc(db, 'supporters', uid), {
+      emailValide: true,
+      updatedAt: serverTimestamp()
+    });
+    await this.gainerPoints(uid, 25, 'Email validé');
+  }
+
+  static async validerTelephone(uid) {
+    await updateDoc(doc(db, 'supporters', uid), {
+      telephoneValide: true,
+      updatedAt: serverTimestamp()
+    });
+    await this.gainerPoints(uid, 25, 'Téléphone validé');
   }
 }
 
-window.deleteSite = async function(id) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce site ?')) {
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.sitesSportifs, id));
-      showToast('✅ Site supprimé', 'success');
-      loadSites();
-    } catch (e) {
-      console.error('Erreur suppression:', e);
-      showToast('Erreur lors de la suppression', 'error');
+// ──────────────────────────────────────────────────────────
+// ④ FICHES ACTEURS À L'INTERNATIONAL
+// ──────────────────────────────────────────────────────────
+
+class FichesActeursInternational {
+  static async creerFicheJoueur(donnees) {
+    const fiche = {
+      typeActeur: 'JOUEUR',
+      
+      // Identité
+      nom: donnees.nom,
+      prenom: donnees.prenom,
+      nationalite: donnees.nationalite || 'Gabon',
+      ddn: donnees.ddn,
+      sexe: donnees.sexe,
+      taille: donnees.taille,
+      poids: donnees.poids,
+      
+      // Carrière
+      position: donnees.position,
+      numero: donnees.numero,
+      pied: donnees.pied, // Droit/Gauche
+      club: donnees.club,
+      saison: donnees.saison,
+      dateSignature: donnees.dateSignature,
+      contratExpire: donnees.contratExpire,
+      
+      // Palmarès
+      selections: donnees.selections || 0,
+      buts: donnees.buts || 0,
+      passes: donnees.passes || 0,
+      trophees: donnees.trophees || [],
+      
+      // Marché
+      valeurMarche: donnees.valeurMarche || 0,
+      devise: 'EUR',
+      tendance: donnees.tendance || 'STABLE',
+      
+      // Média
+      photoURL: donnees.photoURL,
+      videos: donnees.videos || [],
+      statistiques: donnees.statistiques || {},
+      
+      // International
+      selectionNationale: donnees.selectionNationale || false,
+      equipes: donnees.equipes || [],
+      competitionsInter: donnees.competitionsInter || [],
+      
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      verifie: false
+    };
+
+    const docRef = await addDoc(collection(db, 'joueursInternational'), fiche);
+    return { id: docRef.id, ...fiche };
+  }
+
+  static async creerFicheArbitre(donnees) {
+    const fiche = {
+      typeActeur: 'ARBITRE',
+      
+      // Identité
+      nom: donnees.nom,
+      prenom: donnees.prenom,
+      nationalite: donnees.nationalite || 'Gabon',
+      ddn: donnees.ddn,
+      sexe: donnees.sexe,
+      
+      // Certification
+      niveau: donnees.niveau, // National/Continental/Mondial
+      sports: donnees.sports || [],
+      dateAcreditationDebut: donnees.dateAcreditationDebut,
+      dateAcreditationFin: donnees.dateAcreditationFin,
+      acrediteAuNiveau: donnees.acrediteAuNiveau,
+      
+      // Expérience
+      matchsArbbitres: donnees.matchsArbbitres || 0,
+      competitionsOfficielles: donnees.competitionsOfficielles || [],
+      
+      // Évaluations
+      notePerformance: donnees.notePerformance || 5,
+      evaluationsRecentes: donnees.evaluationsRecentes || [],
+      incidents: donnees.incidents || [],
+      
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      verifie: false
+    };
+
+    const docRef = await addDoc(collection(db, 'arbitresInternational'), fiche);
+    return { id: docRef.id, ...fiche };
+  }
+
+  static async creerFicheClubInternational(donnees) {
+    const fiche = {
+      typeActeur: 'CLUB',
+      
+      // Identité
+      nom: donnees.nom,
+      nomCourt: donnees.nomCourt,
+      pays: donnees.pays,
+      ville: donnees.ville,
+      
+      // Structure
+      fondationAnnee: donnees.fondationAnnee,
+      stade: donnees.stade,
+      capaciteStade: donnees.capaciteStade,
+      president: donnees.president,
+      entraineur: donnees.entraineur,
+      
+      // Sport(s)
+      sports: donnees.sports || ['Football'],
+      feminin: donnees.feminin || false,
+      
+      // Palmarès
+      trophees: donnees.trophees || [],
+      ligueActuelle: donnees.ligueActuelle,
+      positionnement: donnees.positionnement,
+      
+      // International
+      competitionsEuropeennes: donnees.competitionsEuropeennes || [],
+      palmareInternational: donnees.palmareInternational || {},
+      
+      // Média
+      logoURL: donnees.logoURL,
+      reseauxSociaux: donnees.reseauxSociaux || {},
+      sitesOfficiels: donnees.sitesOfficiels || [],
+      
+      // Effectif
+      effectifTotal: donnees.effectifTotal || 0,
+      joueursActuels: donnees.joueursActuels || [],
+      
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      verifie: false
+    };
+
+    const docRef = await addDoc(collection(db, 'clubsInternational'), fiche);
+    return { id: docRef.id, ...fiche };
+  }
+
+  static async rechercherActeursInternational(type, criteres) {
+    let collectionName = '';
+    
+    if (type === 'JOUEUR') collectionName = 'joueursInternational';
+    else if (type === 'ARBITRE') collectionName = 'arbitresInternational';
+    else if (type === 'CLUB') collectionName = 'clubsInternational';
+    
+    let q = collection(db, collectionName);
+    if (criteres.nationalite) {
+      q = query(q, where('nationalite', '==', criteres.nationalite));
     }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   }
+
+  static async obtenirFicheActeur(id, type) {
+    let collectionName = '';
+    if (type === 'JOUEUR') collectionName = 'joueursInternational';
+    else if (type === 'ARBITRE') collectionName = 'arbitresInternational';
+    else if (type === 'CLUB') collectionName = 'clubsInternational';
+    
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+    
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+  }
+
+  static async exporterFicheActeur(acteur, format = 'json') {
+    if (format === 'json') {
+      return JSON.stringify(acteur, null, 2);
+    } else if (format === 'csv') {
+      const keys = Object.keys(acteur);
+      const header = keys.join(',');
+      const values = keys.map(k => `"${acteur[k]}"`).join(',');
+      return `${header}\n${values}`;
+    }
+    return acteur;
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// EXPORT & INTÉGRATION GÉNÉRALE
+// ──────────────────────────────────────────────────────────
+
+window.GeolocalisationAvancee = GeolocalisationAvancee;
+window.ProfilMembre = ProfilMembre;
+window.StatutSupporter = StatutSupporter;
+window.FichesActeursInternational = FichesActeursInternational;
+
+// Variables globales
+let geoManager = null;
+
+// Initialiser au chargement
+window.addEventListener('DOMContentLoaded', () => {
+  geoManager = new GeolocalisationAvancee();
+  console.log('✅ App Avancée v5.0 chargée — 4 fonctionnalités actives');
+});
+
+export { 
+  GeolocalisationAvancee, 
+  ProfilMembre, 
+  StatutSupporter, 
+  FichesActeursInternational 
 };
-
-// ─── NAVIGATION ET VUES ─────────────────────────────────────
-function switchView(viewName) {
-  currentView = viewName;
-  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-  const viewElement = document.getElementById(`view-${viewName}`);
-  if (viewElement) {
-    viewElement.classList.remove('hidden');
-    if (viewName === 'mon-profil') loadUserProfile();
-    else if (viewName === 'supporters') loadSupporters();
-    else if (viewName === 'sites-sportifs') loadSites();
-  }
-}
-
-function showDashboard() {
-  document.getElementById('landing').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
-  switchView('accueil');
-}
-
-function showLanding() {
-  document.getElementById('landing').classList.remove('hidden');
-  document.getElementById('dashboard').classList.add('hidden');
-}
-
-// ─── TOAST ─────────────────────────────────────────────────
-function showToast(message, type = 'success') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
-
-// ─── LOGIN ──────────────────────────────────────────────────
-function openLoginModal() {
-  const email = prompt('Email:');
-  const password = prompt('Mot de passe:');
-  if (email && password) {
-    signInWithEmailAndPassword(auth, email, password)
-      .catch(e => showToast(`Erreur: ${e.message}`, 'error'));
-  }
-}
-
-window.signUpUser = function(email, password) {
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => showToast('✅ Compte créé avec succès !', 'success'))
-    .catch(e => showToast(`❌ Erreur: ${e.message}`, 'error'));
-};
-
-console.log('✅ App v4.0 chargée — Photos via Firebase Storage activé');

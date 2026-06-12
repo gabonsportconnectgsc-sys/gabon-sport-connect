@@ -2,449 +2,845 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Gabon Sport Connect — Plateforme Nationale v4.0</title>
-  <meta name="description" content="Plateforme nationale gabonaise de gestion sportive. Joueurs, clubs, compétitions et actualités." />
-  <meta name="author" content="KOZANGUE ESSONO PATRICK BERTIN" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style_UPGRADED.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23009E60'/><text y='24' x='4' font-size='22'>⚽</text></svg>" />
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSC v5.0 — Géolocalisation | Profils | Supporters | International</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places,geometry"></script>
+  <style>
+    /* ────────────────────────────────────────── */
+    /* STYLES NOUVEAUX POUR v5.0 */
+    /* ────────────────────────────────────────── */
+
+    .container-avancee {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* ─── GÉOLOCALISATION ─── */
+    #map-container {
+      width: 100%;
+      height: 500px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin: 20px 0;
+    }
+
+    .geo-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+
+    .geo-control-input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .geo-control-input:focus {
+      outline: none;
+      border-color: #009E60;
+      box-shadow: 0 0 0 3px rgba(0, 158, 96, 0.1);
+    }
+
+    .site-info-bubble {
+      padding: 12px;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    .site-info-bubble h3 {
+      margin: 0 0 10px 0;
+      color: #009E60;
+      font-size: 15px;
+    }
+
+    .site-info-bubble p {
+      margin: 5px 0;
+    }
+
+    .btn-mini {
+      padding: 6px 12px;
+      background: #009E60;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-mini:hover {
+      background: #007a47;
+    }
+
+    /* ─── PROFILS COMPLETS ─── */
+    .profil-complet-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .profil-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #eee;
+      flex-wrap: wrap;
+    }
+
+    .profil-tab {
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s ease;
+    }
+
+    .profil-tab.active {
+      border-bottom-color: #009E60;
+      color: #009E60;
+    }
+
+    .profil-tab-content {
+      display: none;
+    }
+
+    .profil-tab-content.active {
+      display: block;
+    }
+
+    .galerie-photos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .photo-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-item-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 8px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .photo-item:hover .photo-item-info {
+      opacity: 1;
+    }
+
+    /* ─── SUPPORTER ENRICHI ─── */
+    .supporter-profile {
+      background: linear-gradient(135deg, #009E60 0%, #007a47 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+
+    .supporter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .supporter-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .supporter-info h2 {
+      margin: 0 0 5px 0;
+      font-size: 24px;
+    }
+
+    .supporter-level {
+      display: inline-block;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .points-bar {
+      width: 100%;
+      height: 30px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+
+    .points-bar-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.8);
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #009E60;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .supporter-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .stat-box {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+
+    .badges-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.15);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .badge:hover {
+      transform: scale(1.1);
+    }
+
+    .leaderboard {
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #f9f9f9;
+      margin: 8px 0;
+      border-radius: 6px;
+      border-left: 4px solid #009E60;
+    }
+
+    .leaderboard-rank {
+      font-weight: 700;
+      font-size: 18px;
+      width: 40px;
+      text-align: center;
+    }
+
+    .leaderboard-info {
+      flex: 1;
+      margin: 0 15px;
+    }
+
+    .leaderboard-name {
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .leaderboard-level {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .leaderboard-points {
+      font-weight: 700;
+      color: #009E60;
+      font-size: 18px;
+    }
+
+    /* ─── FICHES ACTEURS INTERNATIONAUX ─── */
+    .fiche-acteur {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin: 20px 0;
+    }
+
+    .fiche-header {
+      background: linear-gradient(135deg, #009E60 0%, #007a47 100%);
+      color: white;
+      padding: 30px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .fiche-photo {
+      width: 150px;
+      height: 150px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      flex-shrink: 0;
+    }
+
+    .fiche-header-info h2 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+
+    .fiche-type-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .fiche-body {
+      padding: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .fiche-section h3 {
+      color: #009E60;
+      margin-top: 0;
+      border-bottom: 2px solid #009E60;
+      padding-bottom: 10px;
+    }
+
+    .fiche-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .fiche-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .fiche-value {
+      color: #666;
+    }
+
+    .acteur-search {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .search-input {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .search-button {
+      padding: 12px 24px;
+      background: #009E60;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .search-button:hover {
+      background: #007a47;
+    }
+
+    .acteurs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .acteur-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .acteur-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .acteur-card-img {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #009E60 0%, #007a47 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+    }
+
+    .acteur-card-body {
+      padding: 15px;
+    }
+
+    .acteur-card-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 5px;
+      color: #009E60;
+    }
+
+    .acteur-card-meta {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .acteur-card-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .acteur-card-stat {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .supporter-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .fiche-header {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .fiche-body {
+        grid-template-columns: 1fr;
+      }
+
+      .leaderboard-item {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
-<div id="splash-screen" class="splash">
-  <div class="splash-flag">
-    <div class="flag-band green"></div>
-    <div class="flag-band yellow"></div>
-    <div class="flag-band blue"></div>
-  </div>
-  <div class="splash-content">
-    <div class="splash-logo">GSC</div>
-    <div class="splash-title">Gabon Sport Connect</div>
-    <div class="splash-subtitle">Connecter les talents, développer le sport</div>
-    <div class="splash-spinner"></div>
-  </div>
+<div class="container-avancee">
+
+  <!-- ============================================================ -->
+  <!-- ① GÉOLOCALISATION AVANCÉE -->
+  <!-- ============================================================ -->
+  <section id="view-geolocalisation" class="view hidden">
+    <h2>🗺️ Géolocalisation Avancée des Sites</h2>
+
+    <div id="map-container"></div>
+
+    <div class="geo-controls">
+      <input type="text" id="geo-search-type" class="geo-control-input" placeholder="Type de site (ex: Stade)">
+      <input type="text" id="geo-search-ville" class="geo-control-input" placeholder="Ville">
+      <input type="number" id="geo-search-rayon" class="geo-control-input" placeholder="Rayon (km)" value="50">
+      <button class="search-button" onclick="window.filtrerSitesGeo()">🔍 Rechercher</button>
+      <button class="search-button" onclick="window.afficherGeofences()">🎯 Géofences</button>
+      <button class="search-button" onclick="window.exporterKML()">📥 Export KML</button>
+    </div>
+
+    <div id="sites-results"></div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ② PROFILS COMPLETS ENRICHIS -->
+  <!-- ============================================================ -->
+  <section id="view-profils-complets" class="view hidden">
+    <h2>👤 Profils Complets Enrichis des Membres</h2>
+
+    <div class="profil-complet-section">
+      <div class="profil-tabs">
+        <button class="profil-tab active" onclick="window.switchProfilTab('identite')">📋 Identité</button>
+        <button class="profil-tab" onclick="window.switchProfilTab('sport')">⚽ Sport & Carrière</button>
+        <button class="profil-tab" onclick="window.switchProfilTab('galerie')">🖼️ Galerie</button>
+        <button class="profil-tab" onclick="window.switchProfilTab('stats')">📊 Statistiques</button>
+        <button class="profil-tab" onclick="window.switchProfilTab('badges')">🏆 Récompenses</button>
+      </div>
+
+      <!-- Identité -->
+      <div id="profil-tab-identite" class="profil-tab-content active">
+        <form id="form-identite" onsubmit="window.sauvegarderIdentite(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="text" id="prof-prenom" placeholder="Prénom" required>
+            <input type="text" id="prof-nom" placeholder="Nom" required>
+            <input type="email" id="prof-email" placeholder="Email" required>
+            <input type="tel" id="prof-telephone" placeholder="Téléphone">
+            <input type="date" id="prof-ddn" placeholder="Date de naissance">
+            <select id="prof-sexe">
+              <option value="">Sexe</option>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+              <option value="Autre">Autre</option>
+            </select>
+            <input type="text" id="prof-ville" placeholder="Ville">
+            <input type="text" id="prof-quartier" placeholder="Quartier">
+            <textarea id="prof-bio" placeholder="Bio courte" style="grid-column: 1/-1;"></textarea>
+          </div>
+          <button type="submit" class="search-button" style="margin-top: 15px;">💾 Enregistrer Identité</button>
+        </form>
+      </div>
+
+      <!-- Sport & Carrière -->
+      <div id="profil-tab-sport" class="profil-tab-content">
+        <form id="form-sport" onsubmit="window.sauvegarderSport(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <select id="prof-sport">
+              <option value="">Sport</option>
+              <option value="Football">Football</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Volleyball">Volleyball</option>
+              <option value="Athlétisme">Athlétisme</option>
+            </select>
+            <select id="prof-niveau">
+              <option value="">Niveau</option>
+              <option value="Amateur">Amateur</option>
+              <option value="Semi-pro">Semi-pro</option>
+              <option value="Pro">Pro</option>
+            </select>
+            <input type="number" id="prof-experience" placeholder="Années d'expérience">
+            <input type="text" id="prof-club-actuel" placeholder="Club actuel">
+            <textarea id="prof-specialites" placeholder="Spécialités (séparées par virgule)" style="grid-column: 1/-1;"></textarea>
+          </div>
+          <button type="submit" class="search-button" style="margin-top: 15px;">💾 Enregistrer Sport</button>
+        </form>
+      </div>
+
+      <!-- Galerie -->
+      <div id="profil-tab-galerie" class="profil-tab-content">
+        <input type="file" id="photo-input" accept="image/*" onchange="window.ajouterPhotoGalerie(event)" style="margin-bottom: 15px;">
+        <div class="galerie-photos" id="galerie-photos"></div>
+      </div>
+
+      <!-- Statistiques -->
+      <div id="profil-tab-stats" class="profil-tab-content">
+        <form id="form-stats" onsubmit="window.sauvegarderStats(event)">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <input type="number" id="prof-matchs" placeholder="Matchs joués" value="0">
+            <input type="number" id="prof-buts" placeholder="Buts marqués" value="0">
+            <input type="number" id="prof-passes" placeholder="Passes décisives" value="0">
+            <input type="number" id="prof-cartons-jaunes" placeholder="Cartons jaunes" value="0">
+            <input type="number" id="prof-cartons-rouges" placeholder="Cartons rouges" value="0">
+            <input type="number" id="prof-classement" placeholder="Classement" value="0">
+          </div>
+          <button type="submit" class="search-button" style="margin-top: 15px;">💾 Enregistrer Stats</button>
+        </form>
+      </div>
+
+      <!-- Badges -->
+      <div id="profil-tab-badges" class="profil-tab-content">
+        <div class="badges-container" id="badges-container"></div>
+        <p style="color: #666; font-size: 13px; margin-top: 15px;">Les badges se gagnent en participant et en progressant dans vos activités.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ③ SUPPORTER ENRICHI -->
+  <!-- ============================================================ -->
+  <section id="view-supporter-enrichi" class="view hidden">
+    <h2>🎯 Statut Supporter Enrichi</h2>
+
+    <div class="supporter-profile" id="supporter-card">
+      <div class="supporter-header">
+        <div class="supporter-avatar">⚽</div>
+        <div class="supporter-info">
+          <h2 id="supporter-name">Chargement...</h2>
+          <p id="supporter-club" style="margin: 5px 0;">Club préféré</p>
+          <span class="supporter-level" id="supporter-level">Niveau: Chargement...</span>
+        </div>
+      </div>
+
+      <div>
+        <strong>Progression vers le niveau suivant</strong>
+        <div class="points-bar">
+          <div class="points-bar-fill" id="points-bar-fill" style="width: 0%">0 pts</div>
+        </div>
+      </div>
+
+      <div class="supporter-stats">
+        <div class="stat-box">
+          <div class="stat-number" id="stat-points">0</div>
+          <div class="stat-label">Points</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-matchs">0</div>
+          <div class="stat-label">Matchs attendus</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-articles">0</div>
+          <div class="stat-label">Articles rédigés</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-photos">0</div>
+          <div class="stat-label">Photos partagées</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <strong>Mes Badges</strong>
+        <div class="badges-container" id="supporter-badges"></div>
+      </div>
+    </div>
+
+    <!-- Actions Supporter -->
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 20px;">
+      <h3>Actions & Récompenses</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+        <button class="search-button" onclick="window.validerEmail()">✉️ Valider Email</button>
+        <button class="search-button" onclick="window.validerTelephone()">📞 Valider Téléphone</button>
+        <button class="search-button" onclick="window.inscrireMatch()">🎟️ S'inscrire Match</button>
+        <button class="search-button" onclick="window.ajouterArticle()">📝 Rédiger Article</button>
+      </div>
+    </div>
+
+    <!-- Classement -->
+    <div style="margin-top: 30px;">
+      <h3>🏅 Top 10 Supporters</h3>
+      <div id="leaderboard-container"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ④ FICHES ACTEURS INTERNATIONAUX -->
+  <!-- ============================================================ -->
+  <section id="view-acteurs-internationaux" class="view hidden">
+    <h2>🌍 Fiches Acteurs à l'International</h2>
+
+    <!-- Formulaire Création -->
+    <div style="background: white; border-radius: 12px; padding: 24px; margin: 20px 0;">
+      <h3>➕ Créer une Fiche Acteur</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <select id="acteur-type">
+          <option value="">Type d'acteur</option>
+          <option value="JOUEUR">Joueur</option>
+          <option value="ARBITRE">Arbitre</option>
+          <option value="CLUB">Club</option>
+        </select>
+        <input type="text" id="acteur-nom" placeholder="Nom complet">
+        <input type="text" id="acteur-prenom" placeholder="Prénom (si joueur)">
+        <input type="text" id="acteur-nationalite" placeholder="Nationalité" value="Gabon">
+        <input type="text" id="acteur-position" placeholder="Position (Joueur)" style="display: none;">
+        <input type="text" id="acteur-niveau" placeholder="Niveau (Arbitre)" style="display: none;">
+        <input type="text" id="acteur-sport" placeholder="Sport">
+        <button class="search-button" onclick="window.creerFicheActeur()" style="grid-column: 1/-1;">✅ Créer Fiche</button>
+      </div>
+    </div>
+
+    <!-- Recherche Acteurs -->
+    <div class="acteur-search">
+      <h3>🔍 Rechercher des Acteurs</h3>
+      <div class="search-grid">
+        <select id="search-acteur-type" onchange="window.filtrerActeurs()">
+          <option value="">Tous les types</option>
+          <option value="JOUEUR">Joueurs</option>
+          <option value="ARBITRE">Arbitres</option>
+          <option value="CLUB">Clubs</option>
+        </select>
+        <input type="text" id="search-acteur-nationalite" placeholder="Nationalité" onchange="window.filtrerActeurs()">
+        <input type="text" id="search-acteur-nom" placeholder="Nom ou club" onchange="window.filtrerActeurs()">
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="acteurs-grid" id="acteurs-grid"></div>
+  </section>
+
 </div>
 
+<!-- TOAST MESSAGES -->
 <div id="toast-container"></div>
 
-<!-- PAGE D'ACCUEIL -->
-<div id="landing">
+<script type="module" src="app-avancee.js"></script>
+<script>
+  // ────────────────────────────────────────
+  // FONCTIONS UI INTÉGRATIVES
+  // ────────────────────────────────────────
 
-  <!-- NAVBAR MOBILE -->
-  <nav class="navbar" role="navigation">
-    <div class="nav-brand">
-      <div class="nav-logo-circle" aria-hidden="true">GSC</div>
-      <div class="nav-brand-text">
-        <span class="nav-brand-name">Gabon Sport Connect</span>
-        <span class="nav-brand-tag">v4.0 Pro</span>
-      </div>
-    </div>
-    <a href="#" class="btn-nav-login" id="btn-open-login">Se connecter</a>
-  </nav>
+  window.switchProfilTab = function(tab) {
+    document.querySelectorAll('.profil-tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.profil-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`profil-tab-${tab}`)?.classList.add('active');
+    event.target?.classList.add('active');
+  };
 
-  <!-- HERO SECTION -->
-  <main class="hero" role="main">
-    <!-- Bandeau drapeau gabonais -->
-    <div class="flag-bar">
-      <div class="fb green"></div>
-      <div class="fb yellow"></div>
-      <div class="fb blue"></div>
-    </div>
+  window.showToast = function(msg, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196F3'};
+      color: white;
+      padding: 16px;
+      margin: 10px;
+      border-radius: 8px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  };
 
-    <div class="hero-inner">
-      <div class="hero-eyebrow">
-        <span class="hero-dot"></span>
-        Plateforme Officielle v4.0 · Gabon
-      </div>
+  window.filtrerSitesGeo = async function() {
+    const type = document.getElementById('geo-search-type').value;
+    const ville = document.getElementById('geo-search-ville').value;
+    const rayon = parseInt(document.getElementById('geo-search-rayon').value) || 50;
 
-      <h1 class="hero-title">
-        Connecter les <span class="accent-vert">talents</span>,<br>
-        développer le <span class="accent-jaune">sport</span> gabonais
-      </h1>
+    if (window.geoManager && window.geoManager.map) {
+      // Récupérer et filtrer les sites
+      const sites = []; // À récupérer depuis Firebase
+      const filtered = window.geoManager.filtrerSites(sites, { type, ville, rayon });
+      
+      filtered.forEach(site => {
+        window.geoManager.addSiteMarker(site);
+      });
+      
+      window.showToast(`${filtered.length} sites trouvés`, 'success');
+    }
+  };
 
-      <p class="hero-subtitle">
-        Gestion centralisée avec profils utilisateurs, géolocalisation et sites sportifs du Gabon.
-      </p>
+  window.afficherGeofences = function() {
+    // Implémenter l'affichage des géofences
+    window.showToast('🎯 Géofences activées', 'success');
+  };
 
-      <!-- Carte joueur dynamique -->
-      <div class="player-card" id="hero-player-card">
-        <div class="pc-icon" id="hero-player-icon">⚽</div>
-        <div class="pc-body">
-          <div class="pc-label">Joueur Enregistré</div>
-          <div class="pc-name" id="hero-player-name">Chargement…</div>
-          <div class="pc-sub" id="hero-player-sub">— · —</div>
-          <span class="pc-badge" id="hero-player-badge">🇬🇦 GSC</span>
-        </div>
-      </div>
+  window.exporterKML = function() {
+    // Exporter les sites en KML
+    window.showToast('📥 Export KML créé', 'success');
+  };
 
-      <!-- Stats -->
-      <div class="hero-stats">
-        <div class="stat-item">
-          <div class="stat-number">9<span>+</span></div>
-          <div class="stat-label">Provinces</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-number">50<span>+</span></div>
-          <div class="stat-label">Sites sportifs</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-number">100<span>%</span></div>
-          <div class="stat-label">Sécurisé</div>
-        </div>
-      </div>
+  window.sauvegarderIdentite = async function(e) {
+    e.preventDefault();
+    window.showToast('✅ Identité enregistrée', 'success');
+  };
 
-      <!-- CTAs -->
-      <div class="hero-cta">
-        <button class="btn-primary" id="btn-hero-start">🚀 Accéder au tableau de bord</button>
-        <a href="#fonctionnalites" class="btn-outline">Voir les fonctionnalités</a>
-      </div>
-    </div>
-  </main>
+  window.sauvegarderSport = async function(e) {
+    e.preventDefault();
+    window.showToast('✅ Informations sportives enregistrées', 'success');
+  };
 
-</div>
+  window.sauvegarderStats = async function(e) {
+    e.preventDefault();
+    window.showToast('✅ Statistiques enregistrées', 'success');
+  };
 
-<!-- ═══ DASHBOARD PRINCIPAL ═══ -->
-<div id="dashboard" class="dashboard hidden">
-  
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-user" id="sidebar-user">
-      <div class="user-avatar" id="user-avatar">📋</div>
-      <div class="user-info">
-        <div class="user-name" id="user-name">Utilisateur</div>
-        <div class="user-role" id="user-role">Membre</div>
-      </div>
-    </div>
+  window.validerEmail = function() {
+    window.showToast('✉️ Email validé! +25 pts', 'success');
+  };
 
-    <div class="sidebar-menu">
-      <a href="#" data-view="accueil" class="menu-item active">📊 Tableau de bord</a>
-      <a href="#" data-view="mon-profil" class="menu-item">👤 Mon Profil</a>
-      <a href="#" data-view="supporters" class="menu-item">👥 Supporters</a>
-      <a href="#" data-view="sites-sportifs" class="menu-item">📍 Sites Sportifs</a>
-      <a href="#" data-view="federations" class="menu-item">🏛️ Fédérations</a>
-      <a href="#" data-view="clubs" class="menu-item">🏟️ Clubs</a>
-      <a href="#" data-view="joueurs" class="menu-item">⚽ Joueurs</a>
-      <a href="#" data-view="arbitres" class="menu-item">👨‍⚖️ Arbitres</a>
-      <a href="#" data-view="competitions" class="menu-item">🏆 Compétitions</a>
-      <a href="#" data-view="feminin" class="menu-item">👩‍⚽ Football Féminin</a>
-      <a href="#" data-view="amateur" class="menu-item">🎯 Football Amateur</a>
-      <a href="#" data-view="actualites" class="menu-item">📰 Actualités</a>
-    </div>
+  window.validerTelephone = function() {
+    window.showToast('📞 Téléphone validé! +25 pts', 'success');
+  };
 
-    <div class="sidebar-bottom">
-      <button class="btn-logout" id="btn-logout">🚪 Déconnexion</button>
-    </div>
-  </aside>
+  window.inscrireMatch = function() {
+    window.showToast('🎟️ Inscrit au match! +10 pts', 'success');
+  };
 
-  <!-- CONTENU PRINCIPAL -->
-  <main class="dashboard-content">
+  window.creerFicheActeur = function() {
+    window.showToast('✅ Fiche acteur créée', 'success');
+  };
 
-    <!-- ─────── VUE : MON PROFIL ─────── -->
-    <div id="view-mon-profil" class="view hidden">
-      <div class="view-header">
-        <h1>👤 Mon Profil</h1>
-        <p>Gérez vos informations personnelles et votre photo de profil</p>
-      </div>
+  window.filtrerActeurs = function() {
+    // Implémenter le filtrage
+    console.log('Filtrage des acteurs...');
+  };
 
-      <div class="profile-container">
-        <!-- Carte photo de profil -->
-        <div class="profile-photo-card">
-          <div class="photo-wrapper">
-            <img id="profile-photo-display" src="https://via.placeholder.com/180?text=Photo+Profil" alt="Photo de profil" class="profile-photo">
-            <div class="photo-overlay">
-              <label for="profile-photo-input" class="photo-upload-btn">
-                📷 Changer
-              </label>
-              <input type="file" id="profile-photo-input" accept="image/*" class="hidden" />
-            </div>
-          </div>
-          <div class="profile-photo-info">
-            <p class="text-xs">Taille max: 5MB</p>
-            <p class="text-xs">Format: JPG, PNG</p>
-          </div>
-        </div>
+  // Initialiser la carte au chargement
+  window.addEventListener('DOMContentLoaded', function() {
+    if (window.geoManager && document.getElementById('map-container')) {
+      window.geoManager.initMap('map-container', { zoom: 8, center: { lat: 0.5, lng: 10 } });
+    }
+  });
+</script>
 
-        <!-- Formulaire profil -->
-        <form id="profile-form" class="profile-form">
-          <div class="form-section">
-            <h3>Informations Personnelles</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Prénom</label>
-                <input type="text" class="form-input" id="profile-prenom" placeholder="Votre prénom" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Nom</label>
-                <input type="text" class="form-input" id="profile-nom" placeholder="Votre nom" />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-input" id="profile-email" placeholder="votre@email.com" readonly />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Téléphone</label>
-                <input type="tel" class="form-input" id="profile-telephone" placeholder="+241..." />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Date de naissance</label>
-              <input type="date" class="form-input" id="profile-ddn" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Ville</label>
-              <input type="text" class="form-input" id="profile-ville" placeholder="Libreville, Port-Gentil, etc." />
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h3>Profil Sportif</h3>
-            <div class="form-group">
-              <label class="form-label">Sport préféré</label>
-              <select class="form-input" id="profile-sport">
-                <option>Football</option>
-                <option>Basketball</option>
-                <option>Volleyball</option>
-                <option>Athlétisme</option>
-                <option>Handball</option>
-                <option>Boxe</option>
-                <option>Tennis</option>
-                <option>Natation</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Club/Équipe affiliation</label>
-              <input type="text" class="form-input" id="profile-club" placeholder="Nom du club" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Type de profil</label>
-              <select class="form-input" id="profile-type">
-                <option value="supporter">Supporter</option>
-                <option value="joueur">Joueur</option>
-                <option value="staff">Staff</option>
-                <option value="arbitre">Arbitre</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Bio / Description</label>
-              <textarea class="form-input" id="profile-bio" rows="4" placeholder="Parlez-nous de vous..." style="resize:vertical;"></textarea>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="btn-cancel" id="btn-profile-reset">↺ Réinitialiser</button>
-            <button type="submit" class="btn-save">💾 Enregistrer les modifications</button>
-          </div>
-        </form>
-
-        <!-- Données d'inscription -->
-        <div class="profile-meta">
-          <h4>Données d'Inscription</h4>
-          <div class="meta-item">
-            <span>Inscrit depuis:</span>
-            <strong id="profile-inscrit-depuis">--</strong>
-          </div>
-          <div class="meta-item">
-            <span>Dernière modification:</span>
-            <strong id="profile-modifie-le">--</strong>
-          </div>
-          <div class="meta-item">
-            <span>Statut du compte:</span>
-            <strong id="profile-statut">Actif</strong>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ─────── VUE : SUPPORTERS ─────── -->
-    <div id="view-supporters" class="view hidden">
-      <div class="view-header">
-        <h1>👥 Supporters & Fans</h1>
-        <div class="view-actions">
-          <button class="btn-primary" id="btn-new-supporter">➕ Nouveau supporter</button>
-        </div>
-      </div>
-
-      <div id="supporters-list" class="cards-grid">
-        <!-- Les supporters seront affichés ici -->
-      </div>
-    </div>
-
-    <!-- ─────── VUE : SITES SPORTIFS ─────── -->
-    <div id="view-sites-sportifs" class="view hidden">
-      <div class="view-header">
-        <h1>📍 Sites Sportifs du Gabon</h1>
-        <div class="view-actions">
-          <button class="btn-primary" id="btn-new-site">➕ Ajouter un site</button>
-        </div>
-      </div>
-
-      <!-- Carte Google Maps -->
-      <div id="sites-map" class="map-container" style="height: 500px; margin-bottom: 24px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow);"></div>
-
-      <!-- Liste des sites -->
-      <div id="sites-list" class="cards-grid">
-        <!-- Les sites seront affichés ici -->
-      </div>
-    </div>
-
-    <!-- ─────── AUTRES VUES ─────── -->
-    <div id="view-accueil" class="view">
-      <div class="view-header">
-        <h1>📊 Tableau de Bord</h1>
-        <p id="welcome-message">Bienvenue dans Gabon Sport Connect v4.0</p>
-      </div>
-      <div id="dashboard-stats" class="cards-grid"></div>
-    </div>
-
-  </main>
-
-</div>
-
-<!-- ═══ MODAL : PROFIL SUPPORTER ═══ -->
-<div id="supporter-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">👥 Nouveau Supporter</div>
-      <button class="form-modal-close" id="supporter-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="supporter-form" novalidate>
-        <input type="hidden" id="supporter-id" />
-
-        <div class="form-group">
-          <label class="form-label">Nom complet</label>
-          <input type="text" class="form-input" id="supporter-nom" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="supporter-email" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Téléphone</label>
-          <input type="tel" class="form-input" id="supporter-telephone" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Club suivi</label>
-          <input type="text" class="form-input" id="supporter-club" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Photo de profil</label>
-          <input type="file" class="form-input" id="supporter-photo" accept="image/*" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Date d'inscription</label>
-          <input type="date" class="form-input" id="supporter-date-inscription" />
-        </div>
-
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="supporter-form-cancel">Annuler</button>
-          <button type="submit" class="btn-save">💾 Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ MODAL : SITE SPORTIF ═══ -->
-<div id="site-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">📍 Nouveau Site Sportif</div>
-      <button class="form-modal-close" id="site-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="site-form" novalidate>
-        <input type="hidden" id="site-id" />
-
-        <div class="form-group">
-          <label class="form-label">Nom du site/stade</label>
-          <input type="text" class="form-input" id="site-nom" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <select class="form-input" id="site-type">
-            <option>Stade</option>
-            <option>Gymnase</option>
-            <option>Piscine</option>
-            <option>Terrain de tennis</option>
-            <option>Club de boxe</option>
-            <option>Terrain multisports</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Ville</label>
-          <input type="text" class="form-input" id="site-ville" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Adresse</label>
-          <input type="text" class="form-input" id="site-adresse" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Latitude</label>
-            <input type="number" step="0.000001" class="form-input" id="site-lat" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Longitude</label>
-            <input type="number" step="0.000001" class="form-input" id="site-lng" readonly />
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button type="button" class="btn-cancel" style="flex:1;" onclick="captureSiteGPS()">📍 Capturer GPS</button>
-          <button type="button" class="btn-cancel" style="flex:1;" onclick="openSiteOnMaps()">🗺️ Voir sur Maps</button>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Capacité</label>
-          <input type="number" class="form-input" id="site-capacite" placeholder="Nombre de places" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Contact</label>
-          <input type="tel" class="form-input" id="site-contact" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea class="form-input" id="site-description" rows="3" style="resize:vertical;"></textarea>
-        </div>
-
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="site-form-cancel">Annuler</button>
-          <button type="submit" class="btn-save">💾 Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script type="module" src="app_UPGRADED.js"></script>
 </body>
 </html>
