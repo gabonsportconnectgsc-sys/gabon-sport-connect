@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Gabon Sport Connect — Plateforme Nationale</title>
+  <title>Gabon Sport Connect — Plateforme Nationale v4.0</title>
   <meta name="description" content="Plateforme nationale gabonaise de gestion sportive. Joueurs, clubs, compétitions et actualités." />
   <meta name="author" content="KOZANGUE ESSONO PATRICK BERTIN" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style_UPGRADED.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23009E60'/><text y='24' x='4' font-size='22'>⚽</text></svg>" />
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
 </head>
 <body>
 
@@ -40,7 +42,7 @@
       <div class="nav-logo-circle" aria-hidden="true">GSC</div>
       <div class="nav-brand-text">
         <span class="nav-brand-name">Gabon Sport Connect</span>
-        <span class="nav-brand-tag">Plateforme Nationale</span>
+        <span class="nav-brand-tag">v4.0 Pro</span>
       </div>
     </div>
     <a href="#" class="btn-nav-login" id="btn-open-login">Se connecter</a>
@@ -58,7 +60,7 @@
     <div class="hero-inner">
       <div class="hero-eyebrow">
         <span class="hero-dot"></span>
-        Plateforme Officielle · Gabon
+        Plateforme Officielle v4.0 · Gabon
       </div>
 
       <h1 class="hero-title">
@@ -67,10 +69,10 @@
       </h1>
 
       <p class="hero-subtitle">
-        Gestion centralisée des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.
+        Gestion centralisée avec profils utilisateurs, géolocalisation et sites sportifs du Gabon.
       </p>
 
-      <!-- Carte joueur dynamique — meilleur joueur réel -->
+      <!-- Carte joueur dynamique -->
       <div class="player-card" id="hero-player-card">
         <div class="pc-icon" id="hero-player-icon">⚽</div>
         <div class="pc-body">
@@ -89,8 +91,8 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <div class="stat-number">4<span>+</span></div>
-          <div class="stat-label">Sports</div>
+          <div class="stat-number">50<span>+</span></div>
+          <div class="stat-label">Sites sportifs</div>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
@@ -107,530 +109,257 @@
     </div>
   </main>
 
-  <!-- FONCTIONNALITÉS -->
-  <section class="features" id="fonctionnalites">
-    <div class="section-header">
-      <div class="section-eyebrow">CE QUE VOUS POUVEZ FAIRE</div>
-      <h2 class="section-title">Une plateforme complète</h2>
-      <p class="section-subtitle">Tous les outils pour gérer le sport national gabonais.</p>
-    </div>
-
-    <div class="features-grid">
-      <a href="#" class="feature-card" id="fc-federations" data-action="login">
-        <div class="feature-icon-wrap green">🏛️</div>
-        <div class="feature-body">
-          <div class="feature-title">Fédérations</div>
-          <p class="feature-desc">Enregistrez fédérations, agréments et affiliations internationales.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-joueurs" data-action="login">
-        <div class="feature-icon-wrap yellow">⚽</div>
-        <div class="feature-body">
-          <div class="feature-title">Joueurs</div>
-          <p class="feature-desc">Profils complets : position, club, statistiques certifiées.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-clubs" data-action="login">
-        <div class="feature-icon-wrap blue">🏟️</div>
-        <div class="feature-body">
-          <div class="feature-title">Clubs</div>
-          <p class="feature-desc">Infrastructure, staff technique et effectif par catégorie.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-arbitres" data-action="login">
-        <div class="feature-icon-wrap green">👨‍⚖️</div>
-        <div class="feature-body">
-          <div class="feature-title">Arbitres</div>
-          <p class="feature-desc">Grades national, FIFA, CAF et historique des matchs.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-competitions" data-action="login">
-        <div class="feature-icon-wrap yellow">🏆</div>
-        <div class="feature-body">
-          <div class="feature-title">Compétitions</div>
-          <p class="feature-desc">Créez et suivez les championnats nationaux.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-feminin" data-action="login">
-        <div class="feature-icon-wrap blue">👩‍⚽</div>
-        <div class="feature-body">
-          <div class="feature-title">Football Féminin</div>
-          <p class="feature-desc">Panel dédié avec rapports d'état national.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-amateur" data-action="login">
-        <div class="feature-icon-wrap green">🎯</div>
-        <div class="feature-body">
-          <div class="feature-title">Football Amateur</div>
-          <p class="feature-desc">Passerelle vers le niveau professionnel.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-
-      <a href="#" class="feature-card" id="fc-rapports" data-action="login">
-        <div class="feature-icon-wrap yellow">🖨️</div>
-        <div class="feature-body">
-          <div class="feature-title">Rapports Officiels</div>
-          <p class="feature-desc">Documents A4 avec en-tête Ministère et cachet numérique.</p>
-        </div>
-        <span class="feature-arrow">→</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- SECTION AVANTAGES -->
-  <section class="benefits-section">
-    <div class="section-header">
-      <div class="section-eyebrow">POURQUOI NOUS REJOINDRE</div>
-      <h2 class="section-title">La force du <span class="accent-vert">numérique</span></h2>
-    </div>
-    <div class="benefits-list">
-      <div class="benefit-item">
-        <div class="benefit-icon">🔒</div>
-        <div class="benefit-text">
-          <strong>Données sécurisées</strong>
-          <span>Hébergement Firebase certifié, accès contrôlé par rôles</span>
-        </div>
-      </div>
-      <div class="benefit-item">
-        <div class="benefit-icon">📱</div>
-        <div class="benefit-text">
-          <strong>Accessible partout</strong>
-          <span>Sur mobile, tablette ou ordinateur, 24h/24</span>
-        </div>
-      </div>
-      <div class="benefit-item">
-        <div class="benefit-icon">🇬🇦</div>
-        <div class="benefit-text">
-          <strong>Made in Gabon</strong>
-          <span>Conçu pour les 9 provinces du territoire national</span>
-        </div>
-      </div>
-      <div class="benefit-item">
-        <div class="benefit-icon">📊</div>
-        <div class="benefit-text">
-          <strong>Rapports officiels</strong>
-          <span>Exports imprimables avec cachet numérique ministère</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA FINAL -->
-  <section class="cta-section">
-    <div class="cta-flag-bar">
-      <div class="fb green"></div>
-      <div class="fb yellow"></div>
-      <div class="fb blue"></div>
-    </div>
-    <div class="cta-inner">
-      <div class="cta-logo">GSC</div>
-      <h2>Prêt à rejoindre la plateforme ?</h2>
-      <p>Inscrivez-vous gratuitement et gérez votre entité sportive dès aujourd'hui.</p>
-      <button class="btn-primary btn-lg" id="btn-cta-register">Créer mon compte →</button>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer" id="contact">
-    <div class="footer-top">
-      <div class="footer-brand">Gabon Sport <span>Connect</span></div>
-      <p class="footer-tagline">Connecter les talents, développer le sport</p>
-    </div>
-    <div class="footer-links">
-      <a href="#fonctionnalites">Fonctionnalités</a>
-      <a href="#" id="footer-login-link">Connexion</a>
-      <a href="mailto:gabonsportconnectgsc@gmail.com">Contact</a>
-    </div>
-    <div class="footer-contact">
-      <div>Porteur : <strong>KOZANGUE ESSONO PATRICK BERTIN</strong></div>
-      <a href="mailto:gabonsportconnectgsc@gmail.com">gabonsportconnectgsc@gmail.com</a>
-      <a href="tel:+24160141924">+241 60 14 19 24</a>
-    </div>
-    <div class="footer-copy">
-      © 2025 Gabon Sport Connect · Tous droits réservés
-    </div>
-    <div class="footer-privacy">
-      <a href="#" id="btn-confidentialite" onclick="document.getElementById('confidentialite-modal').classList.remove('hidden');return false;">🔒 Règles &amp; Confidentialité</a>
-    </div>
-  </footer>
-
-</div><!-- end #landing -->
-
-<!-- MODAL AUTH -->
-<div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Authentification">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-logo">
-        <div class="modal-logo-circle">GSC</div>
-        <span class="modal-logo-text">Gabon Sport Connect</span>
-      </div>
-      <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="modal-title">Bienvenue</div>
-    <div class="modal-body">
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab active" data-tab="login" role="tab">Se connecter</button>
-        <button class="auth-tab" data-tab="register" role="tab">S'inscrire</button>
-      </div>
-
-      <form id="login-form" novalidate>
-        <div class="form-group">
-          <label class="form-label" for="login-email">Email *</label>
-          <input class="form-input" type="email" id="login-email" placeholder="votre@email.com" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="login-password">Mot de passe *</label>
-          <input class="form-input" type="password" id="login-password" placeholder="••••••••" required />
-        </div>
-        <button type="submit" class="btn-submit">Se connecter</button>
-      </form>
-
-      <form id="register-form" class="hidden" novalidate>
-        <div class="form-group">
-          <label class="form-label" for="reg-email">Email *</label>
-          <input class="form-input" type="email" id="reg-email" placeholder="votre@email.com" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="reg-password">Mot de passe *</label>
-          <input class="form-input" type="password" id="reg-password" placeholder="Min. 6 caractères" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="reg-nom">Nom complet *</label>
-          <input class="form-input" type="text" id="reg-nom" placeholder="Jean Dupont" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="reg-role">Rôle *</label>
-          <select class="form-input" id="reg-role" required>
-            <option value="">Sélectionner un rôle</option>
-            <option value="fédération">🏛️ Fédération</option>
-            <option value="club">🏟️ Club</option>
-            <option value="joueur">⚽ Joueur</option>
-            <option value="arbitre">👨‍⚖️ Arbitre</option>
-            <option value="organisation">📊 Organisation</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-submit">S'inscrire</button>
-      </form>
-    </div>
-  </div>
 </div>
 
-<!-- DASHBOARD PRINCIPAL -->
+<!-- ═══ DASHBOARD PRINCIPAL ═══ -->
 <div id="dashboard" class="dashboard hidden">
-
+  
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-logo-circle">GSC</div>
-      <div class="sidebar-logo-text">Gabon Sport Connect</div>
-    </div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar" id="user-avatar-text">XX</div>
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="user-avatar" id="user-avatar">📋</div>
       <div class="user-info">
-        <div class="user-name" id="user-name-text">Utilisateur</div>
-        <div class="user-email" id="user-email-text">email@example.com</div>
-        <div class="user-role" id="user-role-badge">Rôle</div>
+        <div class="user-name" id="user-name">Utilisateur</div>
+        <div class="user-role" id="user-role">Membre</div>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <button class="nav-item nav-admin-only" data-view="accueil">📊 Tableau de bord</button>
+    <div class="sidebar-menu">
+      <a href="#" data-view="accueil" class="menu-item active">📊 Tableau de bord</a>
+      <a href="#" data-view="mon-profil" class="menu-item">👤 Mon Profil</a>
+      <a href="#" data-view="supporters" class="menu-item">👥 Supporters</a>
+      <a href="#" data-view="sites-sportifs" class="menu-item">📍 Sites Sportifs</a>
+      <a href="#" data-view="federations" class="menu-item">🏛️ Fédérations</a>
+      <a href="#" data-view="clubs" class="menu-item">🏟️ Clubs</a>
+      <a href="#" data-view="joueurs" class="menu-item">⚽ Joueurs</a>
+      <a href="#" data-view="arbitres" class="menu-item">👨‍⚖️ Arbitres</a>
+      <a href="#" data-view="competitions" class="menu-item">🏆 Compétitions</a>
+      <a href="#" data-view="feminin" class="menu-item">👩‍⚽ Football Féminin</a>
+      <a href="#" data-view="amateur" class="menu-item">🎯 Football Amateur</a>
+      <a href="#" data-view="actualites" class="menu-item">📰 Actualités</a>
+    </div>
 
-      <div class="nav-section nav-admin-only">
-        <div class="nav-section-title">ADMINISTRATION</div>
-        <button class="nav-item" data-view="fédérations">🏛️ Fédérations</button>
-        <button class="nav-item" data-view="clubs">🏟️ Clubs</button>
-        <button class="nav-item" data-view="joueurs">⚽ Joueurs</button>
-        <button class="nav-item" data-view="arbitres">👨‍⚖️ Arbitres</button>
-        <button class="nav-item" data-view="compétitions">🏆 Compétitions</button>
-      </div>
-
-      <div class="nav-section nav-admin-only">
-        <div class="nav-section-title">SPÉCIALISÉS</div>
-        <button class="nav-item" data-view="féminin">👩‍⚽ Football féminin</button>
-        <button class="nav-item" data-view="amateur">🎯 Football amateur</button>
-      </div>
-
-      <button class="nav-item nav-fédération-only" data-view="fed-dashboard">📊 Mon tableau</button>
-      <button class="nav-item nav-fédération-only" data-view="fed-clubs">🏟️ Mes clubs</button>
-      <button class="nav-item nav-club-only" data-view="club-dashboard">📊 Mon club</button>
-      <button class="nav-item nav-joueur-only" data-view="joueur-profil">⚽ Mon profil</button>
-      <button class="nav-item nav-arbitre-only" data-view="arbitre-profil">👨‍⚖️ Ma fiche arbitre</button>
-
-      <div class="nav-section">
-        <div class="nav-section-title">CONTENU</div>
-        <button class="nav-item" data-view="actualités">📰 Actualités</button>
-      </div>
-
-      <div class="nav-section nav-admin-only">
-        <div class="nav-section-title">RAPPORTS</div>
-        <button class="nav-item" data-view="rapports">🖨️ Rapports imprimables</button>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
+    <div class="sidebar-bottom">
       <button class="btn-logout" id="btn-logout">🚪 Déconnexion</button>
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
-  <div class="main-content">
-    <div class="content-header">
-      <h1 class="content-title" id="content-title">Accueil</h1>
-      <div class="content-actions">
-        <button class="btn-icon" id="btn-notifs" style="position:relative;" title="Notifications">
-          🔔
-          <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;align-items:center;justify-content:center;">0</span>
-        </button>
-        <button class="btn-icon" id="btn-menu-toggle">☰</button>
-      </div>
-    </div>
+  <!-- CONTENU PRINCIPAL -->
+  <main class="dashboard-content">
 
-    <!-- ACCUEIL -->
-    <div id="view-accueil" class="view hidden">
-      <div class="welcome-card">
-        <h2>Bienvenue sur Gabon Sport Connect 🇬🇦</h2>
-        <p>Gestion complète des fédérations, clubs, joueurs, arbitres et compétitions du Gabon.</p>
-        <div class="dashboard-stats">
-          <div class="stat-card" data-nav="fédérations" title="Voir les fédérations">
-            <div class="stat-value" id="stat-fédérations">-</div>
-            <div class="stat-label">Fédérations →</div>
+    <!-- ─────── VUE : MON PROFIL ─────── -->
+    <div id="view-mon-profil" class="view hidden">
+      <div class="view-header">
+        <h1>👤 Mon Profil</h1>
+        <p>Gérez vos informations personnelles et votre photo de profil</p>
+      </div>
+
+      <div class="profile-container">
+        <!-- Carte photo de profil -->
+        <div class="profile-photo-card">
+          <div class="photo-wrapper">
+            <img id="profile-photo-display" src="https://via.placeholder.com/180?text=Photo+Profil" alt="Photo de profil" class="profile-photo">
+            <div class="photo-overlay">
+              <label for="profile-photo-input" class="photo-upload-btn">
+                📷 Changer
+              </label>
+              <input type="file" id="profile-photo-input" accept="image/*" class="hidden" />
+            </div>
           </div>
-          <div class="stat-card" data-nav="clubs" title="Voir les clubs">
-            <div class="stat-value" id="stat-clubs">-</div>
-            <div class="stat-label">Clubs →</div>
-          </div>
-          <div class="stat-card" data-nav="joueurs" title="Voir les joueurs">
-            <div class="stat-value" id="stat-joueurs">-</div>
-            <div class="stat-label">Joueurs →</div>
-          </div>
-          <div class="stat-card" data-nav="arbitres" title="Voir les arbitres">
-            <div class="stat-value" id="stat-arbitres">-</div>
-            <div class="stat-label">Arbitres →</div>
+          <div class="profile-photo-info">
+            <p class="text-xs">Taille max: 5MB</p>
+            <p class="text-xs">Format: JPG, PNG</p>
           </div>
         </div>
+
+        <!-- Formulaire profil -->
+        <form id="profile-form" class="profile-form">
+          <div class="form-section">
+            <h3>Informations Personnelles</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Prénom</label>
+                <input type="text" class="form-input" id="profile-prenom" placeholder="Votre prénom" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-input" id="profile-nom" placeholder="Votre nom" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="profile-email" placeholder="votre@email.com" readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="tel" class="form-input" id="profile-telephone" placeholder="+241..." />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date de naissance</label>
+              <input type="date" class="form-input" id="profile-ddn" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Ville</label>
+              <input type="text" class="form-input" id="profile-ville" placeholder="Libreville, Port-Gentil, etc." />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Profil Sportif</h3>
+            <div class="form-group">
+              <label class="form-label">Sport préféré</label>
+              <select class="form-input" id="profile-sport">
+                <option>Football</option>
+                <option>Basketball</option>
+                <option>Volleyball</option>
+                <option>Athlétisme</option>
+                <option>Handball</option>
+                <option>Boxe</option>
+                <option>Tennis</option>
+                <option>Natation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Club/Équipe affiliation</label>
+              <input type="text" class="form-input" id="profile-club" placeholder="Nom du club" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Type de profil</label>
+              <select class="form-input" id="profile-type">
+                <option value="supporter">Supporter</option>
+                <option value="joueur">Joueur</option>
+                <option value="staff">Staff</option>
+                <option value="arbitre">Arbitre</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio / Description</label>
+              <textarea class="form-input" id="profile-bio" rows="4" placeholder="Parlez-nous de vous..." style="resize:vertical;"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="btn-profile-reset">↺ Réinitialiser</button>
+            <button type="submit" class="btn-save">💾 Enregistrer les modifications</button>
+          </div>
+        </form>
+
+        <!-- Données d'inscription -->
+        <div class="profile-meta">
+          <h4>Données d'Inscription</h4>
+          <div class="meta-item">
+            <span>Inscrit depuis:</span>
+            <strong id="profile-inscrit-depuis">--</strong>
+          </div>
+          <div class="meta-item">
+            <span>Dernière modification:</span>
+            <strong id="profile-modifie-le">--</strong>
+          </div>
+          <div class="meta-item">
+            <span>Statut du compte:</span>
+            <strong id="profile-statut">Actif</strong>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- FÉDÉRATIONS -->
-    <div id="view-fédérations" class="view hidden">
+    <!-- ─────── VUE : SUPPORTERS ─────── -->
+    <div id="view-supporters" class="view hidden">
       <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-federation">➕ Nouvelle fédération</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-federations">🖨️ Imprimer rapport</button>
+        <h1>👥 Supporters & Fans</h1>
+        <div class="view-actions">
+          <button class="btn-primary" id="btn-new-supporter">➕ Nouveau supporter</button>
+        </div>
       </div>
-      <div id="list-fédérations" class="data-list"></div>
+
+      <div id="supporters-list" class="cards-grid">
+        <!-- Les supporters seront affichés ici -->
+      </div>
     </div>
 
-    <!-- CLUBS -->
-    <div id="view-clubs" class="view hidden">
+    <!-- ─────── VUE : SITES SPORTIFS ─────── -->
+    <div id="view-sites-sportifs" class="view hidden">
       <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-club">➕ Nouveau club</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-clubs">🖨️ Imprimer rapport</button>
+        <h1>📍 Sites Sportifs du Gabon</h1>
+        <div class="view-actions">
+          <button class="btn-primary" id="btn-new-site">➕ Ajouter un site</button>
+        </div>
       </div>
-      <div id="list-clubs" class="data-list"></div>
+
+      <!-- Carte Google Maps -->
+      <div id="sites-map" class="map-container" style="height: 500px; margin-bottom: 24px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow);"></div>
+
+      <!-- Liste des sites -->
+      <div id="sites-list" class="cards-grid">
+        <!-- Les sites seront affichés ici -->
+      </div>
     </div>
 
-    <!-- JOUEURS -->
-    <div id="view-joueurs" class="view hidden">
+    <!-- ─────── AUTRES VUES ─────── -->
+    <div id="view-accueil" class="view">
       <div class="view-header">
-        <button class="btn-primary" id="btn-add-joueur">➕ Nouveau joueur</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-joueurs">🖨️ Imprimer rapport</button>
+        <h1>📊 Tableau de Bord</h1>
+        <p id="welcome-message">Bienvenue dans Gabon Sport Connect v4.0</p>
       </div>
-      <!-- Barre de recherche + tri -->
-      <div class="joueurs-toolbar">
-        <input type="text" id="joueur-search" class="form-input" placeholder="🔍 Rechercher par nom ou prénom…" style="flex:1;" />
-        <button class="btn-small" id="joueur-sort-az" onclick="sortJoueurs('az')">A→Z</button>
-        <button class="btn-small" id="joueur-sort-za" onclick="sortJoueurs('za')">Z→A</button>
-      </div>
-      <!-- Filtres déployables -->
-      <div id="joueurs-filtres" class="joueurs-filtres">
-        <div class="filtre-section">
-          <button class="filtre-toggle" onclick="toggleFiltre('filtre-discipline')">🔽 DISCIPLINE</button>
-          <div id="filtre-discipline" class="filtre-body hidden"></div>
-        </div>
-        <div class="filtre-section">
-          <button class="filtre-toggle" onclick="toggleFiltre('filtre-club')">🔽 CLUB</button>
-          <div id="filtre-club" class="filtre-body hidden"></div>
-        </div>
-        <div class="filtre-section">
-          <button class="filtre-toggle" onclick="toggleFiltre('filtre-ville')">🔽 VILLE</button>
-          <div id="filtre-ville" class="filtre-body hidden"></div>
-        </div>
-        <div class="filtre-section">
-          <button class="filtre-toggle" onclick="toggleFiltre('filtre-quartier')">🔽 QUARTIER</button>
-          <div id="filtre-quartier" class="filtre-body hidden"></div>
-        </div>
-        <div class="filtre-section">
-          <button class="filtre-toggle" onclick="toggleFiltre('filtre-arrondissement')">🔽 ARRONDISSEMENT</button>
-          <div id="filtre-arrondissement" class="filtre-body hidden"></div>
-        </div>
-        <button class="btn-small" id="btn-reset-filtres" onclick="resetFiltresJoueurs()">🔄 Réinitialiser filtres</button>
-      </div>
-      <!-- Liste compacte -->
-      <div id="list-joueurs" class="data-list joueurs-list-compact"></div>
+      <div id="dashboard-stats" class="cards-grid"></div>
     </div>
 
-    <!-- ARBITRES -->
-    <div id="view-arbitres" class="view hidden">
-      <div class="view-header">
-        <button class="btn-primary" id="btn-add-arbitre">➕ Nouvel arbitre</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-arbitres">🖨️ Imprimer rapport</button>
-      </div>
-      <div id="list-arbitres" class="data-list"></div>
-    </div>
+  </main>
 
-    <!-- COMPÉTITIONS -->
-    <div id="view-compétitions" class="view hidden">
-      <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-comp">➕ Nouvelle compétition</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-comps">🖨️ Imprimer rapport</button>
-      </div>
-      <div id="list-compétitions" class="data-list"></div>
-    </div>
-
-    <!-- FOOTBALL FÉMININ -->
-    <div id="view-féminin" class="view hidden">
-      <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-joueur-f">➕ Nouvelle joueuse</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-féminin">🖨️ État national féminin</button>
-      </div>
-      <div id="list-féminin" class="data-list"></div>
-    </div>
-
-    <!-- FOOTBALL AMATEUR -->
-    <div id="view-amateur" class="view hidden">
-      <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-joueur-a">➕ Nouveau joueur amateur</button>
-        <button class="btn-secondary nav-admin-only" id="btn-print-amateur">🖨️ État amateur par province</button>
-      </div>
-      <div id="list-amateur" class="data-list"></div>
-    </div>
-
-    <!-- ACTUALITÉS -->
-    <div id="view-actualités" class="view hidden">
-      <div class="view-header">
-        <button class="btn-primary nav-admin-only" id="btn-add-news">➕ Nouvel article</button>
-      </div>
-      <div id="list-actualités" class="data-list"></div>
-    </div>
-
-    <!-- RAPPORTS -->
-    <div id="view-rapports" class="view hidden">
-      <div class="rapports-grid">
-        <div class="rapport-card" data-rapport="fédérations">
-          <h3>🏛️ Fédérations</h3>
-          <p>Liste des fédérations avec statuts et fiches</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-        <div class="rapport-card" data-rapport="clubs">
-          <h3>🏟️ Clubs</h3>
-          <p>Annuaire complet avec infrastructure et staff</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-        <div class="rapport-card" data-rapport="joueurs">
-          <h3>⚽ Joueurs</h3>
-          <p>Liste nationale avec fiches individuelles</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-        <div class="rapport-card" data-rapport="arbitres">
-          <h3>👨‍⚖️ Arbitres</h3>
-          <p>Liste avec grades et historique</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-        <div class="rapport-card" data-rapport="compétitions">
-          <h3>🏆 Compétitions</h3>
-          <p>Calendrier avec arbitres assignés</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-        <div class="rapport-card" data-rapport="féminin">
-          <h3>👩‍⚽ Football féminin</h3>
-          <p>État du football féminin national</p>
-          <button class="btn-secondary">Générer</button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- MODALES FORMULAIRES -->
-
-<!-- Modal Fédération -->
-<div id="federation-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+<!-- ═══ MODAL : PROFIL SUPPORTER ═══ -->
+<div id="supporter-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
   <div class="form-modal">
     <div class="form-modal-header">
-      <div class="form-modal-title">Nouvelle fédération</div>
-      <button class="form-modal-close" id="federation-modal-close" aria-label="Fermer">✕</button>
+      <div class="form-modal-title">👥 Nouveau Supporter</div>
+      <button class="form-modal-close" id="supporter-modal-close" aria-label="Fermer">✕</button>
     </div>
     <div class="form-modal-body">
-      <form id="federation-form" novalidate>
-        <input type="hidden" id="federation-id" />
-        <h4>Informations générales</h4>
+      <form id="supporter-form" novalidate>
+        <input type="hidden" id="supporter-id" />
+
         <div class="form-group">
-          <label class="form-label" for="fed-nom">Nom de la fédération *</label>
-          <input class="form-input" type="text" id="fed-nom" placeholder="Ex: Fédération Gabonaise de Football" required />
+          <label class="form-label">Nom complet</label>
+          <input type="text" class="form-input" id="supporter-nom" required />
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-sport">Sport *</label>
-            <select class="form-input" id="fed-sport" required>
-              <option value="">Sélectionner</option>
-              <option>Football</option><option>Basketball</option><option>Volleyball</option>
-              <option>Athlétisme</option><option>Natation</option><option>Boxe</option>
-              <option>Tennis</option><option>Handball</option><option>Autre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-statut">Statut</label>
-            <select class="form-input" id="fed-statut">
-              <option>En attente</option><option>Validée</option><option>Suspendue</option>
-            </select>
-          </div>
-        </div>
-        <h4>Responsable</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-president">Président *</label>
-            <input class="form-input" type="text" id="fed-president" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-contact">Contact</label>
-            <input class="form-input" type="tel" id="fed-contact" placeholder="+241 xx xx xx xx" />
-          </div>
-        </div>
+
         <div class="form-group">
-          <label class="form-label" for="fed-email">Email</label>
-          <input class="form-input" type="email" id="fed-email" placeholder="federation@gabon.sport" />
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="supporter-email" required />
         </div>
-        <h4>Affiliation</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="fed-affiliation">Affiliation internationale</label>
-            <select class="form-input" id="fed-affiliation">
-              <option>Non affiliée</option><option>FIFA</option><option>CAF</option>
-              <option>FIBA</option><option>FIVB</option><option>IAAF</option><option>Autre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="fed-annee">Année de création</label>
-            <input class="form-input" type="number" id="fed-annee" placeholder="2000" min="1960" max="2025" />
-          </div>
+
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input type="tel" class="form-input" id="supporter-telephone" />
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Club suivi</label>
+          <input type="text" class="form-input" id="supporter-club" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Photo de profil</label>
+          <input type="file" class="form-input" id="supporter-photo" accept="image/*" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date d'inscription</label>
+          <input type="date" class="form-input" id="supporter-date-inscription" />
+        </div>
+
         <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="federation-modal-cancel">Annuler</button>
+          <button type="button" class="btn-cancel" id="supporter-form-cancel">Annuler</button>
           <button type="submit" class="btn-save">💾 Enregistrer</button>
         </div>
       </form>
@@ -638,80 +367,77 @@
   </div>
 </div>
 
-<!-- Modal Club -->
-<div id="club-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
+<!-- ═══ MODAL : SITE SPORTIF ═══ -->
+<div id="site-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
   <div class="form-modal">
     <div class="form-modal-header">
-      <div class="form-modal-title">Nouveau club</div>
-      <button class="form-modal-close" id="club-modal-close" aria-label="Fermer">✕</button>
+      <div class="form-modal-title">📍 Nouveau Site Sportif</div>
+      <button class="form-modal-close" id="site-modal-close" aria-label="Fermer">✕</button>
     </div>
     <div class="form-modal-body">
-      <form id="club-form" novalidate>
-        <input type="hidden" id="club-id" />
-        <h4>Informations du club</h4>
+      <form id="site-form" novalidate>
+        <input type="hidden" id="site-id" />
+
         <div class="form-group">
-          <label class="form-label" for="club-nom">Nom du club *</label>
-          <input class="form-input" type="text" id="club-nom" placeholder="Ex: Panthères FC" required />
+          <label class="form-label">Nom du site/stade</label>
+          <input type="text" class="form-input" id="site-nom" required />
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-sport">Sport *</label>
-            <select class="form-input" id="club-sport" required>
-              <option>Football</option><option>Basketball</option><option>Volleyball</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-division">Division</label>
-            <select class="form-input" id="club-division">
-              <option>D1</option><option>D2</option><option>Régionale</option><option>Amateur</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="club-ville">Ville</label>
-            <input class="form-input" type="text" id="club-ville" placeholder="Libreville" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="club-province">Province</label>
-            <select class="form-input" id="club-province">
-              <option>Estuaire</option><option>Haut-Ogooué</option><option>Moyen-Ogooué</option>
-              <option>Ngounié</option><option>Nyanga</option><option>Ogooué-Ivindo</option>
-              <option>Ogooué-Lolo</option><option>Ogooué-Maritime</option><option>Woleu-Ntem</option>
-            </select>
-          </div>
-        </div>
+
         <div class="form-group">
-          <label class="form-label" for="club-fédération">Fédération de rattachement</label>
-          <select class="form-input" id="club-fédération"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="club-statut">Statut</label>
-          <select class="form-input" id="club-statut">
-            <option>Actif</option><option>Inactif</option><option>Suspendu</option>
+          <label class="form-label">Type</label>
+          <select class="form-input" id="site-type">
+            <option>Stade</option>
+            <option>Gymnase</option>
+            <option>Piscine</option>
+            <option>Terrain de tennis</option>
+            <option>Club de boxe</option>
+            <option>Terrain multisports</option>
           </select>
         </div>
-        <h4>📍 Localisation du stade / siège</h4>
+
         <div class="form-group">
-          <label class="form-label" for="club-stade-nom">Nom du stade</label>
-          <input class="form-input" type="text" id="club-stade-nom" placeholder="Ex: Stade Omar Bongo" />
+          <label class="form-label">Ville</label>
+          <input type="text" class="form-input" id="site-ville" />
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse</label>
+          <input type="text" class="form-input" id="site-adresse" />
+        </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="club-gps-lat">Latitude GPS</label>
-            <input class="form-input" type="text" id="club-gps-lat" placeholder="0.000000" readonly />
+            <label class="form-label">Latitude</label>
+            <input type="number" step="0.000001" class="form-input" id="site-lat" readonly />
           </div>
           <div class="form-group">
-            <label class="form-label" for="club-gps-lng">Longitude GPS</label>
-            <input class="form-input" type="text" id="club-gps-lng" placeholder="9.000000" readonly />
+            <label class="form-label">Longitude</label>
+            <input type="number" step="0.000001" class="form-input" id="site-lng" readonly />
           </div>
         </div>
+
         <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button type="button" id="btn-club-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('club-gps-lat','club-gps-lng','btn-club-gps')">📍 Localiser via GPS</button>
-          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('club-gps-lat').value && document.getElementById('club-gps-lng').value){ window.open('https://maps.google.com/?q='+document.getElementById('club-gps-lat').value+','+document.getElementById('club-gps-lng').value,'_blank') } else { alert('Capturez d\'abord le GPS'); }">🗺️ Voir Maps</button>
+          <button type="button" class="btn-cancel" style="flex:1;" onclick="captureSiteGPS()">📍 Capturer GPS</button>
+          <button type="button" class="btn-cancel" style="flex:1;" onclick="openSiteOnMaps()">🗺️ Voir sur Maps</button>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Capacité</label>
+          <input type="number" class="form-input" id="site-capacite" placeholder="Nombre de places" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contact</label>
+          <input type="tel" class="form-input" id="site-contact" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="site-description" rows="3" style="resize:vertical;"></textarea>
+        </div>
+
         <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="club-modal-cancel">Annuler</button>
+          <button type="button" class="btn-cancel" id="site-form-cancel">Annuler</button>
           <button type="submit" class="btn-save">💾 Enregistrer</button>
         </div>
       </form>
@@ -719,500 +445,6 @@
   </div>
 </div>
 
-<!-- Modal Joueur -->
-<div id="joueur-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">Nouveau joueur</div>
-      <button class="form-modal-close" id="joueur-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="joueur-form" novalidate>
-        <input type="hidden" id="joueur-id" />
-        <h4>Identité</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-genre">Genre</label>
-            <select class="form-input" id="joueur-genre">
-              <option>Masculin</option><option>Féminin</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-statut">Statut</label>
-            <select class="form-input" id="joueur-statut">
-              <option>Actif</option><option>Inactif</option><option>Blessé</option><option>Suspendu</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-nom">Nom *</label>
-            <input class="form-input" type="text" id="joueur-nom" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-prenom">Prénom *</label>
-            <input class="form-input" type="text" id="joueur-prenom" required />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-date-naissance">Date de naissance</label>
-            <input class="form-input" type="date" id="joueur-date-naissance" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-nationalite">Nationalité</label>
-            <input class="form-input" type="text" id="joueur-nationalite" placeholder="Gabonaise" />
-          </div>
-        </div>
-        <h4>Profil sportif</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-position">Position *</label>
-            <select class="form-input" id="joueur-position" required>
-              <option>Gardien</option><option>Défenseur</option><option>Milieu</option><option>Attaquant</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-pied">Pied fort</label>
-            <select class="form-input" id="joueur-pied">
-              <option>Droit</option><option>Gauche</option><option>Les deux</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-club">Club actuel</label>
-            <select class="form-input" id="joueur-club"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-niveau">Niveau</label>
-            <select class="form-input" id="joueur-niveau">
-              <option>Amateur</option><option>Semi-pro</option><option>Professionnel</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="joueur-bio">Biographie</label>
-          <textarea class="form-input" id="joueur-bio" rows="3" style="resize:vertical;"></textarea>
-        </div>
-
-        <h4>📞 Contact &amp; Licence</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-telephone">Téléphone</label>
-            <input class="form-input" type="tel" id="joueur-telephone" placeholder="+241 xx xx xx xx" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-licence">N° de licence</label>
-            <input class="form-input" type="text" id="joueur-licence" placeholder="Numéro de licence" />
-          </div>
-        </div>
-
-        <h4>💪 Profil physique</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-taille">Taille (cm)</label>
-            <input class="form-input" type="number" id="joueur-taille" placeholder="175" min="100" max="250" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-poids">Poids (kg)</label>
-            <input class="form-input" type="number" id="joueur-poids" placeholder="70" min="30" max="200" />
-          </div>
-        </div>
-
-        <h4>📍 Localisation</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-ville">Ville</label>
-            <input class="form-input" type="text" id="joueur-ville" placeholder="Libreville" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-quartier">Quartier</label>
-            <input class="form-input" type="text" id="joueur-quartier" placeholder="Akébé" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-arrondissement">Arrondissement</label>
-            <input class="form-input" type="text" id="joueur-arrondissement" placeholder="2ème" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-village">Village</label>
-            <input class="form-input" type="text" id="joueur-village" placeholder="Village d'origine" />
-          </div>
-        </div>
-
-        <h4>📊 Statistiques de jeu</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-matchs">Matchs joués</label>
-            <input class="form-input" type="number" id="joueur-matchs" placeholder="0" min="0" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-buts">Buts marqués</label>
-            <input class="form-input" type="number" id="joueur-buts" placeholder="0" min="0" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-passes">Passes décisives</label>
-            <input class="form-input" type="number" id="joueur-passes" placeholder="0" min="0" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="joueur-cartons-j">Cartons jaunes</label>
-            <input class="form-input" type="number" id="joueur-cartons-j" placeholder="0" min="0" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="joueur-cartons-r">Cartons rouges</label>
-            <input class="form-input" type="number" id="joueur-cartons-r" placeholder="0" min="0" />
-          </div>
-        </div>
-
-        <h4>🏅 Évaluation technique</h4>
-        <div class="form-group">
-          <label class="form-label" for="joueur-appreciation">Appréciation technique</label>
-          <select class="form-input" id="joueur-appreciation">
-            <option value="">-- Sélectionner --</option>
-            <option>Excellent</option><option>Bon</option><option>Moyen</option><option>À développer</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="joueur-commentaire">Commentaire entraîneur</label>
-          <textarea class="form-input" id="joueur-commentaire" rows="3" style="resize:vertical;" placeholder="Observations techniques…"></textarea>
-        </div>
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="joueur-modal-cancel">Annuler</button>
-          <button type="submit" class="btn-save">💾 Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Fiche Joueur (lecture seule) -->
-<div id="fiche-joueur-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal" style="max-width:600px;max-height:92vh;">
-    <div class="form-modal-header">
-      <div class="form-modal-title">📋 Fiche biographique</div>
-      <button class="form-modal-close" id="fiche-joueur-close">✕</button>
-    </div>
-    <div class="form-modal-body" id="fiche-joueur-body" style="overflow-y:auto;max-height:70vh;"></div>
-  </div>
-</div>
-
-<!-- Modal Arbitre -->
-<div id="arbitre-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">Nouvel arbitre</div>
-      <button class="form-modal-close" id="arbitre-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="arbitre-form" novalidate>
-        <input type="hidden" id="arbitre-id" />
-        <h4>Identité</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="arbitre-nom">Nom *</label>
-            <input class="form-input" type="text" id="arbitre-nom" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="arbitre-prenom">Prénom *</label>
-            <input class="form-input" type="text" id="arbitre-prenom" required />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="arbitre-date-naissance">Date de naissance</label>
-            <input class="form-input" type="date" id="arbitre-date-naissance" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="arbitre-nationalité">Nationalité</label>
-            <input class="form-input" type="text" id="arbitre-nationalité" placeholder="Gabonaise" />
-          </div>
-        </div>
-        <h4>Qualification</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="arbitre-grade">Grade *</label>
-            <select class="form-input" id="arbitre-grade" required>
-              <option>National</option><option>FIFA</option><option>CAF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="arbitre-niveau">Niveau</label>
-            <select class="form-input" id="arbitre-niveau">
-              <option>Amateur</option><option>Semi-pro</option><option>Professionnel</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="arbitre-fédération">Fédération de rattachement</label>
-          <select class="form-input" id="arbitre-fédération"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="arbitre-statut">Statut</label>
-          <select class="form-input" id="arbitre-statut">
-            <option>Actif</option><option>Inactif</option><option>Suspendu</option>
-          </select>
-        </div>
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="arbitre-modal-cancel">Annuler</button>
-          <button type="submit" class="btn-save">💾 Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Compétition -->
-<div id="comp-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">Nouvelle compétition</div>
-      <button class="form-modal-close" id="comp-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="comp-form" novalidate>
-        <input type="hidden" id="comp-id" />
-        <h4>Informations</h4>
-        <div class="form-group">
-          <label class="form-label" for="comp-nom">Nom de la compétition *</label>
-          <input class="form-input" type="text" id="comp-nom" placeholder="Championnat National D1" required />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="comp-sport">Sport</label>
-            <select class="form-input" id="comp-sport">
-              <option>Football</option><option>Basketball</option><option>Volleyball</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="comp-saison">Saison</label>
-            <input class="form-input" type="text" id="comp-saison" placeholder="2024-2025" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="comp-date-debut">Date de début</label>
-            <input class="form-input" type="date" id="comp-date-debut" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="comp-date-fin">Date de fin</label>
-            <input class="form-input" type="date" id="comp-date-fin" />
-          </div>
-        </div>
-        <h4>Organisation</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="comp-fédération">Fédération organisatrice</label>
-            <select class="form-input" id="comp-fédération"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="comp-statut">Statut</label>
-            <select class="form-input" id="comp-statut">
-              <option>À venir</option><option>En cours</option><option>Terminée</option><option>Suspendue</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="comp-arbitre-assigné">Arbitre assigné</label>
-          <select class="form-input" id="comp-arbitre-assigné"></select>
-        </div>
-        <h4>📍 Lieu principal de la compétition</h4>
-        <div class="form-group">
-          <label class="form-label" for="comp-lieu">Stade / Lieu principal</label>
-          <input class="form-input" type="text" id="comp-lieu" placeholder="Ex: Stade de l'Amitié" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="comp-gps-lat">Latitude GPS</label>
-            <input class="form-input" type="text" id="comp-gps-lat" placeholder="0.000000" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="comp-gps-lng">Longitude GPS</label>
-            <input class="form-input" type="text" id="comp-gps-lng" placeholder="9.000000" readonly />
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button type="button" id="btn-comp-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('comp-gps-lat','comp-gps-lng','btn-comp-gps')">📍 Localiser via GPS</button>
-          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('comp-gps-lat').value){ window.open('https://maps.google.com/?q='+document.getElementById('comp-gps-lat').value+','+document.getElementById('comp-gps-lng').value,'_blank') } else { alert('Capturez d\'abord le GPS'); }">🗺️ Voir Maps</button>
-        </div>
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="comp-modal-cancel">Annuler</button>
-          <button type="submit" class="btn-save">💾 Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Actualités -->
-<div id="news-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal">
-    <div class="form-modal-header">
-      <div class="form-modal-title">Nouvel article</div>
-      <button class="form-modal-close" id="news-modal-close" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <form id="news-form" novalidate>
-        <input type="hidden" id="news-id" />
-        <div class="form-group">
-          <label class="form-label" for="news-titre">Titre de l'article *</label>
-          <input class="form-input" type="text" id="news-titre" placeholder="Titre de l'actualité" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="news-categorie">Catégorie</label>
-          <select class="form-input" id="news-categorie">
-            <option>Général</option><option>Football</option><option>Basketball</option>
-            <option>Compétitions</option><option>Arbitrage</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="news-contenu">Contenu</label>
-          <textarea class="form-input" id="news-contenu" rows="5" placeholder="Rédigez votre article ici…" style="resize:vertical;"></textarea>
-        </div>
-        <div class="form-modal-actions">
-          <button type="button" class="btn-cancel" id="news-modal-cancel">Annuler</button>
-          <button type="submit" class="btn-save">📰 Publier</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Modal NOTIFICATIONS ═══ -->
-<div id="notif-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal" style="max-width:520px;">
-    <div class="form-modal-header">
-      <div class="form-modal-title">🔔 Notifications — Alertes Doublons</div>
-      <button class="form-modal-close" id="notif-modal-close">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <div id="notif-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Modal CALENDRIER COMPÉTITION ═══ -->
-<div id="calendrier-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal" style="max-width:580px;max-height:95vh;">
-    <div class="form-modal-header">
-      <div class="form-modal-title" id="calendrier-comp-title">📅 Calendrier</div>
-      <button class="form-modal-close" id="calendrier-modal-close">✕</button>
-    </div>
-    <div class="form-modal-body">
-      <!-- Liste des matchs -->
-      <div id="calendrier-list" style="margin-bottom:24px;"></div>
-
-      <!-- Formulaire ajout match -->
-      <div style="border-top:2px solid var(--border);padding-top:20px;">
-        <h4 style="font-size:13px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:1px;margin-bottom:16px;">➕ Ajouter un match</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Équipe domicile *</label>
-            <input class="form-input" type="text" id="match-domicile" placeholder="Club A" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Équipe visiteur *</label>
-            <input class="form-input" type="text" id="match-visiteur" placeholder="Club B" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Date *</label>
-            <input class="form-input" type="date" id="match-date" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Heure</label>
-            <input class="form-input" type="time" id="match-heure" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nom du stade / lieu</label>
-          <input class="form-input" type="text" id="match-lieu" placeholder="Ex: Stade Omar Bongo" />
-        </div>
-        <!-- GPS du lieu du match -->
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Latitude GPS</label>
-            <input class="form-input" type="text" id="match-lieu-lat" placeholder="0.000000" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Longitude GPS</label>
-            <input class="form-input" type="text" id="match-lieu-lng" placeholder="9.000000" readonly />
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button type="button" id="btn-match-gps" class="btn-cancel" style="flex:1;" onclick="captureGPS('match-lieu-lat','match-lieu-lng','btn-match-gps')">📍 GPS du lieu</button>
-          <button type="button" class="btn-cancel" style="flex:1;" onclick="if(document.getElementById('match-lieu-lat').value){window.open('https://maps.google.com/?q='+document.getElementById('match-lieu-lat').value+','+document.getElementById('match-lieu-lng').value,'_blank')}else{alert('Capturez d\'abord le GPS');}">🗺️ Voir Maps</button>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Résultat (si terminé)</label>
-          <input class="form-input" type="text" id="match-resultat" placeholder="Ex: 2-1" />
-        </div>
-        <button type="button" class="btn-save" style="width:100%;" onclick="ajouterMatch()">✅ Ajouter ce match</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Modal CONFIDENTIALITÉ ═══ -->
-<div id="confidentialite-modal" class="form-modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="form-modal" style="max-width:580px;max-height:90vh;">
-    <div class="form-modal-header">
-      <div class="form-modal-title">🔒 Conditions &amp; Confidentialité</div>
-      <button class="form-modal-close" onclick="document.getElementById('confidentialite-modal').classList.add('hidden')" aria-label="Fermer">✕</button>
-    </div>
-    <div class="form-modal-body" style="overflow-y:auto;max-height:65vh;">
-      <div class="confidentialite-content">
-        <div class="conf-section">
-          <h4>📜 CONDITIONS D'UTILISATION</h4>
-          <ul>
-            <li>La plateforme GSC est réservée à la gestion officielle du sport gabonais</li>
-            <li>Tous les utilisateurs acceptent les conditions avant de créer un compte</li>
-            <li>Les données saisies doivent être exactes et complètes</li>
-            <li><strong>Interdiction stricte :</strong> données falsifiées, contenus offensants, spamming</li>
-          </ul>
-        </div>
-        <div class="conf-section">
-          <h4>⚖️ PROTECTION DES DONNÉES (RGPD simplifié)</h4>
-          <ul>
-            <li>Vos données personnelles sont chiffrées et stockées en toute sécurité</li>
-            <li>Nous collectons : nom, email, téléphone, données sportives (joueurs, arbitres)</li>
-            <li>Conservation : pendant 7 ans après fermeture de compte (conformité légale)</li>
-            <li>Vos données ne sont <strong>JAMAIS</strong> vendues à des tiers</li>
-            <li>Accès : seuls les administrateurs autorisés voient vos informations complètes</li>
-            <li>Transparence : vous pouvez demander l'export de vos données à tout moment</li>
-          </ul>
-        </div>
-        <div class="conf-section">
-          <h4>👤 VOS DROITS</h4>
-          <ul>
-            <li><strong>Droit d'accès :</strong> consultez vos données personnelles</li>
-            <li><strong>Droit de rectification :</strong> modifiez vos données incorrectes</li>
-            <li><strong>Droit à l'oubli :</strong> demandez la suppression (sauf obligation légale)</li>
-            <li><strong>Droit de portabilité :</strong> téléchargez vos données en format standard</li>
-            <li><strong>Opposition :</strong> refusez le traitement de vos données pour certains usages</li>
-            <li><strong>Réclamation :</strong> adressez-vous à l'autorité de protection des données</li>
-          </ul>
-        </div>
-        <div class="conf-section">
-          <h4>📧 CONTACT — DPO (Responsable Protection Données)</h4>
-          <p>Email : <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:var(--green);font-weight:600;">gabonsportconnectgsc@gmail.com</a></p>
-          <p>Nous répondons à toute demande en 30 jours maximum</p>
-        </div>
-        <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">Dernière mise à jour : 2024</p>
-      </div>
-    </div>
-    <div class="form-modal-actions">
-      <button class="btn-save" onclick="document.getElementById('confidentialite-modal').classList.add('hidden')">✅ Je comprends et j'accepte</button>
-    </div>
-  </div>
-</div>
-
-<script type="module" src="app.js"></script>
+<script type="module" src="app_UPGRADED.js"></script>
 </body>
 </html>
