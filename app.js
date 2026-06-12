@@ -1,9 +1,10 @@
 // ============================================================
-// app_UPGRADED.js — Gabon Sport Connect v4.0
-// Fonctionnalités: Profils utilisateurs, photos, géolocalisation, sites sportifs
+// app.js — Gabon Sport Connect v4.0 (CORRIGÉ)
+// Fix: Photos via Firebase Storage, import setDoc en haut,
+//      supporters chargés correctement
 // ============================================================
 
-import { auth, db } from './firebase-config.js';
+import { auth, db, storage } from './firebase-config.js';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -11,10 +12,14 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  collection, addDoc, getDocs, deleteDoc, updateDoc, doc, getDoc,
-  serverTimestamp, query, orderBy, where, getStorage, ref, uploadBytes, getBytes
+  collection, addDoc, getDocs, deleteDoc, updateDoc,
+  doc, getDoc, setDoc, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage as getStorageModule, ref as storageRef, uploadBytes as uploadFile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 // ─── ÉTAT GLOBAL ─────────────────────────────────────────
 let currentUser = null;
@@ -107,13 +112,12 @@ async function loadUserData() {
   try {
     const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
     const userSnap = await getDoc(userRef);
-    
+
     if (userSnap.exists()) {
       currentUserData = userSnap.data();
       currentRole = currentUserData.role || 'user';
       updateUIWithUserData();
     } else {
-      // Créer un profil par défaut
       await createDefaultProfile();
     }
   } catch (e) {
@@ -135,7 +139,7 @@ async function createDefaultProfile() {
     club: '',
     type: 'supporter',
     bio: '',
-    photoURL: 'https://via.placeholder.com/180?text=Photo+Profil',
+    photoURL: '',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -148,16 +152,23 @@ async function createDefaultProfile() {
 }
 
 function updateUIWithUserData() {
-  const userName = currentUserData.prenom ? `${currentUserData.prenom} ${currentUserData.nom}` : 'Utilisateur';
+  const userName = currentUserData.prenom
+    ? `${currentUserData.prenom} ${currentUserData.nom}`
+    : 'Utilisateur';
   document.getElementById('user-name').textContent = userName;
   document.getElementById('user-role').textContent = currentUserData.type || 'Membre';
 
+  const avatar = document.getElementById('user-avatar');
   if (currentUserData.photoURL) {
-    const avatar = document.getElementById('user-avatar');
-    avatar.innerHTML = `<img src="${currentUserData.photoURL}" alt="Avatar">`;
+    avatar.innerHTML = `<img src="${currentUserData.photoURL}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    avatar.textContent = '📋';
   }
 
-  document.getElementById('welcome-message').textContent = `Bienvenue ${currentUserData.prenom || 'utilisateur'} ! 👋`;
+  const welcomeEl = document.getElementById('welcome-message');
+  if (welcomeEl) {
+    welcomeEl.textContent = `Bienvenue ${currentUserData.prenom || 'utilisateur'} ! 👋`;
+  }
 }
 
 function handleLogout() {
@@ -186,16 +197,21 @@ async function loadUserProfile() {
   document.getElementById('profile-club').value = currentUserData.club || '';
   document.getElementById('profile-type').value = currentUserData.type || 'supporter';
   document.getElementById('profile-bio').value = currentUserData.bio || '';
-  document.getElementById('profile-photo-display').src = currentUserData.photoURL || 'https://via.placeholder.com/180?text=Photo+Profil';
 
-  // Dates d'inscription
+  const photoDisplay = document.getElementById('profile-photo-display');
+  photoDisplay.src = currentUserData.photoURL || 'https://via.placeholder.com/180?text=Photo+Profil';
+
   if (currentUserData.createdAt) {
-    const createdDate = new Date(currentUserData.createdAt.toDate()).toLocaleDateString('fr-FR');
-    document.getElementById('profile-inscrit-depuis').textContent = createdDate;
+    try {
+      const createdDate = new Date(currentUserData.createdAt.toDate()).toLocaleDateString('fr-FR');
+      document.getElementById('profile-inscrit-depuis').textContent = createdDate;
+    } catch {}
   }
   if (currentUserData.updatedAt) {
-    const updatedDate = new Date(currentUserData.updatedAt.toDate()).toLocaleDateString('fr-FR');
-    document.getElementById('profile-modifie-le').textContent = updatedDate;
+    try {
+      const updatedDate = new Date(currentUserData.updatedAt.toDate()).toLocaleDateString('fr-FR');
+      document.getElementById('profile-modifie-le').textContent = updatedDate;
+    } catch {}
   }
 }
 
@@ -218,7 +234,6 @@ async function handleProfileSave(e) {
   try {
     const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
     await updateDoc(userRef, updatedData);
-    
     currentUserData = { ...currentUserData, ...updatedData };
     updateUIWithUserData();
     showToast('✅ Profil mis à jour avec succès !', 'success');
@@ -226,6 +241,15 @@ async function handleProfileSave(e) {
     console.error('Erreur sauvegarde profil:', e);
     showToast('Erreur lors de la sauvegarde', 'error');
   }
+}
+
+// ─── UPLOAD PHOTO VERS FIREBASE STORAGE ─────────────────────
+// FIX PRINCIPAL : on stocke la photo dans Storage, pas en base64 dans Firestore
+async function uploadPhotoToStorage(file, path) {
+  const fileRef = storageRef(storage, path);
+  await uploadBytes(fileRef, file);
+  const url = await getDownloadURL(fileRef);
+  return url;
 }
 
 async function handleProfilePhotoChange(e) {
@@ -237,27 +261,27 @@ async function handleProfilePhotoChange(e) {
     return;
   }
 
+  showToast('⏳ Upload en cours...', 'success');
+
   try {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const photoData = event.target.result;
-      document.getElementById('profile-photo-display').src = photoData;
+    // Upload vers Storage (pas base64 dans Firestore !)
+    const path = `profiles/photos/${currentUser.uid}`;
+    const url = await uploadPhotoToStorage(file, path);
 
-      // Sauvegarder en Firebase Storage (ou base64 dans Firestore)
-      const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
-      await updateDoc(userRef, {
-        photoURL: photoData,
-        updatedAt: serverTimestamp()
-      });
+    // Sauvegarder uniquement l'URL dans Firestore
+    const userRef = doc(db, COLLECTIONS.userProfiles, currentUser.uid);
+    await updateDoc(userRef, {
+      photoURL: url,
+      updatedAt: serverTimestamp()
+    });
 
-      currentUserData.photoURL = photoData;
-      updateUIWithUserData();
-      showToast('✅ Photo de profil mise à jour !', 'success');
-    };
-    reader.readAsDataURL(file);
+    currentUserData.photoURL = url;
+    document.getElementById('profile-photo-display').src = url;
+    updateUIWithUserData();
+    showToast('✅ Photo de profil mise à jour !', 'success');
   } catch (e) {
     console.error('Erreur upload photo:', e);
-    showToast('Erreur lors de l\'upload', 'error');
+    showToast('Erreur lors de l\'upload de la photo', 'error');
   }
 }
 
@@ -275,6 +299,8 @@ function closeSupporterModal() {
 async function handleSupporterSave(e) {
   e.preventDefault();
 
+  const supporterId = document.getElementById('supporter-id').value;
+
   const supporterData = {
     nom: document.getElementById('supporter-nom').value,
     email: document.getElementById('supporter-email').value,
@@ -282,28 +308,36 @@ async function handleSupporterSave(e) {
     club: document.getElementById('supporter-club').value,
     dateInscription: document.getElementById('supporter-date-inscription').value,
     createdBy: currentUser.uid,
-    createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
 
-  // Gérer la photo
   const photoInput = document.getElementById('supporter-photo');
-  if (photoInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      supporterData.photoURL = event.target.result;
-      await saveSupporter(supporterData);
-    };
-    reader.readAsDataURL(photoInput.files[0]);
-  } else {
-    await saveSupporter(supporterData);
-  }
-}
+  const file = photoInput.files[0];
 
-async function saveSupporter(data) {
   try {
-    await addDoc(collection(db, COLLECTIONS.supporters), data);
-    showToast('✅ Supporter enregistré !', 'success');
+    showToast('⏳ Enregistrement...', 'success');
+
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        showToast('Photo max 3MB', 'error');
+        return;
+      }
+      // Upload photo vers Storage
+      const path = `supporters/photos/${currentUser.uid}_${Date.now()}`;
+      supporterData.photoURL = await uploadPhotoToStorage(file, path);
+    }
+
+    if (supporterId) {
+      // Mise à jour
+      await updateDoc(doc(db, COLLECTIONS.supporters, supporterId), supporterData);
+      showToast('✅ Supporter mis à jour !', 'success');
+    } else {
+      // Nouveau
+      supporterData.createdAt = serverTimestamp();
+      await addDoc(collection(db, COLLECTIONS.supporters), supporterData);
+      showToast('✅ Supporter enregistré !', 'success');
+    }
+
     closeSupporterModal();
     loadSupporters();
   } catch (e) {
@@ -313,55 +347,70 @@ async function saveSupporter(data) {
 }
 
 async function loadSupporters() {
+  const container = document.getElementById('supporters-list');
+  if (!container) return;
+
+  container.innerHTML = '<p style="text-align:center;color:var(--text-3);">⏳ Chargement...</p>';
+
   try {
     const q = query(collection(db, COLLECTIONS.supporters), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    const container = document.getElementById('supporters-list');
     container.innerHTML = '';
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
+    if (snapshot.empty) {
+      container.innerHTML = '<p style="text-align:center;color:var(--text-3);">Aucun supporter enregistré</p>';
+      return;
+    }
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
         <div class="supporter-card">
-          <img src="${data.photoURL || 'https://via.placeholder.com/64?text=Photo'}" class="supporter-photo" alt="${data.nom}">
+          <img
+            src="${data.photoURL || 'https://via.placeholder.com/64?text=👤'}"
+            class="supporter-photo"
+            alt="${data.nom}"
+            onerror="this.src='https://via.placeholder.com/64?text=👤'"
+          >
           <div class="supporter-info">
             <div class="supporter-name">${data.nom}</div>
             <div class="supporter-club">📍 ${data.club || 'Non spécifié'}</div>
             <div class="supporter-meta">
-              <strong>Email:</strong> ${data.email}<br>
+              <strong>Email:</strong> ${data.email || '--'}<br>
               <strong>Tél:</strong> ${data.telephone || '--'}
             </div>
           </div>
         </div>
         <div class="card-actions">
-          <button class="card-btn" onclick="editSupporter('${doc.id}')">✏️ Éditer</button>
-          <button class="card-btn danger" onclick="deleteSupporter('${doc.id}')">🗑️ Supprimer</button>
+          <button class="card-btn" onclick="editSupporter('${docSnap.id}')">✏️ Éditer</button>
+          <button class="card-btn danger" onclick="deleteSupporter('${docSnap.id}')">🗑️ Supprimer</button>
         </div>
       `;
       container.appendChild(card);
     });
-
-    if (snapshot.empty) {
-      container.innerHTML = '<p style="text-align: center; color: var(--text-3);">Aucun supporter enregistré</p>';
-    }
   } catch (e) {
     console.error('Erreur chargement supporters:', e);
+    container.innerHTML = '<p style="text-align:center;color:red;">Erreur de chargement</p>';
   }
 }
 
 window.editSupporter = async function(id) {
-  const docSnap = await getDoc(doc(db, COLLECTIONS.supporters, id));
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    document.getElementById('supporter-id').value = id;
-    document.getElementById('supporter-nom').value = data.nom || '';
-    document.getElementById('supporter-email').value = data.email || '';
-    document.getElementById('supporter-telephone').value = data.telephone || '';
-    document.getElementById('supporter-club').value = data.club || '';
-    document.getElementById('supporter-date-inscription').value = data.dateInscription || '';
-    openSupporterModal();
+  try {
+    const docSnap = await getDoc(doc(db, COLLECTIONS.supporters, id));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      document.getElementById('supporter-id').value = id;
+      document.getElementById('supporter-nom').value = data.nom || '';
+      document.getElementById('supporter-email').value = data.email || '';
+      document.getElementById('supporter-telephone').value = data.telephone || '';
+      document.getElementById('supporter-club').value = data.club || '';
+      document.getElementById('supporter-date-inscription').value = data.dateInscription || '';
+      openSupporterModal();
+    }
+  } catch (e) {
+    showToast('Erreur lors du chargement', 'error');
   }
 };
 
@@ -380,8 +429,6 @@ window.deleteSupporter = async function(id) {
 
 // ─── GESTION SITES SPORTIFS ─────────────────────────────────
 function initSitesMap() {
-  // Initialisation de la carte Google Maps
-  // Cette fonction s'exécutera après le chargement de l'API Google Maps
   if (window.google && window.google.maps) {
     const mapElement = document.getElementById('sites-map');
     if (mapElement) {
@@ -408,15 +455,11 @@ window.captureSiteGPS = function() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        document.getElementById('site-lat').value = lat.toFixed(6);
-        document.getElementById('site-lng').value = lng.toFixed(6);
+        document.getElementById('site-lat').value = position.coords.latitude.toFixed(6);
+        document.getElementById('site-lng').value = position.coords.longitude.toFixed(6);
         showToast('📍 Position capturée avec succès !', 'success');
       },
-      () => {
-        showToast('Erreur: Impossible d\'accéder à votre position', 'error');
-      }
+      () => showToast('Impossible d\'accéder à votre position', 'error')
     );
   } else {
     showToast('La géolocalisation n\'est pas supportée', 'error');
@@ -464,19 +507,15 @@ async function handleSiteSave(e) {
 
 async function loadSites() {
   try {
-    // Charger les sites prédéfinis + ceux de la BD
     const snapshot = await getDocs(collection(db, COLLECTIONS.sitesSportifs));
     const sites = [...SITES_GABON_PREDEFINIS];
-    
-    snapshot.forEach(doc => {
-      sites.push({ id: doc.id, ...doc.data() });
+    snapshot.forEach(docSnap => {
+      sites.push({ id: docSnap.id, ...docSnap.data() });
     });
 
-    // Afficher dans la carte
     if (sitesMap) {
       sitesMarkers.forEach(marker => marker.setMap(null));
       sitesMarkers = [];
-
       sites.forEach(site => {
         const marker = new google.maps.Marker({
           position: { lat: site.lat, lng: site.lng },
@@ -484,19 +523,17 @@ async function loadSites() {
           title: site.nom,
           animation: google.maps.Animation.DROP
         });
-
         marker.addListener('click', () => {
           new google.maps.InfoWindow({
             content: `<strong>${site.nom}</strong><br>${site.type}<br>📞 ${site.contact || '--'}`
           }).open(sitesMap, marker);
         });
-
         sitesMarkers.push(marker);
       });
     }
 
-    // Afficher la liste
     const container = document.getElementById('sites-list');
+    if (!container) return;
     container.innerHTML = '';
 
     sites.forEach(site => {
@@ -508,18 +545,10 @@ async function loadSites() {
           <div class="site-name">${site.nom}</div>
         </div>
         <div class="site-details">
-          <div class="site-detail">
-            <strong>🏙️ Ville:</strong> ${site.ville}
-          </div>
-          <div class="site-detail">
-            <strong>📍 GPS:</strong> ${site.lat.toFixed(4)}, ${site.lng.toFixed(4)}
-          </div>
-          <div class="site-detail">
-            <strong>👥 Capacité:</strong> ${site.capacite || '--'} places
-          </div>
-          <div class="site-detail">
-            <strong>📞 Contact:</strong> ${site.contact || '--'}
-          </div>
+          <div class="site-detail"><strong>🏙️ Ville:</strong> ${site.ville}</div>
+          <div class="site-detail"><strong>📍 GPS:</strong> ${site.lat.toFixed(4)}, ${site.lng.toFixed(4)}</div>
+          <div class="site-detail"><strong>👥 Capacité:</strong> ${site.capacite || '--'} places</div>
+          <div class="site-detail"><strong>📞 Contact:</strong> ${site.contact || '--'}</div>
         </div>
         <div class="card-actions">
           <button class="card-btn" onclick="window.open('https://maps.google.com/?q=${site.lat},${site.lng}', '_blank')">🗺️ Voir Maps</button>
@@ -549,23 +578,13 @@ window.deleteSite = async function(id) {
 // ─── NAVIGATION ET VUES ─────────────────────────────────────
 function switchView(viewName) {
   currentView = viewName;
-
-  // Masquer toutes les vues
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-
-  // Afficher la vue demandée
   const viewElement = document.getElementById(`view-${viewName}`);
   if (viewElement) {
     viewElement.classList.remove('hidden');
-
-    // Charger les données spécifiques
-    if (viewName === 'mon-profil') {
-      loadUserProfile();
-    } else if (viewName === 'supporters') {
-      loadSupporters();
-    } else if (viewName === 'sites-sportifs') {
-      loadSites();
-    }
+    if (viewName === 'mon-profil') loadUserProfile();
+    else if (viewName === 'supporters') loadSupporters();
+    else if (viewName === 'sites-sportifs') loadSites();
   }
 }
 
@@ -583,41 +602,31 @@ function showLanding() {
 // ─── TOAST ─────────────────────────────────────────────────
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
   container.appendChild(toast);
-
   setTimeout(() => {
     toast.style.opacity = '0';
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
 
-// ─── HELPERS ─────────────────────────────────────────────
+// ─── LOGIN ──────────────────────────────────────────────────
 function openLoginModal() {
-  // Vous pouvez implémenter une modale de connexion complète
   const email = prompt('Email:');
   const password = prompt('Mot de passe:');
-
   if (email && password) {
     signInWithEmailAndPassword(auth, email, password)
       .catch(e => showToast(`Erreur: ${e.message}`, 'error'));
   }
 }
 
-// Fonction pour créer un compte (optionnel)
 window.signUpUser = function(email, password) {
   createUserWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      showToast('✅ Compte créé avec succès !', 'success');
-    })
-    .catch(e => {
-      showToast(`❌ Erreur: ${e.message}`, 'error');
-    });
+    .then(() => showToast('✅ Compte créé avec succès !', 'success'))
+    .catch(e => showToast(`❌ Erreur: ${e.message}`, 'error'));
 };
 
-// Import de setDoc
-import { setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-console.log('✅ App v4.0 chargée - Profils, photos, géolocalisation, sites sportifs activés');
+console.log('✅ App v4.0 chargée — Photos via Firebase Storage activé');
