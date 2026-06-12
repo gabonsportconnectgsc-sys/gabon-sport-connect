@@ -35,12 +35,8 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
 
-// Configuration Firestore
-const firestore = getFirestore(app);
-firestore.settings = { 
-  timestampsInSnapshots: true,
-  ignoreUndefinedProperties: true
-};
+// ✅ Note : firestore.settings n'existe plus en Firebase v9 (modular)
+// ignoreUndefinedProperties se configure via initializeFirestore() si besoin
 
 // ─────────────────────────────────────────────────────────
 // COLLECTIONS CONSTANTES
