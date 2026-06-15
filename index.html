@@ -1012,6 +1012,16 @@
      AUTH SCREEN
 ═══════════════════════════════════════════════════════════ -->
 <div id="auth-screen">
+
+  <!-- Bouton Admin discret en haut à droite -->
+  <button id="admin-lock-btn" onclick="toggleAdminPanel()"
+    title="Accès administrateur"
+    style="position:absolute;top:18px;right:18px;z-index:10;
+           background:rgba(255,255,255,.08);border:none;border-radius:50%;
+           width:38px;height:38px;cursor:pointer;font-size:18px;
+           display:flex;align-items:center;justify-content:center;
+           transition:background .2s;">🔒</button>
+
   <div class="auth-card">
     <div class="auth-logo">
       <div class="logo-badge">⚽</div>
@@ -1019,30 +1029,34 @@
       <p>Plateforme nationale du sport gabonais</p>
     </div>
 
-    <!-- Tabs -->
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Connexion</button>
-      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Inscription</button>
-    </div>
-
     <!-- Error message -->
     <div class="auth-error" id="auth-error"></div>
 
-    <!-- LOGIN FORM -->
-    <div class="auth-form active" id="form-login">
+    <!-- PANNEAU ADMIN (caché par défaut) -->
+    <div id="admin-panel" style="display:none;margin-bottom:20px;
+         background:#fef3cd;border:1.5px solid #ffc107;border-radius:10px;padding:18px;">
+      <div style="font-weight:700;color:#7a5500;margin-bottom:12px;font-size:14px">⚙️ Connexion Administrateur</div>
       <div class="field-group">
-        <label>Adresse email</label>
-        <input type="email" id="login-email" placeholder="votre@email.com" />
+        <label>Email admin</label>
+        <input type="email" id="login-email" placeholder="gabonsportconnectgsc@gmail.com" />
       </div>
       <div class="field-group">
         <label>Mot de passe</label>
         <input type="password" id="login-password" placeholder="••••••••" />
       </div>
-      <button class="btn-primary" onclick="handleLogin()" id="btn-login">Se connecter</button>
+      <button class="btn-primary" onclick="handleLogin()" id="btn-login"
+        style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔐 Connexion Admin</button>
+      <button onclick="toggleAdminPanel()"
+        style="width:100%;margin-top:8px;padding:10px;border:none;background:none;
+               color:var(--gray-txt);font-size:13px;cursor:pointer">Annuler</button>
     </div>
 
-    <!-- REGISTER FORM -->
-    <div class="auth-form" id="form-register">
+    <!-- FORMULAIRE INSCRIPTION (visible par défaut) -->
+    <div id="form-register" style="display:block">
+      <div style="font-weight:700;color:var(--navy);font-size:15px;margin-bottom:18px;
+                  text-align:center;font-family:var(--font-display)">
+        Rejoignez la plateforme 🇬🇦
+      </div>
       <div class="field-group">
         <label>Prénom & Nom</label>
         <input type="text" id="reg-name" placeholder="Jean Obiang" />
@@ -1079,7 +1093,9 @@
           <option value="Cyclisme">Cyclisme</option>
         </select>
       </div>
-      <button class="btn-primary" onclick="handleRegister()" id="btn-register">Créer mon compte</button>
+      <button class="btn-primary" onclick="handleRegister()" id="btn-register">
+        ✅ Créer mon compte et accéder
+      </button>
     </div>
   </div>
 </div>
@@ -1650,46 +1666,52 @@ window.closeModal    = closeModal;
 window.getMyLocation = getMyLocation;
 window.uploadProfilePhoto = uploadProfilePhoto;
 
-// ─── MODE TEST : AUTH DÉSACTIVÉE ──────────────────────────
-// L'écran de connexion est bypassé — accès libre pour les tests.
-// Pour réactiver l'auth, supprimer ce bloc et décommenter onAuthStateChanged.
+// ─── AUTH STATE ───────────────────────────────────────────
+// Timeout de secours — cache le loader après 3s même si Firebase ne répond pas
+setTimeout(function() {
+  var loader = document.getElementById('app-loader');
+  if (loader) loader.style.display = 'none';
+  if (!currentUser) {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+}, 3000);
 
-(function lancerModeInvite() {
+onAuthStateChanged(auth, async (user) => {
   const loader = document.getElementById('app-loader');
   if (loader) loader.style.display = 'none';
 
-  // Profil invité par défaut
-  currentUser = { uid: 'invite-test', email: 'invite@test.com' };
-  userProfile = {
-    uid:         'invite-test',
-    email:       'invite@test.com',
-    prenom:      'Invité',
-    nom:         'Test',
-    role:        'joueur',
-    sport:       'Football',
-    ville:       'Libreville',
-    telephone:   '',
-    bio:         '',
-    club:        '',
-    niveau:      'Amateur',
-    matchsJoues: 0,
-    buts:        0,
-    passes:      0,
-    trophees:    0,
-    photoURL:    ''
-  };
+  if (user) {
+    currentUser = user;
+    // Transition immédiate
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display  = 'block';
+    // Reset bouton login
+    setLoading('btn-login', false, '🔐 Connexion Admin');
+    try {
+      await loadUserProfile(user.uid);
+      renderDashboard();
+      loadSites();
+      renderNews();
+    } catch(err) {
+      console.error('Erreur post-auth:', err);
+    }
+  } else {
+    currentUser = null;
+    userProfile = null;
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display  = 'none';
+  }
+});
 
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display  = 'block';
-
-  renderDashboard();
-  loadSites();
-  renderNews();
-})();
-
-// ─── AUTH STATE (désactivé pour les tests) ────────────────
-// onAuthStateChanged(auth, async (user) => { ... });
-// Décommentez ce bloc pour réactiver la connexion Firebase.
+// ─── ADMIN PANEL TOGGLE ───────────────────────────────────
+window.toggleAdminPanel = function() {
+  const panel = document.getElementById('admin-panel');
+  const btn   = document.getElementById('admin-lock-btn');
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  btn.style.background = visible ? 'rgba(255,255,255,.08)' : 'rgba(245,158,11,.25)';
+  if (!visible) document.getElementById('login-email').focus();
+};
 
 // ─── AUTH FUNCTIONS ───────────────────────────────────────
 function switchAuthTab(tab) {
@@ -1704,11 +1726,17 @@ async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pwd   = document.getElementById('login-password').value;
   if (!email || !pwd) return showAuthError('Veuillez remplir tous les champs.');
+
+  // Sécurité : seul l'admin peut se connecter via ce panneau
+  if (email !== ADMIN_EMAIL) {
+    return showAuthError('Ce panneau est réservé à l\'administrateur.');
+  }
+
   setLoading('btn-login', true, 'Connexion…');
   try {
     await signInWithEmailAndPassword(auth, email, pwd);
   } catch(e) {
-    setLoading('btn-login', false, 'Se connecter');
+    setLoading('btn-login', false, '🔐 Connexion Admin');
     showAuthError(formatError(e.code));
   }
 }
@@ -1864,14 +1892,6 @@ async function saveProfile() {
     passes:      parseInt(document.getElementById('edit-passes').value) || 0,
     updatedAt:   serverTimestamp()
   };
-  // MODE TEST : sauvegarde locale uniquement
-  if (currentUser.uid === 'invite-test') {
-    Object.assign(userProfile, updates);
-    renderDashboard();
-    renderProfile();
-    toast('✅ Profil mis à jour (mode test).', 'success');
-    return;
-  }
   try {
     await updateDoc(doc(db, 'users', currentUser.uid), updates);
     Object.assign(userProfile, updates);
@@ -1885,7 +1905,6 @@ async function saveProfile() {
 
 async function uploadProfilePhoto(input) {
   if (!input.files[0] || !currentUser) return;
-  if (currentUser.uid === 'invite-test') return toast('Upload photo désactivé en mode test.', 'info');
   const file = input.files[0];
   if (file.size > 5 * 1024 * 1024) return toast('Photo trop lourde (max 5 Mo).', 'error');
   toast('📤 Upload en cours…', 'info');
