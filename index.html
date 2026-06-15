@@ -1650,42 +1650,46 @@ window.closeModal    = closeModal;
 window.getMyLocation = getMyLocation;
 window.uploadProfilePhoto = uploadProfilePhoto;
 
-// ─── AUTH STATE ───────────────────────────────────────────
-// Timeout de secours — cache le loader après 3s même si Firebase ne répond pas
-setTimeout(function() {
-  var loader = document.getElementById('app-loader');
-  if (loader) loader.style.display = 'none';
-  if (!currentUser) {
-    document.getElementById('auth-screen').style.display = 'flex';
-  }
-}, 3000);
+// ─── MODE TEST : AUTH DÉSACTIVÉE ──────────────────────────
+// L'écran de connexion est bypassé — accès libre pour les tests.
+// Pour réactiver l'auth, supprimer ce bloc et décommenter onAuthStateChanged.
 
-onAuthStateChanged(auth, async (user) => {
+(function lancerModeInvite() {
   const loader = document.getElementById('app-loader');
   if (loader) loader.style.display = 'none';
 
-  if (user) {
-    currentUser = user;
-    // Transition immédiate
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display  = 'block';
-    // Reset bouton login
-    setLoading('btn-login', false, 'Se connecter');
-    try {
-      await loadUserProfile(user.uid);
-      renderDashboard();
-      loadSites();
-      renderNews();
-    } catch(err) {
-      console.error('Erreur post-auth:', err);
-    }
-  } else {
-    currentUser = null;
-    userProfile = null;
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-screen').style.display  = 'none';
-  }
-});
+  // Profil invité par défaut
+  currentUser = { uid: 'invite-test', email: 'invite@test.com' };
+  userProfile = {
+    uid:         'invite-test',
+    email:       'invite@test.com',
+    prenom:      'Invité',
+    nom:         'Test',
+    role:        'joueur',
+    sport:       'Football',
+    ville:       'Libreville',
+    telephone:   '',
+    bio:         '',
+    club:        '',
+    niveau:      'Amateur',
+    matchsJoues: 0,
+    buts:        0,
+    passes:      0,
+    trophees:    0,
+    photoURL:    ''
+  };
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display  = 'block';
+
+  renderDashboard();
+  loadSites();
+  renderNews();
+})();
+
+// ─── AUTH STATE (désactivé pour les tests) ────────────────
+// onAuthStateChanged(auth, async (user) => { ... });
+// Décommentez ce bloc pour réactiver la connexion Firebase.
 
 // ─── AUTH FUNCTIONS ───────────────────────────────────────
 function switchAuthTab(tab) {
@@ -1860,6 +1864,14 @@ async function saveProfile() {
     passes:      parseInt(document.getElementById('edit-passes').value) || 0,
     updatedAt:   serverTimestamp()
   };
+  // MODE TEST : sauvegarde locale uniquement
+  if (currentUser.uid === 'invite-test') {
+    Object.assign(userProfile, updates);
+    renderDashboard();
+    renderProfile();
+    toast('✅ Profil mis à jour (mode test).', 'success');
+    return;
+  }
   try {
     await updateDoc(doc(db, 'users', currentUser.uid), updates);
     Object.assign(userProfile, updates);
@@ -1873,6 +1885,7 @@ async function saveProfile() {
 
 async function uploadProfilePhoto(input) {
   if (!input.files[0] || !currentUser) return;
+  if (currentUser.uid === 'invite-test') return toast('Upload photo désactivé en mode test.', 'info');
   const file = input.files[0];
   if (file.size > 5 * 1024 * 1024) return toast('Photo trop lourde (max 5 Mo).', 'error');
   toast('📤 Upload en cours…', 'info');
