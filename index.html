@@ -1605,6 +1605,8 @@ import {
   getFirestore, doc, setDoc, getDoc, updateDoc, collection,
   addDoc, getDocs, query, orderBy, serverTimestamp, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+let sRef, uploadBytes, getDownloadURL, storage;
+
 // ─── CONFIG ───────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw",
@@ -1621,16 +1623,13 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-let sRef, uploadBytes, getDownloadURL, storage;
-async function initStorage() {
-  try {
-    const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
-    sRef = sm.ref; uploadBytes = sm.uploadBytes; getDownloadURL = sm.getDownloadURL;
-    const { getStorage } = sm;
-    storage = getStorage(app);
-  } catch(e) { console.warn("Storage non dispo:", e); }
-}
-initStorage();
+// ─── STORAGE (optionnel) ──────────────────────────────────
+try {
+  const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
+  sRef = sm.ref; uploadBytes = sm.uploadBytes; getDownloadURL = sm.getDownloadURL;
+  const { getStorage } = sm;
+  storage = getStorage(app);
+} catch(e) { console.warn("Storage non dispo:", e); }
 
 // ─── STATE ────────────────────────────────────────────────
 let currentUser = null;
@@ -1652,29 +1651,33 @@ window.getMyLocation = getMyLocation;
 window.uploadProfilePhoto = uploadProfilePhoto;
 
 // ─── AUTH STATE ───────────────────────────────────────────
+// Timeout de secours — cache le loader après 3s même si Firebase ne répond pas
+setTimeout(function() {
+  var loader = document.getElementById('app-loader');
+  if (loader) loader.style.display = 'none';
+  if (!currentUser) {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+}, 3000);
+
 onAuthStateChanged(auth, async (user) => {
-  // Masquer le loader global
   const loader = document.getElementById('app-loader');
   if (loader) loader.style.display = 'none';
 
   if (user) {
-    console.log("Utilisateur connecté:", user.uid);
     currentUser = user;
-    
-    // Transition d'écran immédiate
+    // Transition immédiate
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display  = 'block';
-    
-    // Reset du bouton login au cas où
+    // Reset bouton login
     setLoading('btn-login', false, 'Se connecter');
-
     try {
       await loadUserProfile(user.uid);
       renderDashboard();
       loadSites();
       renderNews();
-    } catch (err) {
-      console.error("Erreur post-auth:", err);
+    } catch(err) {
+      console.error('Erreur post-auth:', err);
     }
   } else {
     currentUser = null;
