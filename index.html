@@ -59,7 +59,11 @@
     .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:8px;}
     .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,158,96,.35);}
     .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-    .auth-error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
+    .auth-error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;margin-bottom:16px;display:none;line-height:1.5;}
+    .pwd-wrapper{position:relative;}
+    .pwd-wrapper input{padding-right:44px;}
+    .pwd-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-txt);padding:4px;line-height:1;transition:color .2s;}
+    .pwd-toggle:hover{color:var(--navy);}
     #admin-lock-btn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;cursor:pointer;transition:all .2s;z-index:10;}
     #admin-lock-btn:hover{background:rgba(255,255,255,.15);}
 
@@ -298,7 +302,10 @@
       </div>
       <div class="field-group">
         <label>Mot de passe</label>
-        <input type="password" id="login-password" placeholder="••••••••" />
+        <div class="pwd-wrapper">
+          <input type="password" id="login-password" placeholder="••••••••" />
+          <button type="button" class="pwd-toggle" onclick="togglePwd('login-password',this)" title="Afficher/masquer">👁️</button>
+        </div>
       </div>
       <button id="btn-login" onclick="handleLogin()" class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔐 Connexion Admin</button>
       <button onclick="toggleAdminPanel()" class="btn-cancel" style="margin-top:8px;width:100%;padding:10px;">Annuler</button>
@@ -314,15 +321,20 @@
     <div id="form-login" class="auth-form active">
       <div class="field-group">
         <label>Adresse email</label>
-        <input type="email" id="user-login-email" placeholder="votre@email.com" />
+        <input type="email" id="user-login-email" placeholder="votre@email.com" oninput="hideAuthError()" />
       </div>
       <div class="field-group">
         <label>Mot de passe</label>
-        <input type="password" id="user-login-password" placeholder="••••••••" />
+        <div class="pwd-wrapper">
+          <input type="password" id="user-login-password" placeholder="••••••••" oninput="hideAuthError()" />
+          <button type="button" class="pwd-toggle" onclick="togglePwd('user-login-password',this)" title="Afficher/masquer">👁️</button>
+        </div>
       </div>
       <button id="btn-user-login" onclick="handleUserLogin()" class="btn-primary">🏃 Se connecter</button>
+      <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--gray-txt);">
+        <a href="#" onclick="showForgotPassword()" style="color:var(--green);text-decoration:none;font-weight:600;">Mot de passe oublié ?</a>
+      </p>
     </div>
-
     <!-- REGISTER FORM -->
     <div id="form-register" class="auth-form">
       <div class="field-group">
@@ -335,7 +347,10 @@
       </div>
       <div class="field-group">
         <label>Mot de passe</label>
-        <input type="password" id="reg-password" placeholder="Minimum 6 caractères" />
+        <div class="pwd-wrapper">
+          <input type="password" id="reg-password" placeholder="Minimum 6 caractères" />
+          <button type="button" class="pwd-toggle" onclick="togglePwd('reg-password',this)" title="Afficher/masquer">👁️</button>
+        </div>
       </div>
       <div class="field-group">
         <label>Rôle</label>
@@ -949,6 +964,20 @@ const db  = getFirestore(app);
 let _idToken = null;
 let _uid = null;
 
+function mapFirebaseRestError(message) {
+  if (!message) return 'auth/unknown';
+  const msg = message.toUpperCase();
+  if (msg.includes('EMAIL_NOT_FOUND') || msg.includes('USER_DISABLED')) return 'auth/user-not-found';
+  if (msg.includes('INVALID_PASSWORD')) return 'auth/wrong-password';
+  if (msg.includes('INVALID_LOGIN_CREDENTIALS') || msg.includes('INVALID_EMAIL') && msg.includes('PASSWORD')) return 'auth/invalid-credential';
+  if (msg.includes('INVALID_EMAIL')) return 'auth/invalid-email';
+  if (msg.includes('TOO_MANY_ATTEMPTS') || msg.includes('TOO_MANY_REQUESTS')) return 'auth/too-many-requests';
+  if (msg.includes('EMAIL_EXISTS')) return 'auth/email-already-in-use';
+  if (msg.includes('WEAK_PASSWORD')) return 'auth/weak-password';
+  if (msg.includes('OPERATION_NOT_ALLOWED')) return 'auth/operation-not-allowed';
+  return 'auth/invalid-credential';
+}
+
 async function restSignIn(email, password) {
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
@@ -956,7 +985,7 @@ async function restSignIn(email, password) {
       body: JSON.stringify({email, password, returnSecureToken:true}) }
   );
   const data = await res.json();
-  if (data.error) throw {code:'auth/invalid-credential', message:data.error.message};
+  if (data.error) throw {code: mapFirebaseRestError(data.error.message), message: data.error.message};
   _idToken = data.idToken; _uid = data.localId;
   localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
   return {uid:data.localId, email};
@@ -969,7 +998,7 @@ async function restSignUp(email, password) {
       body: JSON.stringify({email, password, returnSecureToken:true}) }
   );
   const data = await res.json();
-  if (data.error) throw {code:'auth/'+data.error.message.toLowerCase().replace(/ /g,'_'), message:data.error.message};
+  if (data.error) throw {code: mapFirebaseRestError(data.error.message), message: data.error.message};
   _idToken = data.idToken; _uid = data.localId;
   localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
   return {uid:data.localId, email};
@@ -1813,21 +1842,53 @@ function toast(msg,type='info'){
   document.getElementById('toast-container').appendChild(el);
   setTimeout(()=>el.remove(),3500);
 }
-function showAuthError(msg){ const el=document.getElementById('auth-error'); el.textContent=msg; el.style.display='block'; }
+function showAuthError(msg){ const el=document.getElementById('auth-error'); el.innerHTML='⚠️ '+msg; el.style.display='block'; }
 function hideAuthError(){ document.getElementById('auth-error').style.display='none'; }
+function togglePwd(inputId, btn){
+  const input = document.getElementById(inputId);
+  if(input.type === 'password'){ input.type='text'; btn.textContent='🙈'; }
+  else { input.type='password'; btn.textContent='👁️'; }
+}
 function setLoading(id,loading,label){ const btn=document.getElementById(id); if(!btn)return; btn.disabled=loading; btn.textContent=label; }
 function formatError(code){
   const map={
-    'auth/user-not-found':'Aucun compte trouvé avec cet email.',
-    'auth/wrong-password':'Mot de passe incorrect.',
-    'auth/email-already-in-use':'Cet email est déjà utilisé.',
-    'auth/weak-password':'Mot de passe trop faible (min 6 caractères).',
+    'auth/user-not-found':'Aucun compte trouvé avec cet email. Vérifiez l\'adresse ou créez un compte.',
+    'auth/wrong-password':'Mot de passe incorrect. Réessayez ou cliquez sur "Mot de passe oublié".',
+    'auth/email-already-in-use':'Cet email est déjà utilisé. Essayez de vous connecter.',
+    'auth/weak-password':'Mot de passe trop faible (minimum 6 caractères).',
     'auth/invalid-email':'Adresse email invalide.',
-    'auth/too-many-requests':'Trop de tentatives. Réessayez plus tard.',
-    'auth/invalid-credential':'Email ou mot de passe incorrect.'
+    'auth/too-many-requests':'Trop de tentatives échouées. Attendez quelques minutes ou réinitialisez votre mot de passe.',
+    'auth/invalid-credential':'Email ou mot de passe incorrect.',
+    'auth/operation-not-allowed':'Connexion par email désactivée. Contactez l\'administrateur.',
+    'auth/network-request-failed':'Erreur réseau. Vérifiez votre connexion internet.'
   };
-  return map[code]||('Erreur : '+code);
+  return map[code]||('Erreur inattendue : '+code);
 }
+
+async function showForgotPassword(){
+  const email = document.getElementById('user-login-email').value.trim();
+  const emailToSend = email || prompt('Entrez votre adresse email pour réinitialiser votre mot de passe :');
+  if(!emailToSend) return;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({requestType:'PASSWORD_RESET', email: emailToSend}) }
+    );
+    const data = await res.json();
+    if(data.error) throw data.error;
+    hideAuthError();
+    toast(`📧 Email de réinitialisation envoyé à ${emailToSend}. Vérifiez votre boîte mail.`, 'success');
+  } catch(e) {
+    const code = e.message ? mapFirebaseRestError(e.message) : 'auth/user-not-found';
+    if(code === 'auth/user-not-found') {
+      showAuthError('Aucun compte trouvé avec cet email.');
+    } else {
+      toast('Erreur lors de l\'envoi. Vérifiez l\'adresse email.', 'error');
+    }
+  }
+}
+window.showForgotPassword = showForgotPassword;
 
 document.getElementById('modal-site')?.addEventListener('click',(e)=>{if(e.target===document.getElementById('modal-site'))closeModal('modal-site');});
 document.getElementById('modal-edit-user')?.addEventListener('click',(e)=>{if(e.target===document.getElementById('modal-edit-user'))closeModal('modal-edit-user');});
