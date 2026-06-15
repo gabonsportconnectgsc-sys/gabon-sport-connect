@@ -279,12 +279,6 @@
 <div id="auth-screen" style="display:flex;">
   <button id="admin-lock-btn" onclick="toggleAdminPanel()" title="Accès administrateur">⚙️ Admin</button>
 
-  <!-- DOMAIN WARNING BANNER -->
-  <div id="domain-warning" style="display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#fef3c7;border:1.5px solid #f59e0b;border-radius:8px;padding:10px 16px;font-size:12px;color:#7a5500;z-index:10;max-width:340px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.15);">
-    ⚠️ <strong>Domaine non autorisé Firebase.</strong><br>
-    Ajoutez <code style="background:#fde68a;padding:1px 4px;border-radius:3px;">gabonsportconnectgsc-sys.github.io</code><br>
-    dans <a href="https://console.firebase.google.com/project/gabon-sport-connect/authentication/settings" target="_blank" style="color:#b45309;font-weight:700;">Firebase Console → Auth → Domaines autorisés</a>
-  </div>
 
   <div class="auth-card">
     <div class="auth-logo">
@@ -1147,8 +1141,8 @@ async function handleLogin(){
   catch(e){
     setLoading('btn-login',false,'🔐 Connexion Admin');
     if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
-      document.getElementById('domain-warning').style.display='block';
-      showAuthError('❌ Ce domaine n\'est pas autorisé dans Firebase. Voir la bannière en haut.');
+      
+      showAuthError(formatError(e.code));
     } else { showAuthError(formatError(e.code)); }
   }
 }
@@ -1162,8 +1156,8 @@ async function handleUserLogin(){
   catch(e){
     setLoading('btn-user-login',false,'🏃 Se connecter');
     if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
-      document.getElementById('domain-warning').style.display='block';
-      showAuthError('❌ Ce domaine n\'est pas autorisé dans Firebase. Voir la bannière en haut.');
+      
+      showAuthError(formatError(e.code));
     } else { showAuthError(formatError(e.code)); }
   }
 }
