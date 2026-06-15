@@ -931,29 +931,71 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
   getFirestore, doc, setDoc, getDoc, updateDoc, collection,
   addDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc,
   where, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const ADMIN_EMAIL = 'gabonsportconnectgsc@gmail.com';
+const FIREBASE_API_KEY = "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw",
-  authDomain: "gabonsportconnectgsc-sys.github.io",
+  apiKey: FIREBASE_API_KEY,
+  authDomain: "gabon-sport-connect.firebaseapp.com",
   projectId: "gabon-sport-connect",
   storageBucket: "gabon-sport-connect.appspot.com",
   messagingSenderId: "760498266017",
   appId: "1:760498266017:web:ee7a5ed9bf522e34649ee8"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── AUTH via REST API (contourne la restriction de domaine) ──
+let _idToken = null;
+let _uid = null;
+
+async function restSignIn(email, password) {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+    { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password, returnSecureToken:true}) }
+  );
+  const data = await res.json();
+  if (data.error) throw {code:'auth/invalid-credential', message:data.error.message};
+  _idToken = data.idToken; _uid = data.localId;
+  localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
+  return {uid:data.localId, email};
+}
+
+async function restSignUp(email, password) {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+    { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password, returnSecureToken:true}) }
+  );
+  const data = await res.json();
+  if (data.error) throw {code:'auth/'+data.error.message.toLowerCase().replace(/ /g,'_'), message:data.error.message};
+  _idToken = data.idToken; _uid = data.localId;
+  localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
+  return {uid:data.localId, email};
+}
+
+function restSignOut() {
+  _idToken=null; _uid=null;
+  localStorage.removeItem('gsc_session');
+}
+
+function getStoredSession() {
+  try {
+    const s = localStorage.getItem('gsc_session');
+    if(!s) return null;
+    const d = JSON.parse(s);
+    if(Date.now() > d.exp){ localStorage.removeItem('gsc_session'); return null; }
+    _idToken=d.idToken; _uid=d.uid;
+    return {uid:d.uid, email:d.email};
+  } catch(e){ return null; }
+}
 
 let storage=null,sRef=null,uploadBytes=null,getDownloadURL=null;
 try {
@@ -1045,47 +1087,36 @@ document.getElementById('edit-poste')?.addEventListener?.('change', ()=>{
   if(sd) sd.style.display = isDefenseur?'':'none';
 });
 
-// ── AUTH STATE ──
-// Afficher immédiatement l'écran de connexion sans attendre Firebase
-const l0=document.getElementById('app-loader');
-if(l0)l0.style.display='none';
-document.getElementById('auth-screen').style.display='flex';
-const loaderFallback = setTimeout(()=>{
-  const l=document.getElementById('app-loader');
-  if(l)l.style.display='none';
-  if(!currentUser) document.getElementById('auth-screen').style.display='flex';
-},1500);
+// ── AUTH STATE ── (géré par REST API session)
 
-onAuthStateChanged(auth, async(user)=>{
-  clearTimeout(loaderFallback);
-  const l=document.getElementById('app-loader');
-  if(l)l.style.display='none';
-  // Cacher le message d'avertissement si Firebase répond
-  const errEl=document.getElementById('auth-error');
-  if(errEl && errEl.textContent.includes('Firebase Console')) errEl.style.display='none';
-  if(user){
-    currentUser=user;
-    document.getElementById('auth-screen').style.display='none';
-    document.getElementById('app-screen').style.display='block';
-    try{
-      await loadUserProfile(user.uid);
-      renderDashboard();
-      loadSites();
-      await loadNewsFromDb();
-      renderNews();
-      if(userProfile?.role==='admin'){
-        document.getElementById('bnav-admin').style.display='';
-        loadAdminUsers();
-        loadAdminSites();
-        loadAdminStats();
-      }
-    }catch(err){console.error('post-auth:',err);}
-  } else {
-    currentUser=null; userProfile=null;
-    document.getElementById('auth-screen').style.display='flex';
-    document.getElementById('app-screen').style.display='none';
+// Vérification session au chargement
+async function postAuthSuccess(user) {
+  currentUser=user;
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  try{
+    await loadUserProfile(user.uid);
+    renderDashboard();
+    loadSites();
+    await loadNewsFromDb();
+    renderNews();
+    if(userProfile?.role==='admin'){
+      document.getElementById('bnav-admin').style.display='';
+      loadAdminUsers();
+      loadAdminSites();
+      loadAdminStats();
+    }
+  }catch(err){console.error('post-auth:',err);}
+}
+
+// Vérifier session existante au chargement
+(async()=>{
+  const stored = getStoredSession();
+  if(stored){
+    try{ await postAuthSuccess(stored); return; }catch(e){}
   }
-});
+  document.getElementById('auth-screen').style.display='flex';
+})();
 
 // ── ADMIN TOGGLE ──
 function toggleAdminPanel(){
@@ -1112,7 +1143,7 @@ async function handleLogin(){
   if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
   if(email!==ADMIN_EMAIL) return showAuthError('Ce panneau est réservé à l\'administrateur.');
   setLoading('btn-login',true,'Connexion…');
-  try{ await signInWithEmailAndPassword(auth,email,pwd); }
+  try{ const u=await restSignIn(email,pwd); await postAuthSuccess(u); }
   catch(e){
     setLoading('btn-login',false,'🔐 Connexion Admin');
     if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
@@ -1127,7 +1158,7 @@ async function handleUserLogin(){
   const pwd=document.getElementById('user-login-password').value;
   if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
   setLoading('btn-user-login',true,'Connexion…');
-  try{ await signInWithEmailAndPassword(auth,email,pwd); }
+  try{ const u=await restSignIn(email,pwd); await postAuthSuccess(u); }
   catch(e){
     setLoading('btn-user-login',false,'🏃 Se connecter');
     if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
@@ -1149,8 +1180,8 @@ async function handleRegister(){
   else if(role==='admin') role='joueur';
   setLoading('btn-register',true,'Création…');
   try{
-    const cred=await createUserWithEmailAndPassword(auth,email,pwd);
-    const uid=cred.user.uid;
+    const cred=await restSignUp(email,pwd);
+    const uid=cred.uid;
     const parts=name.split(' ');
     await setDoc(doc(db,'users',uid),{
       uid,email,
@@ -1169,7 +1200,7 @@ async function handleRegister(){
 }
 
 async function handleLogout(){
-  await signOut(auth);
+  restSignOut();
   toast('Déconnecté.','info');
 }
 
