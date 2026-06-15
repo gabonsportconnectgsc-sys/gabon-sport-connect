@@ -1054,18 +1054,23 @@ function mapFirebaseRestError(message) {
 }
 
 async function restSignIn(email, password) {
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
-    { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({email, password, returnSecureToken:true}) }
-  );
-  const data = await res.json();
-  if (data.error) throw {code: mapFirebaseRestError(data.error.message), message: data.error.message};
-  _idToken = data.idToken; _uid = data.localId;
-  localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
-  return {uid:data.localId, email};
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, password, returnSecureToken:true}) }
+    );
+    const data = await res.json();
+    console.log('[GSC Auth] Firebase response:', JSON.stringify(data.error || 'OK'));
+    if (data.error) throw {code: mapFirebaseRestError(data.error.message), message: data.error.message, raw: data.error};
+    _idToken = data.idToken; _uid = data.localId;
+    localStorage.setItem('gsc_session', JSON.stringify({idToken:data.idToken, uid:data.localId, email, exp:Date.now()+3500000}));
+    return {uid:data.localId, email};
+  } catch(e) {
+    if (e.raw) throw e; // Already formatted
+    throw {code:'auth/network-request-failed', message: e.message || 'Network error'};
+  }
 }
-
 async function restSignUp(email, password) {
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
@@ -1239,15 +1244,13 @@ async function handleLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pwd=document.getElementById('login-password').value;
   if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
-  if(email!==ADMIN_EMAIL) return showAuthError('Ce panneau est réservé à l\'administrateur.');
+  if(email!==ADMIN_EMAIL) return showAuthError("Ce panneau est réservé à l'administrateur.");
   setLoading('btn-login',true,'Connexion…');
   try{ const u=await restSignIn(email,pwd); await postAuthSuccess(u); }
   catch(e){
     setLoading('btn-login',false,'🔐 Connexion Admin');
-    if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
-      
-      showAuthError(formatError(e.code));
-    } else { showAuthError(formatError(e.code)); }
+    console.log('[GSC Auth Admin] Error:', e.code, e.message);
+    showAuthError(formatError(e.code));
   }
 }
 
@@ -1256,13 +1259,13 @@ async function handleUserLogin(){
   const pwd=document.getElementById('user-login-password').value;
   if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
   setLoading('btn-user-login',true,'Connexion…');
-  try{ const u=await restSignIn(email,pwd); await postAuthSuccess(u); }
-  catch(e){
+  try{
+    const u=await restSignIn(email,pwd);
+    await postAuthSuccess(u);
+  }catch(e){
     setLoading('btn-user-login',false,'🏃 Se connecter');
-    if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
-      
-      showAuthError(formatError(e.code));
-    } else { showAuthError(formatError(e.code)); }
+    console.log('[GSC Auth] Error code:', e.code, '| message:', e.message);
+    showAuthError(formatError(e.code));
   }
 }
 
