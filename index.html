@@ -332,8 +332,17 @@
       </div>
       <button id="btn-user-login" onclick="handleUserLogin()" class="btn-primary">🏃 Se connecter</button>
       <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--gray-txt);">
-        <a href="#" onclick="showForgotPassword()" style="color:var(--green);text-decoration:none;font-weight:600;">Mot de passe oublié ?</a>
+        <a href="#" onclick="event.preventDefault();showForgotPassword()" style="color:var(--green);text-decoration:none;font-weight:600;">Mot de passe oublié ?</a>
       </p>
+      <!-- FORGOT PASSWORD PANEL (inline) -->
+      <div id="forgot-panel" style="display:none;margin-top:16px;background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:16px;">
+        <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;">🔑 Réinitialisation du mot de passe</p>
+        <div class="field-group" style="margin-bottom:10px;">
+          <input type="email" id="forgot-email" placeholder="Votre adresse email" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-size:14px;outline:none;" />
+        </div>
+        <button id="btn-forgot" onclick="sendResetEmail()" class="btn-primary" style="margin-top:0;">📧 Envoyer le lien</button>
+        <button onclick="closeForgotPanel()" style="width:100%;margin-top:8px;padding:8px;background:none;border:none;color:var(--gray-txt);font-size:13px;cursor:pointer;">Annuler</button>
+      </div>
     </div>
     <!-- REGISTER FORM -->
     <div id="form-register" class="auth-form">
@@ -380,7 +389,7 @@
     </div>
 
     <p style="text-align:center;font-size:11px;color:var(--gray-txt);margin-top:20px;">
-      Plateforme nationale du sport gabonais &mdash; 2025<br>
+      Plateforme nationale du sport gabonais &mdash; 2026<br>
       <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green);text-decoration:none;">gabonsportconnectgsc-sys.github.io</a>
     </p>
   </div>
@@ -936,6 +945,72 @@
     </div>
   </div>
 </div>
+
+<!-- Fonctions globales appelées via onclick/oninput (hors module ES6) -->
+<script>
+function showAuthError(msg){
+  var el=document.getElementById('auth-error');
+  el.innerHTML='⚠️ '+msg;
+  el.style.display='block';
+}
+function hideAuthError(){
+  document.getElementById('auth-error').style.display='none';
+}
+function togglePwd(inputId, btn){
+  var input=document.getElementById(inputId);
+  if(input.type==='password'){ input.type='text'; btn.textContent='🙈'; }
+  else { input.type='password'; btn.textContent='👁️'; }
+}
+function showForgotPassword(){
+  var emailField=document.getElementById('user-login-email');
+  var forgotPanel=document.getElementById('forgot-panel');
+  var forgotInput=document.getElementById('forgot-email');
+  if(emailField && emailField.value.trim()) forgotInput.value=emailField.value.trim();
+  forgotPanel.style.display='block';
+  forgotInput.focus();
+}
+function closeForgotPanel(){
+  document.getElementById('forgot-panel').style.display='none';
+}
+async function sendResetEmail(){
+  var FIREBASE_API_KEY='AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw';
+  var emailToSend=document.getElementById('forgot-email').value.trim();
+  var inp=document.getElementById('forgot-email');
+  var btn=document.getElementById('btn-forgot');
+  if(!emailToSend){ inp.style.borderColor='#ef4444'; inp.focus(); return; }
+  inp.style.borderColor='#e2e8f0';
+  btn.disabled=true; btn.textContent='Envoi…';
+  try{
+    var res=await fetch(
+      'https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key='+FIREBASE_API_KEY,
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({requestType:'PASSWORD_RESET',email:emailToSend})}
+    );
+    var data=await res.json();
+    if(data.error) throw data.error;
+    closeForgotPanel();
+    hideAuthError();
+    // Afficher un message de succès inline
+    var successMsg=document.createElement('div');
+    successMsg.style.cssText='background:#f0faf5;border:1.5px solid #009E60;border-radius:8px;padding:12px 14px;font-size:13px;color:#007a47;margin-bottom:16px;';
+    successMsg.innerHTML='📧 Email envoyé à <strong>'+emailToSend+'</strong> ! Vérifiez votre boîte mail.';
+    var authError=document.getElementById('auth-error');
+    authError.parentNode.insertBefore(successMsg,authError);
+    setTimeout(function(){ successMsg.remove(); },5000);
+  }catch(e){
+    btn.disabled=false; btn.textContent='📧 Envoyer le lien';
+    var msg=e.message||'';
+    if(msg.toUpperCase().includes('EMAIL_NOT_FOUND')||msg.toUpperCase().includes('USER_NOT_FOUND')){
+      showAuthError('Aucun compte trouvé avec cet email.');
+    } else if(msg.toUpperCase().includes('INVALID_EMAIL')){
+      showAuthError('Adresse email invalide.');
+    } else {
+      showAuthError('Erreur envoi. Vérifiez l\'adresse email.');
+    }
+    closeForgotPanel();
+  }
+}
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1842,13 +1917,6 @@ function toast(msg,type='info'){
   document.getElementById('toast-container').appendChild(el);
   setTimeout(()=>el.remove(),3500);
 }
-function showAuthError(msg){ const el=document.getElementById('auth-error'); el.innerHTML='⚠️ '+msg; el.style.display='block'; }
-function hideAuthError(){ document.getElementById('auth-error').style.display='none'; }
-function togglePwd(inputId, btn){
-  const input = document.getElementById(inputId);
-  if(input.type === 'password'){ input.type='text'; btn.textContent='🙈'; }
-  else { input.type='password'; btn.textContent='👁️'; }
-}
 function setLoading(id,loading,label){ const btn=document.getElementById(id); if(!btn)return; btn.disabled=loading; btn.textContent=label; }
 function formatError(code){
   const map={
@@ -1864,31 +1932,6 @@ function formatError(code){
   };
   return map[code]||('Erreur inattendue : '+code);
 }
-
-async function showForgotPassword(){
-  const email = document.getElementById('user-login-email').value.trim();
-  const emailToSend = email || prompt('Entrez votre adresse email pour réinitialiser votre mot de passe :');
-  if(!emailToSend) return;
-  try {
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`,
-      { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({requestType:'PASSWORD_RESET', email: emailToSend}) }
-    );
-    const data = await res.json();
-    if(data.error) throw data.error;
-    hideAuthError();
-    toast(`📧 Email de réinitialisation envoyé à ${emailToSend}. Vérifiez votre boîte mail.`, 'success');
-  } catch(e) {
-    const code = e.message ? mapFirebaseRestError(e.message) : 'auth/user-not-found';
-    if(code === 'auth/user-not-found') {
-      showAuthError('Aucun compte trouvé avec cet email.');
-    } else {
-      toast('Erreur lors de l\'envoi. Vérifiez l\'adresse email.', 'error');
-    }
-  }
-}
-window.showForgotPassword = showForgotPassword;
 
 document.getElementById('modal-site')?.addEventListener('click',(e)=>{if(e.target===document.getElementById('modal-site'))closeModal('modal-site');});
 document.getElementById('modal-edit-user')?.addEventListener('click',(e)=>{if(e.target===document.getElementById('modal-edit-user'))closeModal('modal-edit-user');});
