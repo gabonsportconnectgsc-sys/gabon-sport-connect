@@ -1016,11 +1016,18 @@
   <!-- Bouton Admin discret en haut à droite -->
   <button id="admin-lock-btn" onclick="toggleAdminPanel()"
     title="Accès administrateur"
-    style="position:absolute;top:18px;right:18px;z-index:10;
-           background:rgba(255,255,255,.08);border:none;border-radius:50%;
-           width:38px;height:38px;cursor:pointer;font-size:18px;
+    style="position:fixed;top:16px;right:16px;z-index:9999;
+           background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);
+           border-radius:50%;width:44px;height:44px;cursor:pointer;font-size:22px;
            display:flex;align-items:center;justify-content:center;
-           transition:background .2s;">🔒</button>
+           box-shadow:0 2px 12px rgba(0,0,0,.4);">🔒</button>
+
+
+
+
+
+
+
 
   <div class="auth-card">
     <div class="auth-logo">
@@ -1096,6 +1103,69 @@
       <button class="btn-primary" onclick="handleRegister()" id="btn-register">
         ✅ Créer mon compte et accéder
       </button>
+
+    <!-- ═══ FOOTER LÉGAL ═══ -->
+    <div style="margin-top:28px;padding-top:20px;border-top:1.5px solid var(--gray-bd);">
+
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--navy);">
+          🇬🇦 Gabon <span style="color:var(--green)">Sport</span> Connect
+        </div>
+        <div style="font-size:11px;color:var(--gray-txt);margin-top:3px;">
+          Plateforme nationale du sport gabonais &mdash; 2025
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:var(--gray-bg);border-radius:12px;padding:14px;border-left:3px solid var(--green);">
+          <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">
+            🏅 Porteur du projet
+          </div>
+          <div style="font-size:12px;font-weight:800;color:var(--navy);line-height:1.4;">
+            M. NKOGHE EVOUNA<br>Wilfried
+          </div>
+          <div style="font-size:11px;color:var(--gray-txt);margin-top:5px;line-height:1.6;">
+            Professeur d'EPS<br>
+            Master Management des Organisations Sportives<br>
+            Master Technique en Management des Sports
+          </div>
+        </div>
+        <div style="background:var(--gray-bg);border-radius:12px;padding:14px;border-left:3px solid var(--yellow);">
+          <div style="font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">
+            💻 Créateur &amp; Dev.
+          </div>
+          <div style="font-size:12px;font-weight:800;color:var(--navy);line-height:1.4;">
+            M. KOZANGUE ESSONO<br>Patrick Bertin
+          </div>
+          <div style="font-size:11px;color:var(--gray-txt);margin-top:5px;line-height:1.6;">
+            Informaticien<br>
+            Créateur des apps<br>
+            AMBI241 &middot; MALAGA<br>MAGERANTE
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid rgba(0,158,96,.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--green-dk);margin-bottom:6px;">📋 Mentions légales</div>
+        <div style="font-size:11px;color:var(--gray-txt);line-height:1.7;">
+          Gabon Sport Connect est une plateforme numérique dédiée au développement et à la promotion du sport au Gabon.
+          Elle est portée et promue par <strong>M. Nkoghe Evouna Wilfried</strong> et développée par
+          <strong>M. Kozangue Essono Patrick Bertin</strong>, informaticien, concepteur des applications AMBI241, MALAGA et MAGERANTE.
+          Toute reproduction ou utilisation sans autorisation est interdite.<br>
+          <span style="color:var(--green-dk);font-weight:600;">&copy; 2025 Gabon Sport Connect &mdash; Tous droits réservés.</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--gray-txt);padding-bottom:4px;">
+        📧 <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:var(--green);font-weight:600;text-decoration:none;">
+          gabonsportconnectgsc@gmail.com
+        </a>
+        <span style="margin:0 6px;opacity:.4;">·</span>
+        🇬🇦 Libreville, Gabon
+      </div>
+
+    </div>
+    <!-- ═══ FIN FOOTER ═══ -->
     </div>
   </div>
 </div>
