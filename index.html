@@ -1047,20 +1047,15 @@ document.getElementById('edit-poste')?.addEventListener?.('change', ()=>{
 });
 
 // ── AUTH STATE ──
-// Fallback: si Firebase ne répond pas en 5s, afficher l'écran de connexion
+// Afficher immédiatement l'écran de connexion sans attendre Firebase
+const l0=document.getElementById('app-loader');
+if(l0)l0.style.display='none';
+document.getElementById('auth-screen').style.display='flex';
 const loaderFallback = setTimeout(()=>{
   const l=document.getElementById('app-loader');
   if(l)l.style.display='none';
-  if(!currentUser){
-    document.getElementById('auth-screen').style.display='flex';
-    // Afficher un message d'aide si le domaine n'est pas autorisé
-    const errEl=document.getElementById('auth-error');
-    if(errEl){
-      errEl.textContent='⚠️ Si la connexion échoue, vérifiez que ce domaine est autorisé dans Firebase Console (Authentication → Domaines autorisés).';
-      errEl.style.display='block';
-    }
-  }
-},5000);
+  if(!currentUser) document.getElementById('auth-screen').style.display='flex';
+},1500);
 
 onAuthStateChanged(auth, async(user)=>{
   clearTimeout(loaderFallback);
