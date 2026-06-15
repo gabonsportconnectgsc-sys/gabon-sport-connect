@@ -280,6 +280,13 @@
 <div id="auth-screen" style="display:none;">
   <button id="admin-lock-btn" onclick="toggleAdminPanel()" title="Accès administrateur">⚙️ Admin</button>
 
+  <!-- DOMAIN WARNING BANNER -->
+  <div id="domain-warning" style="display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#fef3c7;border:1.5px solid #f59e0b;border-radius:8px;padding:10px 16px;font-size:12px;color:#7a5500;z-index:10;max-width:340px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+    ⚠️ <strong>Domaine non autorisé Firebase.</strong><br>
+    Ajoutez <code style="background:#fde68a;padding:1px 4px;border-radius:3px;">gabonsportconnectgsc-sys.github.io</code><br>
+    dans <a href="https://console.firebase.google.com/project/gabon-sport-connect/authentication/settings" target="_blank" style="color:#b45309;font-weight:700;">Firebase Console → Auth → Domaines autorisés</a>
+  </div>
+
   <div class="auth-card">
     <div class="auth-logo">
       <div class="logo-badge">🇬🇦</div>
@@ -306,12 +313,12 @@
 
     <!-- USER TABS -->
     <div class="auth-tabs">
-      <button class="auth-tab" id="tab-login-btn" onclick="switchAuthTab('login')">Se connecter</button>
-      <button class="auth-tab active" id="tab-register-btn" onclick="switchAuthTab('register')">S'inscrire</button>
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Se connecter</button>
+      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">S'inscrire</button>
     </div>
 
     <!-- LOGIN FORM -->
-    <div id="form-login" class="auth-form">
+    <div id="form-login" class="auth-form active">
       <div class="field-group">
         <label>Adresse email</label>
         <input type="email" id="user-login-email" placeholder="votre@email.com" />
@@ -324,7 +331,7 @@
     </div>
 
     <!-- REGISTER FORM -->
-    <div id="form-register" class="auth-form active">
+    <div id="form-register" class="auth-form">
       <div class="field-group">
         <label>Nom complet</label>
         <input type="text" id="reg-name" placeholder="Prénom Nom" />
@@ -365,7 +372,8 @@
     </div>
 
     <p style="text-align:center;font-size:11px;color:var(--gray-txt);margin-top:20px;">
-      Plateforme nationale du sport gabonais &mdash; 2025
+      Plateforme nationale du sport gabonais &mdash; 2025<br>
+      <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green);text-decoration:none;">gabonsportconnectgsc-sys.github.io</a>
     </p>
   </div>
 </div>
@@ -779,16 +787,38 @@
           <div id="legal-apropos" class="legal-pane active">
             <h3>🇬🇦 Gabon Sport Connect</h3>
             <p>Gabon Sport Connect est la plateforme numérique nationale dédiée au développement et à la promotion du sport au Gabon. Elle connecte joueurs, clubs et institutions sportives sur tout le territoire national.</p>
-            <div class="info">📧 gabonsportconnectgsc@gmail.com</div>
-            <h3>Fonctionnalités</h3>
+            <div class="info">📧 gabonsportconnectgsc@gmail.com<br>🌐 <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green-dk);">gabonsportconnectgsc-sys.github.io</a></div>
+            <h3>👤 Porteur de projet</h3>
+            <p style="background:var(--gray-bg);border-radius:var(--radius-sm);padding:12px;margin:8px 0;">
+              <strong>Gabon Sport Connect GSC</strong><br>
+              Initiative nationale pour la digitalisation du sport gabonais<br>
+              📧 gabonsportconnectgsc@gmail.com
+            </p>
+            <h3>💻 Créateur &amp; Développeur</h3>
+            <p style="background:var(--gray-bg);border-radius:var(--radius-sm);padding:12px;margin:8px 0;">
+              Plateforme conçue et développée pour le compte de Gabon Sport Connect.<br>
+              Toute reproduction ou utilisation non autorisée est interdite.
+            </p>
+            <h3>⚙️ Fonctionnalités</h3>
             <ul><li>Profils athlètes complets (physique, stats, poste)</li><li>Annuaire des clubs et organisations sportives</li><li>Carte géographique des sites sportifs</li><li>Actualités du sport gabonais</li><li>Administration centralisée</li></ul>
-            <h3>Informations techniques</h3>
-            <ul><li>URL : https://gabon-sport-connect.web.app</li><li>Base de données : Cloud Firestore (Firebase)</li><li>Hébergement : Firebase Hosting</li></ul>
+            <h3>🔧 Informations techniques</h3>
+            <ul>
+              <li>URL : <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green-dk);">gabonsportconnectgsc-sys.github.io</a></li>
+              <li>URL alternative : <a href="https://gabon-sport-connect.web.app" target="_blank" style="color:var(--green-dk);">gabon-sport-connect.web.app</a></li>
+              <li>Base de données : Cloud Firestore (Firebase)</li>
+              <li>Hébergement : GitHub Pages</li>
+              <li>Authentification : Firebase Auth</li>
+            </ul>
           </div>
           <div id="legal-contact" class="legal-pane">
             <h3>📧 Nous contacter</h3>
-            <div class="info">📧 gabonsportconnectgsc@gmail.com<br>🌐 https://gabon-sport-connect.web.app</div>
-            <p>Pour toute question, suggestion ou signalement, contactez-nous par email.</p>
+            <div class="info">
+              📧 <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:var(--green-dk);">gabonsportconnectgsc@gmail.com</a><br>
+              🌐 <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green-dk);">gabonsportconnectgsc-sys.github.io</a>
+            </div>
+            <p>Pour toute question, suggestion ou signalement, contactez-nous par email. Notre équipe vous répondra dans les meilleurs délais.</p>
+            <h3>🕐 Délai de réponse</h3>
+            <p>Nous nous engageons à répondre à toute demande dans un délai de 48 à 72 heures ouvrables.</p>
           </div>
           <div id="legal-confidentialite" class="legal-pane">
             <h3>🔒 Politique de confidentialité</h3>
@@ -1017,15 +1047,28 @@ document.getElementById('edit-poste')?.addEventListener?.('change', ()=>{
 });
 
 // ── AUTH STATE ──
-setTimeout(()=>{
+// Fallback: si Firebase ne répond pas en 5s, afficher l'écran de connexion
+const loaderFallback = setTimeout(()=>{
   const l=document.getElementById('app-loader');
   if(l)l.style.display='none';
-  if(!currentUser){ document.getElementById('auth-screen').style.display='flex'; }
-},3500);
+  if(!currentUser){
+    document.getElementById('auth-screen').style.display='flex';
+    // Afficher un message d'aide si le domaine n'est pas autorisé
+    const errEl=document.getElementById('auth-error');
+    if(errEl){
+      errEl.textContent='⚠️ Si la connexion échoue, vérifiez que ce domaine est autorisé dans Firebase Console (Authentication → Domaines autorisés).';
+      errEl.style.display='block';
+    }
+  }
+},5000);
 
 onAuthStateChanged(auth, async(user)=>{
+  clearTimeout(loaderFallback);
   const l=document.getElementById('app-loader');
   if(l)l.style.display='none';
+  // Cacher le message d'avertissement si Firebase répond
+  const errEl=document.getElementById('auth-error');
+  if(errEl && errEl.textContent.includes('Firebase Console')) errEl.style.display='none';
   if(user){
     currentUser=user;
     document.getElementById('auth-screen').style.display='none';
@@ -1076,7 +1119,13 @@ async function handleLogin(){
   if(email!==ADMIN_EMAIL) return showAuthError('Ce panneau est réservé à l\'administrateur.');
   setLoading('btn-login',true,'Connexion…');
   try{ await signInWithEmailAndPassword(auth,email,pwd); }
-  catch(e){ setLoading('btn-login',false,'🔐 Connexion Admin'); showAuthError(formatError(e.code)); }
+  catch(e){
+    setLoading('btn-login',false,'🔐 Connexion Admin');
+    if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
+      document.getElementById('domain-warning').style.display='block';
+      showAuthError('❌ Ce domaine n\'est pas autorisé dans Firebase. Voir la bannière en haut.');
+    } else { showAuthError(formatError(e.code)); }
+  }
 }
 
 async function handleUserLogin(){
@@ -1085,7 +1134,13 @@ async function handleUserLogin(){
   if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
   setLoading('btn-user-login',true,'Connexion…');
   try{ await signInWithEmailAndPassword(auth,email,pwd); }
-  catch(e){ setLoading('btn-user-login',false,'🏃 Se connecter'); showAuthError(formatError(e.code)); }
+  catch(e){
+    setLoading('btn-user-login',false,'🏃 Se connecter');
+    if(e.code==='auth/requests-from-referer'||e.message?.includes('referer')||e.message?.includes('blocked')){
+      document.getElementById('domain-warning').style.display='block';
+      showAuthError('❌ Ce domaine n\'est pas autorisé dans Firebase. Voir la bannière en haut.');
+    } else { showAuthError(formatError(e.code)); }
+  }
 }
 
 async function handleRegister(){
