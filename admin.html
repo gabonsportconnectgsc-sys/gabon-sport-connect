@@ -4,6 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>GSC Admin — Panneau de Contrôle</title>
+<!-- Firebase compat — chargé en premier, bloquant, garanti disponible -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -407,7 +411,7 @@ tr.pending-row td{background:#fffbeb;}
 <!-- TOAST -->
 <div id="toast-box"></div>
 
-<script type="module">
+<script>
 // ── FIREBASE CONFIG ──
 const FIREBASE_CONFIG = {
   apiKey:"AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw",
@@ -417,120 +421,105 @@ const FIREBASE_CONFIG = {
   messagingSenderId:"760498266017",
   appId:"1:760498266017:web:ee7a5ed9bf522e34649ee8"
 };
-const FIREBASE_API_KEY = "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw";
 const ADMIN_EMAIL = "gabonsportconnectgsc@gmail.com";
-const SESSION_KEY = "gsc_admin_session";
 
-let db, docFn, setDocFn, getDocFn, updateDocFn, collectionFn,
-    addDocFn, getDocsFn, queryFn, orderByFn, serverTimestampFn, deleteDocFn, whereFn, limitFn;
+let db, auth;
 let allUsers = [];
 
-// ── INIT ──
-(async function init(){
-  setLoadingMsg("Chargement Firebase…");
-  try{
-    const fb = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-    const fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    const app = fb.initializeApp(FIREBASE_CONFIG);
-    db = fs.getFirestore(app);
-    docFn=fs.doc; setDocFn=fs.setDoc; getDocFn=fs.getDoc; updateDocFn=fs.updateDoc;
-    collectionFn=fs.collection; addDocFn=fs.addDoc; getDocsFn=fs.getDocs;
-    queryFn=fs.query; orderByFn=fs.orderBy; serverTimestampFn=fs.serverTimestamp;
-    deleteDocFn=fs.deleteDoc; whereFn=fs.where; limitFn=fs.limit;
-    // Expose for onclick handlers
-    Object.assign(window,{db,doc:docFn,setDoc:setDocFn,getDoc:getDocFn,
-      updateDoc:updateDocFn,collection:collectionFn,addDoc:addDocFn,getDocs:getDocsFn,
-      query:queryFn,orderBy:orderByFn,serverTimestamp:serverTimestampFn,
-      deleteDoc:deleteDocFn,where:whereFn,limit:limitFn});
-  }catch(e){
-    showLoadingError("Impossible de charger Firebase. Vérifiez votre connexion internet.");
-    return;
-  }
+// Firestore helpers (compat API uses method-chaining, not standalone functions)
+// We wrap them so the rest of the code stays unchanged.
+function docFn(db, col, id)          { return db.collection(col).doc(id); }
+function collectionFn(db, col)       { return db.collection(col); }
+function serverTimestampFn()         { return firebase.firestore.FieldValue.serverTimestamp(); }
 
-  // Check stored session
-  const session = getSession();
-  if(session){
-    setLoadingMsg("Restauration de session…");
-    try{
-      const snap = await getDocFn(docFn(db,'users',session.uid));
-      if(snap.exists() && snap.data().role === 'admin'){
-        enterApp(session);
-        return;
-      }
-    }catch(e){/* session invalid, fall through to login */}
-  }
-  showLogin();
-})();
-
-// ── SESSION ──
-function getSession(){
-  try{
-    const s=localStorage.getItem(SESSION_KEY);
-    if(!s) return null;
-    const d=JSON.parse(s);
-    if(Date.now()>d.exp){localStorage.removeItem(SESSION_KEY);return null;}
-    return d;
-  }catch(e){return null;}
+// Wrappers that mimic the modular API signatures used by the rest of the code
+function getDocFn(ref)               { return ref.get(); }
+function setDocFn(ref, data)         { return ref.set(data); }
+function updateDocFn(ref, data)      { return ref.update(data); }
+function deleteDocFn(ref)            { return ref.delete(); }
+function addDocFn(colRef, data)      { return colRef.add(data); }
+function getDocsFn(query)            { return query.get(); }
+function queryFn(colRef, ...constraints) {
+  let q = colRef;
+  constraints.forEach(c => { q = c(q); });
+  return q;
 }
-function saveSession(data){ localStorage.setItem(SESSION_KEY, JSON.stringify({...data, exp: Date.now()+3500000})); }
-function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+function orderByFn(field, dir)       { return q => q.orderBy(field, dir || 'asc'); }
+function whereFn(field, op, val)     { return q => q.where(field, op, val); }
+function limitFn(n)                  { return q => q.limit(n); }
+
+// ── INIT ──
+function init(){
+  setLoadingMsg("Connexion à Firebase…");
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db   = firebase.firestore();
+
+    // Expose for any remaining window references
+    window.db = db;
+
+    // Firebase Auth handles session persistence automatically.
+    auth.onAuthStateChanged(async (user) => {
+      if(user){
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display  = 'none';
+        document.getElementById('app').style.display           = 'block';
+        document.getElementById('topbar-user').textContent     = user.email || '';
+        await loadStats();
+        await loadUsers();
+      } else {
+        showLogin();
+      }
+    });
+  }catch(e){
+    showLoadingError("Impossible d'initialiser Firebase : " + e.message);
+  }
+}
 
 // ── AUTH ──
 window.doLogin = async function(){
   const email = document.getElementById('login-email').value.trim();
-  const pwd = document.getElementById('login-pwd').value;
-  if(!email||!pwd){ showLoginError('Remplissez tous les champs.'); return; }
+  const pwd   = document.getElementById('login-pwd').value;
+  if(!email || !pwd){ showLoginError('Remplissez tous les champs.'); return; }
   if(email !== ADMIN_EMAIL){ showLoginError("Cet email n'est pas l'administrateur."); return; }
   const btn = document.getElementById('btn-login');
-  btn.disabled=true; btn.textContent='Connexion…';
+  btn.disabled = true; btn.textContent = 'Connexion…';
   try{
-    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
-      {method:'POST',headers:{'Content-Type':'application/json'},
-       body:JSON.stringify({email,password:pwd,returnSecureToken:true})});
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    saveSession({uid:data.localId, email, idToken:data.idToken});
-    enterApp({uid:data.localId, email});
+    await auth.signInWithEmailAndPassword(email, pwd);
+    // onAuthStateChanged charge l'app automatiquement
   }catch(e){
-    btn.disabled=false; btn.textContent='🔐 Connexion Admin';
-    const msg = e.message?.includes('INVALID')||e.message?.includes('PASSWORD')
-      ? 'Mot de passe incorrect.' : e.message?.includes('TOO_MANY')
-      ? 'Trop de tentatives. Attendez.' : 'Erreur : '+e.message;
+    btn.disabled = false; btn.textContent = '🔐 Connexion Admin';
+    const msg = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+      ? 'Mot de passe incorrect.'
+      : e.code === 'auth/too-many-requests'
+      ? 'Trop de tentatives. Réessayez plus tard.'
+      : e.code === 'auth/user-not-found'
+      ? 'Compte introuvable.'
+      : 'Erreur : ' + e.message;
     showLoginError(msg);
   }
 };
 
-window.doLogout = function(){
-  clearSession();
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('login-pwd').value='';
+window.doLogout = async function(){
+  await auth.signOut();
+  // onAuthStateChanged → showLogin() automatiquement
 };
 
-// ── APP ENTER ──
-async function enterApp(session){
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('topbar-user').textContent=session.email||'';
-  await loadStats();
-  await loadUsers();
-}
-
 // ── LOADING HELPERS ──
-function setLoadingMsg(msg){ document.getElementById('loading-sub').textContent=msg; }
+function setLoadingMsg(msg){ document.getElementById('loading-sub').textContent = msg; }
 function showLoadingError(msg){
-  document.getElementById('loading-spinner').style.display='none';
-  const e=document.getElementById('loading-error');
-  e.textContent=msg; e.style.display='block';
+  document.getElementById('loading-spinner').style.display = 'none';
+  const e = document.getElementById('loading-error');
+  e.textContent = msg; e.style.display = 'block';
 }
 function showLogin(){
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display  = 'flex';
 }
 function showLoginError(msg){
-  const e=document.getElementById('login-error');
-  e.textContent=msg; e.style.display='block';
+  const e = document.getElementById('login-error');
+  e.textContent = msg; e.style.display = 'block';
 }
 
 // ── TOAST ──
@@ -873,6 +862,11 @@ function renderReports(){
   mk('chart-sports','bar',Object.keys(bySport),Object.values(bySport));
   mk('chart-villes','bar',Object.keys(byVille),Object.values(byVille));
 }
+
+// ── DÉMARRAGE ──
+init();
+
 </script>
+
 </body>
 </html>
