@@ -12,6 +12,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -102,6 +103,7 @@
     .role-badge.arbitre{background:var(--purple);color:white;}
     .role-badge.entraineur{background:var(--teal);color:white;}
     .role-badge.association{background:var(--rose);color:white;}
+    .role-badge.independant{background:#0ea5e9;color:white;}
     .role-badge.visiteur{background:#94a3b8;color:white;}
     .btn-icon{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
     .btn-icon:hover{background:rgba(255,255,255,.18);}
@@ -195,6 +197,7 @@
     .badge-club{background:#dbeafe;color:#1e3a8a;}
     .badge-federation{background:#fff7ed;color:#9a3412;}
     .badge-association{background:#fce7f3;color:#9d174d;}
+    .badge-independant{background:#e0f2fe;color:#075985;}
 
     /* Actor detail modal */
     .actor-detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
@@ -337,6 +340,36 @@
     .status-active{background:#dcfce7;color:#166534;}
     .status-hidden{background:#fef9c3;color:#92400e;}
     .status-deleted{background:#fee2e2;color:#991b1b;}
+    .status-pending{background:#dbeafe;color:#1e40af;}
+    .pending-row{background:#f0f7ff;}
+    .pending-actions{display:flex;gap:6px;}
+    .btn-approve{background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+    .btn-approve:hover{background:var(--green-dk);}
+    .btn-reject{background:var(--danger);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+    .pending-banner{background:linear-gradient(135deg,#dbeafe,#eff6ff);border:1.5px solid #93c5fd;border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#1e40af;font-weight:600;}
+    .pending-banner .count-bubble{background:#1e40af;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+    .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media (max-width:640px){.report-grid{grid-template-columns:1fr;}}
+    .report-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);padding:16px;box-shadow:var(--shadow-sm);}
+    .report-card-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+    .report-canvas-wrap{position:relative;height:220px;}
+    .report-meta-row{display:flex;justify-content:space-between;font-size:11px;color:var(--gray-txt);border-top:1px solid var(--gray-bd);padding-top:8px;margin-top:10px;}
+    .btn-print-report{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-display);}
+    .btn-print-report:hover{background:var(--navy-md);}
+    .report-id-line{font-size:10px;color:var(--gray-txt);font-family:monospace;}
+    @media print{
+      .topnav,.bottom-nav,.admin-tabs,.btn-print-report,#toast-container{display:none !important;}
+      .main-content{padding-top:0;}
+      body{background:#fff;}
+      .report-card{box-shadow:none;break-inside:avoid;}
+    }
+    /* ── Devenir acteur (formulaire public visiteur) ── */
+    .actor-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+    .actor-type-card{border:2px solid var(--gray-bd);border-radius:var(--radius-sm);padding:14px 8px;cursor:pointer;text-align:center;transition:all .2s;background:var(--white);}
+    .actor-type-card.selected{border-color:var(--green);background:var(--green-lt);}
+    .actor-type-card .at-icon{font-size:24px;margin-bottom:4px;}
+    .actor-type-card .at-label{font-size:11px;font-weight:700;color:var(--navy);}
+    .public-form-note{background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--green-dk);margin-bottom:16px;line-height:1.5;}
     .action-btns{display:flex;gap:6px;flex-wrap:wrap;}
     .admin-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
     .admin-tab{padding:8px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-size:12px;font-weight:700;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
@@ -392,6 +425,7 @@
     .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
     .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
+    .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
 
     /* ── CARTE / SITES FILTER BUTTONS ── */
     .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
@@ -667,6 +701,11 @@
             <div class="rc-label">Club / Association</div>
             <div class="rc-sub">Orga. de tournois</div>
           </div>
+          <div class="role-card" onclick="selectRole('independant')" style="grid-column:1/-1;">
+            <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
+            <div class="rc-label">Sportif indépendant</div>
+            <div class="rc-sub">Pratiquant isolé, hors club</div>
+          </div>
         </div>
         <input type="hidden" id="reg-role" value="joueur" />
       </div>
@@ -755,6 +794,12 @@
         <span>Vous consultez en mode <strong>visiteur</strong>. Les données sont en lecture seule. <a onclick="goToAuth()">Créez un compte</a> pour gérer votre fiche.</span>
       </div>
 
+      <!-- Fiche en attente de validation -->
+      <div class="readonly-notice" id="pending-self-notice" style="display:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fbbf24;color:#92400e;">
+        <span class="rn-icon">⏳</span>
+        <span>Votre fiche est <strong>en attente de validation</strong> par l'administrateur. Elle sera visible dans l'annuaire dès son approbation.</span>
+      </div>
+
       <div class="dashboard-hero fade-up">
         <div class="hero-greeting">Bienvenue sur Gabon Sport Connect</div>
         <div class="hero-name" id="hero-name">Bonjour !</div>
@@ -809,7 +854,19 @@
         <button class="quick-btn" onclick="showView('annuaire')"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📋</span>'">Annuaire acteurs</button>
         <button class="quick-btn" onclick="showView('stades')"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🗺️</span>'">Carte sportive</button>
         <button class="quick-btn" onclick="showView('actualites')"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📰</span>'">Actualités</button>
-        <button class="quick-btn" onclick="goToAuth()" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🔑</span>'">Se connecter</button>
+        <button class="quick-btn" onclick="goToAuth('register')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🏅</span>'">Intégrer comme acteur sportif</button>
+        <button class="quick-btn" onclick="goToAuth('login')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🔑</span>'">Se connecter</button>
+      </div>
+
+      <div class="card fade-up mb-16" style="background:linear-gradient(135deg,#f0faf5,#e6f7ef);border-color:var(--green);" id="visitor-become-actor-card">
+        <div class="card-body" style="display:flex;align-items:center;gap:14px;">
+          <div style="font-size:32px;flex-shrink:0;">🏅</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--navy);margin-bottom:2px;">Vous pratiquez un sport au Gabon ?</div>
+            <div style="font-size:12px;color:var(--gray-txt);">Joueur, club, arbitre, entraîneur, organisateur ou sportif indépendant : intégrez l'annuaire national.</div>
+          </div>
+          <button class="btn-sm" style="border-color:var(--green);color:var(--green-dk);flex-shrink:0;" onclick="goToAuth('register')">S'inscrire</button>
+        </div>
       </div>
 
       <div class="card fade-up mb-16">
@@ -880,6 +937,9 @@
             <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')" style="--abtn-color:#ec4899;">
               <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="supporters" onerror="this.style.display='none'">Supporters
             </button>
+            <button class="actor-filter-btn" data-type="independant" onclick="filterActors('independant')" style="--abtn-color:#0ea5e9;">
+              <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="independant" onerror="this.style.display='none'">Indépendants
+            </button>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
             <input class="search-input" id="annuaire-search" placeholder="🔍 Nom, sport, ville…" oninput="searchAnnuaire()" style="flex:1;">
@@ -910,9 +970,10 @@
       <div class="profile-header-card fade-up">
         <div class="avatar-upload-wrap">
           <div class="profile-avatar-lg" id="prof-avatar-lg">?</div>
-          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo">📷</label>
-          <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
+          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadProfilePhoto(this)">
         </div>
+        <div style="text-align:center;font-size:10px;color:var(--gray-txt);margin-top:4px;">JPG/PNG/WEBP · min. 200×200 px · max 5 Mo</div>
         <div class="profile-fullname" id="prof-fullname">…</div>
         <div class="profile-email-line" id="prof-email-line">…</div>
         <div class="profile-chips">
@@ -1079,8 +1140,14 @@
         <button class="admin-tab" onclick="switchAdminTab('sites')">📍 Sites</button>
         <button class="admin-tab" onclick="switchAdminTab('news')">📰 Actualités</button>
         <button class="admin-tab" onclick="switchAdminTab('import')">🗺️ Import sites</button>
+        <button class="admin-tab" onclick="switchAdminTab('reports')">📊 Rapports</button>
       </div>
       <div class="admin-section active" id="admin-section-users">
+        <div class="pending-banner fade-up" id="pending-banner" style="display:none;">
+          <span class="count-bubble" id="pending-count-bubble">0</span>
+          <span id="pending-banner-text">fiche(s) en attente de validation</span>
+          <button class="btn-sm" style="margin-left:auto;" onclick="document.getElementById('srch-status').value='pending';filterAdminUsers();">Voir</button>
+        </div>
         <div class="search-panel fade-up">
           <h3>🔍 Recherche multi-critères</h3>
           <div class="search-grid">
@@ -1094,8 +1161,16 @@
               <option value="club">Club</option>
               <option value="association">Association</option>
               <option value="federation">Fédération</option>
+              <option value="independant">Sportif indépendant</option>
               <option value="admin">Admin</option>
               <option value="supporter">💗 Supporters</option>
+            </select>
+            <select class="search-input" id="srch-status" onchange="filterAdminUsers()">
+              <option value="">Tous statuts</option>
+              <option value="pending">⏳ En attente</option>
+              <option value="active">✅ Actif</option>
+              <option value="hidden">🙈 Masqué</option>
+              <option value="deleted">🗑️ Supprimé</option>
             </select>
             <select class="search-input" id="srch-sport" onchange="filterAdminUsers()">
               <option value="">Tous sports</option>
@@ -1259,6 +1334,49 @@
           </div>
         </div>
       </div>
+
+      <!-- ── RAPPORTS (graphiques + impression) ── -->
+      <div class="admin-section" id="admin-section-reports">
+        <div class="card fade-up mb-16">
+          <div class="card-header">
+            <div class="card-title">📊 Rapports & statistiques</div>
+            <button class="btn-print-report" onclick="window.print()">🖨️ Imprimer</button>
+          </div>
+          <div class="card-body">
+            <div class="report-id-line" id="report-generated-line">Généré le —</div>
+          </div>
+        </div>
+        <div class="report-grid">
+          <div class="report-card fade-up">
+            <div class="report-card-title">Répartition par rôle</div>
+            <div class="report-canvas-wrap"><canvas id="chart-roles"></canvas></div>
+          </div>
+          <div class="report-card fade-up">
+            <div class="report-card-title">Acteurs par sport</div>
+            <div class="report-canvas-wrap"><canvas id="chart-sports"></canvas></div>
+          </div>
+          <div class="report-card fade-up">
+            <div class="report-card-title">Acteurs par ville</div>
+            <div class="report-canvas-wrap"><canvas id="chart-villes"></canvas></div>
+          </div>
+          <div class="report-card fade-up">
+            <div class="report-card-title">Statuts des fiches</div>
+            <div class="report-canvas-wrap"><canvas id="chart-statuts"></canvas></div>
+          </div>
+        </div>
+        <div class="card fade-up" style="margin-top:14px;">
+          <div class="card-header"><div class="card-title">📋 Synthèse chiffrée (identifiants & numérotation)</div></div>
+          <div class="card-body" style="padding:0;">
+            <div class="users-table-wrap">
+              <table class="users-table" id="report-summary-table">
+                <thead><tr><th>#</th><th>Indicateur</th><th>Valeur</th></tr></thead>
+                <tbody id="report-summary-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card fade-up" style="margin-top:16px;">
         <div class="card-body">
           <button class="btn-danger" onclick="handleLogout()">🚪 Se déconnecter</button>
@@ -1479,6 +1597,7 @@
         <option value="arbitre">🟨 Arbitre</option>
         <option value="entraineur">📋 Entraîneur</option>
         <option value="club">🏟️ Club / Association</option>
+        <option value="independant">🧍 Sportif indépendant</option>
         <option value="federation">🏛️ Fédération</option>
         <option value="admin">⚙️ Admin</option>
       </select>
@@ -1498,7 +1617,7 @@
     </div>
     <div class="form-group"><label>Statut</label>
       <select id="admin-edit-status">
-        <option value="active">Actif</option><option value="hidden">Masqué</option>
+        <option value="active">Actif</option><option value="pending">⏳ En attente</option><option value="hidden">Masqué</option>
       </select>
     </div>
     <div class="modal-footer">
@@ -1532,11 +1651,11 @@
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
   association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
-  entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur'
+  entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
-  joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️'
+  joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍'
 };
 
 function showAuthError(msg){
@@ -1562,8 +1681,8 @@ function selectRole(role){
   document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
   event.currentTarget.classList.add('selected');
   // Show/hide extra fields
-  var showSport=['joueur','arbitre','entraineur'].includes(role);
-  var showNiveau=['joueur','arbitre'].includes(role);
+  var showSport=['joueur','arbitre','entraineur','independant'].includes(role);
+  var showNiveau=['joueur','arbitre','independant'].includes(role);
   document.getElementById('reg-sport-group').style.display=showSport?'':'none';
   document.getElementById('reg-niveau-group').style.display=showNiveau?'':'none';
 }
@@ -1813,9 +1932,10 @@ function enterAsVisitor(silent=false){
   });
 }
 
-function goToAuth(){
+function goToAuth(tab){
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
+  if(tab) switchAuthTab(tab);
 }
 
 function handleChipClick(){
@@ -1916,11 +2036,11 @@ async function handleRegister(){
       uid,email,
       prenom:parts[0]||name,nom:parts.slice(1).join(' ')||'',
       role,sport,niveau,ville:'',telephone:'',bio:'',
-      photoURL:'',status:'active',
+      photoURL:'',status:role==='admin'?'active':'pending',
       createdAt:serverTimestamp(),updatedAt:serverTimestamp()
     };
     // Role-specific fields
-    if(['joueur','arbitre','entraineur'].includes(role)){
+    if(['joueur','arbitre','entraineur','independant'].includes(role)){
       Object.assign(baseProfile,{
         club:'',clubsPrecedents:'',poste:'',
         matchsJoues:0,buts:0,passes:0,trophees:0,
@@ -1940,7 +2060,7 @@ async function handleRegister(){
     await setDoc(doc(db,'users',uid),baseProfile);
     currentUser=cred;
     userProfile=baseProfile;
-    toast('✅ Bienvenue ! Votre compte a été créé.','success');
+    toast(role==='admin'?'✅ Bienvenue ! Votre compte a été créé.':'✅ Compte créé ! Votre fiche sera visible dans l\'annuaire après validation par l\'administrateur.','success');
     await postAuthSuccess();
   }catch(e){
     setLoading('btn-register',false,'✅ Créer mon compte');
@@ -1992,6 +2112,8 @@ function renderDashboard(){
   document.getElementById('hero-sport-label').textContent=p.sport||'—';
   document.getElementById('hero-email-label').textContent=p.email||'';
   document.getElementById('stat-niveau').textContent=p.niveau||'—';
+  const pendingNoticeEl=document.getElementById('pending-self-notice');
+  if(pendingNoticeEl) pendingNoticeEl.style.display=(p.status==='pending')?'flex':'none';
   // Completion bar
   let fields;
   if(['club','association','federation'].includes(p.role)){
@@ -2110,7 +2232,7 @@ function renderActors(actors){
   grid.innerHTML=actors.map(a=>{
     const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
     const initial=name[0]?.toUpperCase()||'?';
-    const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération'}[a.role]||a.role;
+    const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant'}[a.role]||a.role;
     const badgeClass='badge-'+(a.role==='association'?'association':(a.role||'joueur'));
     return `
       <div class="actor-card" onclick="openActorDetail('${a.uid||a.id}')">
@@ -2139,7 +2261,7 @@ function openActorDetail(uid){
   else el.textContent=ROLE_ICONS[a.role]||initial;
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
-  const isPersonnel=['joueur','arbitre','entraineur'].includes(a.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(a.role);
   const isOrg=['club','association','federation'].includes(a.role);
   let html='';
   // Infos générales
@@ -2220,7 +2342,7 @@ function renderProfile(){
   if(p.photoURL) av.innerHTML=`<img src="${p.photoURL}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
-  const isPersonnel=['joueur','arbitre','entraineur'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
   const isOrg=['club','association','federation'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
@@ -2316,7 +2438,7 @@ function renderSportStats(p){
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
-  const isPersonnel=['joueur','arbitre','entraineur'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
   const isOrg=['club','association','federation'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   let h='';
@@ -2516,7 +2638,7 @@ async function saveProfile(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!currentUser||!userProfile) return;
   const p=userProfile;
-  const isPersonnel=['joueur','arbitre','entraineur'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
   const isOrg=['club','association','federation'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
 
@@ -2585,8 +2707,23 @@ async function uploadProfilePhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
   const file=input.files[0];
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
   if(!storage) return toast('Service de stockage indisponible.','error');
+  // Vérification professionnelle minimale (dimensions, format portrait recommandé)
+  try{
+    const dims=await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>resolve({w:img.width,h:img.height});
+      img.onerror=reject;
+      img.src=URL.createObjectURL(file);
+    });
+    if(dims.w<200||dims.h<200){
+      toast('⚠️ Photo trop petite (min. 200×200 px recommandé pour un profil professionnel).','error');
+      return;
+    }
+  }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
   toast('📤 Upload en cours…','info');
   try{
     const r=sRef(storage,`profiles/photos/${currentUser.uid}`);
@@ -2974,6 +3111,7 @@ function switchAdminTab(tab){
   if(tab==='sites') loadAdminSites();
   if(tab==='news') renderNews();
   if(tab==='import') setTimeout(()=>initOsmMap(),200);
+  if(tab==='reports') renderAdminReports();
 }
 
 async function loadAdminStats(){
@@ -2993,8 +3131,22 @@ async function loadAdminUsers(){
     const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
     allAdminUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
   }catch(e){
     document.getElementById('admin-users-tbody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--danger)">Erreur : ${e.message}</td></tr>`;
+  }
+}
+
+function updatePendingBanner(){
+  const pending=allAdminUsers.filter(u=>u.status==='pending');
+  const banner=document.getElementById('pending-banner');
+  if(!banner) return;
+  if(pending.length){
+    banner.style.display='flex';
+    document.getElementById('pending-count-bubble').textContent=pending.length;
+    document.getElementById('pending-banner-text').textContent=`fiche(s) en attente de validation — à traiter`;
+  } else {
+    banner.style.display='none';
   }
 }
 
@@ -3005,9 +3157,10 @@ function renderAdminUsersTable(users){
   tbody.innerHTML=users.map(u=>{
     const fullname=[u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||u.email?.split('@')[0]||'—';
     const initial=fullname[0]?.toUpperCase()||'?';
-    const statusBadge=u.status==='hidden'?'<span class="status-badge status-hidden">Masqué</span>':u.status==='deleted'?'<span class="status-badge status-deleted">Supprimé</span>':'<span class="status-badge status-active">Actif</span>';
+    const isPending=u.status==='pending';
+    const statusBadge=isPending?'<span class="status-badge status-pending">⏳ En attente</span>':u.status==='hidden'?'<span class="status-badge status-hidden">Masqué</span>':u.status==='deleted'?'<span class="status-badge status-deleted">Supprimé</span>':'<span class="status-badge status-active">Actif</span>';
     const fedIcon=u.gereParFederation?'🏛️ ':'' ;
-    return `<tr>
+    return `<tr class="${isPending?'pending-row':''}">
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="user-row-avatar">${u.photoURL?`<img src="${u.photoURL}" alt="">`:initial}</div>
         <div>
@@ -3020,15 +3173,106 @@ function renderAdminUsersTable(users){
       <td style="font-size:13px">${u.ville||'—'}</td>
       <td style="font-size:13px">${u.niveau||'—'}</td>
       <td>${statusBadge}</td>
-      <td><div class="action-btns">
+      <td>${isPending?`<div class="pending-actions">
+        <button class="btn-approve" onclick="adminApproveUser('${u.uid||u.id}')" title="Valider la fiche">✅ Valider</button>
+        <button class="btn-reject" onclick="adminRejectUser('${u.uid||u.id}')" title="Rejeter la fiche">✕ Rejeter</button>
+      </div>`:`<div class="action-btns">
         <button class="btn-sm" onclick="adminEditUser('${u.uid||u.id}')">✏️</button>
         <button class="btn-warn" onclick="adminToggleHide('${u.uid||u.id}','${u.status||'active'}')">${u.status==='hidden'?'👁️':'🙈'}</button>
         ${u.role!=='admin'?`<button class="btn-danger" onclick="adminDeleteUser('${u.uid||u.id}')">🗑️</button>`:''}
-        ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}\n        <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${u.uid||u.id}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
-      </div></td>
+        ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
+        <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${u.uid||u.id}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
+      </div>`}</td>
     </tr>`;
   }).join('');
 }
+
+// ── Validation des fiches en attente ──
+async function adminApproveUser(uid){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
+  try{
+    await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(idx>=0) allAdminUsers[idx].status='active';
+    renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    await loadActors();
+    toast('✅ Fiche validée — désormais visible dans l\'annuaire.','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.adminApproveUser=adminApproveUser;
+
+async function adminRejectUser(uid){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
+  if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
+  try{
+    await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(idx>=0) allAdminUsers[idx].status='hidden';
+    renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    toast('Fiche rejetée et masquée.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.adminRejectUser=adminRejectUser;
+
+// ── RAPPORTS ADMIN (graphiques + impression) ──
+let _reportCharts={};
+function renderAdminReports(){
+  if(!Array.isArray(allAdminUsers)||!allAdminUsers.length){ loadAdminUsers().then(()=>renderAdminReports()); return; }
+  const now=new Date();
+  document.getElementById('report-generated-line').textContent=`Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · Réf. RPT-${now.getTime().toString().slice(-8)}`;
+
+  const visibleUsers=allAdminUsers.filter(u=>u.status!=='deleted');
+  const byRole={};
+  visibleUsers.forEach(u=>{ const r=ROLE_LABELS[u.role]||u.role||'Autre'; byRole[r]=(byRole[r]||0)+1; });
+
+  const bySport={};
+  visibleUsers.forEach(u=>{ const s=u.sport||(u.sports&&u.sports[0])||null; if(s) bySport[s]=(bySport[s]||0)+1; });
+
+  const byVille={};
+  visibleUsers.forEach(u=>{ const v=u.ville; if(v) byVille[v]=(byVille[v]||0)+1; });
+
+  const byStatut={'Actif':0,'En attente':0,'Masqué':0};
+  allAdminUsers.forEach(u=>{
+    if(u.status==='pending') byStatut['En attente']++;
+    else if(u.status==='hidden') byStatut['Masqué']++;
+    else if(u.status!=='deleted') byStatut['Actif']++;
+  });
+
+  const palette=['#009E60','#0A1628','#FFD700','#3b82f6','#8b5cf6','#f97316','#0d9488','#e11d48','#94a3b8','#0ea5e9'];
+  const mkChart=(canvasId,type,labels,data,colors)=>{
+    const ctx=document.getElementById(canvasId);
+    if(!ctx||typeof Chart==='undefined') return;
+    if(_reportCharts[canvasId]) _reportCharts[canvasId].destroy();
+    _reportCharts[canvasId]=new Chart(ctx,{
+      type,
+      data:{labels,datasets:[{data,backgroundColor:colors||palette,borderWidth:type==='line'?2:1,borderColor:type==='bar'?colors||palette:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{boxWidth:10,font:{size:10}}}},scales:type==='bar'?{y:{beginAtZero:true,ticks:{precision:0}}}:{}}
+    });
+  };
+
+  mkChart('chart-roles','doughnut',Object.keys(byRole),Object.values(byRole));
+  mkChart('chart-sports','bar',Object.keys(bySport),Object.values(bySport));
+  mkChart('chart-villes','bar',Object.keys(byVille),Object.values(byVille));
+  mkChart('chart-statuts','doughnut',Object.keys(byStatut),Object.values(byStatut),['#16a34a','#1e40af','#92400e']);
+
+  const totalActeurs=visibleUsers.filter(u=>u.status==='active'||u.status===undefined).length;
+  const totalPending=allAdminUsers.filter(u=>u.status==='pending').length;
+  const totalClubs=visibleUsers.filter(u=>['club','association','federation'].includes(u.role)).length;
+  const totalSitesEl=document.getElementById('admin-total-sites');
+  const totalSites=totalSitesEl?totalSitesEl.textContent:'—';
+  const rows=[
+    ['Utilisateurs enregistrés (total)',allAdminUsers.length],
+    ['Fiches actives (visibles)',totalActeurs],
+    ['Fiches en attente de validation',totalPending],
+    ['Clubs / Associations / Fédérations',totalClubs],
+    ['Sites sportifs référencés',totalSites],
+    ['Sportifs indépendants',visibleUsers.filter(u=>u.role==='independant').length],
+  ];
+  document.getElementById('report-summary-tbody').innerHTML=rows.map((r,i)=>`<tr><td style="font-size:12px;color:var(--gray-txt);">RPT-${String(i+1).padStart(3,'0')}</td><td style="font-size:13px;">${r[0]}</td><td style="font-weight:700;font-size:13px;">${r[1]}</td></tr>`).join('');
+}
+window.renderAdminReports=renderAdminReports;
 
 // Admin can toggle federation management for pro players
 async function adminToggleFederation(uid,current){
@@ -3051,16 +3295,18 @@ function filterAdminUsers(){
   const sport=document.getElementById('srch-sport')?.value||'';
   const ville=document.getElementById('srch-ville')?.value||'';
   const niveau=document.getElementById('srch-niveau')?.value||'';
+  const statut=document.getElementById('srch-status')?.value||'';
   const filtered=allAdminUsers.filter(u=>{
     const fullname=([u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||'').toLowerCase();
     const uemail=(u.email||'').toLowerCase();
     const roleMatch=!role||(role==='supporter'?(u.isSupporter===true||u.role==='supporter'):(u.role===role));
-    return (!nom||fullname.includes(nom))&&(!email||uemail.includes(email))&&roleMatch&&(!sport||u.sport===sport||(u.sports||[]).includes(sport))&&(!ville||u.ville===ville)&&(!niveau||u.niveau===niveau);
+    const statusMatch=!statut||((u.status||'active')===statut);
+    return (!nom||fullname.includes(nom))&&(!email||uemail.includes(email))&&roleMatch&&statusMatch&&(!sport||u.sport===sport||(u.sports||[]).includes(sport))&&(!ville||u.ville===ville)&&(!niveau||u.niveau===niveau);
   });
   renderAdminUsersTable(filtered);
 }
 function resetAdminSearch(){
-  ['srch-nom','srch-email','srch-role','srch-sport','srch-ville','srch-niveau'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['srch-nom','srch-email','srch-role','srch-sport','srch-ville','srch-niveau','srch-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderAdminUsersTable(allAdminUsers);
 }
 function adminEditUser(uid){
@@ -3093,6 +3339,8 @@ async function adminSaveUser(){
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) Object.assign(allAdminUsers[idx],updates);
     renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    await loadActors();
     closeModal('modal-edit-user');
     toast('✅ Utilisateur mis à jour !','success');
   }catch(e){ toast('Erreur : '+e.message,'error'); }
@@ -3105,6 +3353,8 @@ async function adminToggleHide(uid,currentStatus){
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status=newStatus;
     renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    await loadActors();
     toast(newStatus==='hidden'?'🙈 Utilisateur masqué.':'👁️ Utilisateur visible.','info');
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
