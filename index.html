@@ -176,8 +176,9 @@
 
     /* ── ANNUAIRE ACTEURS ── */
     .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-    .actor-filter-btn{padding:6px 14px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
-    .actor-filter-btn.actorOLD{background:var(--navy);color:var(--white);border-color:var(--navy);}
+    .actor-filter-btn{--abtn-color:#009E60;padding:6px 14px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
+    .actor-filter-btn.active{background:var(--abtn-color);color:var(--white);border-color:var(--abtn-color);box-shadow:0 3px 10px rgba(0,0,0,.18);}
+    .actor-filter-btn:hover:not(.active){border-color:var(--abtn-color);color:var(--abtn-color);}
     .actors-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .actor-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);overflow:hidden;cursor:pointer;transition:all .2s;}
     .actor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -548,6 +549,25 @@
     .supporter-stat{background:white;border-radius:var(--radius-sm);padding:10px;text-align:center;border:1px solid #f9a8d4;}
     .supporter-stat-val{font-family:var(--font-display);font-size:18px;font-weight:800;color:#db2777;}
     .supporter-stat-lbl{font-size:10px;color:var(--gray-txt);margin-top:2px;}
+    /* ── NEWS FILTER BUTTONS ── */
+    .news-filter-btn{padding:5px 12px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;white-space:nowrap;}
+    .news-filter-btn.active{background:var(--green);color:var(--white);border-color:var(--green);}
+    .news-filter-btn:hover:not(.active){border-color:var(--green);color:var(--green);}
+    /* ── ONLINE NEWS CARD ── */
+    .news-online-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;gap:0;}
+    .news-online-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+    .news-online-accent{width:5px;background:var(--green);flex-shrink:0;}
+    .news-online-accent.football{background:#009E60;}
+    .news-online-accent.basketball{background:#1a2d4a;}
+    .news-online-accent.gabon{background:#FFD700;}
+    .news-online-accent.other{background:#8b5cf6;}
+    .news-online-body{padding:14px 16px;flex:1;}
+    .news-online-source{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-txt);letter-spacing:.5px;margin-bottom:4px;}
+    .news-online-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--navy);line-height:1.3;margin-bottom:6px;}
+    .news-online-excerpt{font-size:12px;color:var(--gray-txt);line-height:1.5;margin-bottom:8px;}
+    .news-online-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .news-online-cat{background:var(--green-lt);color:var(--green-dk);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
+    .news-online-date{font-size:11px;color:var(--gray-txt);}
   </style>
 </head>
 <body>
@@ -558,7 +578,7 @@
 <div id="auth-screen" style="display:none;">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="logo-badge" style="padding:0;overflow:hidden;"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:72px;height:72px;object-fit:cover;border-radius:50%;" alt="GSC" onerror="this.outerHTML='🇬🇦'"></div>
+      <div class="logo-badge" style="padding:0;overflow:hidden;background:linear-gradient(135deg,#009E60,#007a47);display:inline-flex;align-items:center;justify-content:center;font-size:38px;">⚽</div>
       <h1>Gabon Sport<span style="color:var(--green)">Connect</span></h1>
       <p>Plateforme nationale du sport gabonais</p>
     </div>
@@ -712,7 +732,7 @@
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="topnav-logo"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" alt=""> <span>GSC</span></div>
+    <div class="topnav-logo"><span style="font-size:22px;margin-right:4px;">⚽</span> <span>GSC</span></div>
     <div class="topnav-spacer"></div>
     <div id="nav-visitor-banner" class="visitor-banner" style="display:none;">VISITEUR</div>
     <div id="nav-rolebadge"></div>
@@ -839,25 +859,25 @@
       <div class="card mb-16 fade-up">
         <div class="card-body" style="padding-bottom:0;">
           <div class="actors-filters" id="actor-type-filters">
-            <button class="actor-filter-btn active" data-type="tous" onclick="filterActors('tous')">
+            <button class="actor-filter-btn active" data-type="tous" onclick="filterActors('tous')" style="--abtn-color:#009E60;">
               <img src="https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="tous" onerror="this.style.display='none'">Tous
             </button>
-            <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')">
+            <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')" style="--abtn-color:#1a2d4a;">
               <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="joueur" onerror="this.style.display='none'">Joueurs
             </button>
-            <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')">
+            <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')" style="--abtn-color:#8b5cf6;">
               <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="arbitre" onerror="this.style.display='none'">Arbitres
             </button>
-            <button class="actor-filter-btn" data-type="entraineur" onclick="filterActors('entraineur')">
+            <button class="actor-filter-btn" data-type="entraineur" onclick="filterActors('entraineur')" style="--abtn-color:#0d9488;">
               <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="coach" onerror="this.style.display='none'">Entraîneurs
             </button>
-            <button class="actor-filter-btn" data-type="club" onclick="filterActors('club')">
+            <button class="actor-filter-btn" data-type="club" onclick="filterActors('club')" style="--abtn-color:#f97316;">
               <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="club" onerror="this.style.display='none'">Clubs
             </button>
-            <button class="actor-filter-btn" data-type="association" onclick="filterActors('association')">
+            <button class="actor-filter-btn" data-type="association" onclick="filterActors('association')" style="--abtn-color:#e11d48;">
               <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="asso" onerror="this.style.display='none'">Associations
             </button>
-            <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')">
+            <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')" style="--abtn-color:#ec4899;">
               <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="supporters" onerror="this.style.display='none'">Supporters
             </button>
           </div>
@@ -1023,10 +1043,23 @@
 
     <!-- ── ACTUALITÉS ── -->
     <section class="view" id="view-actualites">
-      <div class="card fade-up">
-        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Actualités Sport Gabon</div></div>
-        <div class="card-body" id="news-list"></div>
+      <div class="card fade-up mb-16">
+        <div class="card-header">
+          <div class="card-title"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Actualités Sport Gabon</div>
+          <button class="btn-sm" onclick="refreshOnlineNews()" id="btn-refresh-news">↺ Actualiser</button>
+        </div>
+        <div class="card-body" style="padding-bottom:8px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="news-cat-filters">
+            <button class="news-filter-btn active" onclick="filterNews('all',this)">🌍 Tout</button>
+            <button class="news-filter-btn" onclick="filterNews('Football',this)">⚽ Football</button>
+            <button class="news-filter-btn" onclick="filterNews('Basketball',this)">🏀 Basketball</button>
+            <button class="news-filter-btn" onclick="filterNews('Athlétisme',this)">🏃 Athlétisme</button>
+            <button class="news-filter-btn" onclick="filterNews('Gabon',this)">🇬🇦 Gabon</button>
+          </div>
+          <div id="online-news-status" style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;display:none;"></div>
+        </div>
       </div>
+      <div id="news-list"></div>
     </section>
 
     <!-- ── ADMIN VIEW ── -->
@@ -1771,6 +1804,13 @@ function enterAsVisitor(silent=false){
   document.getElementById('btn-add-site').style.display='none';
   if(!silent) showView('dashboard');
   loadGlobalStats();
+  // Init news preview with seed data
+  allNewsItems=[...GSC_SEED_NEWS];
+  renderNewsFiltered();
+  loadNewsFromDb().then(()=>{
+    allNewsItems=[...newsDb,...GSC_SEED_NEWS.filter(s=>!newsDb.find(n=>n.id===s.id))];
+    renderNewsFiltered();
+  });
 }
 
 function goToAuth(){
@@ -1806,6 +1846,8 @@ function enterApp(){
   document.getElementById('btn-add-site').style.display='';
   renderDashboard();
   loadGlobalStats();
+  // Init news preview
+  if(!allNewsItems.length){ allNewsItems=[...GSC_SEED_NEWS]; renderNewsFiltered(); }
   loadActors();
 }
 
@@ -1964,24 +2006,75 @@ function renderDashboard(){
 }
 
 async function loadGlobalStats(){
-  if(!db||typeof collection!=='function'){return;}
-  try{
-    const snap=await getDocs(collection(db,'users'));
-    const users=snap.docs.map(d=>d.data()).filter(u=>u.status==='active');
-    document.getElementById('stat-total-acteurs').textContent=users.length;
-    document.getElementById('stat-total-joueurs').textContent=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
-    document.getElementById('stat-total-clubs').textContent=users.filter(u=>['club','association','federation'].includes(u.role)).length;
-  }catch(e){console.warn('stats:',e);}
+  // Start with seed data counts
+  const seedActive=GSC_SEED_ACTORS.filter(u=>u.status==='active');
+  let total=seedActive.length;
+  let joueurs=seedActive.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+  let clubs=seedActive.filter(u=>['club','association','federation'].includes(u.role)).length;
+  if(db&&typeof collection==='function'){
+    try{
+      const snap=await getDocs(collection(db,'users'));
+      const users=snap.docs.map(d=>d.data()).filter(u=>u.status==='active');
+      // Add Firebase users (seed already counted)
+      total+=users.length;
+      joueurs+=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+      clubs+=users.filter(u=>['club','association','federation'].includes(u.role)).length;
+    }catch(e){console.warn('stats:',e);}
+  }
+  const el1=document.getElementById('stat-total-acteurs');
+  const el2=document.getElementById('stat-total-joueurs');
+  const el3=document.getElementById('stat-total-clubs');
+  if(el1) el1.textContent=total;
+  if(el2) el2.textContent=joueurs;
+  if(el3) el3.textContent=clubs;
 }
+
+// ── SEED ACTORS — Acteurs recensés (données de démonstration réalistes) ──
+const GSC_SEED_ACTORS = [
+  {uid:'seed-a01',prenom:'Pierre Alain',nom:'Mounguengui',role:'federation',sport:'Football',ville:'Libreville',nomOrganisation:'FEGAFOOT',typeOrganisation:'Fédération',president:'Pierre Alain Mounguengui',anneeCreation:'1962',niveau:'National',status:'active',photoURL:''},
+  {uid:'seed-a02',prenom:'Bruno',nom:'Mounguélé',role:'joueur',sport:'Football',ville:'Libreville',poste:'Milieu central',club:'CF Mounana',niveau:'National',matchsJoues:45,buts:8,passes:12,status:'active',photoURL:''},
+  {uid:'seed-a03',prenom:'Denis',nom:'Bouanga',role:'joueur',sport:'Football',ville:'Libreville',poste:'Ailier droit',club:'LA FC',niveau:'International',matchsJoues:120,buts:55,passes:30,status:'active',photoURL:''},
+  {uid:'seed-a04',prenom:'Mario',nom:'Lémina',role:'joueur',sport:'Football',ville:'Libreville',poste:'Milieu défensif',club:'Wolverhampton',niveau:'International',matchsJoues:200,buts:15,passes:40,status:'active',photoURL:''},
+  {uid:'seed-a05',prenom:'Alain',nom:'Obiang',role:'entraineur',sport:'Football',ville:'Libreville',poste:'Coach principal',club:'AS Stade Mandji',niveau:'National',status:'active',photoURL:''},
+  {uid:'seed-a06',prenom:'Jean-Claude',nom:'Mvoa',role:'arbitre',sport:'Football',ville:'Libreville',poste:'Arbitre central',niveau:'National',licenceNumero:'GAB-ARB-001',status:'active',photoURL:''},
+  {uid:'seed-a07',prenom:'',nom:'',role:'club',sport:'Football',ville:'Libreville',nomOrganisation:'CF Mounana',typeOrganisation:'Club sportif',president:'Roger Ondo',anneeCreation:'1968',effectif:35,status:'active',photoURL:''},
+  {uid:'seed-a08',prenom:'',nom:'',role:'club',sport:'Football',ville:'Port-Gentil',nomOrganisation:'AS Stade Mandji',typeOrganisation:'Club sportif',president:'Paul Essone',anneeCreation:'1980',effectif:28,status:'active',photoURL:''},
+  {uid:'seed-a09',prenom:'',nom:'',role:'club',sport:'Football',ville:'Libreville',nomOrganisation:'FC 105 Libreville',typeOrganisation:'Club sportif',president:'Marie-Christine Nzamba',anneeCreation:'1990',effectif:40,status:'active',photoURL:''},
+  {uid:'seed-a10',prenom:'',nom:'',role:'club',sport:'Basketball',ville:'Libreville',nomOrganisation:'GBC Basketball Club',typeOrganisation:'Club sportif',president:'Samuel Ondo',anneeCreation:'1995',effectif:22,status:'active',photoURL:''},
+  {uid:'seed-a11',prenom:'Patience',nom:'Ayo',role:'joueur',sport:'Basketball',ville:'Libreville',poste:'Meneur',club:'GBC Basketball Club',niveau:'National',matchsJoues:80,buts:320,passes:95,status:'active',photoURL:''},
+  {uid:'seed-a12',prenom:'Ibrahim',nom:'Diallo',role:'joueur',sport:'Handball',ville:'Franceville',poste:'Pivot',club:'ARC Handball',niveau:'Regional',matchsJoues:55,buts:120,status:'active',photoURL:''},
+  {uid:'seed-a13',prenom:'Christelle',nom:'Ndong',role:'joueur',sport:'Athlétisme',ville:'Libreville',poste:'Sprint',niveau:'National',matchsJoues:30,trophees:3,status:'active',photoURL:''},
+  {uid:'seed-a14',prenom:'',nom:'',role:'association',sport:'Multi-sports',ville:'Oyem',nomOrganisation:'Association Sport Woleu-Ntem',typeOrganisation:'Association',president:'Théodore Minko',anneeCreation:'2005',effectif:150,status:'active',photoURL:''},
+  {uid:'seed-a15',prenom:'Rodrigue',nom:'Ekomi',role:'entraineur',sport:'Basketball',ville:'Libreville',poste:'Coach principal',club:'GBC Basketball Club',niveau:'National',status:'active',photoURL:''},
+  {uid:'seed-a16',prenom:'Sylvain',nom:'Mbong',role:'joueur',sport:'Football',ville:'Oyem',poste:'Défenseur central',club:'Mangasport',niveau:'National',matchsJoues:95,buts:5,status:'active',photoURL:''},
+  {uid:'seed-a17',prenom:'',nom:'',role:'club',sport:'Football',ville:'Oyem',nomOrganisation:'Mangasport FC',typeOrganisation:'Club sportif',president:'Jules Obame',anneeCreation:'1975',effectif:32,status:'active',photoURL:''},
+  {uid:'seed-a18',prenom:'Gaëlle',nom:'Oluma',role:'joueur',sport:'Volleyball',ville:'Libreville',poste:'Passeuse',club:'Libreville Volleyball Club',niveau:'National',matchsJoues:60,status:'active',photoURL:''},
+  {uid:'seed-a19',prenom:'Patrice',nom:'Nguema',role:'arbitre',sport:'Basketball',ville:'Libreville',poste:'Arbitre central',niveau:'National',licenceNumero:'GAB-ARB-002',status:'active',photoURL:''},
+  {uid:'seed-a20',prenom:'',nom:'',role:'federation',sport:'Basketball',ville:'Libreville',nomOrganisation:'Fédération Gabonaise de Basketball',typeOrganisation:'Fédération',president:'Roger Essono',anneeCreation:'1960',niveau:'National',status:'active',photoURL:''},
+];
 
 // ── ANNUAIRE ──
 async function loadActors(){
-  if(!db||typeof collection!=='function'){console.warn('loadActors: Firestore non disponible');return;}
-  try{
-    const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
-    allActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
-    renderActors(allActors);
-  }catch(e){ console.warn('loadActors:',e); }
+  let dbActors = [];
+  if(db&&typeof collection==='function'){
+    try{
+      const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+    }catch(e){ console.warn('loadActors DB:',e); }
+  }
+  // Merge: Firebase first, then seed (avoid duplicates by uid)
+  const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
+  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid));
+  allActors=[...dbActors,...seedActors];
+  renderActors(allActors);
+  // Update global stats with merged data
+  const activeAll=allActors.filter(u=>u.status==='active'||u.status===undefined);
+  const statEl=document.getElementById('stat-total-acteurs');
+  if(statEl) statEl.textContent=activeAll.length;
+  const jEl=document.getElementById('stat-total-joueurs');
+  if(jEl) jEl.textContent=activeAll.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+  const cEl=document.getElementById('stat-total-clubs');
+  if(cEl) cEl.textContent=activeAll.filter(u=>['club','association','federation'].includes(u.role)).length;
 }
 
 function filterActors(type){
@@ -2665,43 +2758,138 @@ async function saveSite(){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 
-// ── NEWS ──
+// ── NEWS — Actualités avec panel en ligne ──
+var allNewsItems = [];
+var currentNewsCat = 'all';
+
+// Fallback seed news (données réalistes gabonaises)
+const GSC_SEED_NEWS = [
+  {id:'sn1',cat:'Football',title:'La Panthère du Gabon domine les qualifications CAN 2026',excerpt:'L\'équipe nationale gabonaise réalise un parcours remarquable lors des éliminatoires avec 3 victoires consécutives.',date:'Aujourd\'hui',tag:'CAN 2026',source:'GSC Sport',url:'#'},
+  {id:'sn2',cat:'Football',title:'FEGAFOOT : Pierre Alain Mounguengui reélu président',excerpt:'Le président de la Fédération Gabonaise de Football a été reconduit dans ses fonctions lors de l\'assemblée générale.',date:'2 jours',tag:'FEGAFOOT',source:'GSC Sport',url:'#'},
+  {id:'sn3',cat:'Basketball',title:'GBC Basketball remporte le championnat national D1',excerpt:'Le Gabon Basketball Club décroche son 5e titre consécutif après une saison dominante. Félicitations aux joueurs !',date:'3 jours',tag:'Championnat',source:'GSC Sport',url:'#'},
+  {id:'sn4',cat:'Athlétisme',title:'3 médailles d\'or pour le Gabon aux Jeux Africains',excerpt:'Christelle Ndong et l\'équipe de relais 4×100m offrent une performance historique pour le Gabon sur la scène continentale.',date:'1 semaine',tag:'Jeux Africains',source:'GSC Sport',url:'#'},
+  {id:'sn5',cat:'Infrastructure',title:'Rénovation du Stade Omnisport Omar Bongo annoncée',excerpt:'Le gouvernement gabonais lance un grand chantier de modernisation pour un investissement de 45 milliards de FCFA.',date:'1 semaine',tag:'Infrastructure',source:'GSC Sport',url:'#'},
+  {id:'sn6',cat:'Football',title:'Denis Bouanga : meilleur buteur de MLS 2025',excerpt:'La star gabonaise continue de briller avec Los Angeles FC et s\'affirme comme l\'un des meilleurs joueurs de la ligue.',date:'2 semaines',tag:'MLS',source:'GSC Sport',url:'#'},
+  {id:'sn7',cat:'Gabon',title:'Ouverture du nouveau complexe sportif de Franceville',excerpt:'La capitale de la Haute-Ogooué inaugure son nouveau complexe multisports avec piscine olympique et terrains modernes.',date:'2 semaines',tag:'Infrastructure',source:'GSC Sport',url:'#'},
+  {id:'sn8',cat:'Football',title:'CF Mounana en Ligue des Champions CAF',excerpt:'Le champion du Gabon représentera fièrement le pays lors de la phase de groupes de la Ligue des Champions africaine.',date:'3 semaines',tag:'CAF',source:'GSC Sport',url:'#'},
+];
+
+// Fetch online sport news via RSS2JSON proxy (free public API)
+async function fetchOnlineNews(){
+  const statusEl=document.getElementById('online-news-status');
+  if(statusEl){statusEl.style.display='';statusEl.textContent='🔄 Chargement des actualités en ligne…';}
+  const rssFeeds=[
+    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Frss.lemonde.fr%2Frss%2Fune',
+    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.rfi.fr%2Ffr%2Fpodcasts%2Fsports%2Frss',
+  ];
+  let onlineItems=[];
+  for(const url of rssFeeds){
+    try{
+      const res=await fetch(url,{signal:AbortSignal.timeout(5000)});
+      if(!res.ok) continue;
+      const data=await res.json();
+      if(data.status!=='ok'||!data.items?.length) continue;
+      const items=data.items.slice(0,8).map(item=>{
+        const title=(item.title||'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+        const excerpt=(item.description||item.content||'').replace(/<[^>]+>/g,'').substring(0,180).trim();
+        const pubDate=item.pubDate?new Date(item.pubDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'Récent';
+        const catGuess=title.toLowerCase().includes('football')||title.toLowerCase().includes('foot')||title.toLowerCase().includes('fifa')||title.toLowerCase().includes('can ')?'Football':
+          title.toLowerCase().includes('basket')?'Basketball':
+          title.toLowerCase().includes('athlét')||title.toLowerCase().includes('sprint')?'Athlétisme':
+          title.toLowerCase().includes('gabon')||title.toLowerCase().includes('libreville')?'Gabon':'Sport';
+        return {id:'online-'+Date.now()+'-'+Math.random(),cat:catGuess,title,excerpt,date:pubDate,tag:catGuess,source:data.feed?.title||'RSS',url:item.link||'#',online:true};
+      }).filter(i=>i.title);
+      onlineItems=[...onlineItems,...items];
+    }catch(e){/* ignore feed errors */}
+  }
+  if(statusEl){
+    if(onlineItems.length>0){statusEl.textContent=`✅ ${onlineItems.length} articles récupérés en ligne`;}
+    else{statusEl.textContent='📡 Mode hors ligne — actualités locales affichées';}
+    setTimeout(()=>{statusEl.style.display='none';},3000);
+  }
+  return onlineItems;
+}
+
 async function loadNewsFromDb(){
   if(!db||typeof collection!=='function'){return;}
   try{
     const snap=await getDocs(query(collection(db,'actualites'),orderBy('createdAt','desc'),limit(20)));
     if(!snap.empty) newsDb=snap.docs.map(d=>({id:d.id,...d.data()}));
-    else newsDb=[
-      {id:'n1',cat:'Football',title:'La Panthère du Gabon s\'impose face au Nigeria',excerpt:'Victoire historique lors de la qualification CAN 2025.',date:'Aujourd\'hui',tag:'CAN 2025'},
-      {id:'n2',cat:'Basketball',title:'GBC Basketball Champion National',excerpt:'Le Gabon Basketball Club remporte le championnat national.',date:'2 jours',tag:'Championnat'},
-      {id:'n3',cat:'Athlétisme',title:'Médaille d\'or pour Gabon aux Jeux Africains',excerpt:'3 médailles en athlétisme sur la scène continentale.',date:'4 jours',tag:'Jeux Africains'},
-      {id:'n4',cat:'Infrastructure',title:'Rénovation du Stade Omar Bongo',excerpt:'Le gouvernement annonce un grand chantier de modernisation.',date:'1 semaine',tag:'Infrastructure'}
-    ];
-  }catch(e){console.warn('loadNews:',e);}
+    else newsDb=[...GSC_SEED_NEWS];
+  }catch(e){console.warn('loadNews:',e);newsDb=[...GSC_SEED_NEWS];}
 }
-function renderNews(){
+
+async function refreshOnlineNews(){
+  const btn=document.getElementById('btn-refresh-news');
+  if(btn){btn.textContent='⌛ Chargement…';btn.disabled=true;}
+  const onlineItems=await fetchOnlineNews();
+  // Merge: online first, then DB/seed
+  allNewsItems=[...onlineItems,...newsDb,...GSC_SEED_NEWS.filter(s=>!newsDb.find(n=>n.id===s.id))];
+  // Deduplicate by title
+  const seen=new Set();
+  allNewsItems=allNewsItems.filter(n=>{const k=n.title.substring(0,40);if(seen.has(k))return false;seen.add(k);return true;});
+  renderNewsFiltered();
+  if(btn){btn.textContent='↺ Actualiser';btn.disabled=false;}
+}
+
+function filterNews(cat,btnEl){
+  currentNewsCat=cat;
+  document.querySelectorAll('.news-filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btnEl) btnEl.classList.add('active');
+  renderNewsFiltered();
+}
+window.filterNews=filterNews;
+window.refreshOnlineNews=refreshOnlineNews;
+
+function renderNewsFiltered(){
+  const filtered=currentNewsCat==='all'?allNewsItems:allNewsItems.filter(n=>(n.cat||'').toLowerCase().includes(currentNewsCat.toLowerCase()));
   const isAdmin=userProfile?.role==='admin';
-  const makeCard=n=>`
+  const makeCard=n=>{
+    const accentClass=n.cat==='Football'?'football':n.cat==='Basketball'?'basketball':n.cat==='Gabon'?'gabon':'other';
+    return `<div class="news-online-card" ${n.url&&n.url!=='#'?`onclick="window.open('${n.url}','_blank')"`:''}> 
+      <div class="news-online-accent ${accentClass}"></div>
+      <div class="news-online-body">
+        <div class="news-online-source">${n.source||'GSC Sport'}</div>
+        <div class="news-online-title">${n.title}</div>
+        ${n.excerpt?`<div class="news-online-excerpt">${n.excerpt.substring(0,200)}…</div>`:''}
+        <div class="news-online-footer">
+          <span class="news-online-cat">${n.cat||'Sport'}</span>
+          <span class="news-online-date">🕐 ${n.date||'Récent'}</span>
+          ${isAdmin&&!n.online?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();deleteNews('${n.id}')">🗑️</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+  const nl=document.getElementById('news-list');
+  if(nl) nl.innerHTML=filtered.length?filtered.map(makeCard).join(''):'<div class="card"><div class="card-body"><div class="empty-state"><div class="es-icon">📰</div><h3>Aucune actualité</h3><p>Essayez un autre filtre.</p></div></div></div>';
+  const preview=document.getElementById('latest-news-preview');
+  if(preview) preview.innerHTML=allNewsItems.slice(0,2).map(n=>`
+    <div class="news-card">
+      <div class="news-accent"></div>
+      <div class="news-body">
+        <div class="news-cat">${n.cat||'Sport'}</div>
+        <div class="news-title">${n.title}</div>
+        <div class="news-excerpt">${(n.excerpt||'').substring(0,120)}</div>
+        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span></div>
+      </div>
+    </div>`).join('');
+  const adm=document.getElementById('news-list-admin');
+  if(adm&&isAdmin) adm.innerHTML=newsDb.map(n=>`
     <div class="news-card">
       <div class="news-accent"></div>
       <div class="news-body">
         <div class="news-cat">${n.cat||'Sport'}</div>
         <div class="news-title">${n.title}</div>
         <div class="news-excerpt">${n.excerpt||''}</div>
-        <div class="news-footer">
-          <span class="news-date">🕐 ${n.date||'Récent'}</span>
-          <span class="news-tag">${n.tag||''}</span>
-          ${isAdmin?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteNews('${n.id}')">🗑️</button>`:''}
+        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span>
+          <button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteNews('${n.id}')">🗑️</button>
         </div>
       </div>
-    </div>`;
-  const nl=document.getElementById('news-list');
-  if(nl) nl.innerHTML=newsDb.map(makeCard).join('');
-  const preview=document.getElementById('latest-news-preview');
-  if(preview) preview.innerHTML=newsDb.slice(0,2).map(makeCard).join('');
-  const adm=document.getElementById('news-list-admin');
-  if(adm&&isAdmin) adm.innerHTML=newsDb.map(makeCard).join('');
+    </div>`).join('');
 }
+
+function renderNews(){ renderNewsFiltered(); }
+
 async function publishNews(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(userProfile?.role!=='admin') return;
@@ -2711,9 +2899,11 @@ async function publishNews(){
   const tag=document.getElementById('news-tag').value.trim();
   if(!title) return toast('Veuillez entrer un titre.','error');
   try{
-    const ref=await addDoc(collection(db,'actualites'),{cat,title,excerpt,tag,date:'Aujourd\'hui',createdAt:serverTimestamp(),publishedBy:currentUser.uid});
-    newsDb.unshift({id:ref.id,cat,title,excerpt,tag,date:'Aujourd\'hui'});
-    renderNews();
+    const ref=await addDoc(collection(db,'actualites'),{cat,title,excerpt,tag,date:'Aujourd\'hui',createdAt:serverTimestamp(),publishedBy:currentUser.uid,source:'GSC Admin'});
+    const newItem={id:ref.id,cat,title,excerpt,tag,date:'Aujourd\'hui',source:'GSC Admin'};
+    newsDb.unshift(newItem);
+    allNewsItems.unshift(newItem);
+    renderNewsFiltered();
     document.getElementById('news-titre').value='';
     document.getElementById('news-excerpt').value='';
     document.getElementById('news-tag').value='';
@@ -2726,7 +2916,8 @@ async function deleteNews(id){
   try{
     await deleteDoc(doc(db,'actualites',id));
     newsDb=newsDb.filter(n=>n.id!==id);
-    renderNews();
+    allNewsItems=allNewsItems.filter(n=>n.id!==id);
+    renderNewsFiltered();
     toast('🗑️ Actualité supprimée.','info');
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
@@ -2754,7 +2945,16 @@ function showView(name){
     loadSites();
     setTimeout(()=>{ if(mapInstance) mapInstance.invalidateSize(); },120);
   }
-  if(name==='actualites') renderNews();
+  if(name==='actualites'){
+    // Load DB news then merge with online
+    loadNewsFromDb().then(()=>{
+      newsDb=newsDb.length?newsDb:[...GSC_SEED_NEWS];
+      allNewsItems=[...newsDb];
+      renderNewsFiltered();
+      // Then try fetching online news
+      refreshOnlineNews();
+    });
+  }
   if(name==='admin'){loadAdminUsers();loadAdminStats();}
 }
 
