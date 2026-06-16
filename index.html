@@ -762,6 +762,7 @@
     <p style="text-align:center;font-size:11px;color:var(--gray-txt);margin-top:20px;">
       Plateforme nationale du sport gabonais &mdash; 2026<br>
       <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green);text-decoration:none;">gabonsportconnectgsc-sys.github.io</a>
+      <br><a href="?admin=1" style="color:rgba(100,116,139,.4);text-decoration:none;font-size:10px;">·</a>
     </p>
   </div>
 </div>
@@ -1128,6 +1129,7 @@
       <div class="admin-header fade-up">
         <div class="admin-title">⚙️ Administration — GSC</div>
         <div class="admin-sub">Panneau de contrôle général</div>
+        <button onclick="(function(){const url=location.origin+location.pathname+'?admin=1';navigator.clipboard?.writeText(url).then(()=>toast('🔗 Lien admin copié !','success')).catch(()=>toast(url,'info'));})()" style="margin-top:12px;padding:6px 14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;color:rgba(255,255,255,.85);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" title="Copier le lien d'accès direct admin">🔗 Copier le lien direct admin</button>
       </div>
       <div class="admin-stats fade-up" id="admin-global-stats">
         <div class="admin-stat"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
@@ -1766,6 +1768,10 @@ var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
 
 const ADMIN_EMAIL = 'gabonsportconnectgsc@gmail.com';
 
+// ── ADMIN DIRECT LINK HELPER ──
+function isAdminLinkRequested(){
+  return new URLSearchParams(window.location.search).get('admin') === '1';
+}
 
 // ── POSTES ──
 const POSTES = {
@@ -1936,6 +1942,12 @@ function goToAuth(tab){
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
   if(tab) switchAuthTab(tab);
+  // Pre-fill admin email when accessed via ?admin=1 link
+  if(isAdminLinkRequested()){
+    switchAuthTab('admin');
+    const emailField = document.getElementById('login-email');
+    if(emailField && !emailField.value) emailField.value = ADMIN_EMAIL;
+  }
 }
 
 function handleChipClick(){
@@ -2073,6 +2085,8 @@ async function postAuthSuccess(){
   await loadActors();
   if(userProfile?.role==='admin'){
     loadAdminUsers();loadAdminSites();loadAdminStats();
+    // If accessed via the special admin link, jump straight to the admin panel
+    if(isAdminLinkRequested()) { showView('admin'); return; }
   }
   showView('dashboard');
 }
@@ -3698,12 +3712,21 @@ document.addEventListener('firebase-ready', async function(){
     currentUser = session;
     await loadUserProfile(session.uid);
     enterApp();
+    // If restored session is admin AND special link was used → jump to admin panel directly
+    if(userProfile?.role==='admin' && isAdminLinkRequested()){
+      loadAdminUsers();loadAdminSites();loadAdminStats();
+      showView('admin');
+    }
   } else {
     loadGlobalStats();
     await loadNewsFromDb();
     renderNews();
     showApp();
     enterAsVisitor(true);
+    // If no session but ?admin=1 in URL → open auth on Admin tab with email pre-filled
+    if(isAdminLinkRequested()){
+      goToAuth('admin');
+    }
   }
   loadActors();
 });
