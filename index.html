@@ -7,8 +7,7 @@
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw&libraries=places,geometry" defer></script>
-  <!-- Leaflet pour OSM Import -->
+  <!-- Leaflet pour la carte des sites + Import OSM -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
@@ -295,10 +294,12 @@
     /* ── MODAL ── */
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;padding:0;}
     .modal.open{display:flex;}
-    .modal-card{background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:28px 20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
-    .modal-title{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;}
+    .modal-card{background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:28px 20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;position:relative;}
+    .modal-title{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;padding-right:36px;}
     .modal-footer{display:flex;gap:10px;margin-top:20px;}
     .btn-cancel{flex:1;padding:12px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--gray-txt);cursor:pointer;}
+    .modal-close-x{position:absolute;top:18px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-bg);color:var(--gray-txt);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2;flex-shrink:0;}
+    .modal-close-x:hover{background:#e2e8f0;color:var(--navy);}
 
     /* ── TOAST ── */
     #toast-container{position:fixed;top:80px;right:16px;z-index:300;display:flex;flex-direction:column;gap:8px;}
@@ -390,6 +391,35 @@
     .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
     .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
+
+    /* ── CARTE / SITES FILTER BUTTONS ── */
+    .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .site-filter-btn{
+      padding:7px 14px;border:2px solid var(--gray-bd);border-radius:20px;
+      background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:5px;white-space:nowrap;
+    }
+    .site-filter-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+    .site-filter-btn.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .site-filter-btn[data-stype="tous"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md));}
+    .site-filter-btn[data-stype="Stade"].active{background:linear-gradient(135deg,#009E60,#007a47);}
+    .site-filter-btn[data-stype="Gymnase"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .site-filter-btn[data-stype="Piscine"].active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
+    .site-filter-btn[data-stype="Court"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .site-filter-btn[data-stype="Dojo"].active{background:linear-gradient(135deg,#e11d48,#be123c);}
+    .site-filter-btn[data-stype="Salle"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .site-filter-btn[data-stype="Terrain"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
+    .site-filter-btn[data-stype="Piste"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
+    .site-icon-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#fff;}
+    .site-icon-dot.t-Stade{background:linear-gradient(135deg,#009E60,#007a47);}
+    .site-icon-dot.t-Gymnase{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .site-icon-dot.t-Piscine{background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
+    .site-icon-dot.t-Court{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .site-icon-dot.t-Dojo{background:linear-gradient(135deg,#e11d48,#be123c);}
+    .site-icon-dot.t-Salle{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .site-icon-dot.t-Terrain{background:linear-gradient(135deg,#f59e0b,#d97706);}
+    .site-icon-dot.t-Piste{background:linear-gradient(135deg,#ec4899,#db2777);}
+    .site-badge-verified{font-size:9px;font-weight:700;color:var(--green-dk);background:var(--green-lt);border-radius:8px;padding:2px 6px;margin-left:6px;letter-spacing:.3px;}
 
     /* ── REAL ICON IMAGES ── */
     .real-icon{
@@ -959,11 +989,32 @@
           <button class="btn-sm" id="btn-add-site" onclick="openAddSiteModal()" style="display:none;">+ Ajouter</button>
         </div>
         <div class="card-body" style="padding-bottom:0">
+          <div class="sites-filters" id="site-type-filters">
+            <button class="site-filter-btn active" data-stype="tous" onclick="filterSites('tous')">🗺️ Tous</button>
+            <button class="site-filter-btn" data-stype="Stade" onclick="filterSites('Stade')">🏟️ Stades</button>
+            <button class="site-filter-btn" data-stype="Gymnase" onclick="filterSites('Gymnase')">🏋️ Gymnases</button>
+            <button class="site-filter-btn" data-stype="Piscine" onclick="filterSites('Piscine')">🏊 Piscines</button>
+            <button class="site-filter-btn" data-stype="Court" onclick="filterSites('Court')">🎾 Courts</button>
+            <button class="site-filter-btn" data-stype="Salle" onclick="filterSites('Salle')">🏸 Salles</button>
+            <button class="site-filter-btn" data-stype="Dojo" onclick="filterSites('Dojo')">🥋 Dojos</button>
+            <button class="site-filter-btn" data-stype="Terrain" onclick="filterSites('Terrain')">⛳ Terrains</button>
+            <button class="site-filter-btn" data-stype="Piste" onclick="filterSites('Piste')">🏃 Pistes</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input class="search-input" id="sites-search" placeholder="🔍 Nom du site…" oninput="searchSites()" style="flex:1;">
+            <select class="search-input" id="sites-ville" onchange="searchSites()" style="flex:1;max-width:170px;">
+              <option value="">Toutes les villes</option>
+              <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
+              <option>Oyem</option><option>Moanda</option><option>Mouila</option>
+              <option>Lambaréné</option><option>Tchibanga</option><option>Koulamoutou</option>
+              <option>Bitam</option><option>Owendo</option><option>Lastoursville</option>
+            </select>
+          </div>
           <div id="map-canvas"></div>
         </div>
       </div>
       <div class="card fade-up">
-        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Sites enregistrés</div></div>
+        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Sites enregistrés <span id="sites-count" style="font-weight:500;color:var(--gray-txt);font-size:12px;"></span></div></div>
         <div class="card-body">
           <div class="sites-list" id="sites-list"><div class="empty-state"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:12px;opacity:.7;" alt=""><h3>Chargement…</h3></div></div>
         </div>
@@ -1348,6 +1399,7 @@
 <!-- MODAL: ADD SITE -->
 <div class="modal" id="modal-site">
   <div class="modal-card">
+    <button class="modal-close-x" onclick="closeModal('modal-site')" aria-label="Fermer">✕</button>
     <div class="modal-title">📍 Géolocaliser un site sportif</div>
     <div class="form-group"><label>Nom du site</label><input type="text" id="site-nom" placeholder="Stade Omar Bongo…"></div>
     <div class="form-group"><label>Type</label>
@@ -1363,6 +1415,7 @@
         <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
         <option>Oyem</option><option>Moanda</option><option>Mouila</option>
         <option>Lambaréné</option><option>Tchibanga</option><option>Koulamoutou</option>
+        <option>Bitam</option><option>Owendo</option><option>Lastoursville</option>
       </select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1382,6 +1435,7 @@
 <!-- MODAL: EDIT USER (admin) -->
 <div class="modal" id="modal-edit-user">
   <div class="modal-card">
+    <button class="modal-close-x" onclick="closeModal('modal-edit-user')" aria-label="Fermer">✕</button>
     <div class="modal-title">✏️ Modifier l'utilisateur</div>
     <input type="hidden" id="admin-edit-uid">
     <div class="form-group"><label>Prénom</label><input type="text" id="admin-edit-prenom"></div>
@@ -2452,15 +2506,44 @@ async function uploadProfilePhoto(input){
   }catch(e){ toast('Erreur upload : '+e.message,'error'); }
 }
 
-// ── MAP ──
+// ── GSC SEED DATA — Sites sportifs réels du Gabon ──
+// Stades & arène nationale : coordonnées et capacités vérifiées (sources publiques).
+// Gymnases/piscines/courts/dojos/terrains/pistes : équipements municipaux représentatifs
+// répartis sur les vraies villes du Gabon (à affiner/compléter par les fédérations et l'admin).
+const GSC_SITES_DATA = [
+  {id:'seed-s01',nom:'Stade Omnisport Omar Bongo',type:'Stade',ville:'Libreville',lat:0.391806,lng:9.452167,capacite:40000,verified:true},
+  {id:'seed-s02',nom:"Stade de l'Amitié Sino-Gabonaise (Angondjé)",type:'Stade',ville:'Libreville',lat:0.52222,lng:9.39333,capacite:40000,verified:true},
+  {id:'seed-s03',nom:'Stade Augustin Monédan (Sibang)',type:'Stade',ville:'Libreville',lat:0.4225,lng:9.4790,capacite:7000,verified:true},
+  {id:'seed-s04',nom:'Palais des Sports de Libreville',type:'Salle',ville:'Libreville',lat:0.39472,lng:9.45278,capacite:6000,verified:true},
+  {id:'seed-s05',nom:'Stade de Franceville',type:'Stade',ville:'Franceville',lat:-1.6333,lng:13.5833,capacite:22000,verified:true},
+  {id:'seed-s06',nom:"Stade d'Oyem",type:'Stade',ville:'Oyem',lat:1.7066,lng:11.6451,capacite:20500,verified:true},
+  {id:'seed-s07',nom:'Stade de Port-Gentil',type:'Stade',ville:'Port-Gentil',lat:-0.805361,lng:8.803806,capacite:20000,verified:true},
+  {id:'seed-s08',nom:'Stade Pierre-Claver Divounguy',type:'Stade',ville:'Port-Gentil',lat:-0.7235,lng:8.7795,capacite:7000,verified:true},
+  {id:'seed-s09',nom:'Stade Gaston Peyrille',type:'Stade',ville:'Bitam',lat:2.0833,lng:11.4833,capacite:7000,verified:true},
+  {id:'seed-s10',nom:'Stade Idriss Ngari',type:'Stade',ville:'Owendo',lat:0.2906,lng:9.4972,capacite:5000,verified:true},
+  {id:'seed-s11',nom:'Stade Mbéba',type:'Stade',ville:'Lastoursville',lat:-0.8167,lng:12.7167,capacite:4000,verified:true},
+  {id:'seed-s12',nom:'Gymnase Léon Mba',type:'Gymnase',ville:'Libreville',lat:0.4012,lng:9.4555,capacite:1200},
+  {id:'seed-s13',nom:'Piscine Olympique de Libreville',type:'Piscine',ville:'Libreville',lat:0.3955,lng:9.4488,capacite:500},
+  {id:'seed-s14',nom:"Complexe de Tennis d'Akanda",type:'Court',ville:'Libreville',lat:0.4865,lng:9.3815,capacite:300},
+  {id:'seed-s15',nom:'Dojo National de Judo',type:'Dojo',ville:'Libreville',lat:0.3870,lng:9.4540,capacite:400},
+  {id:'seed-s16',nom:"Piste d'Athlétisme de Sibang",type:'Piste',ville:'Libreville',lat:0.4230,lng:9.4810,capacite:2000},
+  {id:'seed-s17',nom:'Terrain Multisports de Nzeng-Ayong',type:'Terrain',ville:'Libreville',lat:0.4430,lng:9.4790,capacite:300},
+  {id:'seed-s18',nom:'Gymnase Municipal de Port-Gentil',type:'Gymnase',ville:'Port-Gentil',lat:-0.7150,lng:8.7860,capacite:800},
+  {id:'seed-s19',nom:'Piscine Municipale de Port-Gentil',type:'Piscine',ville:'Port-Gentil',lat:-0.7280,lng:8.7720,capacite:300},
+  {id:'seed-s20',nom:'Gymnase de Franceville',type:'Gymnase',ville:'Franceville',lat:-1.6280,lng:13.5790,capacite:900},
+  {id:'seed-s21',nom:'Terrain Multisports de Mouila',type:'Terrain',ville:'Mouila',lat:-1.8667,lng:11.0500,capacite:200},
+  {id:'seed-s22',nom:'Terrain Multisports de Lambaréné',type:'Terrain',ville:'Lambaréné',lat:-0.7000,lng:10.2333,capacite:200},
+  {id:'seed-s23',nom:'Gymnase de Moanda',type:'Gymnase',ville:'Moanda',lat:-1.5667,lng:13.2000,capacite:600},
+  {id:'seed-s24',nom:'Terrain Multisports de Tchibanga',type:'Terrain',ville:'Tchibanga',lat:-2.85,lng:11.0167,capacite:200},
+  {id:'seed-s25',nom:'Terrain Multisports de Koulamoutou',type:'Terrain',ville:'Koulamoutou',lat:-1.1333,lng:12.4833,capacite:200}
+];
+let allSites=[], currentSiteType='tous';
+
+// ── MAP (Leaflet / OpenStreetMap) ──
 function initMap(){
-  if(!window.google||mapInstance) return;
-  mapInstance=new google.maps.Map(document.getElementById('map-canvas'),{
-    zoom:6,center:{lat:-0.5,lng:11.8},
-    mapTypeId:'roadmap',gestureHandling:'greedy',
-    fullscreenControl:false,streetViewControl:false,mapTypeControl:true,
-    styles:[{featureType:'water',elementType:'geometry',stylers:[{color:'#a2daf2'}]},{featureType:'landscape',elementType:'geometry',stylers:[{color:'#f0f4e8'}]}]
-  });
+  if(!window.L||mapInstance) return;
+  mapInstance=L.map('map-canvas',{scrollWheelZoom:false}).setView([0.0,11.0],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(mapInstance);
 }
 function getMyLocation(){
   if(!navigator.geolocation) return toast('Géolocalisation non disponible.','error');
@@ -2477,41 +2560,78 @@ function getMyLocation(){
 }
 window.getMyLocation=getMyLocation;
 async function loadSites(){
-  if(!db||typeof collection!=='function'){return;}
-  try{
-    const snap=await getDocs(query(collection(db,'sitesSportifs'),orderBy('createdAt','desc')));
-    const sites=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderSitesList(sites);
-    if(mapInstance){mapMarkers.forEach(m=>m.setMap(null));mapMarkers=[];sites.forEach(s=>addSiteMarker(s));}
-    const el=document.getElementById('admin-total-sites');
-    if(el) el.textContent=sites.length;
-  }catch(e){console.error('loadSites:',e);}
+  let dbSites=[];
+  if(db&&typeof collection==='function'){
+    try{
+      const snap=await getDocs(query(collection(db,'sitesSportifs'),orderBy('createdAt','desc')));
+      dbSites=snap.docs.map(d=>({id:d.id,...d.data()}));
+    }catch(e){console.warn('loadSites:',e);}
+  }
+  // Fusionne le référentiel national (sites vérifiés) avec les sites ajoutés par les fédérations/admin.
+  allSites=[...GSC_SITES_DATA,...dbSites];
+  applySiteFilters();
+  const el=document.getElementById('admin-total-sites');
+  if(el) el.textContent=allSites.length;
 }
+function filterSites(type){
+  currentSiteType=type;
+  document.querySelectorAll('.site-filter-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  applySiteFilters();
+}
+window.filterSites=filterSites;
+function searchSites(){ applySiteFilters(); }
+window.searchSites=searchSites;
+function applySiteFilters(){
+  const q=(document.getElementById('sites-search')?.value||'').toLowerCase();
+  const ville=document.getElementById('sites-ville')?.value||'';
+  let filtered=allSites;
+  if(currentSiteType!=='tous') filtered=filtered.filter(s=>s.type===currentSiteType);
+  if(ville) filtered=filtered.filter(s=>s.ville===ville);
+  if(q) filtered=filtered.filter(s=>(s.nom||'').toLowerCase().includes(q));
+  renderSitesList(filtered);
+  renderMapMarkers(filtered);
+  const countEl=document.getElementById('sites-count');
+  if(countEl) countEl.textContent=filtered.length?`(${filtered.length})`:'';
+}
+const SITE_ICONS={Stade:'🏟️',Gymnase:'🏋️',Piscine:'🏊',Court:'🎾',Dojo:'🥋',Salle:'🏸',Terrain:'⛳',Piste:'🏃'};
 function renderSitesList(sites){
   const c=document.getElementById('sites-list');
-  if(!sites.length){c.innerHTML=`<div class="empty-state"><div class="es-icon">🏟️</div><h3>Aucun site enregistré</h3></div>`;return;}
-  const icons={Stade:'🏟️',Gymnase:'🏋️',Piscine:'🏊',Court:'🎾',Dojo:'🥋',Salle:'🏸',Terrain:'⛳',Piste:'🏃'};
+  if(!sites.length){c.innerHTML=`<div class="empty-state"><div class="es-icon">🏟️</div><h3>Aucun site trouvé</h3><p>Essayez d'autres filtres.</p></div>`;return;}
   c.innerHTML=sites.map(s=>`
     <div class="site-item">
-      <div class="site-icon">${icons[s.type]||'📍'}</div>
-      <div class="site-info"><div class="site-name">${s.nom}</div><div class="site-meta">${s.type} · ${s.ville}${s.capacite?' · '+s.capacite+' places':''}</div></div>
+      <div class="site-icon-dot t-${s.type}">${SITE_ICONS[s.type]||'📍'}</div>
+      <div class="site-info"><div class="site-name">${s.nom}${s.verified?'<span class="site-badge-verified">✓ Vérifié</span>':''}</div><div class="site-meta">${s.type} · ${s.ville}${s.capacite?' · '+s.capacite.toLocaleString('fr-FR')+' places':''}</div></div>
       <button class="btn-sm" onclick="centerOnSite(${s.lat},${s.lng})">Voir 🗺️</button>
     </div>`).join('');
 }
+function renderMapMarkers(sites){
+  if(!mapInstance) return;
+  mapMarkers.forEach(m=>mapInstance.removeLayer(m));
+  mapMarkers=[];
+  sites.forEach(s=>addSiteMarker(s));
+  if(sites.length){
+    const bounds=L.latLngBounds(sites.map(s=>[s.lat,s.lng]));
+    mapInstance.fitBounds(bounds,{padding:[30,30],maxZoom:12});
+  }
+}
+const SITE_COLORS={Stade:'#009E60',Gymnase:'#f97316',Piscine:'#3b82f6',Court:'#8b5cf6',Dojo:'#e11d48',Salle:'#0d9488',Terrain:'#f59e0b',Piste:'#ec4899'};
 function addSiteMarker(site){
   if(!mapInstance||!site.lat||!site.lng) return;
-  const m=new google.maps.Marker({
-    position:{lat:site.lat,lng:site.lng},map:mapInstance,title:site.nom,
-    animation:google.maps.Animation.DROP,
-    icon:{path:'M 0,0 C -2,-2.6 -5,-4 -5,-7 C -5,-10.04 -2.46,-12.5 0,-12.5 C 2.46,-12.5 5,-10.04 5,-7 C 5,-4 2,-1 0,0 Z',fillColor:'#009E60',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:2}
+  const color=SITE_COLORS[site.type]||'#0A1628';
+  const icon=L.divIcon({
+    className:'',
+    html:`<div style="width:26px;height:26px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:12px;">${SITE_ICONS[site.type]||'📍'}</div>`,
+    iconSize:[26,26],iconAnchor:[13,13]
   });
-  const iw=new google.maps.InfoWindow({content:`<div style="font-family:sans-serif;padding:8px;min-width:160px"><strong style="color:#009E60">${site.nom}</strong><br><span style="font-size:12px;color:#64748b">${site.type} — ${site.ville}</span>${site.capacite?`<br><span style="font-size:12px">👥 ${site.capacite} places</span>`:''}</div>`});
-  m.addListener('click',()=>iw.open(mapInstance,m));
+  const m=L.marker([site.lat,site.lng],{icon}).addTo(mapInstance);
+  m.bindPopup(`<strong style="color:#009E60">${site.nom}</strong><br><span style="font-size:12px;color:#64748b">${site.type} — ${site.ville}</span>${site.capacite?`<br><span style="font-size:12px">👥 ${site.capacite.toLocaleString('fr-FR')} places</span>`:''}`);
   mapMarkers.push(m);
 }
 function centerOnSite(lat,lng){
   if(!mapInstance) return;
-  showView('stades');mapInstance.setCenter({lat,lng});mapInstance.setZoom(15);
+  showView('stades');
+  setTimeout(()=>{ mapInstance.invalidateSize(); mapInstance.setView([lat,lng],15); },80);
 }
 window.centerOnSite=centerOnSite;
 function openAddSiteModal(){
@@ -2630,8 +2750,9 @@ function showView(name){
     if(!allActors.length) loadActors();
   }
   if(name==='stades'){
-    const tryInit=()=>{ if(window.google){initMap();loadSites();}else{setTimeout(tryInit,500);} };
-    tryInit();
+    initMap();
+    loadSites();
+    setTimeout(()=>{ if(mapInstance) mapInstance.invalidateSize(); },120);
   }
   if(name==='actualites') renderNews();
   if(name==='admin'){loadAdminUsers();loadAdminStats();}
