@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSC Admin — Panneau de Contrôle</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
+  --yellow:#FFD700;--navy:#0A1628;--navy-md:#1a2d4a;
+  --white:#fff;--gray-bg:#F4F6F8;--gray-bd:#e2e8f0;
+  --gray-txt:#64748b;--danger:#ef4444;--warn:#f59e0b;
+  --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;
+  --teal:#0d9488;--rose:#e11d48;
+  --font:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-height:100vh;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── LOADING SCREEN ── */
+#loading-screen{
+  position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--navy-md));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:999;
+}
+.loading-logo{font-size:56px;}
+.loading-title{font-size:22px;font-weight:800;color:var(--white);letter-spacing:.5px;}
+.loading-sub{font-size:13px;color:rgba(255,255,255,.55);}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+.loading-error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;border-radius:10px;padding:14px 20px;font-size:13px;max-width:320px;text-align:center;display:none;}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  display:none;min-height:100vh;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--navy),var(--navy-md),#0d3a1f);padding:20px;
+}
+.login-card{background:var(--white);border-radius:22px;padding:44px 36px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.18);animation:fadeUp .4s ease;}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .badge{display:inline-flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dk));font-size:30px;margin-bottom:12px;box-shadow:0 6px 20px rgba(0,158,96,.35);}
+.login-logo h1{font-size:20px;font-weight:800;color:var(--navy);}
+.login-logo p{font-size:12px;color:var(--gray-txt);margin-top:4px;}
+.login-card .notice{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fbbf24;border-radius:10px;padding:14px;margin-bottom:20px;font-size:12px;color:#92400e;}
+.field-group{margin-bottom:14px;}
+.field-group label{display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.field-group input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:14px;color:var(--navy);outline:none;transition:border-color .2s;}
+.field-group input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--warn),#d97706);color:var(--white);border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-top:4px;transition:all .2s;}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,158,11,.35);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.login-error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:8px;padding:12px;font-size:13px;margin-bottom:14px;display:none;}
+
+/* ── APP ── */
+#app{display:none;}
+.topbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1a0a00,#3d1a00);padding:0 16px;height:58px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.topbar-logo{font-size:15px;font-weight:800;color:var(--white);display:flex;align-items:center;gap:8px;}
+.topbar-logo span{color:var(--yellow);}
+.topbar-spacer{flex:1;}
+.topbar-badge{background:var(--yellow);color:var(--navy);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.5px;}
+.topbar-user{font-size:12px;color:rgba(255,255,255,.6);}
+.btn-logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s;}
+.btn-logout:hover{background:rgba(239,68,68,.3);border-color:rgba(239,68,68,.5);color:#fff;}
+
+.content{padding:16px;max-width:1000px;margin:0 auto;}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:640px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{border-radius:14px;padding:20px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 4px 18px rgba(0,0,0,.13);animation:fadeUp .4s ease;}
+.stat-card.c1{background:linear-gradient(135deg,#009E60,#007a47);}
+.stat-card.c2{background:linear-gradient(135deg,#1a2d4a,#0f3460);}
+.stat-card.c3{background:linear-gradient(135deg,#f97316,#c2410c);}
+.stat-card.c4{background:linear-gradient(135deg,#FFD700,#b8960c);}
+.stat-icon{font-size:26px;margin-bottom:2px;}
+.stat-val{font-size:30px;font-weight:800;color:#fff;line-height:1;}
+.stat-lbl{font-size:10px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
+.stat-card.c4 .stat-val,.stat-card.c4 .stat-lbl{color:var(--navy);}
+.stat-card.c4 .stat-lbl{color:rgba(10,22,40,.7);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--white);border-radius:12px;padding:6px;margin-bottom:20px;overflow-x:auto;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.tab-btn{flex:1;min-width:90px;padding:10px 8px;border:none;border-radius:8px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{background:linear-gradient(135deg,#1a0a00,#3d1a00);color:var(--yellow);}
+
+/* ── SECTION ── */
+.section{display:none;animation:fadeUp .3s ease;}
+.section.active{display:block;}
+.card{background:var(--white);border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);overflow:hidden;margin-bottom:16px;}
+.card-header{padding:18px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.card-title{font-size:16px;font-weight:700;color:var(--navy);}
+.card-body{padding:18px;}
+
+/* ── PENDING BANNER ── */
+.pending-banner{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid var(--warn);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#92400e;}
+.pending-badge{background:var(--warn);color:var(--white);font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;}
+
+/* ── SEARCH BAR ── */
+.search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.search-row input,.search-row select{padding:9px 12px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:13px;color:var(--navy);outline:none;background:var(--white);flex:1;min-width:100px;}
+.search-row input:focus,.search-row select:focus{border-color:var(--green);}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--gray-bg);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-txt);white-space:nowrap;}
+td{padding:10px 12px;border-bottom:1px solid var(--gray-bd);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+tr.pending-row td{background:#fffbeb;}
+.user-row-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--white);overflow:hidden;flex-shrink:0;}
+.user-row-avatar img{width:100%;height:100%;object-fit:cover;}
+.role-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;}
+.role-badge.admin{background:var(--yellow);color:var(--navy);}
+.role-badge.federation{background:var(--orange);color:white;}
+.role-badge.club{background:var(--blue);color:white;}
+.role-badge.joueur,.role-badge.athlete{background:var(--green);color:white;}
+.role-badge.arbitre{background:var(--purple);color:white;}
+.role-badge.entraineur{background:var(--teal);color:white;}
+.role-badge.association{background:var(--rose);color:white;}
+.role-badge.independant{background:#0ea5e9;color:white;}
+.role-badge.visiteur{background:#94a3b8;color:white;}
+.status-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.status-active{background:#dcfce7;color:#166534;}
+.status-pending{background:#fef3c7;color:#92400e;}
+.status-hidden{background:#f3f4f6;color:#374151;}
+.status-deleted{background:#fee2e2;color:#991b1b;}
+.action-btns{display:flex;gap:5px;flex-wrap:wrap;}
+.pending-actions{display:flex;gap:5px;}
+.btn-approve{padding:5px 10px;border:1.5px solid var(--green);border-radius:6px;background:none;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-approve:hover{background:var(--green);color:white;}
+.btn-reject{padding:5px 10px;border:1.5px solid var(--danger);border-radius:6px;background:none;color:var(--danger);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-reject:hover{background:var(--danger);color:white;}
+.btn-sm{padding:5px 10px;border:1.5px solid var(--green);border-radius:6px;background:none;color:var(--green);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-sm:hover{background:var(--green);color:white;}
+.btn-warn{padding:5px 10px;border:1.5px solid var(--warn);border-radius:6px;background:none;color:var(--warn);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-warn:hover{background:var(--warn);color:white;}
+.btn-danger{padding:5px 10px;border:1.5px solid var(--danger);border-radius:6px;background:none;color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-danger:hover{background:var(--danger);color:white;}
+
+/* ── EDIT MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;padding:0;}
+.modal.open{display:flex;}
+.modal-card{background:var(--white);border-radius:22px 22px 0 0;padding:28px 20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeUp .3s ease;position:relative;}
+.modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;padding-right:36px;}
+.modal-close{position:absolute;top:18px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-bg);color:var(--gray-txt);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:#e2e8f0;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:14px;color:var(--navy);background:var(--white);outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.modal-footer{display:flex;gap:10px;margin-top:20px;}
+.btn-save{flex:2;padding:13px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-save:hover{transform:translateY(-1px);}
+.btn-cancel{flex:1;padding:13px;border:1.5px solid var(--gray-bd);border-radius:8px;background:none;font-size:14px;font-weight:600;color:var(--gray-txt);cursor:pointer;}
+
+/* ── NEWS FORM ── */
+.news-form{display:grid;gap:12px;margin-bottom:16px;}
+.news-form input,.news-form select,.news-form textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:14px;color:var(--navy);outline:none;}
+.news-form input:focus,.news-form select:focus,.news-form textarea:focus{border-color:var(--green);}
+.btn-publish{padding:12px 20px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:all .2s;}
+.btn-publish:hover{transform:translateY(-1px);}
+.news-item{border-bottom:1px solid var(--gray-bd);padding:12px 0;display:flex;align-items:flex-start;gap:12px;}
+.news-item:last-child{border-bottom:none;}
+.news-cat-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--green-lt);color:var(--green-dk);white-space:nowrap;}
+.news-info{flex:1;}
+.news-title-text{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.news-excerpt-text{font-size:12px;color:var(--gray-txt);}
+
+/* ── SITES ── */
+.admin-site-item{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--gray-bd);}
+.admin-site-item:last-child{border-bottom:none;}
+.admin-site-info{flex:1;}
+.admin-site-name{font-size:14px;font-weight:700;color:var(--navy);}
+.admin-site-meta{font-size:12px;color:var(--gray-txt);margin-top:2px;}
+
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.charts-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--white);border-radius:14px;border:1px solid var(--gray-bd);padding:16px;}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.chart-wrap{height:200px;position:relative;}
+
+/* ── TOAST ── */
+#toast-box{position:fixed;top:70px;right:16px;z-index:400;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:11px 16px;border-radius:8px;font-size:13px;font-weight:600;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .25s ease;}
+.toast.success{background:#dcfce7;color:#166534;border-left:4px solid var(--green);}
+.toast.error{background:#fef2f2;color:#991b1b;border-left:4px solid var(--danger);}
+.toast.info{background:#eff6ff;color:#1e40af;border-left:4px solid var(--blue);}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:36px 16px;color:var(--gray-txt);}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+.empty h3{font-size:16px;color:var(--navy);margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="loading-logo">⚙️</div>
+  <div class="loading-title">GSC Administration</div>
+  <div class="loading-sub" id="loading-sub">Connexion à Firebase…</div>
+  <div class="spinner" id="loading-spinner"></div>
+  <div class="loading-error" id="loading-error"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="badge">⚙️</div>
+      <h1>GSC Admin</h1>
+      <p>Panneau de contrôle — Gabon Sport Connect</p>
+    </div>
+    <div class="notice">
+      <strong>⚙️ Accès réservé</strong><br>
+      Panel d'administration sécurisé
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="field-group">
+      <label>Email administrateur</label>
+      <input type="email" id="login-email" value="gabonsportconnectgsc@gmail.com"/>
+    </div>
+    <div class="field-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">🔐 Connexion Admin</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">⚽ <span>GSC</span></div>
+    <span class="topbar-badge">ADMIN</span>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user" id="topbar-user"></div>
+    <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-val" id="st-users">—</div><div class="stat-lbl">Utilisateurs</div></div>
+      <div class="stat-card c2"><div class="stat-icon">⚽</div><div class="stat-val" id="st-joueurs">—</div><div class="stat-lbl">Joueurs</div></div>
+      <div class="stat-card c3"><div class="stat-icon">🏛️</div><div class="stat-val" id="st-clubs">—</div><div class="stat-lbl">Clubs</div></div>
+      <div class="stat-card c4"><div class="stat-icon">⏳</div><div class="stat-val" id="st-pending">—</div><div class="stat-lbl">En attente</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('users',this)">👥 Utilisateurs</button>
+      <button class="tab-btn" onclick="switchTab('news',this)">📰 Actualités</button>
+      <button class="tab-btn" onclick="switchTab('sites',this)">📍 Sites</button>
+      <button class="tab-btn" onclick="switchTab('rapports',this)">📊 Rapports</button>
+    </div>
+
+    <!-- USERS -->
+    <div class="section active" id="sec-users">
+      <div class="pending-banner" id="pending-banner">
+        <span>⚠️</span>
+        <span class="pending-badge" id="pending-count">0</span>
+        <span id="pending-text">fiches en attente de validation</span>
+        <button class="btn-sm" style="margin-left:auto;" onclick="document.getElementById('srch-status').value='pending';filterUsers()">Voir</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Utilisateurs <span id="users-count" style="font-size:13px;font-weight:500;color:var(--gray-txt);"></span></div>
+          <button class="btn-sm" onclick="loadUsers()">↺ Actualiser</button>
+        </div>
+        <div class="card-body">
+          <div class="search-row">
+            <input id="srch-nom" placeholder="Nom…" oninput="filterUsers()">
+            <input id="srch-email" placeholder="Email…" oninput="filterUsers()">
+            <select id="srch-role" onchange="filterUsers()">
+              <option value="">Tous les rôles</option>
+              <option>admin</option><option>joueur</option><option>arbitre</option>
+              <option>entraineur</option><option>club</option><option>federation</option>
+              <option>association</option><option>independant</option>
+            </select>
+            <select id="srch-status" onchange="filterUsers()">
+              <option value="">Tous statuts</option>
+              <option value="active">Actif</option>
+              <option value="pending">En attente</option>
+              <option value="hidden">Masqué</option>
+            </select>
+            <button class="btn-sm" onclick="resetSearch()">✕ Reset</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Sport / Poste</th>
+                  <th>Ville</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="5" class="empty"><div class="empty-icon">⏳</div><p>Chargement…</p></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="section" id="sec-news">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📢 Publier une actualité</div></div>
+        <div class="card-body">
+          <div class="news-form">
+            <select id="news-cat">
+              <option value="Football">⚽ Football</option>
+              <option value="Basketball">🏀 Basketball</option>
+              <option value="Athlétisme">🏃 Athlétisme</option>
+              <option value="Gabon">🇬🇦 Gabon</option>
+              <option value="Infrastructure">🏗️ Infrastructure</option>
+              <option value="Sport">🏅 Sport général</option>
+            </select>
+            <input id="news-titre" placeholder="Titre de l'actualité *" />
+            <textarea id="news-excerpt" rows="3" placeholder="Résumé / extrait…"></textarea>
+            <input id="news-tag" placeholder="Tag (ex: CAN 2026, FEGAFOOT…)"/>
+            <button class="btn-publish" onclick="publishNews()">📢 Publier</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Actualités publiées</div>
+          <button class="btn-sm" onclick="loadNews()">↺ Actualiser</button>
+        </div>
+        <div class="card-body" id="news-list">
+          <div class="empty"><div class="empty-icon">📰</div><h3>Chargement…</h3></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SITES -->
+    <div class="section" id="sec-sites">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Sites sportifs ajoutés</div>
+          <button class="btn-sm" onclick="loadSites()">↺ Actualiser</button>
+        </div>
+        <div class="card-body" id="sites-list">
+          <div class="empty"><div class="empty-icon">📍</div><h3>Chargement…</h3></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="section" id="sec-rapports">
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Répartition par rôle</h3><div class="chart-wrap"><canvas id="chart-roles"></canvas></div></div>
+        <div class="chart-card"><h3>Statuts des fiches</h3><div class="chart-wrap"><canvas id="chart-statuts"></canvas></div></div>
+        <div class="chart-card"><h3>Top sports</h3><div class="chart-wrap"><canvas id="chart-sports"></canvas></div></div>
+        <div class="chart-card"><h3>Villes</h3><div class="chart-wrap"><canvas id="chart-villes"></canvas></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- EDIT MODAL -->
+<div class="modal" id="modal-edit">
+  <div class="modal-card">
+    <div class="modal-title">✏️ Modifier l'utilisateur</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <input type="hidden" id="edit-uid">
+    <div class="form-group"><label>Prénom / Nom organisation</label><input id="edit-prenom"></div>
+    <div class="form-group"><label>Nom</label><input id="edit-nom"></div>
+    <div class="form-group"><label>Rôle</label>
+      <select id="edit-role">
+        <option>joueur</option><option>arbitre</option><option>entraineur</option>
+        <option>club</option><option>federation</option><option>association</option>
+        <option>independant</option><option>admin</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Sport</label>
+      <select id="edit-sport">
+        <option>Football</option><option>Basketball</option><option>Handball</option>
+        <option>Volleyball</option><option>Athlétisme</option><option>Natation</option>
+        <option>Boxe</option><option>Judo</option><option>Tennis</option>
+        <option>Rugby</option><option>Cyclisme</option><option>Multi-sports</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Niveau</label>
+      <select id="edit-niveau"><option>Amateur</option><option>Regional</option><option>National</option><option>International</option></select>
+    </div>
+    <div class="form-group"><label>Statut</label>
+      <select id="edit-status"><option value="active">Actif</option><option value="pending">En attente</option><option value="hidden">Masqué</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveUser()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-box"></div>
+
+<script type="module">
+// ── FIREBASE CONFIG ──
+const FIREBASE_CONFIG = {
+  apiKey:"AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw",
+  authDomain:"gabon-sport-connect.firebaseapp.com",
+  projectId:"gabon-sport-connect",
+  storageBucket:"gabon-sport-connect.appspot.com",
+  messagingSenderId:"760498266017",
+  appId:"1:760498266017:web:ee7a5ed9bf522e34649ee8"
+};
+const FIREBASE_API_KEY = "AIzaSyB22T0CQAsm4K3U1mnTGektprj6cEEmfuw";
+const ADMIN_EMAIL = "gabonsportconnectgsc@gmail.com";
+const SESSION_KEY = "gsc_admin_session";
+
+let db, docFn, setDocFn, getDocFn, updateDocFn, collectionFn,
+    addDocFn, getDocsFn, queryFn, orderByFn, serverTimestampFn, deleteDocFn, whereFn, limitFn;
+let allUsers = [];
+
+// ── INIT ──
+(async function init(){
+  setLoadingMsg("Chargement Firebase…");
+  try{
+    const fb = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const app = fb.initializeApp(FIREBASE_CONFIG);
+    db = fs.getFirestore(app);
+    docFn=fs.doc; setDocFn=fs.setDoc; getDocFn=fs.getDoc; updateDocFn=fs.updateDoc;
+    collectionFn=fs.collection; addDocFn=fs.addDoc; getDocsFn=fs.getDocs;
+    queryFn=fs.query; orderByFn=fs.orderBy; serverTimestampFn=fs.serverTimestamp;
+    deleteDocFn=fs.deleteDoc; whereFn=fs.where; limitFn=fs.limit;
+    // Expose for onclick handlers
+    Object.assign(window,{db,doc:docFn,setDoc:setDocFn,getDoc:getDocFn,
+      updateDoc:updateDocFn,collection:collectionFn,addDoc:addDocFn,getDocs:getDocsFn,
+      query:queryFn,orderBy:orderByFn,serverTimestamp:serverTimestampFn,
+      deleteDoc:deleteDocFn,where:whereFn,limit:limitFn});
+  }catch(e){
+    showLoadingError("Impossible de charger Firebase. Vérifiez votre connexion internet.");
+    return;
+  }
+
+  // Check stored session
+  const session = getSession();
+  if(session){
+    setLoadingMsg("Restauration de session…");
+    try{
+      const snap = await getDocFn(docFn(db,'users',session.uid));
+      if(snap.exists() && snap.data().role === 'admin'){
+        enterApp(session);
+        return;
+      }
+    }catch(e){/* session invalid, fall through to login */}
+  }
+  showLogin();
+})();
+
+// ── SESSION ──
+function getSession(){
+  try{
+    const s=localStorage.getItem(SESSION_KEY);
+    if(!s) return null;
+    const d=JSON.parse(s);
+    if(Date.now()>d.exp){localStorage.removeItem(SESSION_KEY);return null;}
+    return d;
+  }catch(e){return null;}
+}
+function saveSession(data){ localStorage.setItem(SESSION_KEY, JSON.stringify({...data, exp: Date.now()+3500000})); }
+function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+// ── AUTH ──
+window.doLogin = async function(){
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  if(!email||!pwd){ showLoginError('Remplissez tous les champs.'); return; }
+  if(email !== ADMIN_EMAIL){ showLoginError("Cet email n'est pas l'administrateur."); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled=true; btn.textContent='Connexion…';
+  try{
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({email,password:pwd,returnSecureToken:true})});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    saveSession({uid:data.localId, email, idToken:data.idToken});
+    enterApp({uid:data.localId, email});
+  }catch(e){
+    btn.disabled=false; btn.textContent='🔐 Connexion Admin';
+    const msg = e.message?.includes('INVALID')||e.message?.includes('PASSWORD')
+      ? 'Mot de passe incorrect.' : e.message?.includes('TOO_MANY')
+      ? 'Trop de tentatives. Attendez.' : 'Erreur : '+e.message;
+    showLoginError(msg);
+  }
+};
+
+window.doLogout = function(){
+  clearSession();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pwd').value='';
+};
+
+// ── APP ENTER ──
+async function enterApp(session){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('topbar-user').textContent=session.email||'';
+  await loadStats();
+  await loadUsers();
+}
+
+// ── LOADING HELPERS ──
+function setLoadingMsg(msg){ document.getElementById('loading-sub').textContent=msg; }
+function showLoadingError(msg){
+  document.getElementById('loading-spinner').style.display='none';
+  const e=document.getElementById('loading-error');
+  e.textContent=msg; e.style.display='block';
+}
+function showLogin(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+function showLoginError(msg){
+  const e=document.getElementById('login-error');
+  e.textContent=msg; e.style.display='block';
+}
+
+// ── TOAST ──
+window.toast = function(msg, type='info'){
+  const box = document.getElementById('toast-box');
+  const t = document.createElement('div');
+  t.className='toast '+type; t.textContent=msg;
+  box.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+};
+
+// ── TABS ──
+window.switchTab = function(name, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='news') loadNews();
+  if(name==='sites') loadSites();
+  if(name==='rapports') renderReports();
+};
+
+// ── STATS ──
+async function loadStats(){
+  try{
+    const snap = await getDocsFn(collectionFn(db,'users'));
+    const users = snap.docs.map(d=>d.data());
+    document.getElementById('st-users').textContent = users.length;
+    document.getElementById('st-joueurs').textContent = users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+    document.getElementById('st-clubs').textContent = users.filter(u=>['club','association','federation'].includes(u.role)).length;
+    document.getElementById('st-pending').textContent = users.filter(u=>u.status==='pending').length;
+  }catch(e){ console.warn('stats:',e); }
+}
+
+// ── USERS ──
+async function loadUsers(){
+  document.getElementById('users-tbody').innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray-txt)">⏳ Chargement…</td></tr>';
+  try{
+    const snap = await getDocsFn(queryFn(collectionFn(db,'users'),orderByFn('createdAt','desc')));
+    allUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderUsers(allUsers);
+    updatePendingBanner();
+  }catch(e){
+    document.getElementById('users-tbody').innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:20px">Erreur : ${e.message}</td></tr>`;
+  }
+}
+window.loadUsers = loadUsers;
+
+function updatePendingBanner(){
+  const pending = allUsers.filter(u=>u.status==='pending');
+  const banner = document.getElementById('pending-banner');
+  if(pending.length){
+    banner.style.display='flex';
+    document.getElementById('pending-count').textContent=pending.length;
+    document.getElementById('pending-text').textContent=`fiche${pending.length>1?'s':''} en attente de validation`;
+  } else { banner.style.display='none'; }
+}
+
+function renderUsers(users){
+  document.getElementById('users-count').textContent=`(${users.length})`;
+  const tbody = document.getElementById('users-tbody');
+  if(!users.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">🔍</div><h3>Aucun utilisateur</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u=>{
+    const fullname=[u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||u.email?.split('@')[0]||'—';
+    const init = fullname[0]?.toUpperCase()||'?';
+    const isPending = u.status==='pending';
+    const statusBadge = isPending
+      ? '<span class="status-badge status-pending">⏳ En attente</span>'
+      : u.status==='hidden' ? '<span class="status-badge status-hidden">🙈 Masqué</span>'
+      : u.status==='deleted' ? '<span class="status-badge status-deleted">🗑️ Supprimé</span>'
+      : '<span class="status-badge status-active">✅ Actif</span>';
+    const uid = u.uid||u.id;
+    return `<tr class="${isPending?'pending-row':''}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="user-row-avatar">${u.photoURL?`<img src="${u.photoURL}" alt="">`:init}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${fullname}</div>
+            <div style="font-size:11px;color:var(--gray-txt)">${u.email||'—'}</div>
+            <span class="role-badge ${u.role||''}">${u.role||'—'}</span>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="font-size:13px">${u.sport||u.sports?.join(', ')||'—'}</div>
+        <div style="font-size:11px;color:var(--gray-txt)">${u.poste||u.typeOrganisation||'—'}</div>
+      </td>
+      <td style="font-size:13px">${u.ville||'—'}</td>
+      <td>${statusBadge}</td>
+      <td>${isPending
+        ? `<div class="pending-actions">
+            <button class="btn-approve" onclick="approveUser('${uid}')">✅ Valider</button>
+            <button class="btn-reject" onclick="rejectUser('${uid}')">✕ Rejeter</button>
+           </div>`
+        : `<div class="action-btns">
+            <button class="btn-sm" onclick="editUser('${uid}')">✏️</button>
+            <button class="btn-warn" onclick="toggleHide('${uid}','${u.status||'active'}')">${u.status==='hidden'?'👁️':'🙈'}</button>
+            ${u.role!=='admin'?`<button class="btn-danger" onclick="deleteUser('${uid}')">🗑️</button>`:''}
+            <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="toggleSupporter('${uid}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer Supporter':'Marquer Supporter'}">💗</button>
+           </div>`
+      }</td>
+    </tr>`;
+  }).join('');
+}
+
+window.filterUsers = function(){
+  const nom=(document.getElementById('srch-nom').value||'').toLowerCase();
+  const email=(document.getElementById('srch-email').value||'').toLowerCase();
+  const role=document.getElementById('srch-role').value;
+  const status=document.getElementById('srch-status').value;
+  const filtered = allUsers.filter(u=>{
+    const name=[u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ').toLowerCase();
+    if(nom && !name.includes(nom)) return false;
+    if(email && !(u.email||'').toLowerCase().includes(email)) return false;
+    if(role && u.role!==role) return false;
+    if(status && u.status!==status) return false;
+    return true;
+  });
+  renderUsers(filtered);
+};
+
+window.resetSearch = function(){
+  ['srch-nom','srch-email','srch-role','srch-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderUsers(allUsers);
+};
+
+// Approve
+window.approveUser = async function(uid){
+  try{
+    await updateDocFn(docFn(db,'users',uid),{status:'active',validatedAt:serverTimestampFn(),updatedAt:serverTimestampFn()});
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) allUsers[i].status='active';
+    renderUsers(allUsers); updatePendingBanner();
+    document.getElementById('st-pending').textContent=allUsers.filter(u=>u.status==='pending').length;
+    toast('✅ Fiche validée — visible dans l\'annuaire.','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+// Reject
+window.rejectUser = async function(uid){
+  if(!confirm('Rejeter cette fiche ?')) return;
+  try{
+    await updateDocFn(docFn(db,'users',uid),{status:'hidden',rejectedAt:serverTimestampFn(),updatedAt:serverTimestampFn()});
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) allUsers[i].status='hidden';
+    renderUsers(allUsers); updatePendingBanner();
+    toast('Fiche rejetée et masquée.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+// Edit
+window.editUser = function(uid){
+  const u = allUsers.find(u=>(u.uid||u.id)===uid);
+  if(!u) return;
+  document.getElementById('edit-uid').value=uid;
+  document.getElementById('edit-prenom').value=u.prenom||u.nomOrganisation||'';
+  document.getElementById('edit-nom').value=u.nom||'';
+  document.getElementById('edit-role').value=u.role||'joueur';
+  document.getElementById('edit-sport').value=u.sport||u.sports?.[0]||'Football';
+  document.getElementById('edit-niveau').value=u.niveau||'Amateur';
+  document.getElementById('edit-status').value=u.status||'active';
+  document.getElementById('modal-edit').classList.add('open');
+};
+
+window.saveUser = async function(){
+  const uid = document.getElementById('edit-uid').value;
+  if(!uid) return;
+  const updates={
+    prenom:document.getElementById('edit-prenom').value.trim(),
+    nom:document.getElementById('edit-nom').value.trim(),
+    role:document.getElementById('edit-role').value,
+    sport:document.getElementById('edit-sport').value,
+    niveau:document.getElementById('edit-niveau').value,
+    status:document.getElementById('edit-status').value,
+    updatedAt:serverTimestampFn()
+  };
+  try{
+    await updateDocFn(docFn(db,'users',uid),updates);
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) Object.assign(allUsers[i],updates);
+    renderUsers(allUsers); updatePendingBanner();
+    closeModal();
+    toast('✅ Utilisateur mis à jour !','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+window.toggleHide = async function(uid,current){
+  const newStatus = current==='hidden'?'active':'hidden';
+  try{
+    await updateDocFn(docFn(db,'users',uid),{status:newStatus,updatedAt:serverTimestampFn()});
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) allUsers[i].status=newStatus;
+    renderUsers(allUsers); updatePendingBanner();
+    toast(newStatus==='hidden'?'🙈 Masqué.':'👁️ Visible.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+window.deleteUser = async function(uid){
+  if(!confirm('Supprimer définitivement cet utilisateur ?')) return;
+  try{
+    await updateDocFn(docFn(db,'users',uid),{status:'deleted',updatedAt:serverTimestampFn()});
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) allUsers[i].status='deleted';
+    renderUsers(allUsers);
+    toast('🗑️ Utilisateur supprimé.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+window.toggleSupporter = async function(uid,current){
+  const newVal=!current;
+  try{
+    await updateDocFn(docFn(db,'users',uid),{isSupporter:newVal,updatedAt:serverTimestampFn()});
+    const i=allUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(i>=0) allUsers[i].isSupporter=newVal;
+    renderUsers(allUsers);
+    toast(newVal?'💗 Statut Supporter activé.':'Statut Supporter retiré.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+window.closeModal = function(){
+  document.getElementById('modal-edit').classList.remove('open');
+};
+
+// ── NEWS ──
+let newsItems=[];
+async function loadNews(){
+  document.getElementById('news-list').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>';
+  try{
+    const snap=await getDocsFn(queryFn(collectionFn(db,'actualites'),orderByFn('createdAt','desc'),limitFn(30)));
+    newsItems=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderNews();
+  }catch(e){ document.getElementById('news-list').innerHTML=`<div class="empty"><p style="color:var(--danger)">Erreur : ${e.message}</p></div>`; }
+}
+window.loadNews=loadNews;
+
+function renderNews(){
+  const el=document.getElementById('news-list');
+  if(!newsItems.length){el.innerHTML='<div class="empty"><div class="empty-icon">📰</div><h3>Aucune actualité publiée</h3></div>';return;}
+  el.innerHTML=newsItems.map(n=>`
+    <div class="news-item">
+      <span class="news-cat-badge">${n.cat||'Sport'}</span>
+      <div class="news-info">
+        <div class="news-title-text">${n.title}</div>
+        ${n.excerpt?`<div class="news-excerpt-text">${n.excerpt}</div>`:''}
+      </div>
+      <button class="btn-danger" onclick="deleteNews('${n.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+window.publishNews = async function(){
+  const cat=document.getElementById('news-cat').value;
+  const title=document.getElementById('news-titre').value.trim();
+  const excerpt=document.getElementById('news-excerpt').value.trim();
+  const tag=document.getElementById('news-tag').value.trim();
+  if(!title){toast('Titre requis.','error');return;}
+  try{
+    const ref=await addDocFn(collectionFn(db,'actualites'),{cat,title,excerpt,tag,date:"Aujourd'hui",createdAt:serverTimestampFn(),source:'GSC Admin'});
+    newsItems.unshift({id:ref.id,cat,title,excerpt,tag,date:"Aujourd'hui"});
+    renderNews();
+    document.getElementById('news-titre').value='';
+    document.getElementById('news-excerpt').value='';
+    document.getElementById('news-tag').value='';
+    toast('📢 Actualité publiée !','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+window.deleteNews = async function(id){
+  if(!confirm('Supprimer cette actualité ?')) return;
+  try{
+    await deleteDocFn(docFn(db,'actualites',id));
+    newsItems=newsItems.filter(n=>n.id!==id);
+    renderNews();
+    toast('🗑️ Supprimé.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+// ── SITES ──
+async function loadSites(){
+  document.getElementById('sites-list').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>';
+  const icons={Stade:'🏟️',Gymnase:'🏋️',Piscine:'🏊',Court:'🎾',Dojo:'🥋',Salle:'🏸',Terrain:'⛳',Piste:'🏃'};
+  try{
+    const snap=await getDocsFn(queryFn(collectionFn(db,'sitesSportifs'),orderByFn('createdAt','desc')));
+    const sites=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const el=document.getElementById('sites-list');
+    if(!sites.length){el.innerHTML='<div class="empty"><div class="empty-icon">📍</div><h3>Aucun site ajouté</h3></div>';return;}
+    el.innerHTML=sites.map(s=>`
+      <div class="admin-site-item">
+        <div style="font-size:26px">${icons[s.type]||'📍'}</div>
+        <div class="admin-site-info">
+          <div class="admin-site-name">${s.nom}</div>
+          <div class="admin-site-meta">${s.type||'—'} · ${s.ville||'—'}${s.capacite?' · '+s.capacite+' places':''}</div>
+          <div class="admin-site-meta" style="font-size:11px">GPS: ${s.lat?.toFixed(4)||'?'}, ${s.lng?.toFixed(4)||'?'}</div>
+        </div>
+        <button class="btn-danger" onclick="deleteSite('${s.id}')">🗑️</button>
+      </div>`).join('');
+  }catch(e){ document.getElementById('sites-list').innerHTML=`<div class="empty"><p style="color:var(--danger)">Erreur : ${e.message}</p></div>`; }
+}
+window.loadSites=loadSites;
+
+window.deleteSite = async function(id){
+  if(!confirm('Supprimer ce site ?')) return;
+  try{
+    await deleteDocFn(docFn(db,'sitesSportifs',id));
+    loadSites();
+    toast('🗑️ Site supprimé.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+};
+
+// ── RAPPORTS ──
+let _charts={};
+function renderReports(){
+  if(!allUsers.length){ loadUsers().then(renderReports); return; }
+  const visible=allUsers.filter(u=>u.status!=='deleted');
+  const byRole={};
+  visible.forEach(u=>{const r=u.role||'autre'; byRole[r]=(byRole[r]||0)+1;});
+  const bySport={};
+  visible.forEach(u=>{const s=u.sport||(u.sports&&u.sports[0]);if(s)bySport[s]=(bySport[s]||0)+1;});
+  const byVille={};
+  visible.forEach(u=>{if(u.ville)byVille[u.ville]=(byVille[u.ville]||0)+1;});
+  const byStatut={'Actif':0,'En attente':0,'Masqué':0};
+  allUsers.forEach(u=>{
+    if(u.status==='pending')byStatut['En attente']++;
+    else if(u.status==='hidden')byStatut['Masqué']++;
+    else if(u.status!=='deleted')byStatut['Actif']++;
+  });
+  const pal=['#009E60','#0A1628','#FFD700','#3b82f6','#8b5cf6','#f97316','#0d9488','#e11d48','#94a3b8'];
+  const mk=(id,type,labels,data,colors)=>{
+    const ctx=document.getElementById(id);
+    if(!ctx||typeof Chart==='undefined') return;
+    if(_charts[id]) _charts[id].destroy();
+    _charts[id]=new Chart(ctx,{type,data:{labels,datasets:[{data,backgroundColor:colors||pal,borderWidth:1,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{boxWidth:10,font:{size:10}}}},
+        scales:type==='bar'?{y:{beginAtZero:true,ticks:{precision:0}}}:{}}});
+  };
+  mk('chart-roles','doughnut',Object.keys(byRole),Object.values(byRole));
+  mk('chart-statuts','doughnut',Object.keys(byStatut),Object.values(byStatut),['#16a34a','#1e40af','#92400e']);
+  mk('chart-sports','bar',Object.keys(bySport),Object.values(bySport));
+  mk('chart-villes','bar',Object.keys(byVille),Object.values(byVille));
+}
+</script>
+</body>
+</html>
