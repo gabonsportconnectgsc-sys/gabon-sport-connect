@@ -449,7 +449,7 @@ function whereFn(field, op, val)     { return q => q.where(field, op, val); }
 function limitFn(n)                  { return q => q.limit(n); }
 
 // ── INIT ──
-function init(){
+async function init(){
   setLoadingMsg("Connexion à Firebase…");
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
@@ -459,19 +459,13 @@ function init(){
     // Expose for any remaining window references
     window.db = db;
 
-    // Firebase Auth handles session persistence automatically.
-    auth.onAuthStateChanged(async (user) => {
-      if(user){
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('login-screen').style.display  = 'none';
-        document.getElementById('app').style.display           = 'block';
-        document.getElementById('topbar-user').textContent     = user.email || '';
-        await loadStats();
-        await loadUsers();
-      } else {
-        showLogin();
-      }
-    });
+    // Accès direct sans login
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display  = 'none';
+    document.getElementById('app').style.display           = 'block';
+    document.getElementById('topbar-user').textContent     = 'Admin';
+    await loadStats();
+    await loadUsers();
   }catch(e){
     showLoadingError("Impossible d'initialiser Firebase : " + e.message);
   }
