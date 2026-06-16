@@ -142,10 +142,34 @@
     .completion-bar{height:6px;background:rgba(0,158,96,.2);border-radius:3px;overflow:hidden;}
     .completion-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s ease;}
     .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
-    .stat-card{background:var(--white);border-radius:var(--radius-md);padding:18px 16px;border:1px solid var(--gray-bd);display:flex;flex-direction:column;gap:6px;}
-    .stat-icon{font-size:26px;}
-    .stat-val{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--navy);line-height:1;}
-    .stat-lbl{font-size:12px;color:var(--gray-txt);font-weight:500;}
+    /* ── STAT CARDS — luxe sportif ── */
+    .stat-card{
+      position:relative;overflow:hidden;border-radius:var(--radius-md);
+      padding:20px 16px 16px;display:flex;flex-direction:column;gap:4px;
+      cursor:pointer;border:none;text-align:left;width:100%;
+      transition:transform .18s ease,box-shadow .18s ease;
+      box-shadow:0 4px 18px rgba(0,0,0,.13);
+    }
+    .stat-card:hover,.stat-card:active{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,.22);}
+    .stat-card::before{
+      content:'';position:absolute;top:-18px;right:-18px;
+      width:90px;height:90px;border-radius:50%;
+      background:rgba(255,255,255,.12);pointer-events:none;
+    }
+    .stat-card::after{
+      content:'';position:absolute;bottom:-22px;left:-10px;
+      width:70px;height:70px;border-radius:50%;
+      background:rgba(255,255,255,.08);pointer-events:none;
+    }
+    .stat-card-1{background:linear-gradient(135deg,#009E60 0%,#007a47 100%);}
+    .stat-card-2{background:linear-gradient(135deg,#1a2d4a 0%,#0f3460 100%);}
+    .stat-card-3{background:linear-gradient(135deg,#f97316 0%,#c2410c 100%);}
+    .stat-card-4{background:linear-gradient(135deg,#FFD700 0%,#b8960c 100%);}
+    .stat-icon{font-size:28px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
+    .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.2);}
+    .stat-lbl{font-size:11px;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-top:2px;}
+    .stat-card-4 .stat-val,.stat-card-4 .stat-lbl{color:var(--navy);}
+    .stat-card-4 .stat-lbl{color:rgba(10,22,40,.7);}
     .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
     .quick-btn{background:var(--white);border:1.5px solid var(--gray-bd);border-radius:var(--radius-md);padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--navy);transition:all .2s;text-align:left;}
     .quick-btn:hover{border-color:var(--green);background:var(--green-lt);color:var(--green-dk);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
@@ -154,7 +178,7 @@
     /* ── ANNUAIRE ACTEURS ── */
     .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .actor-filter-btn{padding:6px 14px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
-    .actor-filter-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy);}
+    .actor-filter-btn.actorOLD{background:var(--navy);color:var(--white);border-color:var(--navy);}
     .actors-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .actor-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);overflow:hidden;cursor:pointer;transition:all .2s;}
     .actor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -350,6 +374,99 @@
     .role-badge.supporter{background:#ec4899;color:white;}
     .badge-supporter{background:#fce7f3;color:#9d174d;}
 
+    /* ── ANNUAIRE FILTER BUTTONS AMÉLIORÉS ── */
+    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;}
+    .actor-filter-btn{
+      padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
+      background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:6px;
+    }
+    .actor-filter-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+    .actor-filter-btn.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .actor-filter-btn[data-type="tous"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md));}
+    .actor-filter-btn[data-type="joueur"].active{background:linear-gradient(135deg,#009E60,#007a47);}
+    .actor-filter-btn[data-type="arbitre"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
+    .actor-filter-btn[data-type="entraineur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
+
+    /* ── REAL ICON IMAGES ── */
+    .real-icon{
+      width:28px;height:28px;border-radius:50%;object-fit:cover;
+      box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;
+      transition:transform .2s ease;
+    }
+    .actor-filter-btn:hover .real-icon{transform:scale(1.1);}
+    .bnav-real-icon{width:22px;height:22px;border-radius:50%;object-fit:cover;filter:grayscale(30%);}
+    .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.1);}
+    .stat-real-icon{width:38px;height:38px;border-radius:12px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.25);margin-bottom:6px;}
+
+    /* Quick-btn image icons */
+    .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+
+    /* ── ANIMATIONS PROFESSIONNELLES ── */
+    @keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:.7}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    .stat-real-icon{animation:float 3s ease-in-out infinite;}
+    .stat-card:nth-child(2) .stat-real-icon{animation-delay:.5s;}
+    .stat-card:nth-child(3) .stat-real-icon{animation-delay:1s;}
+    .stat-card:nth-child(4) .stat-real-icon{animation-delay:1.5s;}
+
+    /* ── MENTIONS LÉGALES FOOTER ── */
+    .legal-footer{
+      background:linear-gradient(135deg,var(--navy),var(--navy-md));
+      border-radius:var(--radius-md);padding:18px 16px;margin-top:20px;
+      color:rgba(255,255,255,.8);font-size:11px;line-height:1.7;text-align:center;
+    }
+    .legal-footer-title{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:8px;letter-spacing:.5px;}
+    .legal-footer-divider{height:1px;background:rgba(255,255,255,.12);margin:10px 0;}
+    .legal-footer a{color:var(--green);text-decoration:none;font-weight:600;}
+    .legal-footer .lf-team{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:8px 0;}
+    .legal-footer .lf-person{background:rgba(255,255,255,.07);border-radius:var(--radius-sm);padding:8px 12px;text-align:left;}
+    .legal-footer .lf-role{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--yellow);font-weight:700;margin-bottom:2px;}
+    .legal-footer .lf-name{font-size:12px;color:white;font-weight:600;}
+    .legal-footer .lf-sub{font-size:10px;color:rgba(255,255,255,.55);}
+
+    /* ── SPORT GABON SECTION ── */
+    .sport-gabon-header{position:relative;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;height:110px;}
+    .sport-header-bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;filter:brightness(.45);}
+    .sport-header-content{position:relative;z-index:1;padding:20px 20px;color:white;}
+    .sport-header-title{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;}
+    .sport-header-sub{font-size:12px;opacity:.8;}
+    .discipline-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+    .disc-tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:20px;border:2px solid var(--gray-bd);background:var(--white);cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-txt);transition:all .2s;white-space:nowrap;}
+    .disc-tab:hover{border-color:var(--green);color:var(--green);}
+    .disc-tab.active{background:var(--navy);color:white;border-color:var(--navy);box-shadow:0 4px 14px rgba(10,22,40,.25);}
+    .disc-tab img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+    .fed-card{background:linear-gradient(135deg,var(--navy),var(--navy-md));border-radius:var(--radius-md);padding:18px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;}
+    .fed-card-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3);flex-shrink:0;}
+    .fed-card-info{flex:1;}
+    .fed-card-name{font-family:var(--font-display);font-size:15px;font-weight:800;margin-bottom:2px;}
+    .fed-card-sigle{font-size:11px;opacity:.7;letter-spacing:.5px;}
+    .fed-card-meta{font-size:12px;opacity:.8;margin-top:4px;}
+    .champ-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:10px;overflow:hidden;}
+    .champ-header{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,#f8fafc,#f0f4f8);border-bottom:1px solid var(--gray-bd);cursor:pointer;}
+    .champ-header img{width:32px;height:32px;border-radius:8px;object-fit:cover;}
+    .champ-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--navy);flex:1;}
+    .champ-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;background:var(--green);color:white;letter-spacing:.3px;}
+    .champ-body{padding:0 16px 14px;}
+    .division-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-bg);cursor:pointer;transition:background .15s;}
+    .division-row:last-child{border-bottom:none;}
+    .division-row:hover{background:var(--green-lt);margin:0 -16px;padding-left:16px;padding-right:16px;}
+    .div-num{width:26px;height:26px;border-radius:50%;background:var(--navy);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .div-info{flex:1;}
+    .div-name{font-size:13px;font-weight:700;color:var(--navy);}
+    .div-meta{font-size:11px;color:var(--gray-txt);margin-top:1px;}
+    .div-clubs-count{font-size:11px;font-weight:700;color:var(--green);background:var(--green-lt);padding:2px 8px;border-radius:10px;}
+    .clubs-grid-sport{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    .club-sport-card{background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .18s;}
+    .club-sport-card:hover{box-shadow:var(--shadow-sm);border-color:var(--green);transform:translateY(-1px);}
+    .club-sport-card img{width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.15);flex-shrink:0;}
+    .club-sport-name{font-size:12px;font-weight:700;color:var(--navy);}
+    .club-sport-meta{font-size:11px;color:var(--gray-txt);margin-top:1px;}
+
     /* ── PHOTO GALLERY ── */
     .photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
     .gallery-item{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
@@ -411,7 +528,7 @@
 <div id="auth-screen" style="display:none;">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="logo-badge">🇬🇦</div>
+      <div class="logo-badge" style="padding:0;overflow:hidden;"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:72px;height:72px;object-fit:cover;border-radius:50%;" alt="GSC" onerror="this.outerHTML='🇬🇦'"></div>
       <h1>Gabon Sport<span style="color:var(--green)">Connect</span></h1>
       <p>Plateforme nationale du sport gabonais</p>
     </div>
@@ -481,22 +598,22 @@
         <label>Type de compte</label>
         <div class="role-cards" id="role-cards">
           <div class="role-card selected" onclick="selectRole('joueur')">
-            <div class="rc-icon">⚽</div>
+            <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Joueur / Athlète</div>
             <div class="rc-sub">Amateur ou pro</div>
           </div>
           <div class="role-card" onclick="selectRole('arbitre')">
-            <div class="rc-icon">🟨</div>
+            <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Arbitre</div>
             <div class="rc-sub">Officiel de match</div>
           </div>
           <div class="role-card" onclick="selectRole('entraineur')">
-            <div class="rc-icon">📋</div>
+            <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Entraîneur</div>
             <div class="rc-sub">Coach / Technicien</div>
           </div>
           <div class="role-card" onclick="selectRole('club')">
-            <div class="rc-icon">🏟️</div>
+            <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Club / Association</div>
             <div class="rc-sub">Orga. de tournois</div>
           </div>
@@ -565,7 +682,7 @@
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="topnav-logo">🇬🇦 <span>GSC</span></div>
+    <div class="topnav-logo"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" alt=""> <span>GSC</span></div>
     <div class="topnav-spacer"></div>
     <div id="nav-visitor-banner" class="visitor-banner" style="display:none;">VISITEUR</div>
     <div id="nav-rolebadge"></div>
@@ -573,7 +690,7 @@
       <div class="user-avatar" id="nav-avatar">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
-    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" style="display:none;">🔑</button>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" style="display:none;padding:0;overflow:hidden;"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=80&h=80&fit=crop&auto=format" style="width:34px;height:34px;object-fit:cover;border-radius:50%;" alt="" onerror="this.outerHTML='🔑'"></button>
   </nav>
 
   <!-- MAIN -->
@@ -584,7 +701,7 @@
 
       <!-- Visiteur notice -->
       <div class="readonly-notice" id="visitor-notice" style="display:none;">
-        <span class="rn-icon">👁️</span>
+        <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="" onerror="this.style.display='none'">
         <span>Vous consultez en mode <strong>visiteur</strong>. Les données sont en lecture seule. <a onclick="goToAuth()">Créez un compte</a> pour gérer votre fiche.</span>
       </div>
 
@@ -601,7 +718,7 @@
       </div>
 
       <div class="profile-completion fade-up" id="profile-completion-bar" onclick="handleCompletionClick()" style="display:none;">
-        <span style="font-size:22px">📋</span>
+        <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=80&h=80&fit=crop&auto=format" style="width:26px;height:26px;border-radius:8px;object-fit:cover;" alt="" onerror="this.style.display='none'">
         <div class="completion-bar-wrap">
           <div class="completion-label" id="completion-label">Chargement…</div>
           <div class="completion-bar"><div class="completion-fill" id="completion-fill" style="width:0%"></div></div>
@@ -610,31 +727,67 @@
       </div>
 
       <div class="stats-grid fade-up" id="dashboard-stats">
-        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="stat-total-acteurs">—</div><div class="stat-lbl">Acteurs enregistrés</div></div>
-        <div class="stat-card"><div class="stat-icon">⚽</div><div class="stat-val" id="stat-total-joueurs">—</div><div class="stat-lbl">Joueurs / Athlètes</div></div>
-        <div class="stat-card"><div class="stat-icon">🏟️</div><div class="stat-val" id="stat-total-clubs">—</div><div class="stat-lbl">Clubs enregistrés</div></div>
-        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-val" id="stat-niveau">—</div><div class="stat-lbl">Mon niveau</div></div>
+        <button class="stat-card stat-card-1" onclick="showView('annuaire')">
+          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="acteurs" onerror="this.outerHTML='<div class=stat-icon>👥</div>'">
+          <div class="stat-val" id="stat-total-acteurs">—</div>
+          <div class="stat-lbl">Acteurs enregistrés</div>
+        </button>
+        <button class="stat-card stat-card-2" onclick="showView('annuaire');filterActors('joueur')">
+          <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="joueurs" onerror="this.outerHTML='<div class=stat-icon>⚽</div>'">
+          <div class="stat-val" id="stat-total-joueurs">—</div>
+          <div class="stat-lbl">Joueurs / Athlètes</div>
+        </button>
+        <button class="stat-card stat-card-3" onclick="showView('annuaire');filterActors('club')">
+          <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="clubs" onerror="this.outerHTML='<div class=stat-icon>🏟️</div>'">
+          <div class="stat-val" id="stat-total-clubs">—</div>
+          <div class="stat-lbl">Clubs enregistrés</div>
+        </button>
+        <button class="stat-card stat-card-4" onclick="isVisitor?goToAuth():showView('profil')">
+          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="niveau" onerror="this.outerHTML='<div class=stat-icon>📊</div>'">
+          <div class="stat-val" id="stat-niveau">—</div>
+          <div class="stat-lbl">Mon niveau</div>
+        </button>
       </div>
 
       <div class="quick-actions fade-up" id="quick-actions-auth" style="display:none;">
-        <button class="quick-btn" onclick="showView('profil')"><span class="qb-icon">👤</span>Mon profil</button>
-        <button class="quick-btn" onclick="showView('annuaire')"><span class="qb-icon">📋</span>Annuaire</button>
-        <button class="quick-btn" onclick="showView('stades')"><span class="qb-icon">🗺️</span>Carte sportive</button>
-        <button class="quick-btn" onclick="showView('actualites')"><span class="qb-icon">📰</span>Actualités</button>
+        <button class="quick-btn" onclick="showView('profil')"><img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>👤</span>'">Mon profil</button>
+        <button class="quick-btn" onclick="showView('annuaire')"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📋</span>'">Annuaire</button>
+        <button class="quick-btn" onclick="showView('stades')"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🗺️</span>'">Carte sportive</button>
+        <button class="quick-btn" onclick="showView('actualites')"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📰</span>'">Actualités</button>
       </div>
       <div class="quick-actions fade-up" id="quick-actions-visitor" style="display:none;">
-        <button class="quick-btn" onclick="showView('annuaire')"><span class="qb-icon">📋</span>Annuaire acteurs</button>
-        <button class="quick-btn" onclick="showView('stades')"><span class="qb-icon">🗺️</span>Carte sportive</button>
-        <button class="quick-btn" onclick="showView('actualites')"><span class="qb-icon">📰</span>Actualités</button>
-        <button class="quick-btn" onclick="goToAuth()" style="border-color:var(--green);color:var(--green-dk);"><span class="qb-icon">🔑</span>Se connecter</button>
+        <button class="quick-btn" onclick="showView('annuaire')"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📋</span>'">Annuaire acteurs</button>
+        <button class="quick-btn" onclick="showView('stades')"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🗺️</span>'">Carte sportive</button>
+        <button class="quick-btn" onclick="showView('actualites')"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📰</span>'">Actualités</button>
+        <button class="quick-btn" onclick="goToAuth()" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🔑</span>'">Se connecter</button>
       </div>
 
       <div class="card fade-up mb-16">
         <div class="card-header">
-          <div class="card-title">📰 Dernières actualités</div>
+          <div class="card-title"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Dernières actualités</div>
           <button class="btn-sm" onclick="showView('actualites')">Voir tout</button>
         </div>
         <div class="card-body" id="latest-news-preview"></div>
+      </div>
+
+      <!-- MENTIONS LÉGALES FOOTER ACCUEIL -->
+      <div class="legal-footer fade-up">
+        <div class="legal-footer-title">🇬🇦 Gabon Sport Connect — GSC</div>
+        <div style="margin-bottom:8px;">Plateforme nationale de gestion du sport gabonais</div>
+        <div class="lf-team">
+          <div class="lf-person">
+            <div class="lf-role">🏆 Porteur de projet</div>
+            <div class="lf-name">NKOGHE EVOUNA WILFRIED</div>
+            <div class="lf-sub">Prof. EPS · Master Management Sport</div>
+          </div>
+          <div class="lf-person">
+            <div class="lf-role">💻 Créateur technique</div>
+            <div class="lf-name">KOZANGUE ESSONO PATRICK BERTIN</div>
+            <div class="lf-sub">Informaticien · Fondateur PCINFORMATIQUE</div>
+          </div>
+        </div>
+        <div class="legal-footer-divider"></div>
+        <div>© 2026 GSC · <a href="#" onclick="showView('legal')">Mentions légales & CGU</a> · <a href="mailto:gabonsportconnectgsc@gmail.com">Contact</a></div>
       </div>
     </section>
 
@@ -642,11 +795,11 @@
     <section class="view" id="view-annuaire">
       <div class="card mb-16 fade-up">
         <div class="card-header">
-          <div class="card-title">📋 Annuaire des acteurs sportifs</div>
+          <div class="card-title"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Annuaire des acteurs sportifs</div>
         </div>
         <div class="card-body">
           <div class="readonly-notice" style="margin-bottom:0;">
-            <span class="rn-icon">👁️</span>
+            <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="" onerror="this.style.display='none'">
             <span>Données consultables par tous — modification réservée aux acteurs concernés et aux fédérations.</span>
           </div>
         </div>
@@ -656,13 +809,27 @@
       <div class="card mb-16 fade-up">
         <div class="card-body" style="padding-bottom:0;">
           <div class="actors-filters" id="actor-type-filters">
-            <button class="actor-filter-btn active" onclick="filterActors('tous')">Tous</button>
-            <button class="actor-filter-btn" onclick="filterActors('joueur')">⚽ Joueurs</button>
-            <button class="actor-filter-btn" onclick="filterActors('arbitre')">🟨 Arbitres</button>
-            <button class="actor-filter-btn" onclick="filterActors('entraineur')">📋 Entraîneurs</button>
-            <button class="actor-filter-btn" onclick="filterActors('club')">🏟️ Clubs</button>
-            <button class="actor-filter-btn" onclick="filterActors('association')">🤝 Associations</button>
-            <button class="actor-filter-btn" onclick="filterActors('supporter')">💗 Supporters</button>
+            <button class="actor-filter-btn active" data-type="tous" onclick="filterActors('tous')">
+              <img src="https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="tous" onerror="this.style.display='none'">Tous
+            </button>
+            <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')">
+              <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="joueur" onerror="this.style.display='none'">Joueurs
+            </button>
+            <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')">
+              <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="arbitre" onerror="this.style.display='none'">Arbitres
+            </button>
+            <button class="actor-filter-btn" data-type="entraineur" onclick="filterActors('entraineur')">
+              <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="coach" onerror="this.style.display='none'">Entraîneurs
+            </button>
+            <button class="actor-filter-btn" data-type="club" onclick="filterActors('club')">
+              <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="club" onerror="this.style.display='none'">Clubs
+            </button>
+            <button class="actor-filter-btn" data-type="association" onclick="filterActors('association')">
+              <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="asso" onerror="this.style.display='none'">Associations
+            </button>
+            <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')">
+              <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="supporters" onerror="this.style.display='none'">Supporters
+            </button>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
             <input class="search-input" id="annuaire-search" placeholder="🔍 Nom, sport, ville…" oninput="searchAnnuaire()" style="flex:1;">
@@ -677,7 +844,7 @@
       </div>
 
       <div class="actors-grid fade-up" id="actors-grid">
-        <div class="empty-state" style="grid-column:1/-1;"><div class="es-icon">⏳</div><h3>Chargement…</h3></div>
+        <div class="empty-state" style="grid-column:1/-1;"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:12px;opacity:.7;" alt=""><h3>Chargement…</h3></div>
       </div>
     </section>
 
@@ -788,7 +955,7 @@
     <section class="view" id="view-stades">
       <div class="card mb-16 fade-up">
         <div class="card-header">
-          <div class="card-title">🗺️ Carte des sites sportifs</div>
+          <div class="card-title"><img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Carte des sites sportifs</div>
           <button class="btn-sm" id="btn-add-site" onclick="openAddSiteModal()" style="display:none;">+ Ajouter</button>
         </div>
         <div class="card-body" style="padding-bottom:0">
@@ -796,9 +963,9 @@
         </div>
       </div>
       <div class="card fade-up">
-        <div class="card-header"><div class="card-title">🏟️ Sites enregistrés</div></div>
+        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Sites enregistrés</div></div>
         <div class="card-body">
-          <div class="sites-list" id="sites-list"><div class="empty-state"><div class="es-icon">🏟️</div><h3>Chargement…</h3></div></div>
+          <div class="sites-list" id="sites-list"><div class="empty-state"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:12px;opacity:.7;" alt=""><h3>Chargement…</h3></div></div>
         </div>
       </div>
     </section>
@@ -806,7 +973,7 @@
     <!-- ── ACTUALITÉS ── -->
     <section class="view" id="view-actualites">
       <div class="card fade-up">
-        <div class="card-header"><div class="card-title">📰 Actualités Sport Gabon</div></div>
+        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Actualités Sport Gabon</div></div>
         <div class="card-body" id="news-list"></div>
       </div>
     </section>
@@ -818,10 +985,10 @@
         <div class="admin-sub">Panneau de contrôle général</div>
       </div>
       <div class="admin-stats fade-up" id="admin-global-stats">
-        <div class="admin-stat"><div class="as-icon">👥</div><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
-        <div class="admin-stat"><div class="as-icon">⚽</div><div class="as-val" id="admin-total-joueurs">—</div><div class="as-lbl">Joueurs</div></div>
-        <div class="admin-stat"><div class="as-icon">🏟️</div><div class="as-val" id="admin-total-clubs">—</div><div class="as-lbl">Clubs</div></div>
-        <div class="admin-stat"><div class="as-icon">📍</div><div class="as-val" id="admin-total-sites">—</div><div class="as-lbl">Sites</div></div>
+        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
+        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-joueurs">—</div><div class="as-lbl">Joueurs</div></div>
+        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-clubs">—</div><div class="as-lbl">Clubs</div></div>
+        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-sites">—</div><div class="as-lbl">Sites</div></div>
       </div>
       <div class="admin-tabs fade-up">
         <button class="admin-tab active" onclick="switchAdminTab('users')">👥 Utilisateurs</button>
@@ -1015,15 +1182,53 @@
       </div>
     </section>
 
+    <!-- ── SPORT GABON ── -->
+    <section class="view" id="view-sport">
+      <!-- Header -->
+      <div class="sport-gabon-header fade-up">
+        <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&h=160&fit=crop&auto=format" class="sport-header-bg" alt="">
+        <div class="sport-header-content">
+          <div class="sport-header-title">🇬🇦 Sport Gabonais</div>
+          <div class="sport-header-sub">Fédérations · Championnats · Ligues · Divisions</div>
+        </div>
+      </div>
+
+      <!-- Discipline selector -->
+      <div class="card fade-up mb-16">
+        <div class="card-body" style="padding-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Choisir une discipline</div>
+          <div class="discipline-tabs" id="discipline-tabs"></div>
+        </div>
+      </div>
+
+      <!-- Federation card -->
+      <div id="federation-detail" class="fade-up"></div>
+
+      <!-- Championnats / Ligues -->
+      <div id="championnats-section" class="fade-up"></div>
+
+      <!-- Clubs par ligue -->
+      <div id="clubs-ligue-section" class="fade-up"></div>
+
+      <!-- Note admin -->
+      <div class="card fade-up" style="margin-top:12px;border:1.5px dashed var(--green);">
+        <div class="card-body" style="font-size:12px;color:var(--gray-txt);text-align:center;padding:14px;">
+          <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=40&h=40&fit=crop&auto=format" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;" alt="">
+          Ces données sont mises à jour par les <strong>fédérations</strong> et l'<strong>admin GSC</strong>. Les acteurs enregistrés mettent à jour leurs propres fiches.
+        </div>
+      </div>
+    </section>
+
     <!-- ── INFOS LÉGALES ── -->
     <section class="view" id="view-legal">
       <div class="card fade-up">
-        <div class="card-header"><div class="card-title">📋 Informations & Accès</div></div>
+        <div class="card-header"><div class="card-title"><img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Informations & Accès</div></div>
         <div class="card-body">
           <div class="legal-tabs">
             <button class="legal-tab active" onclick="switchLegalTab('roles',event)">Rôles</button>
             <button class="legal-tab" onclick="switchLegalTab('donnees',event)">Données</button>
             <button class="legal-tab" onclick="switchLegalTab('contact',event)">Contact</button>
+            <button class="legal-tab" onclick="switchLegalTab('mentions',event)">⚖️ Légal</button>
           </div>
           <div class="legal-pane active" id="legal-roles">
             <h3>Architecture des accès</h3>
@@ -1045,14 +1250,69 @@
             <h3>Protection des données</h3>
             <p>Les données personnelles saisies sur GSC sont stockées de manière sécurisée sur Firebase (Google Cloud). Elles ne sont pas revendues à des tiers.</p>
             <p>Chaque acteur peut modifier ou supprimer ses propres données depuis son profil. Les données de mandat professionnel sont sous la responsabilité de la fédération concernée.</p>
+            <h3>Hébergement</h3>
+            <p>La plateforme est hébergée sur Firebase Hosting (Google) et GitHub Pages. Les données sont stockées dans Cloud Firestore, infrastructure Google Cloud.</p>
+            <h3>Cookies</h3>
+            <p>GSC utilise uniquement les cookies techniques nécessaires à l'authentification Firebase. Aucun cookie publicitaire n'est utilisé.</p>
           </div>
           <div class="legal-pane" id="legal-contact">
             <h3>Contact</h3>
             <p>📧 <strong>gabonsportconnectgsc@gmail.com</strong></p>
             <p>🌐 <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green);">gabonsportconnectgsc-sys.github.io</a></p>
             <p>Pour demander un accès Fédération ou signaler un problème, contactez l'administration GSC.</p>
+            <h3>Équipe du projet</h3>
+            <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
+              <p style="margin-bottom:8px;"><strong>🏆 Porteur de projet</strong><br>
+              NKOGHE EVOUNA WILFRIED<br>
+              <span style="font-size:12px;color:var(--gray-txt);">Professeur d'EPS · Master en Management des Organisations Sportives · Master Technique en Management des Sports</span></p>
+              <hr style="border:none;border-top:1px solid var(--gray-bd);margin:10px 0;">
+              <p><strong>💻 Créateur technique</strong><br>
+              KOZANGUE ESSONO PATRICK BERTIN<br>
+              <span style="font-size:12px;color:var(--gray-txt);">Informaticien · Fondateur & Président PCINFORMATIQUE · Créateur : AMBIGAB(241), MAGERANTE, MALAGA, GSC</span></p>
+            </div>
+          </div>
+          <div class="legal-pane" id="legal-mentions">
+            <h3>⚖️ Mentions légales</h3>
+            <div class="info" style="margin-bottom:14px;">Conformément aux lois en vigueur en République Gabonaise.</div>
+            <h3>Éditeur de la plateforme</h3>
+            <p><strong>Gabon Sport Connect (GSC)</strong><br>
+            Plateforme nationale de gestion sportive — République Gabonaise 🇬🇦</p>
+            <h3>Porteur de projet</h3>
+            <p><strong>NKOGHE EVOUNA WILFRIED</strong><br>
+            Professeur d'EPS, Master en Management des Organisations Sportives et Master Technique en Management des Sports.</p>
+            <h3>Responsable technique</h3>
+            <p><strong>KOZANGUE ESSONO PATRICK BERTIN</strong><br>
+            Informaticien, Fondateur & Président de PCINFORMATIQUE. Créateur des plateformes AMBIGAB(241), MAGERANTE, MALAGA et GSC.<br>
+            📧 <a href="mailto:gabonsportconnectgsc@gmail.com" style="color:var(--green);">gabonsportconnectgsc@gmail.com</a></p>
+            <h3>Hébergement</h3>
+            <p>Firebase Hosting — Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA.<br>
+            GitHub Pages — GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA.</p>
+            <h3>Propriété intellectuelle</h3>
+            <p>L'ensemble du contenu de cette plateforme (code, design, données, logos) est la propriété exclusive de Gabon Sport Connect. Toute reproduction sans autorisation est interdite.</p>
+            <h3>Responsabilité</h3>
+            <p>GSC s'efforce de fournir des informations fiables et à jour. La plateforme ne saurait être tenue responsable des données saisies par les utilisateurs ou des erreurs provenant de tiers.</p>
+            <p style="font-size:12px;color:var(--gray-txt);margin-top:14px;">© 2026 Gabon Sport Connect — Tous droits réservés.</p>
           </div>
         </div>
+      </div>
+
+      <!-- MENTIONS LÉGALES FOOTER INFOS -->
+      <div class="legal-footer fade-up">
+        <div class="legal-footer-title">🇬🇦 Gabon Sport Connect · © 2026</div>
+        <div class="lf-team">
+          <div class="lf-person">
+            <div class="lf-role">🏆 Porteur de projet</div>
+            <div class="lf-name">NKOGHE EVOUNA WILFRIED</div>
+            <div class="lf-sub">Prof. EPS · Master Management Sport</div>
+          </div>
+          <div class="lf-person">
+            <div class="lf-role">💻 Créateur technique</div>
+            <div class="lf-name">KOZANGUE ESSONO PATRICK BERTIN</div>
+            <div class="lf-sub">Informaticien · PCINFORMATIQUE</div>
+          </div>
+        </div>
+        <div class="legal-footer-divider"></div>
+        <div>Tous droits réservés · <a href="mailto:gabonsportconnectgsc@gmail.com">gabonsportconnectgsc@gmail.com</a></div>
       </div>
     </section>
 
@@ -1060,13 +1320,28 @@
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <button class="bnav-item active" id="bnav-dashboard" onclick="showView('dashboard')"><span class="bnav-icon">🏠</span>Accueil</button>
-    <button class="bnav-item" id="bnav-annuaire" onclick="showView('annuaire')"><span class="bnav-icon">📋</span>Annuaire</button>
-    <button class="bnav-item" id="bnav-stades" onclick="showView('stades')"><span class="bnav-icon">🗺️</span>Carte</button>
-    <button class="bnav-item" id="bnav-actualites" onclick="showView('actualites')"><span class="bnav-icon">📰</span>Actu</button>
-    <button class="bnav-item" id="bnav-profil" onclick="showView('profil')" style="display:none;"><span class="bnav-icon">👤</span>Profil</button>
+    <button class="bnav-item active" id="bnav-dashboard" onclick="showView('dashboard')">
+      <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>🏠</span>'">Accueil
+    </button>
+    <button class="bnav-item" id="bnav-annuaire" onclick="showView('annuaire')">
+      <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>📋</span>'">Annuaire
+    </button>
+    <button class="bnav-item" id="bnav-stades" onclick="showView('stades')">
+      <img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>🗺️</span>'">Carte
+    </button>
+    <button class="bnav-item" id="bnav-actualites" onclick="showView('actualites')">
+      <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>📰</span>'">Actu
+    </button>
+    <button class="bnav-item" id="bnav-profil" onclick="showView('profil')" style="display:none;">
+      <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>👤</span>'">Profil
+    </button>
     <button class="bnav-item" id="bnav-admin" onclick="showView('admin')" style="display:none;"><span class="bnav-icon">⚙️</span>Admin</button>
-    <button class="bnav-item" id="bnav-legal" onclick="showView('legal')"><span class="bnav-icon">📋</span>Infos</button>
+    <button class="bnav-item" id="bnav-legal" onclick="showView('legal')">
+      <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>📋</span>'">Infos
+    </button>
+    <button class="bnav-item" id="bnav-sport" onclick="showView('sport')">
+      <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>🏆</span>'">Sport
+    </button>
   </nav>
 </div>
 
@@ -2860,6 +3135,542 @@ document.addEventListener('firebase-ready', async function(){
     enterAsVisitor(true);
   }
   loadActors();
+});
+
+// ══════════════════════════════════════════════════
+// ── SPORT GABON — DONNÉES NATIONALES COMPLÈTES ──
+// ══════════════════════════════════════════════════
+// Ces données sont la base publique officielle.
+// Modifiables par admin via Firebase (collection 'sportData')
+// ou directement ici pour la version statique.
+
+const SPORT_IMG = {
+  football: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format',
+  basketball: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=80&h=80&fit=crop&auto=format',
+  handball: 'https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=80&h=80&fit=crop&auto=format',
+  volleyball: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=80&h=80&fit=crop&auto=format',
+  athletisme: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format',
+  natation: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=80&h=80&fit=crop&auto=format',
+  boxe: 'https://images.unsplash.com/photo-1545289414-1c3cb1333ad8?w=80&h=80&fit=crop&auto=format',
+  judo: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=80&h=80&fit=crop&auto=format',
+  tennis: 'https://images.unsplash.com/photo-1564632588843-03d05aa1b0d1?w=80&h=80&fit=crop&auto=format',
+  rugby: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=80&h=80&fit=crop&auto=format',
+  cyclisme: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=80&h=80&fit=crop&auto=format',
+  taekwondo: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=80&h=80&fit=crop&auto=format',
+  stade: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format',
+  club: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format',
+};
+
+const GSC_SPORTS_DATA = [
+  {
+    id: 'football',
+    nom: 'Football',
+    img: SPORT_IMG.football,
+    federation: {
+      nom: 'Fédération Gabonaise de Football',
+      sigle: 'FEGAFOOT',
+      president: 'Pierre Alain Mounguengui',
+      fondee: 1962,
+      affiliation: 'FIFA / CAF / UNIFFAC',
+      siege: 'Libreville',
+      email: 'fegafoot@gabon.com',
+      img: SPORT_IMG.football,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National D1 — Gabon',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'D1',
+        img: SPORT_IMG.football,
+        divisions: [
+          {
+            nom: 'Division 1 — Élite',
+            clubs: 16,
+            desc: 'Championnat professionnel national',
+            clubs_list: [
+              'CF Mounana','Mangasport FC','AS Stade Mandji','FC 105 Libreville',
+              'AS Police Nationale','AS Panthères FC','Akanda FC','US Bitam',
+              'AS Sogéa','RC Bouenguidi','AS Port-Gentil','FC Diables Noirs',
+              'US Owendo','FC Sapins','Abeilles FC','AS Missamango'
+            ]
+          },
+          {
+            nom: 'Division 2 — Promotion',
+            clubs: 18,
+            desc: 'Deuxième échelon national',
+            clubs_list: [
+              'AS Perroquets Verts','FC Renaissance','Jeunesse Sportive Libreville',
+              'AS Cheminots','Moanda FC','CS Oyem','FC Franceville','AS Moabi',
+              'US Tchibanga','AC Koulamoutou','FC Bitam','Jeunesse Oyem',
+              'AS Lastoursville','FC Ndende','US Fougamou','AS Lambaréné',
+              'FC Mimongo','AS Booué'
+            ]
+          },
+          {
+            nom: 'Ligue Provinciale — Estuaire',
+            clubs: 24,
+            desc: 'Championnat provincial de Libreville et environs',
+            clubs_list: [
+              'AS Libreville Nord','FC Owendo','AS Ntoum','Akanda FC B',
+              'JS Libreville','AS Sibang','FC Malibé','US Kango','AS Ndzomé',
+              'FC Port Môle','AS Angondjé','FC PK5','AS Lalala','Jeunesse PK8',
+              'AS Lendoho','FC Bikélé','US Cocobeach','AS Andock',
+              'FC Bolokoboué','AS Ekouk','JS Sibang','FC Alibandeng',
+              'AS Nomba','US Akok'
+            ]
+          },
+          {
+            nom: 'Ligue Provinciale — Haut-Ogooué',
+            clubs: 16,
+            desc: 'Province de Franceville, Moanda, Masuku',
+            clubs_list: [
+              'CF Mounana','Mangasport FC','FC Masuku','AS Moanda',
+              'AS Franceville','CS Bakoumba','AS Okondja','FC Lékoni',
+              'US Boumango','AS Akiéni','FC Aboumi','AS Ngouoni',
+              'US Lastoursville','AS Mbigou','FC Mounana B','AS Franceville B'
+            ]
+          },
+          {
+            nom: 'Ligue Provinciale — Ogooué-Maritime',
+            clubs: 14,
+            desc: 'Province de Port-Gentil',
+            clubs_list: [
+              'AS Stade Mandji','AS Port-Gentil','FC Petrogab','US Sette Cama',
+              'AS Omboué','FC Mandji B','AS Gamba','US Iguendja',
+              'FC Ozouri','AS Maurétanie','US Mbandié','FC Ntchengue',
+              'AS Tchanzi','US Sogara'
+            ]
+          },
+          {
+            nom: 'Ligue Provinciale — Woleu-Ntem',
+            clubs: 12,
+            desc: 'Province d\'Oyem et du nord Gabon',
+            clubs_list: [
+              'US Bitam','CS Oyem','AS Mitzic','FC Minvoul',
+              'AS Medouneu','US Ebolowa Gabon','FC Oyem B','AS Bitam B',
+              'US Ntem','AS Nkoltang','FC Eyang','AS Atok'
+            ]
+          }
+        ]
+      },
+      {
+        nom: 'Coupe du Gabon de Football',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'Coupe',
+        img: SPORT_IMG.football,
+        divisions: [
+          {nom: 'Phase de groupes', clubs: 32, desc: '8 groupes de 4 équipes', clubs_list: []},
+          {nom: 'Huitièmes de finale', clubs: 16, desc: 'Matchs aller-retour', clubs_list: []},
+          {nom: 'Finale — Stade Omar Bongo', clubs: 2, desc: 'Match unique à Libreville', clubs_list: []}
+        ]
+      },
+      {
+        nom: 'Football Féminin National',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'Fémin.',
+        img: SPORT_IMG.football,
+        divisions: [
+          {nom: 'D1 Féminine', clubs: 8, desc: 'Championnat national féminin', clubs_list: [
+            'AS Stade Mandji F','AS Police F','AS Panthères F','CF Mounana F',
+            'FC Libreville F','AS Sogéa F','Mangasport F','AS Port-Gentil F'
+          ]},
+          {nom: 'U17 Féminines', clubs: 12, desc: 'Moins de 17 ans', clubs_list: []}
+        ]
+      },
+      {
+        nom: 'Championnats Jeunes',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'Jeunes',
+        img: SPORT_IMG.football,
+        divisions: [
+          {nom: 'U20 National', clubs: 16, desc: 'Moins de 20 ans', clubs_list: []},
+          {nom: 'U17 National', clubs: 16, desc: 'Moins de 17 ans', clubs_list: []},
+          {nom: 'U15 National', clubs: 20, desc: 'Moins de 15 ans', clubs_list: []},
+          {nom: 'U13 Régional', clubs: 32, desc: 'Moins de 13 ans', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'basketball',
+    nom: 'Basketball',
+    img: SPORT_IMG.basketball,
+    federation: {
+      nom: 'Fédération Gabonaise de Basketball',
+      sigle: 'FEGABASKET',
+      president: 'À confirmer',
+      fondee: 1970,
+      affiliation: 'FIBA / FIBA Afrique',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.basketball,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National Basketball',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'Elite',
+        img: SPORT_IMG.basketball,
+        divisions: [
+          {nom: 'Division Élite Masculine', clubs: 10, desc: 'Meilleure division nationale masculine', clubs_list: [
+            'AS Police Basket','Stade Mandji Basket','AS Sogéa Basket','ASSIGA',
+            'BC Libreville','AS CEB Basket','ABC Port-Gentil','AS Moanda Basket',
+            'UGB Basket','BC Oyem'
+          ]},
+          {nom: 'Division Élite Féminine', clubs: 8, desc: 'Meilleure division nationale féminine', clubs_list: [
+            'AS Police F Basket','ASSIGA F','AS Sogéa F','ABC F Port-Gentil',
+            'BC Libreville F','AS CEB F','UGB F','Stade Mandji F'
+          ]},
+          {nom: 'Division 2 Masculine', clubs: 12, desc: 'Deuxième niveau national', clubs_list: []},
+          {nom: 'U18 Masculin', clubs: 16, desc: 'Catégorie jeunes moins de 18 ans', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'handball',
+    nom: 'Handball',
+    img: SPORT_IMG.handball,
+    federation: {
+      nom: 'Fédération Gabonaise de Handball',
+      sigle: 'FEGAHAND',
+      president: 'À confirmer',
+      fondee: 1972,
+      affiliation: 'IHF / CAHB',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.handball,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National Handball',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'D1',
+        img: SPORT_IMG.handball,
+        divisions: [
+          {nom: 'Division 1 Masculine', clubs: 10, desc: 'Élite nationale masculine', clubs_list: [
+            'AS Police Hand','AS Sogéa Hand','Stade Mandji Hand','ASSIGA Hand',
+            'HC Libreville','AS CEB Hand','HC Port-Gentil','HC Franceville',
+            'AS Oyem Hand','HC Ntoum'
+          ]},
+          {nom: 'Division 1 Féminine', clubs: 8, desc: 'Élite nationale féminine', clubs_list: [
+            'AS Police F Hand','AS Sogéa F','Stade Mandji F','HC Libreville F',
+            'HC Port-Gentil F','AS CEB F','ASSIGA F','HC Ntoum F'
+          ]},
+          {nom: 'Division 2 Masculine', clubs: 12, desc: 'Deuxième niveau national', clubs_list: []},
+          {nom: 'Catégorie Jeunes U18', clubs: 14, desc: 'Moins de 18 ans masculin et féminin', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'volleyball',
+    nom: 'Volleyball',
+    img: SPORT_IMG.volleyball,
+    federation: {
+      nom: 'Fédération Gabonaise de Volleyball',
+      sigle: 'FEGAVOL',
+      president: 'À confirmer',
+      fondee: 1968,
+      affiliation: 'FIVB / CAVB',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.volleyball,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National Volleyball',
+        niveau: 'National',
+        saison: '2025-2026',
+        badge: 'D1',
+        img: SPORT_IMG.volleyball,
+        divisions: [
+          {nom: 'Division Élite Masculine', clubs: 8, desc: 'Élite nationale masculine', clubs_list: [
+            'AS Police VB','ASVO Libreville','VC Mandji','AS CEB VB',
+            'VC Port-Gentil','AS Sogéa VB','VC Franceville','VC Oyem'
+          ]},
+          {nom: 'Division Élite Féminine', clubs: 8, desc: 'Élite nationale féminine', clubs_list: [
+            'AS Police F VB','ASVO F','VC Mandji F','VC Port-Gentil F',
+            'AS CEB F VB','AS Sogéa F VB','VC Franceville F','VC Ntoum F'
+          ]},
+          {nom: 'Beach Volleyball', clubs: 16, desc: 'Équipes de beach-volley', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'athletisme',
+    nom: 'Athlétisme',
+    img: SPORT_IMG.athletisme,
+    federation: {
+      nom: 'Fédération Gabonaise d\'Athlétisme',
+      sigle: 'FEGATH',
+      president: 'À confirmer',
+      fondee: 1965,
+      affiliation: 'World Athletics / CAA',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.athletisme,
+    },
+    championnats: [
+      {
+        nom: 'Championnats Nationaux d\'Athlétisme',
+        niveau: 'National',
+        saison: '2026',
+        badge: 'Champ. Nat.',
+        img: SPORT_IMG.athletisme,
+        divisions: [
+          {nom: 'Seniors — Toutes disciplines', clubs: 0, desc: 'Sprint, fond, sauts, lancers, marche', clubs_list: []},
+          {nom: 'Espoirs U23', clubs: 0, desc: 'Moins de 23 ans toutes disciplines', clubs_list: []},
+          {nom: 'Juniors U20', clubs: 0, desc: 'Moins de 20 ans', clubs_list: []},
+          {nom: 'Cadets U17', clubs: 0, desc: 'Moins de 17 ans', clubs_list: []},
+          {nom: 'Ligues Provinciales (9 provinces)', clubs: 0, desc: 'Estuaire, Haut-Ogooué, Ogooué-Lolo, Nyanga…', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'boxe',
+    nom: 'Boxe',
+    img: SPORT_IMG.boxe,
+    federation: {
+      nom: 'Fédération Gabonaise de Boxe',
+      sigle: 'FEGABOX',
+      president: 'À confirmer',
+      fondee: 1966,
+      affiliation: 'IBA / CABF',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.boxe,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National de Boxe',
+        niveau: 'National',
+        saison: '2026',
+        badge: 'Champ.',
+        img: SPORT_IMG.boxe,
+        divisions: [
+          {nom: 'Boxe Anglaise — Seniors', clubs: 0, desc: 'Toutes catégories de poids (49kg–92kg+)', clubs_list: []},
+          {nom: 'Boxe Anglaise — Jeunes U18', clubs: 0, desc: 'Catégories juniors', clubs_list: []},
+          {nom: 'Kick-boxing / Muay Thai', clubs: 0, desc: 'Disciplines de boxe pieds-poings', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'judo',
+    nom: 'Judo',
+    img: SPORT_IMG.judo,
+    federation: {
+      nom: 'Fédération Gabonaise de Judo et Arts Martiaux',
+      sigle: 'FEGAJAM',
+      president: 'À confirmer',
+      fondee: 1968,
+      affiliation: 'IJF / Union Africaine de Judo',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.judo,
+    },
+    championnats: [
+      {
+        nom: 'Championnat National de Judo',
+        niveau: 'National',
+        saison: '2026',
+        badge: 'Champ.',
+        img: SPORT_IMG.judo,
+        divisions: [
+          {nom: 'Seniors — Toutes catégories', clubs: 0, desc: 'Masculin et Féminin (7 catégories de poids)', clubs_list: []},
+          {nom: 'Juniors U20', clubs: 0, desc: 'Moins de 20 ans', clubs_list: []},
+          {nom: 'Cadets U17', clubs: 0, desc: 'Moins de 17 ans', clubs_list: []},
+          {nom: 'Karaté — Seniors', clubs: 0, desc: 'Kata et Kumité', clubs_list: []},
+          {nom: 'Taekwondo — Seniors', clubs: 0, desc: 'Formes et combats', clubs_list: []}
+        ]
+      }
+    ]
+  },
+  {
+    id: 'natation',
+    nom: 'Natation',
+    img: SPORT_IMG.natation,
+    federation: {
+      nom: 'Fédération Gabonaise de Natation',
+      sigle: 'FEGANAT',
+      president: 'À confirmer',
+      fondee: 1970,
+      affiliation: 'FINA / World Aquatics / CANA',
+      siege: 'Libreville',
+      email: '',
+      img: SPORT_IMG.natation,
+    },
+    championnats: [
+      {
+        nom: 'Championnats Nationaux de Natation',
+        niveau: 'National',
+        saison: '2026',
+        badge: 'Champ.',
+        img: SPORT_IMG.natation,
+        divisions: [
+          {nom: 'Seniors — Eau calme', clubs: 0, desc: 'Nage libre, dos, brasse, papillon, 4 nages', clubs_list: []},
+          {nom: 'Juniors U20', clubs: 0, desc: 'Moins de 20 ans', clubs_list: []},
+          {nom: 'Natation artistique', clubs: 0, desc: 'Anciennement natation synchronisée', clubs_list: []}
+        ]
+      }
+    ]
+  }
+];
+
+let currentSportId = 'football';
+let currentChampIndex = 0;
+let currentDivIndex = null;
+
+function initSportView() {
+  renderDisciplineTabs();
+  renderSportDetail(currentSportId);
+}
+
+function renderDisciplineTabs() {
+  const c = document.getElementById('discipline-tabs');
+  if (!c) return;
+  c.innerHTML = GSC_SPORTS_DATA.map(s => `
+    <button class="disc-tab${s.id===currentSportId?' active':''}" onclick="selectDiscipline('${s.id}')">
+      <img src="${s.img}" alt="${s.nom}" onerror="this.style.display='none'">
+      ${s.nom}
+    </button>
+  `).join('');
+}
+
+function selectDiscipline(id) {
+  currentSportId = id;
+  currentChampIndex = 0;
+  currentDivIndex = null;
+  renderDisciplineTabs();
+  renderSportDetail(id);
+}
+window.selectDiscipline = selectDiscipline;
+
+function renderSportDetail(id) {
+  const sport = GSC_SPORTS_DATA.find(s => s.id === id);
+  if (!sport) return;
+  const fed = sport.federation;
+
+  // Federation card
+  const fedEl = document.getElementById('federation-detail');
+  if (fedEl) fedEl.innerHTML = `
+    <div class="fed-card mb-16">
+      <img src="${fed.img}" class="fed-card-logo" alt="${fed.sigle}" onerror="this.src='${SPORT_IMG.club}'">
+      <div class="fed-card-info">
+        <div class="fed-card-name">${fed.nom}</div>
+        <div class="fed-card-sigle">${fed.sigle} · Fondée en ${fed.fondee}</div>
+        <div class="fed-card-meta">${fed.affiliation}</div>
+        ${fed.president !== 'À confirmer' ? `<div class="fed-card-meta" style="color:var(--yellow);">Président : ${fed.president}</div>` : ''}
+      </div>
+    </div>`;
+
+  // Championnats
+  const champEl = document.getElementById('championnats-section');
+  if (!champEl) return;
+  champEl.innerHTML = sport.championnats.map((ch, ci) => `
+    <div class="champ-card mb-16">
+      <div class="champ-header" onclick="toggleChamp(${ci})">
+        <img src="${ch.img}" alt="${ch.nom}" onerror="this.style.display='none'">
+        <div class="champ-title">${ch.nom}</div>
+        <div class="champ-badge">${ch.badge}</div>
+        <span style="font-size:16px;color:var(--gray-txt);margin-left:4px;" id="champ-arrow-${ci}">${ci===0?'▲':'▼'}</span>
+      </div>
+      <div class="champ-body" id="champ-body-${ci}" style="${ci===0?'':'display:none'}">
+        <div style="font-size:12px;color:var(--gray-txt);padding:10px 0 6px;">Saison ${ch.saison}</div>
+        ${ch.divisions.map((div, di) => `
+          <div class="division-row" onclick="toggleDivClubs('${id}',${ci},${di})">
+            <div class="div-num">${di+1}</div>
+            <div class="div-info">
+              <div class="div-name">${div.nom}</div>
+              <div class="div-meta">${div.desc}</div>
+            </div>
+            ${div.clubs > 0 ? `<div class="div-clubs-count">${div.clubs} clubs</div>` : ''}
+            <span style="font-size:14px;color:var(--gray-txt);" id="div-arrow-${id}-${ci}-${di}">›</span>
+          </div>
+          <div id="div-clubs-${id}-${ci}-${di}" style="display:none;padding:0 0 8px;"></div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('clubs-ligue-section').innerHTML = '';
+}
+
+function toggleChamp(ci) {
+  const sport = GSC_SPORTS_DATA.find(s => s.id === currentSportId);
+  if (!sport) return;
+  sport.championnats.forEach((_, i) => {
+    const body = document.getElementById('champ-body-'+i);
+    const arrow = document.getElementById('champ-arrow-'+i);
+    if (body) body.style.display = (i === ci && body.style.display === 'none') ? '' : 'none';
+    if (arrow) arrow.textContent = (i === ci && body && body.style.display !== 'none') ? '▲' : '▼';
+  });
+}
+window.toggleChamp = toggleChamp;
+
+function toggleDivClubs(sportId, ci, di) {
+  const sport = GSC_SPORTS_DATA.find(s => s.id === sportId);
+  if (!sport) return;
+  const div = sport.championnats[ci]?.divisions[di];
+  if (!div) return;
+  const key = `${sportId}-${ci}-${di}`;
+  const el = document.getElementById('div-clubs-'+key);
+  const arrow = document.getElementById('div-arrow-'+key);
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  if (open) { el.style.display = 'none'; if(arrow) arrow.textContent = '›'; return; }
+  if (arrow) arrow.textContent = '▾';
+  if (!div.clubs_list || !div.clubs_list.length) {
+    el.style.display = '';
+    el.innerHTML = `<div style="font-size:12px;color:var(--gray-txt);padding:8px 0 4px;font-style:italic;">Liste des clubs à compléter par la fédération ou l'admin GSC.</div>`;
+    return;
+  }
+  el.style.display = '';
+  el.innerHTML = `<div class="clubs-grid-sport">${div.clubs_list.map(nom => `
+    <div class="club-sport-card" onclick="searchClubInAnnuaire('${nom}')">
+      <img src="${sport.img}" alt="${nom}" onerror="this.src='${SPORT_IMG.club}'">
+      <div>
+        <div class="club-sport-name">${nom}</div>
+        <div class="club-sport-meta">${div.nom.split('—')[0].trim()}</div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+window.toggleDivClubs = toggleDivClubs;
+
+function searchClubInAnnuaire(nom) {
+  showView('annuaire');
+  const input = document.getElementById('annuaire-search');
+  if (input) { input.value = nom; searchAnnuaire(); }
+  toast('Recherche "'+nom+'" dans l\'annuaire', 'info');
+}
+window.searchClubInAnnuaire = searchClubInAnnuaire;
+
+// Patch showView to init sport view when needed
+const _origShowView = showView;
+window.showView = function(v) {
+  _origShowView(v);
+  if (v === 'sport') { setTimeout(initSportView, 60); }
+};
+
+// Also add sport btn to the dashboard quick actions
+document.addEventListener('DOMContentLoaded', function() {
+  // Add Sport Gabon quick button to both action grids
+  const ballImg = `<img src="${SPORT_IMG.football}" style="width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);" alt="" onerror="this.style.display='none'">`;
+  const sportBtn = (txt) => `<button class="quick-btn" onclick="showView('sport')">${ballImg}${txt}</button>`;
+  const qa1 = document.getElementById('quick-actions-auth');
+  const qa2 = document.getElementById('quick-actions-visitor');
+  if (qa1) qa1.insertAdjacentHTML('afterbegin', sportBtn('Sport Gabon'));
+  if (qa2) qa2.insertAdjacentHTML('afterbegin', sportBtn('Sport Gabon'));
 });
 
 </script>
