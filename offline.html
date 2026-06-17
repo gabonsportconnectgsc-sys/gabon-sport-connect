@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mode hors ligne - BONGSC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #001a4d 0%, #003366 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .offline-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.5s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .offline-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #009e60 0%, #005c39 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #001a4d;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .status-text {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ef4444;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .cached-data {
+      background: #f3f4f6;
+      border-left: 4px solid #009e60;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .cached-data h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #001a4d;
+      margin-bottom: 8px;
+    }
+
+    .cached-data ul {
+      list-style: none;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .cached-data li:before {
+      content: "✓ ";
+      color: #009e60;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #009e60 0%, #005c39 100%);
+      color: white;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #001a4d;
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .reconnect-timer {
+      font-size: 12px;
+      color: #999;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #009e60;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">📶</div>
+    
+    <h1>Mode hors ligne</h1>
+    
+    <div class="status-text">
+      <span class="status-indicator"></span>
+      Pas de connexion Internet détectée
+    </div>
+
+    <div class="cached-data" id="cachedDataList">
+      <h3>📚 Données disponibles en cache:</h3>
+      <ul id="cacheList">
+        <li>Chargement...</li>
+      </ul>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="tryReconnect()">
+        <span id="reconnectText">Vérifier la connexion</span>
+      </button>
+      <button class="btn-secondary" onclick="goHome()">
+        Consulter l'application
+      </button>
+    </div>
+
+    <div class="reconnect-timer">
+      <p>Tentative de reconnexion automatique en cours...</p>
+      <p id="timerText">Prochaine tentative dans 10s</p>
+    </div>
+  </div>
+
+  <script>
+    let autoReconnectInterval;
+    let secondsLeft = 10;
+
+    // Initialiser le timer
+    function startAutoReconnect() {
+      secondsLeft = 10;
+      updateTimer();
+      autoReconnectInterval = setInterval(() => {
+        secondsLeft--;
+        updateTimer();
+        if (secondsLeft <= 0) {
+          clearInterval(autoReconnectInterval);
+          tryReconnect();
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      document.getElementById('timerText').textContent = 
+        `Prochaine tentative dans ${secondsLeft}s`;
+    }
+
+    // Essayer de se reconnecter
+    async function tryReconnect() {
+      clearInterval(autoReconnectInterval);
+      const btn = document.querySelector('.btn-primary');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span>Test de connexion...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/ping', { method: 'HEAD', cache: 'no-store' });
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch (error) {
+        // Pas de connexion
+      }
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      startAutoReconnect();
+    }
+
+    function goHome() {
+      window.location.href = '/';
+    }
+
+    // Charger la liste des données en cache
+    async function loadCachedData() {
+      if (!window.storageManager) return;
+      
+      const cacheList = document.getElementById('cacheList');
+      cacheList.innerHTML = '';
+
+      const stores = [
+        { name: 'actors', label: 'Acteurs' },
+        { name: 'sites', label: 'Sites' },
+        { name: 'news', label: 'Actualités' },
+        { name: 'session', label: 'Session utilisateur' }
+      ];
+
+      for (const store of stores) {
+        try {
+          const data = await window.storageManager.getAllData(store.name);
+          const metadata = await window.storageManager.getMetadata(store.name);
+          const count = data.length;
+          
+          if (count > 0) {
+            const lastUpdate = metadata ? new Date(metadata.timestamp).toLocaleDateString('fr-FR') : 'N/A';
+            const li = document.createElement('li');
+            li.textContent = `${store.label} (${count} éléments, ${lastUpdate})`;
+            cacheList.appendChild(li);
+          }
+        } catch (error) {
+          console.error(`Erreur chargement ${store.name}:`, error);
+        }
+      }
+
+      if (cacheList.children.length === 0) {
+        cacheList.innerHTML = '<li>Aucune donnée en cache</li>';
+      }
+    }
+
+    // Écouter la reconnexion
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+
+    // Initialiser à la charge
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCachedData();
+      startAutoReconnect();
+    });
+
+    // Importer le storage manager si disponible
+    if (document.readyState === 'loading') {
+      const script = document.createElement('script');
+      script.src = '/storage-manager.js';
+      script.onload = loadCachedData;
+      document.head.appendChild(script);
+    }
+  </script>
+</body>
+</html>

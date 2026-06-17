@@ -1,0 +1,312 @@
+<!-- ========================================
+     AJOUTER CES LIGNES DANS LE <head>
+     DE VOTRE index.html
+     ======================================== -->
+
+<!-- ============ PWA MANIFEST ============ -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- ============ THEME COLOR ============ -->
+<meta name="theme-color" content="#001a4d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BONGSC">
+<meta name="application-name" content="BONGSC">
+
+<!-- ============ ICONS ============ -->
+<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+<link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+<!-- ============ PWA SCRIPTS ============ -->
+<!-- StorageManager: Gestion IndexedDB -->
+<script src="/storage-manager.js"></script>
+
+<!-- PWA Initialization: Service Worker, Installation, Updates -->
+<script src="/pwa-init.js"></script>
+
+<!-- ============ VIEWPORT ============ -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+
+<!-- ============ STYLES POUR INDICATEUR CONNEXION ============ -->
+<style>
+  /* Indicateur de connexion en haut de page */
+  #connection-status {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #009e60;
+    z-index: 1000;
+    transition: background 0.3s ease;
+  }
+  
+  /* Bouton d'installation */
+  #install-pwa-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #009e60 0%, #005c39 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 158, 96, 0.3);
+    z-index: 50;
+    animation: slideInUp 0.3s ease;
+  }
+  
+  #install-pwa-btn:active {
+    transform: scale(0.98);
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<!-- ========================================
+     APRÈS LE TAG BODY:
+     
+     Ajouter un élément pour les notifications
+     ======================================== -->
+
+<div id="pwa-notification-container" style="
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 999;
+  pointer-events: none;
+"></div>
+
+<!-- ========================================
+     SCRIPT D'INTÉGRATION
+     À ajouter avant la fermeture du </body>
+     ======================================== -->
+
+<script>
+/**
+ * INTÉGRATION PWA AVEC VOTRE APPLICATION EXISTANTE
+ * Ce script connecte la PWA avec vos fonctions Firebase existantes
+ */
+
+(function() {
+  // Attendre que PWA soit prêt
+  document.addEventListener('pwaReady', async function() {
+    console.log('[App] PWA est prêt');
+    
+    // ============ OVERRIDE DE VOTRE handleUserLogin EXISTANTE ============
+    const originalHandleUserLogin = window.handleUserLogin;
+    window.handleUserLogin = async function() {
+      const result = await originalHandleUserLogin();
+      
+      // Après connexion réussie, sauvegarder la session
+      if (window.auth && window.auth.currentUser) {
+        const user = window.auth.currentUser;
+        await window.storageManager.saveSession({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || 'Utilisateur',
+          photoURL: user.photoURL || '',
+          role: 'user'
+        });
+      }
+      
+      return result;
+    };
+    
+    // ============ OVERRIDE DE VOTRE handleLogout EXISTANTE ============
+    const originalHandleLogout = window.handleLogout;
+    window.handleLogout = async function() {
+      // Vider les données en cache à la déconnexion
+      await window.storageManager.clearAllData();
+      return await originalHandleLogout();
+    };
+    
+    // ============ CACHER LES ACTEURS CHARGÉS ============
+    // Après votre loadActors(), ajouter:
+    const originalLoadActors = window.loadActors;
+    if (originalLoadActors) {
+      window.loadActors = async function(onlyPending) {
+        const result = await originalLoadActors(onlyPending);
+        
+        // Récupérer les acteurs depuis window.global.actors
+        if (window.global && window.global.actors) {
+          await window.storageManager.saveData('actors', window.global.actors);
+        }
+        
+        return result;
+      };
+    }
+    
+    // ============ CACHER LES SITES CHARGÉS ============
+    const originalLoadSites = window.loadSites;
+    if (originalLoadSites) {
+      window.loadSites = async function() {
+        const result = await originalLoadSites();
+        
+        // Récupérer les sites depuis window.global.sites
+        if (window.global && window.global.sites) {
+          await window.storageManager.saveData('sites', window.global.sites);
+        }
+        
+        return result;
+      };
+    }
+    
+    // ============ CACHER LES ACTUALITÉS CHARGÉES ============
+    const originalLoadNewsFromDb = window.loadNewsFromDb;
+    if (originalLoadNewsFromDb) {
+      window.loadNewsFromDb = async function() {
+        const result = await originalLoadNewsFromDb();
+        
+        // Récupérer les actualités depuis window.global.news
+        if (window.global && window.global.news) {
+          await window.storageManager.saveData('news', window.global.news);
+        }
+        
+        return result;
+      };
+    }
+    
+    // ============ ÉCOUTER LES CHANGEMENTS DE CONNEXION ============
+    document.addEventListener('appOffline', function() {
+      // Désactiver les boutons qui nécessitent une connexion
+      const buttons = document.querySelectorAll('[data-requires-online]');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.title = 'Non disponible en mode hors ligne';
+      });
+      
+      // Afficher un message
+      showPWANotification('Mode hors ligne - Certaines fonctionnalités sont limitées', 'warning');
+    });
+    
+    document.addEventListener('appOnline', function() {
+      // Réactiver les boutons
+      const buttons = document.querySelectorAll('[data-requires-online]');
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.title = '';
+      });
+      
+      // Afficher un message
+      showPWANotification('Connexion rétablie', 'success');
+    });
+    
+    // ============ FALLBACK POUR LES DONNÉES HORS LIGNE ============
+    if (!window.navigator.onLine) {
+      console.log('[App] Chargement des données en cache...');
+      
+      // Récupérer la session
+      const session = await window.storageManager.getSession();
+      if (session) {
+        console.log('[App] Session trouvée:', session.displayName);
+        // Mettre à jour l'UI avec la session cachée
+        if (window.loadUserProfile) {
+          window.loadUserProfile(session.uid);
+        }
+      }
+      
+      // Récupérer les acteurs
+      const cachedActors = await window.storageManager.getAllData('actors');
+      if (cachedActors.length > 0) {
+        window.global = window.global || {};
+        window.global.actors = cachedActors;
+        console.log('[App] Acteurs chargés depuis cache:', cachedActors.length);
+        if (window.renderActors) {
+          window.renderActors(cachedActors);
+        }
+      }
+      
+      // Récupérer les sites
+      const cachedSites = await window.storageManager.getAllData('sites');
+      if (cachedSites.length > 0) {
+        window.global = window.global || {};
+        window.global.sites = cachedSites;
+        console.log('[App] Sites chargés depuis cache:', cachedSites.length);
+        if (window.renderSitesList) {
+          window.renderSitesList(cachedSites);
+        }
+      }
+      
+      // Récupérer les actualités
+      const cachedNews = await window.storageManager.getAllData('news');
+      if (cachedNews.length > 0) {
+        window.global = window.global || {};
+        window.global.news = cachedNews;
+        console.log('[App] Actualités chargées depuis cache:', cachedNews.length);
+        if (window.renderNews) {
+          window.renderNews();
+        }
+      }
+    }
+  });
+  
+  // ============ UTILITAIRE: AFFICHER DES NOTIFICATIONS ============
+  window.showPWANotification = function(message, type = 'info') {
+    const container = document.getElementById('pwa-notification-container');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      background: ${type === 'success' ? '#d1fae5' : type === 'error' ? '#fee2e2' : '#eff6ff'};
+      border-left: 4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      color: ${type === 'success' ? '#047857' : type === 'error' ? '#991b1b' : '#1e40af'};
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      animation: slideInDown 0.3s ease;
+      pointer-events: auto;
+    `;
+    
+    notification.innerHTML = `
+      <div style="font-size: 14px; font-weight: 500;">${message}</div>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Auto-remove après 4 secondes
+    setTimeout(() => {
+      notification.style.animation = 'slideOutUp 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 4000);
+  };
+  
+  // Styles pour les animations de notification
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideOutUp {
+      to {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+</script>
