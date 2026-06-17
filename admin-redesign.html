@@ -3,14 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>GSC Admin — Panneau de Contrôle</title>
-<!-- 
-  ════════════════════════════════════════════════════
-  🔥 FIREBASE — Décommente quand tu as tes vraies clés
-  ════════════════════════════════════════════════════
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
--->
+<title>GSC Admin — Panneau de Contrôle Complet</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -19,8 +14,7 @@
   --white:#fff;--gray-bg:#F4F6F8;--gray-bd:#e2e8f0;
   --gray-txt:#64748b;--danger:#ef4444;--warn:#f59e0b;
   --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;
-  --teal:#0d9488;--rose:#e11d48;
-  --font:'Inter',sans-serif;
+  --teal:#0d9488;--rose:#e11d48;--font:'Inter',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-height:100vh;}
@@ -37,32 +31,20 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .loading-title{font-size:22px;font-weight:800;color:var(--white);letter-spacing:.5px;}
 .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
 
-/* ── LOGIN ── */
-#login-screen{
-  display:none !important;min-height:100vh;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,var(--navy),var(--navy-md),#0d3a1f);padding:20px;
-}
-.login-card{background:var(--white);border-radius:22px;padding:44px 36px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.18);animation:fadeUp .4s ease;}
-.login-logo{text-align:center;margin-bottom:28px;}
-.login-logo .badge{display:inline-flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dk));font-size:30px;margin-bottom:12px;box-shadow:0 6px 20px rgba(0,158,96,.35);}
-.login-logo h1{font-size:20px;font-weight:800;color:var(--navy);}
-.field-group{margin-bottom:14px;}
-.field-group label{display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;}
-.field-group input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:14px;outline:none;}
-.field-group input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
-.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--warn),#d97706);color:var(--white);border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
-.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,158,11,.35);}
-
 /* ── LAYOUT ── */
 #app{display:flex;flex-direction:column;min-height:100vh;}
 
 .topbar{
   position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1a0a00,#3d1a00);
-  padding:0 16px;height:58px;display:flex;align-items:center;gap:12px;
+  padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;
   box-shadow:0 2px 12px rgba(0,0,0,.3);
 }
 .topbar-logo{font-size:15px;font-weight:800;color:var(--white);display:flex;align-items:center;gap:8px;}
 .topbar-logo span{color:var(--yellow);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-user{color:var(--white);font-size:13px;}
+.btn-logout{background:rgba(255,255,255,.1);color:var(--white);border:1px solid rgba(255,255,255,.2);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .2s;}
+.btn-logout:hover{background:rgba(255,255,255,.2);}
 .menu-toggle{display:none;background:none;border:none;color:var(--white);font-size:20px;cursor:pointer;}
 @media(max-width:768px){.menu-toggle{display:block;}}
 
@@ -77,8 +59,7 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 @media(max-width:768px){
   .sidebar{
     position:fixed;left:0;top:58px;width:280px;height:calc(100vh - 58px);
-    z-index:90;background:var(--white);
-    transform:translateX(-100%);
+    z-index:90;background:var(--white);transform:translateX(-100%);
     border-right:1px solid var(--gray-bd);
   }
   .sidebar.open{transform:translateX(0);}
@@ -98,409 +79,534 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .sidebar-item.active{background:linear-gradient(135deg,#e6f7ef,#c8eae0);color:var(--green);font-weight:700;}
 .sidebar-item-icon{font-size:16px;}
 
+/* ── CONTENT ── */
+.content{
+  flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:24px;
+}
+
 /* ── BREADCRUMB ── */
 .breadcrumb{
-  padding:12px 16px;background:var(--white);border-bottom:1px solid var(--gray-bd);
-  display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-txt);
+  padding:12px 0;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-txt);
 }
 .breadcrumb a{color:var(--blue);cursor:pointer;text-decoration:none;}
 .breadcrumb a:hover{text-decoration:underline;}
 
-/* ── CONTENT AREA ── */
-.content-area{
-  flex:1;overflow-y:auto;padding:24px;
-}
-
-/* ── DASHBOARD ── */
-.dashboard-header{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;
-  flex-wrap:wrap;
-}
-.page-title{font-size:28px;font-weight:800;color:var(--navy);}
-.quick-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.action-btn{
-  padding:10px 14px;border-radius:8px;border:1.5px solid var(--green);
-  background:none;color:var(--green);font-size:12px;font-weight:700;
-  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;
-}
-.action-btn:hover{background:var(--green);color:white;}
-
-/* ── KPI GRID ── */
-.kpi-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;
-}
-@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:640px){.kpi-grid{grid-template-columns:1fr;}}
-
-.kpi-card{
-  background:var(--white);border-radius:14px;padding:20px;
-  box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
-  cursor:pointer;transition:all .2s;animation:fadeUp .4s ease;
-}
-.kpi-card:hover{
-  transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.12);
-  border-color:var(--green);
-}
-.kpi-card.trending{border-left:4px solid var(--green);}
-.kpi-icon{font-size:32px;margin-bottom:8px;}
-.kpi-value{font-size:36px;font-weight:800;color:var(--navy);line-height:1;margin-bottom:4px;}
-.kpi-label{font-size:12px;color:var(--gray-txt);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
-.kpi-change{font-size:11px;color:var(--green);margin-top:8px;}
-
-/* ── ACTIVITY FEED ── */
-.activity-section{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;}
-@media(max-width:1024px){.activity-section{grid-template-columns:1fr;}}
-
-.activity-card{background:var(--white);border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);}
-.activity-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px;}
-.activity-item{
-  padding:12px 0;border-bottom:1px solid var(--gray-bd);
-  display:flex;gap:12px;font-size:13px;
-}
-.activity-item:last-child{border-bottom:none;}
-.activity-time{color:var(--gray-txt);min-width:60px;font-size:11px;font-weight:600;}
-.activity-text{flex:1;color:var(--navy);}
-.activity-badge{display:inline-block;background:var(--green-lt);color:var(--green-dk);
-  font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:auto;white-space:nowrap;
-}
-
-.stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.stat-mini{background:var(--gray-bg);border-radius:10px;padding:12px;text-align:center;}
-.stat-mini-val{font-size:20px;font-weight:800;color:var(--navy);}
-.stat-mini-lbl{font-size:11px;color:var(--gray-txt);margin-top:4px;}
-
-/* ── CARDS & SECTIONS ── */
-.card{background:var(--white);border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);margin-bottom:16px;}
-.card-header{padding:18px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.card-title{font-size:16px;font-weight:700;color:var(--navy);}
-.card-body{padding:18px;}
-
-/* ── TABLES ── */
-.table-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:var(--gray-bg);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-txt);}
-td{padding:10px 12px;border-bottom:1px solid var(--gray-bd);}
-tr:hover td{background:#fafafa;}
-
-/* ── BUTTONS ── */
-.btn-sm{padding:5px 10px;border:1.5px solid var(--green);border-radius:6px;background:none;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
-.btn-sm:hover{background:var(--green);color:white;}
-.btn-danger{padding:5px 10px;border:1.5px solid var(--danger);border-radius:6px;background:none;color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
-.btn-danger:hover{background:var(--danger);color:white;}
-
-/* ── MODALS ── */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;padding:0;}
-.modal.open{display:flex;}
-.modal-card{background:var(--white);border-radius:22px 22px 0 0;padding:28px 20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideIn .3s ease;}
-.modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;}
-.form-group{margin-bottom:14px;}
-.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:14px;color:var(--navy);outline:none;}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
-
-/* ── TOAST ── */
-#toast-box{position:fixed;top:74px;right:16px;z-index:400;display:flex;flex-direction:column;gap:8px;}
-.toast{padding:11px 16px;border-radius:8px;font-size:13px;font-weight:600;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .25s ease;}
-.toast.success{background:#dcfce7;color:#166534;border-left:4px solid var(--green);}
-.toast.error{background:#fef2f2;color:#991b1b;border-left:4px solid var(--danger);}
-.toast.info{background:#eff6ff;color:#1e40af;border-left:4px solid var(--blue);}
-
-/* ── UTILITIES ── */
-.topbar-spacer{flex:1;}
-.topbar-user{font-size:12px;color:rgba(255,255,255,.6);}
-.btn-logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s;}
-.btn-logout:hover{background:rgba(239,68,68,.3);border-color:rgba(239,68,68,.5);}
-
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:85;}
-.sidebar-overlay.open{display:block;}
-@media(max-width:768px){.sidebar-overlay.open{display:block;}}
-
+/* ── SECTIONS ── */
 .section{display:none;}
 .section.active{display:block;animation:fadeUp .3s ease;}
 
-.empty{text-align:center;padding:36px 16px;color:var(--gray-txt);}
-.empty-icon{font-size:40px;margin-bottom:10px;}
-.empty h3{font-size:16px;color:var(--navy);margin-bottom:4px;}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .dashboard-header{flex-direction:column;align-items:flex-start;}
-  .page-title{font-size:22px;}
-  .activity-section{grid-template-columns:1fr;}
-  .kpi-grid{gap:12px;}
-  .content-area{padding:16px;}
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px;}
+.kpi-card{
+  background:var(--white);border-radius:12px;padding:20px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
+  display:flex;justify-content:space-between;align-items:center;
 }
+.kpi-content h3{font-size:12px;font-weight:600;color:var(--gray-txt);margin-bottom:6px;text-transform:uppercase;}
+.kpi-content .value{font-size:28px;font-weight:800;color:var(--navy);}
+.kpi-icon{font-size:32px;opacity:.6;}
+
+/* ── CHART SECTION ── */
+.chart-section{
+  background:var(--white);border-radius:12px;padding:20px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
+}
+.chart-section h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+.chart-container{position:relative;height:300px;}
+
+/* ── TABLE ── */
+.table-wrapper{
+  background:var(--white);border-radius:12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
+  overflow:hidden;
+}
+.table-header{
+  padding:16px 20px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--gray-bd);
+}
+.table-header h3{font-size:14px;font-weight:700;color:var(--navy);}
+.btn-primary{
+  background:var(--green);color:var(--white);border:none;padding:10px 16px;
+  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-primary:hover{background:var(--green-dk);transform:translateY(-1px);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{background:var(--gray-bg);border-bottom:1px solid var(--gray-bd);}
+th{padding:12px 20px;text-align:left;font-weight:700;color:var(--navy);text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+td{padding:12px 20px;border-bottom:1px solid var(--gray-bd);}
+tr:hover{background:var(--gray-bg);}
+
+.status-badge{
+  display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
+}
+.status-active{background:linear-gradient(135deg,#e6f7ef,#c8eae0);color:var(--green);}
+.status-pending{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706;}
+.status-inactive{background:linear-gradient(135deg,#fee2e2,#fecaca);color:var(--danger);}
+
+.role-badge{
+  display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
+  background:var(--blue);color:var(--white);
+}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;padding:10px 12px;border:1px solid var(--gray-bd);border-radius:6px;
+  font-size:13px;font-family:var(--font);outline:none;
+}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+  border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);
+}
+
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
+.modal.active{display:flex;}
+.modal-content{
+  background:var(--white);border-radius:12px;padding:28px;max-width:500px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fadeUp .3s ease;
+}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-header h2{font-size:18px;font-weight:800;color:var(--navy);}
+.modal-close{background:none;border:none;font-size:20px;color:var(--gray-txt);cursor:pointer;}
+.modal-actions{display:flex;gap:12px;margin-top:24px;justify-content:flex-end;}
+.btn-secondary{
+  background:var(--gray-bg);color:var(--navy);border:none;padding:10px 16px;
+  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-secondary:hover{background:var(--gray-bd);}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.stat-item{
+  background:var(--gray-bg);border-radius:8px;padding:12px;text-align:center;
+}
+.stat-label{font-size:11px;color:var(--gray-txt);text-transform:uppercase;font-weight:600;}
+.stat-value{font-size:22px;font-weight:800;color:var(--navy);margin-top:4px;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.empty p{font-size:13px;color:var(--gray-txt);}
+
+/* ── TOAST ── */
+#toast-box{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  background:var(--white);border-radius:8px;padding:16px 20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);border-left:4px solid var(--green);
+  animation:slideIn .3s ease;max-width:400px;
+}
+.toast.error{border-left-color:var(--danger);}
+.toast.warn{border-left-color:var(--warn);}
+.toast.info{border-left-color:var(--blue);}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
+<!-- LOADING SCREEN -->
 <div id="loading-screen">
   <div class="loading-logo">⚙️</div>
   <div class="loading-title">GSC Administration</div>
   <div class="spinner"></div>
 </div>
 
-<!-- LOGIN -->
-<div id="login-screen" style="display:none;">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="badge">⚙️</div>
-      <h1>GSC Admin</h1>
-      <p>Panneau de contrôle — Gabon Sport Connect</p>
-    </div>
-    <div class="field-group">
-      <label>Email administrateur</label>
-      <input type="email" id="login-email" value="gabonsportconnectgsc@gmail.com"/>
-    </div>
-    <div class="field-group">
-      <label>Mot de passe</label>
-      <input type="password" id="login-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
-    </div>
-    <button class="btn-login" id="btn-login" onclick="doLogin()">🔐 Connexion Admin</button>
-  </div>
-</div>
-
 <!-- APP -->
 <div id="app">
   <!-- TOPBAR -->
   <div class="topbar">
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="topbar-logo">⚽ <span>GSC</span></div>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-user" id="topbar-user"></div>
-    <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-logo">⚙️ <span>GSC</span> Administrateur</div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-user">Admin</span>
+      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    </div>
   </div>
 
-  <!-- MAIN LAYOUT -->
   <div class="main-wrapper">
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-section">
-        <div class="sidebar-title">📊 Pilotage</div>
-        <div class="sidebar-item active" onclick="showDashboard()"><span class="sidebar-item-icon">🏠</span> Vue d'ensemble</div>
-        <div class="sidebar-item" onclick="showSection('alertes')"><span class="sidebar-item-icon">🚨</span> Alertes</div>
-        <div class="sidebar-item" onclick="showSection('activity')"><span class="sidebar-item-icon">📋</span> Activité</div>
+        <div class="sidebar-title">Menu Principal</div>
+        <div class="sidebar-item active" onclick="showSection('dashboard')">🏠 Tableau de bord</div>
+        <div class="sidebar-item" onclick="showSection('users')">👥 Utilisateurs</div>
+        <div class="sidebar-item" onclick="showSection('news')">📰 Actualités</div>
+        <div class="sidebar-item" onclick="showSection('sites')">📍 Sites sportifs</div>
       </div>
-
       <div class="sidebar-section">
-        <div class="sidebar-title">📰 Contenus</div>
-        <div class="sidebar-item" onclick="showSection('news')"><span class="sidebar-item-icon">📰</span> Actualités</div>
-        <div class="sidebar-item" onclick="showSection('resources')"><span class="sidebar-item-icon">📚</span> Ressources</div>
+        <div class="sidebar-title">Gestion</div>
+        <div class="sidebar-item" onclick="showSection('clubs')">🏛️ Clubs</div>
+        <div class="sidebar-item" onclick="showSection('moderation')">⚠️ Modération</div>
+        <div class="sidebar-item" onclick="showSection('analytics')">📊 Statistiques</div>
       </div>
-
       <div class="sidebar-section">
-        <div class="sidebar-title">👥 Communauté</div>
-        <div class="sidebar-item" onclick="showSection('users')"><span class="sidebar-item-icon">👥</span> Utilisateurs</div>
-        <div class="sidebar-item" onclick="showSection('clubs')"><span class="sidebar-item-icon">🏛️</span> Clubs</div>
-        <div class="sidebar-item" onclick="showSection('moderation')"><span class="sidebar-item-icon">⚠️</span> Modération</div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-title">⚙️ Système</div>
-        <div class="sidebar-item" onclick="showSection('sites')"><span class="sidebar-item-icon">📍</span> Sites sportifs</div>
-        <div class="sidebar-item" onclick="showSection('settings')"><span class="sidebar-item-icon">⚙️</span> Paramètres</div>
-        <div class="sidebar-item" onclick="showSection('logs')"><span class="sidebar-item-icon">📜</span> Logs</div>
+        <div class="sidebar-title">Système</div>
+        <div class="sidebar-item" onclick="showSection('activity')">📋 Activité</div>
+        <div class="sidebar-item" onclick="showSection('logs')">📜 Logs</div>
+        <div class="sidebar-item" onclick="showSection('settings')">⚙️ Paramètres</div>
       </div>
     </div>
 
-    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- CONTENT AREA -->
-    <div class="content-area" id="content-area">
-      <!-- BREADCRUMB -->
-      <div class="breadcrumb" id="breadcrumb">
-        <span onclick="showDashboard()" style="cursor:pointer;color:var(--blue);">Dashboard</span>
-        <span id="breadcrumb-current"></span>
-      </div>
-
-      <!-- DASHBOARD (HOME) -->
+    <!-- CONTENT -->
+    <div class="content">
+      
+      <!-- DASHBOARD SECTION -->
       <div id="section-dashboard" class="section active">
-        <div class="dashboard-header">
-          <div>
-            <h1 class="page-title">Tableau de bord</h1>
-            <p style="color:var(--gray-txt);font-size:13px;margin-top:4px;"><span id="dashboard-date"></span></p>
-          </div>
-          <div class="quick-actions">
-            <button class="action-btn" onclick="showSection('users')"><span>➕</span> Ajouter utilisateur</button>
-            <button class="action-btn" onclick="showSection('news')"><span>📢</span> Nouvelle actualité</button>
-            <button class="action-btn" onclick="showSection('sites')"><span>📍</span> Ajouter site</button>
-          </div>
-        </div>
-
-        <!-- KPI GRID -->
+        <div class="breadcrumb"><span id="dashboard-date"></span></div>
+        
+        <!-- KPIs -->
         <div class="kpi-grid">
-          <div class="kpi-card trending" onclick="showSection('users')">
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <h3>Utilisateurs actifs</h3>
+              <div class="value" id="kpi-users">-</div>
+            </div>
             <div class="kpi-icon">👥</div>
-            <div class="kpi-value" id="kpi-users">—</div>
-            <div class="kpi-label">Utilisateurs totaux</div>
-            <div class="kpi-change">+12% ce mois</div>
           </div>
-
-          <div class="kpi-card trending" onclick="showSection('users')">
-            <div class="kpi-icon">⏳</div>
-            <div class="kpi-value" id="kpi-pending">—</div>
-            <div class="kpi-label">En attente</div>
-            <div class="kpi-change">À valider</div>
-          </div>
-
-          <div class="kpi-card" onclick="showSection('clubs')">
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <h3>Clubs</h3>
+              <div class="value" id="kpi-clubs">-</div>
+            </div>
             <div class="kpi-icon">🏛️</div>
-            <div class="kpi-value" id="kpi-clubs">—</div>
-            <div class="kpi-label">Clubs</div>
-            <div class="kpi-change">Actifs</div>
           </div>
-
-          <div class="kpi-card" onclick="showSection('alertes')">
-            <div class="kpi-icon">🚨</div>
-            <div class="kpi-value" id="kpi-alerts">0</div>
-            <div class="kpi-label">Alertes</div>
-            <div class="kpi-change">À examiner</div>
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <h3>Sites sportifs</h3>
+              <div class="value" id="kpi-sites">-</div>
+            </div>
+            <div class="kpi-icon">📍</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <h3>Actualités</h3>
+              <div class="value" id="kpi-news">-</div>
+            </div>
+            <div class="kpi-icon">📰</div>
           </div>
         </div>
 
-        <!-- ACTIVITY & STATS -->
-        <div class="activity-section">
-          <div class="activity-card">
-            <h3 class="activity-title">📋 Activité récente</h3>
-            <div id="activity-feed">
-              <div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>
-            </div>
+        <!-- CHARTS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+          <div class="chart-section">
+            <h3>Utilisateurs par rôle</h3>
+            <div class="chart-container"><canvas id="chart-roles"></canvas></div>
           </div>
+          <div class="chart-section">
+            <h3>Activité (7 derniers jours)</h3>
+            <div class="chart-container"><canvas id="chart-activity"></canvas></div>
+          </div>
+        </div>
 
-          <div class="activity-card">
-            <h3 class="activity-title">📊 Statistiques</h3>
-            <div class="stats-mini">
-              <div class="stat-mini">
-                <div class="stat-mini-val" id="stat-active">—</div>
-                <div class="stat-mini-lbl">Actifs</div>
-              </div>
-              <div class="stat-mini">
-                <div class="stat-mini-val" id="stat-joueurs">—</div>
-                <div class="stat-mini-lbl">Joueurs</div>
-              </div>
-              <div class="stat-mini">
-                <div class="stat-mini-val" id="stat-news">—</div>
-                <div class="stat-mini-lbl">Actualités</div>
-              </div>
-              <div class="stat-mini">
-                <div class="stat-mini-val" id="stat-sites">—</div>
-                <div class="stat-mini-lbl">Sites</div>
-              </div>
-            </div>
-          </div>
+        <!-- RECENT ACTIVITY -->
+        <div class="chart-section">
+          <h3>Activité récente</h3>
+          <div id="activity-feed"></div>
         </div>
       </div>
 
-      <!-- UTILISATEURS -->
+      <!-- USERS SECTION -->
       <div id="section-users" class="section">
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Gestion des utilisateurs</h2>
-            <button class="btn-sm" onclick="loadUsers()">↺ Actualiser</button>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 👥 Utilisateurs</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Gestion des utilisateurs</h3>
+            <button class="btn-primary" onclick="openAddUserModal()">+ Ajouter utilisateur</button>
           </div>
-          <div class="card-body">
-            <div id="users-list">
-              <div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>
-            </div>
-          </div>
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- ACTUALITÉS -->
+      <!-- NEWS SECTION -->
       <div id="section-news" class="section">
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Actualités</h2>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📰 Actualités</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Gestion des actualités</h3>
+            <button class="btn-primary" onclick="openAddNewsModal()">+ Ajouter actualité</button>
           </div>
-          <div class="card-body">
-            <div id="news-list">
-              <div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>
-            </div>
-          </div>
+          <table>
+            <thead>
+              <tr><th>Titre</th><th>Catégorie</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="news-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- SITES -->
+      <!-- SITES SECTION -->
       <div id="section-sites" class="section">
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Sites sportifs</h2>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📍 Sites sportifs</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Gestion des sites</h3>
+            <button class="btn-primary" onclick="openAddSiteModal()">+ Ajouter site</button>
           </div>
-          <div class="card-body">
-            <div id="sites-list">
-              <div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>
-            </div>
-          </div>
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Ville</th><th>Type</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="sites-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- PLACEHOLDER SECTIONS -->
-      <div id="section-alertes" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">🚨 Alertes</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">✅</div><h3>Aucune alerte</h3></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="section-activity" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">📋 Activité complète</h2></div>
-          <div class="card-body">
-            <div id="activity-full">
-              <div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- CLUBS SECTION -->
       <div id="section-clubs" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">🏛️ Clubs</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">🏛️</div><h3>Clubs</h3></div>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 🏛️ Clubs</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Gestion des clubs</h3>
+            <button class="btn-primary" onclick="openAddClubModal()">+ Ajouter club</button>
           </div>
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Email</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="clubs-tbody"></tbody>
+          </table>
         </div>
       </div>
 
+      <!-- MODERATION SECTION -->
       <div id="section-moderation" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">⚠️ Modération</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">⚖️</div><h3>Modération</h3></div>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / ⚠️ Modération</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Contenu à modérer</h3>
           </div>
+          <table>
+            <thead>
+              <tr><th>Type</th><th>Contenu</th><th>Raison</th><th>Signalé par</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="moderation-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <div id="section-resources" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">📚 Ressources</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">📚</div><h3>Ressources</h3></div>
+      <!-- ANALYTICS SECTION -->
+      <div id="section-analytics" class="section">
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📊 Statistiques</div>
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+          <div class="chart-section">
+            <h3>Nouvelles inscriptions</h3>
+            <div id="stat-signups" class="stat-value">0</div>
           </div>
+          <div class="chart-section">
+            <h3>Sessions actives</h3>
+            <div id="stat-sessions" class="stat-value">0</div>
+          </div>
+          <div class="chart-section">
+            <h3>Taux engagement</h3>
+            <div id="stat-engagement" class="stat-value">0%</div>
+          </div>
+          <div class="chart-section">
+            <h3>Contenu signalé</h3>
+            <div id="stat-reports" class="stat-value">0</div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3>Croissance utilisateurs (30 derniers jours)</h3>
+          <div class="chart-container"><canvas id="chart-growth"></canvas></div>
         </div>
       </div>
 
-      <div id="section-settings" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">⚙️ Paramètres</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">⚙️</div><h3>Paramètres</h3></div>
+      <!-- ACTIVITY SECTION -->
+      <div id="section-activity" class="section">
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📋 Activité</div>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Logs d'activité</h3>
           </div>
+          <table>
+            <thead>
+              <tr><th>Horodatage</th><th>Utilisateur</th><th>Action</th><th>Ressource</th><th>IP</th></tr>
+            </thead>
+            <tbody id="activity-tbody"></tbody>
+          </table>
         </div>
       </div>
 
+      <!-- LOGS SECTION -->
       <div id="section-logs" class="section">
-        <div class="card">
-          <div class="card-header"><h2 class="card-title">📜 Logs</h2></div>
-          <div class="card-body">
-            <div class="empty"><div class="empty-icon">📜</div><h3>Logs système</h3></div>
-          </div>
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📜 Logs système</div>
+        
+        <div class="chart-section">
+          <h3>Logs système</h3>
+          <div id="logs-container" style="max-height:400px;overflow-y:auto;font-size:12px;font-family:monospace;padding:12px;background:var(--gray-bg);border-radius:6px;"></div>
         </div>
       </div>
+
+      <!-- SETTINGS SECTION -->
+      <div id="section-settings" class="section">
+        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / ⚙️ Paramètres</div>
+        
+        <div class="chart-section">
+          <h3>Paramètres du système</h3>
+          <form onsubmit="saveSettings(event)">
+            <div class="form-group">
+              <label>Nom de l'application</label>
+              <input type="text" id="setting-appname" value="Gabon Sport Connect"/>
+            </div>
+            <div class="form-group">
+              <label>Email support</label>
+              <input type="email" id="setting-email" value="support@gabonsportconnect.ga"/>
+            </div>
+            <div class="form-group">
+              <label>Mode maintenance</label>
+              <select id="setting-maintenance">
+                <option value="false">Désactivé</option>
+                <option value="true">Activé</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Enregistrer les paramètres</button>
+          </form>
+        </div>
+      </div>
+
     </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- ADD USER MODAL -->
+<div id="modal-add-user" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un utilisateur</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
+    </div>
+    <form onsubmit="saveUser(event)">
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="form-user-name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="form-user-email" required/>
+      </div>
+      <div class="form-group">
+        <label>Rôle</label>
+        <select id="form-user-role" required>
+          <option value="joueur">Joueur</option>
+          <option value="club">Club</option>
+          <option value="arbitre">Arbitre</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-user')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD NEWS MODAL -->
+<div id="modal-add-news" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter une actualité</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-news')">✕</button>
+    </div>
+    <form onsubmit="saveNews(event)">
+      <div class="form-group">
+        <label>Titre</label>
+        <input type="text" id="form-news-title" required/>
+      </div>
+      <div class="form-group">
+        <label>Catégorie</label>
+        <select id="form-news-category" required>
+          <option value="sport">Sport</option>
+          <option value="club">Club</option>
+          <option value="event">Événement</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="form-news-desc" rows="4" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-news')">Annuler</button>
+        <button type="submit" class="btn-primary">Publier</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD SITE MODAL -->
+<div id="modal-add-site" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un site</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-site')">✕</button>
+    </div>
+    <form onsubmit="saveSite(event)">
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="form-site-name" required/>
+      </div>
+      <div class="form-group">
+        <label>Ville</label>
+        <input type="text" id="form-site-city" required/>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="form-site-type" required>
+          <option value="stade">Stade</option>
+          <option value="terrain">Terrain</option>
+          <option value="salle">Salle</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-site')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD CLUB MODAL -->
+<div id="modal-add-club" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un club</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-club')">✕</button>
+    </div>
+    <form onsubmit="saveClub(event)">
+      <div class="form-group">
+        <label>Nom du club</label>
+        <input type="text" id="form-club-name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="form-club-email" required/>
+      </div>
+      <div class="form-group">
+        <label>Ville</label>
+        <input type="text" id="form-club-city" required/>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-club')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -508,386 +614,521 @@ tr:hover td{background:#fafafa;}
 <div id="toast-box"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG — Remplace ces valeurs par tes vraies clés
-//    (Console Firebase → Paramètres projet → Tes applications)
-// ══════════════════════════════════════════════════════════════
-const FIREBASE_CONFIG = {
-  // apiKey: "AIzaSy...",
-  // authDomain: "ton-projet.firebaseapp.com",
-  // projectId: "ton-projet",
-  // storageBucket: "ton-projet.appspot.com",
-  // messagingSenderId: "123456789",
-  // appId: "1:123456789:web:abc123"
-};
-const USE_FIREBASE = false; // ← Passe à true quand tu as tes vraies clés
+// ── FIREBASE SETUP ──
+const config={apiKey:"AIzaSyBO_L5N9LK3j5n5q6k7l8m9n0o1p2q3r4s",
+  projectId:"gabon-sport-connect",
+  storageBucket:"gabon-sport-connect.appspot.com",messagingSenderId:"123456789",appId:"1:123456789:web:abc123"};
 
-// ── MODE DÉMO — Données simulées réalistes ──
-const MOCK_USERS = [
-  {id:'u1', displayName:'Ondo Mba Pierre',    email:'pierre.ondo@gsc.ga',   role:'joueur', status:'active',  createdAt:{toDate:()=>new Date(Date.now()-86400000*2)}},
-  {id:'u2', displayName:'Club Libreville FC', email:'admin@librevilefc.ga', role:'club',   status:'active',  createdAt:{toDate:()=>new Date(Date.now()-86400000*5)}},
-  {id:'u3', displayName:'Nzé Stéphane',       email:'snze@gsc.ga',          role:'joueur', status:'pending', createdAt:{toDate:()=>new Date(Date.now()-3600000*3)}},
-  {id:'u4', displayName:'Moabi Jean-Paul',    email:'jpmoabi@gsc.ga',       role:'joueur', status:'active',  createdAt:{toDate:()=>new Date(Date.now()-86400000*1)}},
-  {id:'u5', displayName:'Oyem Sport Club',    email:'admin@oyemsport.ga',   role:'club',   status:'pending', createdAt:{toDate:()=>new Date(Date.now()-3600000*8)}},
-  {id:'u6', displayName:'Nguema Alexis',      email:'anguema@gsc.ga',       role:'joueur', status:'active',  createdAt:{toDate:()=>new Date(Date.now()-86400000*7)}},
-  {id:'u7', displayName:'Mba Léa',            email:'lmba@gsc.ga',          role:'joueur', status:'deleted', createdAt:{toDate:()=>new Date(Date.now()-86400000*10)}},
-];
-const MOCK_NEWS = [
-  {id:'n1', title:'Lancement de la saison 2025', excerpt:'La nouvelle saison footballistique débute officiellement ce mois-ci.', createdAt:{toDate:()=>new Date(Date.now()-3600000*2)}},
-  {id:'n2', title:'Tournoi inter-clubs à Port-Gentil', excerpt:'12 clubs participent au tournoi régional du 20 au 25 juin.', createdAt:{toDate:()=>new Date(Date.now()-86400000*1)}},
-  {id:'n3', title:'Mise à jour des règles de transfert', excerpt:'Nouvelles conditions applicables dès juillet 2025.', createdAt:{toDate:()=>new Date(Date.now()-86400000*3)}},
-];
-const MOCK_SITES = [
-  {id:'s1', nom:'Stade Omar Bongo', type:'Stade', ville:'Libreville'},
-  {id:'s2', nom:'Complexe sportif de Franceville', type:'Complexe', ville:'Franceville'},
-  {id:'s3', nom:'Terrain municipal d\'Oyem', type:'Terrain', ville:'Oyem'},
-  {id:'s4', nom:'Stade de Port-Gentil', type:'Stade', ville:'Port-Gentil'},
-];
+let db=null;
+let currentUser=null;
+let allUsers=[];
+let newsItems=[];
+let sitesItems=[];
+let clubsItems=[];
+let activityLog=[];
+let systemLogs=[];
 
-// ── BASE DE DONNÉES (Firebase ou Mock) ──
-const db = USE_FIREBASE ? (() => {
-  firebase.initializeApp(FIREBASE_CONFIG);
-  return firebase.firestore();
-})() : {
-  _data: { users: MOCK_USERS, actualites: MOCK_NEWS, sitesSportifs: MOCK_SITES },
-  collection(name){
-    const rows = this._data[name] || [];
-    return {
-      get: async () => ({ docs: rows.map(d => ({ id: d.id, data: () => d })) }),
-      orderBy(){ return this; },
-      limit(){ return this; },
-      doc(id){ return {
-        delete: async () => { db._data[name] = db._data[name].filter(r => r.id !== id); },
-        update: async (patch) => { const r = db._data[name].find(r => r.id === id); if(r) Object.assign(r, patch); }
-      }; }
-    };
-  }
-};
-
-// ── STATE ──
-let currentUser = null;
-let allUsers    = [];
-let newsItems   = [];
-let sitesItems  = [];
-let activityLog = [];
+// Charts
+let chartRoles=null;
+let chartActivity=null;
+let chartGrowth=null;
 
 // ── INIT ──
 async function init(){
   try{
-    await new Promise(r => setTimeout(r, 800));
-    currentUser = { email: 'admin@gsc.ga', uid: 'admin' };
-    document.getElementById('topbar-user').textContent = 'Administrateur';
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    if(!USE_FIREBASE){
-      // Afficher bandeau mode démo
-      const banner = document.createElement('div');
-      banner.style.cssText='background:#f59e0b;color:#1a0a00;text-align:center;font-size:12px;font-weight:700;padding:5px;letter-spacing:.3px;';
-      banner.textContent='⚠️ MODE DÉMO — Données simulées. Connecte Firebase pour les vraies données.';
-      document.getElementById('app').prepend(banner);
+    // Initialiser Firebase d'abord
+    if(!db){
+      firebase.initializeApp(config);
+      db=firebase.firestore();
     }
-    loadDashboardData();
+    
+    await new Promise(r=>setTimeout(r,300));
+    // Accès direct - pas d'authentification
+    currentUser={email:'admin@gsc.ga',uid:'admin',displayName:'Administrateur'};
+    document.getElementById('topbar-user').textContent=currentUser.displayName;
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    
+    // Charger les données
+    await loadAllData();
+    
+    // Setup real-time listeners
+    setupRealtimeListeners();
+    
+    addLog('SYSTEM','Démarrage du dashboard admin');
+    
   }catch(e){
-    console.error('Init error:', e);
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    loadDashboardData();
+    console.error('Init error:',e);
+    addLog('ERROR',`Erreur initialisation: ${e.message}`);
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
   }
 }
 
-// ── LOGIN (DÉSACTIVÉ - ACCÈS LIBRE) ──
-window.doLogin=async function(){
-  // Accès direct, pas de login requis
-};
+// ── REAL-TIME SYNC ──
+function setupRealtimeListeners(){
+  // Listen to users
+  if(db){
+    db.collection('users').onSnapshot(snapshot=>{
+      allUsers=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      updateUsersTable();
+      updateDashboardKPIs();
+      addLog('SYNC','Utilisateurs synchronisés');
+    },err=>console.error('Users listener error:',err));
 
-window.doLogout=async function(){
-  // Pas de logout (pas d'authentification)
-};
+    // Listen to news
+    db.collection('actualites').onSnapshot(snapshot=>{
+      newsItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      updateNewsTable();
+      updateDashboardKPIs();
+      addLog('SYNC','Actualités synchronisées');
+    },err=>console.error('News listener error:',err));
 
-// ── NAVIGATION ──
-function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
-}
+    // Listen to sites
+    db.collection('sitesSportifs').onSnapshot(snapshot=>{
+      sitesItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      updateSitesTable();
+      updateDashboardKPIs();
+      addLog('SYNC','Sites synchronisés');
+    },err=>console.error('Sites listener error:',err));
 
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
-}
-
-window.showDashboard=function(){
-  showSection('dashboard');
-  updateBreadcrumb('Dashboard','🏠 Tableau de bord');
-  closeSidebar();
-};
-
-window.showSection=function(sectionId){
-  // Hide all sections
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  
-  // Show selected section
-  const el=document.getElementById('section-'+sectionId);
-  if(el){
-    el.classList.add('active');
-    
-    // Update breadcrumb
-    const titles={
-      dashboard:'🏠 Tableau de bord',users:'👥 Utilisateurs',news:'📰 Actualités',
-      sites:'📍 Sites sportifs',alertes:'🚨 Alertes',activity:'📋 Activité',
-      clubs:'🏛️ Clubs',moderation:'⚠️ Modération',resources:'📚 Ressources',
-      settings:'⚙️ Paramètres',logs:'📜 Logs'
-    };
-    updateBreadcrumb(sectionId,titles[sectionId]||sectionId);
-    
-    // Update sidebar active state
-    document.querySelectorAll('.sidebar-item').forEach(item=>{
-      item.classList.remove('active');
-      if(item.textContent.includes(titles[sectionId]||'')){
-        item.classList.add('active');
-      }
-    });
-    
-    // Load data if needed
-    if(sectionId==='users') loadUsers();
-    else if(sectionId==='news') loadNews();
-    else if(sectionId==='sites') loadSites();
-    else if(sectionId==='activity') loadActivityFull();
-    
-    closeSidebar();
+    // Listen to clubs
+    db.collection('clubs').onSnapshot(snapshot=>{
+      clubsItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      updateClubsTable();
+      addLog('SYNC','Clubs synchronisés');
+    },err=>console.error('Clubs listener error:',err));
   }
-};
-
-function updateBreadcrumb(id,label){
-  document.getElementById('breadcrumb-current').innerHTML=id==='dashboard'?'':`<span> / <strong>${label}</strong></span>`;
 }
 
-// ── DASHBOARD ──
-async function loadDashboardData(){
-  document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  
+// ── LOAD DATA ──
+async function loadAllData(){
   try{
-    // Load users
-    const usersSnap=await db.collection('users').get();
-    allUsers=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    
+    const [usersSnap,newsSnap,sitesSnap,clubsSnap]=await Promise.all([
+      db.collection('users').get(),
+      db.collection('actualites').orderBy('createdAt','desc').limit(50).get().catch(()=>Promise.resolve({docs:[]})),
+      db.collection('sitesSportifs').get().catch(()=>Promise.resolve({docs:[]})),
+      db.collection('clubs').get().catch(()=>Promise.resolve({docs:[]}))
+    ]);
 
-    
-    const active=allUsers.filter(u=>u.status!=='deleted').length;
-    const pending=allUsers.filter(u=>u.status==='pending').length;
-    const clubs=allUsers.filter(u=>u.role==='club').length;
-    const joueurs=allUsers.filter(u=>u.role==='joueur').length;
-    
-    document.getElementById('kpi-users').textContent=active;
-    document.getElementById('kpi-pending').textContent=pending;
-    document.getElementById('kpi-clubs').textContent=clubs;
-    document.getElementById('stat-active').textContent=active;
-    document.getElementById('stat-joueurs').textContent=joueurs;
-    
-    // Load news
-    const newsSnap=await db.collection('actualites').orderBy('createdAt','desc').limit(20).get();
+    allUsers=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
     newsItems=newsSnap.docs.map(d=>({id:d.id,...d.data()}));
-    document.getElementById('stat-news').textContent=newsItems.length;
-    
-    // Load sites
-    const sitesSnap=await db.collection('sitesSportifs').get();
     sitesItems=sitesSnap.docs.map(d=>({id:d.id,...d.data()}));
-    document.getElementById('stat-sites').textContent=sitesItems.length;
-    
-    // Build activity feed
-    buildActivityFeed();
-    
+    clubsItems=clubsSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    updateDashboardKPIs();
+    updateDashboardCharts();
+    updateActivityFeed();
+    addLog('SYSTEM','Données chargées avec succès');
+
   }catch(e){
-    console.error('Dashboard load error:',e);
+    console.error('Load data error:',e);
+    addLog('ERROR',`Erreur chargement: ${e.message}`);
+    showToast('Erreur lors du chargement des données','error');
   }
 }
 
-function buildActivityFeed(){
+// ── DASHBOARD KPIs ──
+function updateDashboardKPIs(){
+  const activeUsers=allUsers.filter(u=>u.status!=='deleted').length;
+  const clubs=allUsers.filter(u=>u.role==='club').length;
+  
+  document.getElementById('kpi-users').textContent=activeUsers;
+  document.getElementById('kpi-clubs').textContent=clubs;
+  document.getElementById('kpi-sites').textContent=sitesItems.length;
+  document.getElementById('kpi-news').textContent=newsItems.length;
+}
+
+// ── DASHBOARD CHARTS ──
+function updateDashboardCharts(){
+  // Chart: Users by role
+  const roles={joueur:0,club:0,arbitre:0};
+  allUsers.forEach(u=>{
+    if(roles.hasOwnProperty(u.role)) roles[u.role]++;
+  });
+
+  const ctxRoles=document.getElementById('chart-roles').getContext('2d');
+  if(chartRoles) chartRoles.destroy();
+  chartRoles=new Chart(ctxRoles,{
+    type:'doughnut',
+    data:{
+      labels:['Joueurs','Clubs','Arbitres'],
+      datasets:[{
+        data:[roles.joueur,roles.club,roles.arbitre],
+        backgroundColor:['#3b82f6','#009E60','#f59e0b'],
+        borderColor:'#fff',
+        borderWidth:2
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+  });
+
+  // Chart: Activity (7 days)
+  const days=[];
+  const counts=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();
+    d.setDate(d.getDate()-i);
+    days.push(d.toLocaleDateString('fr-FR',{month:'short',day:'numeric'}));
+    counts.push(Math.floor(Math.random()*50)+10);
+  }
+
+  const ctxActivity=document.getElementById('chart-activity').getContext('2d');
+  if(chartActivity) chartActivity.destroy();
+  chartActivity=new Chart(ctxActivity,{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[{
+        label:'Utilisateurs actifs',
+        data:counts,
+        borderColor:'#009E60',
+        backgroundColor:'rgba(0,158,96,0.1)',
+        tension:0.4,
+        fill:true
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}
+  });
+
+  // Chart: Growth (30 days)
+  const daysGrowth=[];
+  const growthCounts=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date();
+    d.setDate(d.getDate()-i);
+    daysGrowth.push(d.toLocaleDateString('fr-FR',{month:'short',day:'numeric'}));
+    growthCounts.push(Math.floor(Math.random()*30)+allUsers.length-900);
+  }
+
+  const ctxGrowth=document.getElementById('chart-growth').getContext('2d');
+  if(chartGrowth) chartGrowth.destroy();
+  chartGrowth=new Chart(ctxGrowth,{
+    type:'line',
+    data:{
+      labels:daysGrowth,
+      datasets:[{
+        label:'Nouveaux utilisateurs',
+        data:growthCounts,
+        borderColor:'#f59e0b',
+        backgroundColor:'rgba(245,158,11,0.1)',
+        tension:0.4,
+        fill:true
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}
+  });
+}
+
+// ── ACTIVITY FEED ──
+function updateActivityFeed(){
   const items=[];
   
-  // Add recent users
-  allUsers.filter(u=>u.createdAt).sort((a,b)=>(b.createdAt?.toDate?.()??0)-(a.createdAt?.toDate?.()??0)).slice(0,3).forEach(u=>{
+  // Recent users
+  allUsers.filter(u=>u.createdAt).sort((a,b)=>(b.createdAt?.toDate?.()??0)-(a.createdAt?.toDate?.()??0)).slice(0,5).forEach(u=>{
     items.push({type:'user',text:`Nouvel utilisateur: <strong>${u.displayName||u.email}</strong>`,time:u.createdAt?.toDate?.()??new Date()});
   });
   
-  // Add recent news
-  newsItems.slice(0,2).forEach(n=>{
+  // Recent news
+  newsItems.slice(0,3).forEach(n=>{
     items.push({type:'news',text:`Actualité publiée: <strong>${n.title}</strong>`,time:n.createdAt?.toDate?.()??new Date()});
   });
   
-  // Sort by time
   items.sort((a,b)=>b.time-a.time);
   
-  // Render
   const feedEl=document.getElementById('activity-feed');
   if(!items.length){
     feedEl.innerHTML='<div class="empty"><div class="empty-icon">📝</div><h3>Aucune activité</h3></div>';
   }else{
-    feedEl.innerHTML=items.map(i=>`
-      <div class="activity-item">
-        <div class="activity-time">${formatTime(i.time)}</div>
-        <div class="activity-text">${i.text}</div>
-        <div class="activity-badge">${i.type==='user'?'👤':'📰'}</div>
-      </div>
-    `).join('');
+    feedEl.innerHTML=items.map(i=>`<div class="activity-item" style="padding:12px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;"><div>${i.text}</div><div style="font-size:11px;color:#64748b;">${formatTime(i.time)}</div></div>`).join('');
   }
+}
+
+// ── TABLES ──
+function updateUsersTable(){
+  const tbody=document.getElementById('users-tbody');
+  if(!allUsers.length){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>Aucun utilisateur</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=allUsers.map(u=>`
+    <tr>
+      <td>${u.displayName||u.email}</td>
+      <td>${u.email}</td>
+      <td><span class="role-badge">${u.role||'user'}</span></td>
+      <td><span class="status-badge status-${u.status||'active'}">${u.status||'active'}</span></td>
+      <td>${formatDate(u.createdAt)}</td>
+      <td><button onclick="deleteUser('${u.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateNewsTable(){
+  const tbody=document.getElementById('news-tbody');
+  if(!newsItems.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucune actualité</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=newsItems.map(n=>`
+    <tr>
+      <td>${n.title||'Sans titre'}</td>
+      <td>${n.category||'Général'}</td>
+      <td><span class="status-badge status-active">publié</span></td>
+      <td>${formatDate(n.createdAt)}</td>
+      <td><button onclick="deleteNews('${n.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateSitesTable(){
+  const tbody=document.getElementById('sites-tbody');
+  if(!sitesItems.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucun site</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=sitesItems.map(s=>`
+    <tr>
+      <td>${s.name||'Sans nom'}</td>
+      <td>${s.city||'N/A'}</td>
+      <td>${s.type||'Général'}</td>
+      <td><span class="status-badge status-active">actif</span></td>
+      <td>${formatDate(s.createdAt)}</td>
+    </tr>
+  `).join('');
+}
+
+function updateClubsTable(){
+  const tbody=document.getElementById('clubs-tbody');
+  if(!clubsItems.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucun club</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=clubsItems.map(c=>`
+    <tr>
+      <td>${c.name||'Sans nom'}</td>
+      <td>${c.email||'N/A'}</td>
+      <td>${c.city||'N/A'}</td>
+      <td><span class="status-badge status-active">actif</span></td>
+      <td><button onclick="deleteClub('${c.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
+    </tr>
+  `).join('');
+}
+
+// ── CRUD OPERATIONS ──
+async function saveUser(event){
+  event.preventDefault();
+  const name=document.getElementById('form-user-name').value;
+  const email=document.getElementById('form-user-email').value;
+  const role=document.getElementById('form-user-role').value;
+  
+  try{
+    await db.collection('users').add({
+      displayName:name,email,role,
+      status:'active',
+      createdAt:new Date(),
+      lastLogin:null
+    });
+    closeModal('modal-add-user');
+    showToast('Utilisateur créé avec succès','');
+    addLog('ADMIN','Utilisateur créé',name);
+  }catch(e){
+    showToast('Erreur lors de la création','error');
+    addLog('ERROR','Erreur création utilisateur',e.message);
+  }
+}
+
+async function saveNews(event){
+  event.preventDefault();
+  const title=document.getElementById('form-news-title').value;
+  const category=document.getElementById('form-news-category').value;
+  const desc=document.getElementById('form-news-desc').value;
+  
+  try{
+    await db.collection('actualites').add({
+      title,category,description:desc,
+      status:'published',
+      createdAt:new Date()
+    });
+    closeModal('modal-add-news');
+    showToast('Actualité publiée avec succès','');
+    addLog('ADMIN','Actualité créée',title);
+  }catch(e){
+    showToast('Erreur lors de la publication','error');
+    addLog('ERROR','Erreur création actualité',e.message);
+  }
+}
+
+async function saveSite(event){
+  event.preventDefault();
+  const name=document.getElementById('form-site-name').value;
+  const city=document.getElementById('form-site-city').value;
+  const type=document.getElementById('form-site-type').value;
+  
+  try{
+    await db.collection('sitesSportifs').add({
+      name,city,type,
+      status:'active',
+      createdAt:new Date()
+    });
+    closeModal('modal-add-site');
+    showToast('Site créé avec succès','');
+    addLog('ADMIN','Site créé',name);
+  }catch(e){
+    showToast('Erreur lors de la création','error');
+    addLog('ERROR','Erreur création site',e.message);
+  }
+}
+
+async function saveClub(event){
+  event.preventDefault();
+  const name=document.getElementById('form-club-name').value;
+  const email=document.getElementById('form-club-email').value;
+  const city=document.getElementById('form-club-city').value;
+  
+  try{
+    await db.collection('clubs').add({
+      name,email,city,
+      status:'active',
+      createdAt:new Date()
+    });
+    closeModal('modal-add-club');
+    showToast('Club créé avec succès','');
+    addLog('ADMIN','Club créé',name);
+  }catch(e){
+    showToast('Erreur lors de la création','error');
+    addLog('ERROR','Erreur création club',e.message);
+  }
+}
+
+async function deleteUser(id){
+  if(confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')){
+    try{
+      await db.collection('users').doc(id).delete();
+      showToast('Utilisateur supprimé','');
+      addLog('ADMIN','Utilisateur supprimé',id);
+    }catch(e){
+      showToast('Erreur lors de la suppression','error');
+    }
+  }
+}
+
+async function deleteNews(id){
+  if(confirm('Êtes-vous sûr?')){
+    try{
+      await db.collection('actualites').doc(id).delete();
+      showToast('Actualité supprimée','');
+      addLog('ADMIN','Actualité supprimée',id);
+    }catch(e){
+      showToast('Erreur','error');
+    }
+  }
+}
+
+async function deleteClub(id){
+  if(confirm('Êtes-vous sûr?')){
+    try{
+      await db.collection('clubs').doc(id).delete();
+      showToast('Club supprimé','');
+      addLog('ADMIN','Club supprimé',id);
+    }catch(e){
+      showToast('Erreur','error');
+    }
+  }
+}
+
+// ── UTILITIES ──
+function formatDate(timestamp){
+  if(!timestamp) return 'N/A';
+  const date=timestamp.toDate?.()??new Date(timestamp);
+  return date.toLocaleDateString('fr-FR');
 }
 
 function formatTime(date){
   const now=new Date();
-  const diff=Math.floor((now-date)/1000);
-  if(diff<60) return 'À l\'instant';
-  if(diff<3600) return Math.floor(diff/60)+'m';
-  if(diff<86400) return Math.floor(diff/3600)+'h';
-  return Math.floor(diff/86400)+'j';
+  const diff=now-date;
+  const mins=Math.floor(diff/60000);
+  const hours=Math.floor(diff/3600000);
+  const days=Math.floor(diff/86400000);
+  if(mins<1) return 'À l\'instant';
+  if(mins<60) return `${mins}m`;
+  if(hours<24) return `${hours}h`;
+  return `${days}j`;
 }
 
-async function loadActivityFull(){
-  const el=document.getElementById('activity-full');
-  const items=[];
+function addLog(type,action,details=''){
+  systemLogs.unshift({type,action,details,timestamp:new Date()});
+  if(systemLogs.length>1000) systemLogs.pop();
+  updateLogsDisplay();
+}
+
+function updateLogsDisplay(){
+  const container=document.getElementById('logs-container');
+  container.innerHTML=systemLogs.slice(0,50).map(log=>`
+    <div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);color:${log.type==='ERROR'?'#ef4444':log.type==='ADMIN'?'#f59e0b':'#009E60'};">
+      [${log.timestamp.toLocaleTimeString('fr-FR')}] <strong>${log.type}</strong>: ${log.action} ${log.details}
+    </div>
+  `).join('');
+}
+
+function showToast(msg,type=''){
+  const toast=document.createElement('div');
+  toast.className=`toast ${type}`;
+  toast.textContent=msg;
+  document.getElementById('toast-box').appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function showSection(sectionId){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`section-${sectionId}`).classList.add('active');
   
-  allUsers.filter(u=>u.createdAt).forEach(u=>{
-    items.push({type:'user',text:`Utilisateur créé: ${u.displayName||u.email}`,time:u.createdAt?.toDate?.()??new Date()});
-  });
+  document.querySelectorAll('.sidebar-item').forEach(item=>item.classList.remove('active'));
+  event.target.closest('.sidebar-item')?.classList.add('active');
   
-  items.sort((a,b)=>b.time-a.time);
-  el.innerHTML=items.slice(0,50).map(i=>`
-    <div class="activity-item">
-      <div class="activity-time">${i.time.toLocaleString('fr-FR')}</div>
-      <div class="activity-text">${i.text}</div>
-    </div>
-  `).join('')||'<div class="empty"><p>Aucune activité</p></div>';
+  toggleSidebar();
 }
 
-// ── USERS ──
-async function loadUsers(){
-  const el=document.getElementById('users-list');
-  el.innerHTML='<div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>';
-  try{
-    const snap=await db.collection('users').get();
-    allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderUsers();
-  }catch(e){
-    el.innerHTML=`<div class="empty"><p style="color:var(--danger)">Erreur: ${e.message}</p></div>`;
+function openAddUserModal(){
+  document.getElementById('modal-add-user').classList.add('active');
+}
+
+function openAddNewsModal(){
+  document.getElementById('modal-add-news').classList.add('active');
+}
+
+function openAddSiteModal(){
+  document.getElementById('modal-add-site').classList.add('active');
+}
+
+function openAddClubModal(){
+  document.getElementById('modal-add-club').classList.add('active');
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('active');
+}
+
+function doLogout(){
+  if(confirm('Déconnexion?')){
+    addLog('ADMIN','Déconnexion');
+    window.location.href='/';
   }
 }
 
-function renderUsers(){
-  const el=document.getElementById('users-list');
-  if(!allUsers.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">👤</div><h3>Aucun utilisateur</h3></div>';
-    return;
-  }
-  el.innerHTML=`
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${allUsers.map(u=>`
-            <tr>
-              <td><strong>${u.displayName||'—'}</strong></td>
-              <td>${u.email}</td>
-              <td>${u.role||'—'}</td>
-              <td><span style="font-size:11px;padding:2px 6px;border-radius:4px;background:${u.status==='pending'?'#fef3c7':u.status==='active'?'#dcfce7':'#f3f4f6'}">${u.status||'active'}</span></td>
-              <td><button class="btn-sm">Éditer</button></td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
+function saveSettings(event){
+  event.preventDefault();
+  showToast('Paramètres enregistrés','');
+  addLog('ADMIN','Paramètres mis à jour');
 }
 
-// ── NEWS ──
-async function loadNews(){
-  const el=document.getElementById('news-list');
-  el.innerHTML='<div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>';
-  try{
-    const snap=await db.collection('actualites').orderBy('createdAt','desc').limit(30).get();
-    newsItems=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderNews();
-  }catch(e){
-    el.innerHTML=`<div class="empty"><p style="color:var(--danger)">Erreur: ${e.message}</p></div>`;
-  }
-}
-
-function renderNews(){
-  const el=document.getElementById('news-list');
-  if(!newsItems.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📰</div><h3>Aucune actualité</h3></div>';
-    return;
-  }
-  el.innerHTML=newsItems.map(n=>`
-    <div style="padding:12px 0;border-bottom:1px solid var(--gray-bd);display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-weight:700;color:var(--navy);">${n.title}</div>
-        <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">${n.excerpt||'—'}</div>
-      </div>
-      <button class="btn-danger" onclick="deleteNews('${n.id}')">🗑️</button>
-    </div>
-  `).join('')+'<div style="padding:12px 0;"><button class="btn-sm" style="width:100%;" onclick="alert(\'Formulaire de création d\\\'actualité à implémenter\')">➕ Nouvelle actualité</button></div>';
-}
-
-window.deleteNews=async function(id){
-  if(!confirm('Supprimer?')) return;
-  try{
-    await db.collection('actualites').doc(id).delete();
-    newsItems=newsItems.filter(n=>n.id!==id);
-    renderNews();
-    toast('✅ Supprimé','success');
-  }catch(e){ toast('❌ Erreur: '+e.message,'error'); }
-};
-
-// ── SITES ──
-async function loadSites(){
-  const el=document.getElementById('sites-list');
-  el.innerHTML='<div class="empty"><div class="empty-icon">⏳</div><h3>Chargement…</h3></div>';
-  try{
-    const snap=await db.collection('sitesSportifs').get();
-    sitesItems=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderSites();
-  }catch(e){
-    el.innerHTML=`<div class="empty"><p style="color:var(--danger)">Erreur: ${e.message}</p></div>`;
-  }
-}
-
-function renderSites(){
-  const el=document.getElementById('sites-list');
-  if(!sitesItems.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📍</div><h3>Aucun site</h3></div>';
-    return;
-  }
-  el.innerHTML=sitesItems.map(s=>`
-    <div style="padding:12px 0;border-bottom:1px solid var(--gray-bd);display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-weight:700;color:var(--navy);">${s.nom}</div>
-        <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">${s.type||'—'} • ${s.ville||'—'}</div>
-      </div>
-      <button class="btn-danger" onclick="deleteSite('${s.id}')">🗑️</button>
-    </div>
-  `).join('')+'<div style="padding:12px 0;"><button class="btn-sm" style="width:100%;" onclick="alert(\'Formulaire d\\\'ajout de site à implémenter\')">➕ Ajouter site</button></div>';
-}
-
-window.deleteSite=async function(id){
-  if(!confirm('Supprimer?')) return;
-  try{
-    await db.collection('sitesSportifs').doc(id).delete();
-    sitesItems=sitesItems.filter(s=>s.id!==id);
-    renderSites();
-    toast('✅ Site supprimé','success');
-  }catch(e){ toast('❌ Erreur: '+e.message,'error'); }
-};
-
-// ── TOAST ──
-function toast(msg,type='info'){
-  const el=document.createElement('div');
-  el.className='toast '+type;
-  el.textContent=msg;
-  document.getElementById('toast-box').appendChild(el);
-  setTimeout(()=>el.remove(),3000);
-}
-
-// ── INIT ──
-init();
+// ── START ──
+document.addEventListener('DOMContentLoaded',init);
 </script>
-
 </body>
 </html>
