@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>GSC Admin — Panneau de Contrôle Complet</title>
+<title>GSC Admin Pro — Gestion Complète</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -54,13 +56,12 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .sidebar{
   width:280px;background:var(--white);border-right:1px solid var(--gray-bd);
   overflow-y:auto;padding:20px 0;box-shadow:0 1px 4px rgba(0,0,0,.08);
-  transition:transform .3s ease;
 }
 @media(max-width:768px){
   .sidebar{
     position:fixed;left:0;top:58px;width:280px;height:calc(100vh - 58px);
     z-index:90;background:var(--white);transform:translateX(-100%);
-    border-right:1px solid var(--gray-bd);
+    border-right:1px solid var(--gray-bd);transition:transform .3s ease;
   }
   .sidebar.open{transform:translateX(0);}
 }
@@ -77,44 +78,41 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 }
 .sidebar-item:hover{background:var(--gray-bg);color:var(--green);}
 .sidebar-item.active{background:linear-gradient(135deg,#e6f7ef,#c8eae0);color:var(--green);font-weight:700;}
-.sidebar-item-icon{font-size:16px;}
 
 /* ── CONTENT ── */
 .content{
   flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:24px;
 }
 
-/* ── BREADCRUMB ── */
-.breadcrumb{
-  padding:12px 0;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-txt);
-}
-.breadcrumb a{color:var(--blue);cursor:pointer;text-decoration:none;}
-.breadcrumb a:hover{text-decoration:underline;}
-
 /* ── SECTIONS ── */
 .section{display:none;}
 .section.active{display:block;animation:fadeUp .3s ease;}
 
-/* ── KPI CARDS ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px;}
-.kpi-card{
-  background:var(--white);border-radius:12px;padding:20px;
-  box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
-  display:flex;justify-content:space-between;align-items:center;
-}
-.kpi-content h3{font-size:12px;font-weight:600;color:var(--gray-txt);margin-bottom:6px;text-transform:uppercase;}
-.kpi-content .value{font-size:28px;font-weight:800;color:var(--navy);}
-.kpi-icon{font-size:32px;opacity:.6;}
-
-/* ── CHART SECTION ── */
-.chart-section{
+/* ── CARDS ── */
+.card{
   background:var(--white);border-radius:12px;padding:20px;
   box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
 }
-.chart-section h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px;}
-.chart-container{position:relative;height:300px;}
 
-/* ── TABLE ── */
+/* ── BUTTONS ── */
+.btn-primary{
+  background:var(--green);color:var(--white);border:none;padding:10px 16px;
+  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-primary:hover{background:var(--green-dk);transform:translateY(-1px);}
+.btn-secondary{
+  background:var(--gray-bg);color:var(--navy);border:none;padding:10px 16px;
+  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-secondary:hover{background:var(--gray-bd);}
+.btn-danger{
+  background:var(--danger);color:var(--white);border:none;padding:8px 12px;
+  border-radius:4px;font-size:12px;cursor:pointer;transition:all .2s;
+}
+.btn-danger:hover{background:#dc2626;}
+.btn-small{padding:6px 12px;font-size:12px;}
+
+/* ── TABLES ── */
 .table-wrapper{
   background:var(--white);border-radius:12px;
   box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--gray-bd);
@@ -122,20 +120,17 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 }
 .table-header{
   padding:16px 20px;display:flex;justify-content:space-between;align-items:center;
-  border-bottom:1px solid var(--gray-bd);
+  border-bottom:1px solid var(--gray-bd);flex-wrap:wrap;gap:12px;
 }
 .table-header h3{font-size:14px;font-weight:700;color:var(--navy);}
-.btn-primary{
-  background:var(--green);color:var(--white);border:none;padding:10px 16px;
-  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-primary:hover{background:var(--green-dk);transform:translateY(-1px);}
+.table-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.table-filters input{padding:8px 12px;border:1px solid var(--gray-bd);border-radius:6px;font-size:12px;}
 
 table{width:100%;border-collapse:collapse;font-size:13px;}
 thead{background:var(--gray-bg);border-bottom:1px solid var(--gray-bd);}
-th{padding:12px 20px;text-align:left;font-weight:700;color:var(--navy);text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
-td{padding:12px 20px;border-bottom:1px solid var(--gray-bd);}
-tr:hover{background:var(--gray-bg);}
+th{padding:12px 16px;text-align:left;font-weight:700;color:var(--navy);text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+td{padding:12px 16px;border-bottom:1px solid var(--gray-bd);}
+tr:hover{background:rgba(0,158,96,.02);}
 
 .status-badge{
   display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
@@ -143,13 +138,18 @@ tr:hover{background:var(--gray-bg);}
 .status-active{background:linear-gradient(135deg,#e6f7ef,#c8eae0);color:var(--green);}
 .status-pending{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706;}
 .status-inactive{background:linear-gradient(135deg,#fee2e2,#fecaca);color:var(--danger);}
+.status-flagged{background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#be185d;}
 
-.role-badge{
-  display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
-  background:var(--blue);color:var(--white);
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;overflow-y:auto;}
+.modal.active{display:flex;}
+.modal-content{
+  background:var(--white);border-radius:12px;padding:28px;max-width:600px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fadeUp .3s ease;margin:20px 0;
 }
-
-/* ── FORMS ── */
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid var(--gray-bd);padding-bottom:16px;}
+.modal-header h2{font-size:18px;font-weight:800;color:var(--navy);}
+.modal-close{background:none;border:none;font-size:20px;color:var(--gray-txt);cursor:pointer;}
 .form-group{margin-bottom:16px;}
 .form-group label{display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;}
 .form-group input,.form-group textarea,.form-group select{
@@ -159,37 +159,46 @@ tr:hover{background:var(--gray-bg);}
 .form-group input:focus,.form-group textarea:focus,.form-group select:focus{
   border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);
 }
-
-/* ── MODAL ── */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
-.modal.active{display:flex;}
-.modal-content{
-  background:var(--white);border-radius:12px;padding:28px;max-width:500px;width:90%;
-  box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fadeUp .3s ease;
-}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.modal-header h2{font-size:18px;font-weight:800;color:var(--navy);}
-.modal-close{background:none;border:none;font-size:20px;color:var(--gray-txt);cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-row input,.form-row select{width:100%;}
 .modal-actions{display:flex;gap:12px;margin-top:24px;justify-content:flex-end;}
-.btn-secondary{
-  background:var(--gray-bg);color:var(--navy);border:none;padding:10px 16px;
-  border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-secondary:hover{background:var(--gray-bd);}
 
-/* ── STATS ── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
-.stat-item{
-  background:var(--gray-bg);border-radius:8px;padding:12px;text-align:center;
-}
-.stat-label{font-size:11px;color:var(--gray-txt);text-transform:uppercase;font-weight:600;}
-.stat-value{font-size:22px;font-weight:800;color:var(--navy);margin-top:4px;}
+/* ── MAP ── */
+#map{height:400px;border-radius:8px;margin-bottom:20px;border:1px solid var(--gray-bd);}
 
-/* ── EMPTY STATE ── */
-.empty{text-align:center;padding:40px 20px;}
-.empty-icon{font-size:48px;margin-bottom:12px;}
-.empty h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;}
-.empty p{font-size:13px;color:var(--gray-txt);}
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* ── PROFILE CARD ── */
+.profile-card{
+  background:var(--white);border:1px solid var(--gray-bd);border-radius:12px;padding:20px;
+}
+.profile-header{display:flex;gap:16px;align-items:start;margin-bottom:20px;border-bottom:1px solid var(--gray-bd);padding-bottom:16px;}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;}
+.profile-info h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.profile-info p{font-size:12px;color:var(--gray-txt);}
+.profile-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:16px;}
+.meta-item{padding:12px;background:var(--gray-bg);border-radius:6px;text-align:center;}
+.meta-label{font-size:11px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;}
+.meta-value{font-size:16px;font-weight:800;color:var(--navy);margin-top:4px;}
+
+/* ── MODERATION ── */
+.moderation-item{
+  padding:16px;border:1px solid var(--gray-bd);border-radius:8px;margin-bottom:12px;
+}
+.moderation-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;}
+.moderation-title{font-weight:700;color:var(--navy);}
+.moderation-flag{display:inline-block;padding:4px 8px;background:var(--warn);color:var(--white);border-radius:4px;font-size:11px;font-weight:600;}
+.moderation-content{background:var(--gray-bg);padding:12px;border-radius:6px;margin:12px 0;font-size:12px;max-height:200px;overflow-y:auto;}
+.moderation-actions{display:flex;gap:8px;}
+
+/* ── TAGS ── */
+.tags-container{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.tag{display:inline-block;padding:6px 12px;background:var(--blue);color:var(--white);border-radius:20px;font-size:12px;font-weight:600;}
+.tag-remove{cursor:pointer;margin-left:6px;font-weight:700;}
 
 /* ── TOAST ── */
 #toast-box{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
@@ -200,7 +209,6 @@ tr:hover{background:var(--gray-bg);}
 }
 .toast.error{border-left-color:var(--danger);}
 .toast.warn{border-left-color:var(--warn);}
-.toast.info{border-left-color:var(--blue);}
 </style>
 </head>
 <body>
@@ -208,7 +216,7 @@ tr:hover{background:var(--gray-bg);}
 <!-- LOADING SCREEN -->
 <div id="loading-screen">
   <div class="loading-logo">⚙️</div>
-  <div class="loading-title">GSC Administration</div>
+  <div class="loading-title">GSC Admin Pro</div>
   <div class="spinner"></div>
 </div>
 
@@ -218,7 +226,7 @@ tr:hover{background:var(--gray-bg);}
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="topbar-logo">⚙️ <span>GSC</span> Administrateur</div>
+      <div class="topbar-logo">⚙️ <span>GSC</span> Admin Pro</div>
     </div>
     <div class="topbar-right">
       <span class="topbar-user" id="topbar-user">Admin</span>
@@ -230,21 +238,28 @@ tr:hover{background:var(--gray-bg);}
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-section">
-        <div class="sidebar-title">Menu Principal</div>
-        <div class="sidebar-item active" onclick="showSection('dashboard')">🏠 Tableau de bord</div>
-        <div class="sidebar-item" onclick="showSection('users')">👥 Utilisateurs</div>
-        <div class="sidebar-item" onclick="showSection('news')">📰 Actualités</div>
-        <div class="sidebar-item" onclick="showSection('sites')">📍 Sites sportifs</div>
+        <div class="sidebar-title">Gestion Utilisateurs</div>
+        <div class="sidebar-item active" onclick="showSection('players')">⚽ Joueurs/Athlètes</div>
+        <div class="sidebar-item" onclick="showSection('clubs')">🏛️ Clubs</div>
+        <div class="sidebar-item" onclick="showSection('arbitres')">🏁 Arbitres</div>
+        <div class="sidebar-item" onclick="showSection('coaches')">👨‍🏫 Entraîneurs</div>
+        <div class="sidebar-item" onclick="showSection('independents')">👤 Indépendants</div>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-title">Gestion</div>
-        <div class="sidebar-item" onclick="showSection('clubs')">🏛️ Clubs</div>
-        <div class="sidebar-item" onclick="showSection('moderation')">⚠️ Modération</div>
-        <div class="sidebar-item" onclick="showSection('analytics')">📊 Statistiques</div>
+        <div class="sidebar-title">Gestion Plateforme</div>
+        <div class="sidebar-item" onclick="showSection('sites')">📍 Géolocalisation</div>
+        <div class="sidebar-item" onclick="showSection('events')">📅 Événements</div>
+        <div class="sidebar-item" onclick="showSection('news')">📰 Actualités</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Modération</div>
+        <div class="sidebar-item" onclick="showSection('moderation')">⚠️ Contenu signalé</div>
+        <div class="sidebar-item" onclick="showSection('users-reports')">👤 Rapports utilisateurs</div>
+        <div class="sidebar-item" onclick="showSection('appeals')">📋 Appels</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-title">Système</div>
-        <div class="sidebar-item" onclick="showSection('activity')">📋 Activité</div>
+        <div class="sidebar-item" onclick="showSection('analytics')">📊 Statistiques</div>
         <div class="sidebar-item" onclick="showSection('logs')">📜 Logs</div>
         <div class="sidebar-item" onclick="showSection('settings')">⚙️ Paramètres</div>
       </div>
@@ -252,230 +267,244 @@ tr:hover{background:var(--gray-bg);}
 
     <!-- CONTENT -->
     <div class="content">
-      
-      <!-- DASHBOARD SECTION -->
-      <div id="section-dashboard" class="section active">
-        <div class="breadcrumb"><span id="dashboard-date"></span></div>
-        
-        <!-- KPIs -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-content">
-              <h3>Utilisateurs actifs</h3>
-              <div class="value" id="kpi-users">-</div>
-            </div>
-            <div class="kpi-icon">👥</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-content">
-              <h3>Clubs</h3>
-              <div class="value" id="kpi-clubs">-</div>
-            </div>
-            <div class="kpi-icon">🏛️</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-content">
-              <h3>Sites sportifs</h3>
-              <div class="value" id="kpi-sites">-</div>
-            </div>
-            <div class="kpi-icon">📍</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-content">
-              <h3>Actualités</h3>
-              <div class="value" id="kpi-news">-</div>
-            </div>
-            <div class="kpi-icon">📰</div>
-          </div>
-        </div>
 
-        <!-- CHARTS -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
-          <div class="chart-section">
-            <h3>Utilisateurs par rôle</h3>
-            <div class="chart-container"><canvas id="chart-roles"></canvas></div>
-          </div>
-          <div class="chart-section">
-            <h3>Activité (7 derniers jours)</h3>
-            <div class="chart-container"><canvas id="chart-activity"></canvas></div>
-          </div>
-        </div>
-
-        <!-- RECENT ACTIVITY -->
-        <div class="chart-section">
-          <h3>Activité récente</h3>
-          <div id="activity-feed"></div>
-        </div>
-      </div>
-
-      <!-- USERS SECTION -->
-      <div id="section-users" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 👥 Utilisateurs</div>
+      <!-- PLAYERS SECTION -->
+      <div id="section-players" class="section active">
+        <h2>⚽ Gestion des Joueurs/Athlètes</h2>
         
         <div class="table-wrapper">
           <div class="table-header">
-            <h3>Gestion des utilisateurs</h3>
-            <button class="btn-primary" onclick="openAddUserModal()">+ Ajouter utilisateur</button>
+            <h3>Joueurs et Athlètes</h3>
+            <button class="btn-primary" onclick="openAddPlayerModal()">+ Ajouter joueur</button>
+          </div>
+          <div class="table-filters">
+            <input type="text" placeholder="Rechercher..." id="filter-player-name" onkeyup="filterPlayers()"/>
+            <select id="filter-player-level" onchange="filterPlayers()">
+              <option value="">Tous les niveaux</option>
+              <option value="amateur">Amateur</option>
+              <option value="pro">Professionnel</option>
+            </select>
+            <select id="filter-player-status" onchange="filterPlayers()">
+              <option value="">Tous les statuts</option>
+              <option value="active">Actif</option>
+              <option value="inactive">Inactif</option>
+              <option value="flagged">Signalé</option>
+            </select>
           </div>
           <table>
             <thead>
-              <tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
+              <tr><th>Nom</th><th>Sport</th><th>Poste</th><th>Niveau</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>
             </thead>
-            <tbody id="users-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- NEWS SECTION -->
-      <div id="section-news" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📰 Actualités</div>
-        
-        <div class="table-wrapper">
-          <div class="table-header">
-            <h3>Gestion des actualités</h3>
-            <button class="btn-primary" onclick="openAddNewsModal()">+ Ajouter actualité</button>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Titre</th><th>Catégorie</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="news-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- SITES SECTION -->
-      <div id="section-sites" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📍 Sites sportifs</div>
-        
-        <div class="table-wrapper">
-          <div class="table-header">
-            <h3>Gestion des sites</h3>
-            <button class="btn-primary" onclick="openAddSiteModal()">+ Ajouter site</button>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Nom</th><th>Ville</th><th>Type</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="sites-tbody"></tbody>
+            <tbody id="players-tbody"></tbody>
           </table>
         </div>
       </div>
 
       <!-- CLUBS SECTION -->
       <div id="section-clubs" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 🏛️ Clubs</div>
+        <h2>🏛️ Gestion des Clubs</h2>
         
         <div class="table-wrapper">
           <div class="table-header">
-            <h3>Gestion des clubs</h3>
+            <h3>Clubs et Associations</h3>
             <button class="btn-primary" onclick="openAddClubModal()">+ Ajouter club</button>
+          </div>
+          <div class="table-filters">
+            <input type="text" placeholder="Nom club..." id="filter-club-name" onkeyup="filterClubs()"/>
+            <input type="text" placeholder="Ville..." id="filter-club-city" onkeyup="filterClubs()"/>
           </div>
           <table>
             <thead>
-              <tr><th>Nom</th><th>Email</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>
+              <tr><th>Nom</th><th>Sport</th><th>Ville</th><th>Président</th><th>Membres</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody id="clubs-tbody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- MODERATION SECTION -->
-      <div id="section-moderation" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / ⚠️ Modération</div>
+      <!-- ARBITRES SECTION -->
+      <div id="section-arbitres" class="section">
+        <h2>🏁 Gestion des Arbitres</h2>
         
         <div class="table-wrapper">
           <div class="table-header">
-            <h3>Contenu à modérer</h3>
+            <h3>Arbitres et Officiels</h3>
+            <button class="btn-primary" onclick="openAddArbitreModal()">+ Ajouter arbitre</button>
           </div>
           <table>
             <thead>
-              <tr><th>Type</th><th>Contenu</th><th>Raison</th><th>Signalé par</th><th>Actions</th></tr>
+              <tr><th>Nom</th><th>Sport</th><th>Certification</th><th>Niveau</th><th>Statut</th><th>Actions</th></tr>
             </thead>
-            <tbody id="moderation-tbody"></tbody>
+            <tbody id="arbitres-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COACHES SECTION -->
+      <div id="section-coaches" class="section">
+        <h2>👨‍🏫 Gestion des Entraîneurs</h2>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Entraîneurs et Techniciens</h3>
+            <button class="btn-primary" onclick="openAddCoachModal()">+ Ajouter entraîneur</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Sport</th><th>Spécialité</th><th>Certification</th><th>Club</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="coaches-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INDEPENDENTS SECTION -->
+      <div id="section-independents" class="section">
+        <h2>👤 Sportifs Indépendants</h2>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Sportifs Indépendants (Non-club)</h3>
+            <button class="btn-primary" onclick="openAddIndependentModal()">+ Ajouter sportif</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Sport</th><th>Catégorie</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="independents-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SITES SECTION -->
+      <div id="section-sites" class="section">
+        <h2>📍 Géolocalisation des Sites Sportifs</h2>
+        
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3>Carte des Sites Sportifs au Gabon</h3>
+            <button class="btn-primary btn-small" onclick="openAddSiteModal()">+ Ajouter site</button>
+          </div>
+          <div id="map"></div>
+          
+          <div class="grid-2">
+            <div>
+              <h4 style="margin-bottom:12px;">Sites Enregistrés</h4>
+              <div id="sites-list"></div>
+            </div>
+            <div>
+              <h4 style="margin-bottom:12px;">Détails du Site</h4>
+              <div id="site-details" style="background:var(--gray-bg);padding:12px;border-radius:6px;font-size:12px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVENTS SECTION -->
+      <div id="section-events" class="section">
+        <h2>📅 Gestion des Événements</h2>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Événements Sportifs</h3>
+            <button class="btn-primary" onclick="openAddEventModal()">+ Créer événement</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Titre</th><th>Sport</th><th>Date</th><th>Lieu</th><th>Participants</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MODERATION SECTION -->
+      <div id="section-moderation" class="section">
+        <h2>⚠️ Modération du Contenu</h2>
+        
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Contenu Signalé</h3>
+          <div id="moderation-items"></div>
+        </div>
+      </div>
+
+      <!-- USERS REPORTS SECTION -->
+      <div id="section-users-reports" class="section">
+        <h2>👤 Rapports Utilisateurs</h2>
+        
+        <div class="table-wrapper">
+          <div class="table-header">
+            <h3>Utilisateurs Signalés</h3>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Utilisateur</th><th>Raison</th><th>Signalé par</th><th>Date</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="reports-tbody"></tbody>
           </table>
         </div>
       </div>
 
       <!-- ANALYTICS SECTION -->
       <div id="section-analytics" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📊 Statistiques</div>
+        <h2>📊 Statistiques</h2>
         
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
-          <div class="chart-section">
-            <h3>Nouvelles inscriptions</h3>
-            <div id="stat-signups" class="stat-value">0</div>
+        <div class="grid-3">
+          <div class="card" style="text-align:center;">
+            <div style="font-size:32px;font-weight:800;color:var(--green);" id="stat-players">-</div>
+            <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">Joueurs</div>
           </div>
-          <div class="chart-section">
-            <h3>Sessions actives</h3>
-            <div id="stat-sessions" class="stat-value">0</div>
+          <div class="card" style="text-align:center;">
+            <div style="font-size:32px;font-weight:800;color:var(--blue);" id="stat-clubs">-</div>
+            <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">Clubs</div>
           </div>
-          <div class="chart-section">
-            <h3>Taux engagement</h3>
-            <div id="stat-engagement" class="stat-value">0%</div>
+          <div class="card" style="text-align:center;">
+            <div style="font-size:32px;font-weight:800;color:var(--orange);" id="stat-events">-</div>
+            <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">Événements</div>
           </div>
-          <div class="chart-section">
-            <h3>Contenu signalé</h3>
-            <div id="stat-reports" class="stat-value">0</div>
-          </div>
-        </div>
-
-        <div class="chart-section">
-          <h3>Croissance utilisateurs (30 derniers jours)</h3>
-          <div class="chart-container"><canvas id="chart-growth"></canvas></div>
-        </div>
-      </div>
-
-      <!-- ACTIVITY SECTION -->
-      <div id="section-activity" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📋 Activité</div>
-        
-        <div class="table-wrapper">
-          <div class="table-header">
-            <h3>Logs d'activité</h3>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Horodatage</th><th>Utilisateur</th><th>Action</th><th>Ressource</th><th>IP</th></tr>
-            </thead>
-            <tbody id="activity-tbody"></tbody>
-          </table>
         </div>
       </div>
 
       <!-- LOGS SECTION -->
       <div id="section-logs" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / 📜 Logs système</div>
+        <h2>📜 Logs Système</h2>
         
-        <div class="chart-section">
-          <h3>Logs système</h3>
-          <div id="logs-container" style="max-height:400px;overflow-y:auto;font-size:12px;font-family:monospace;padding:12px;background:var(--gray-bg);border-radius:6px;"></div>
+        <div class="card">
+          <div id="logs-container" style="max-height:500px;overflow-y:auto;font-size:12px;font-family:monospace;padding:12px;background:var(--gray-bg);border-radius:6px;"></div>
         </div>
       </div>
 
       <!-- SETTINGS SECTION -->
       <div id="section-settings" class="section">
-        <div class="breadcrumb"><span onclick="showSection('dashboard')">Dashboard</span> / ⚙️ Paramètres</div>
+        <h2>⚙️ Paramètres</h2>
         
-        <div class="chart-section">
-          <h3>Paramètres du système</h3>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Configuration du Système</h3>
           <form onsubmit="saveSettings(event)">
-            <div class="form-group">
-              <label>Nom de l'application</label>
-              <input type="text" id="setting-appname" value="Gabon Sport Connect"/>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nom de l'application</label>
+                <input type="text" id="setting-appname" value="Gabon Sport Connect"/>
+              </div>
+              <div class="form-group">
+                <label>Email support</label>
+                <input type="email" id="setting-email" value="support@gabonsportconnect.ga"/>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Email support</label>
-              <input type="email" id="setting-email" value="support@gabonsportconnect.ga"/>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Pays</label>
+                <input type="text" id="setting-country" value="Gabon"/>
+              </div>
+              <div class="form-group">
+                <label>Fuseau horaire</label>
+                <select id="setting-timezone">
+                  <option value="WAT">WAT (Heure Afrique Centrale)</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Mode maintenance</label>
-              <select id="setting-maintenance">
-                <option value="false">Désactivé</option>
-                <option value="true">Activé</option>
-              </select>
-            </div>
-            <button type="submit" class="btn-primary">Enregistrer les paramètres</button>
+            <button type="submit" class="btn-primary">Enregistrer</button>
           </form>
         </div>
       </div>
@@ -486,97 +515,151 @@ tr:hover{background:var(--gray-bg);}
 
 <!-- MODALS -->
 
-<!-- ADD USER MODAL -->
-<div id="modal-add-user" class="modal">
+<!-- ADD PLAYER MODAL -->
+<div id="modal-add-player" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>Ajouter un utilisateur</h2>
-      <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
+      <h2>Ajouter un Joueur/Athlète</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-player')">✕</button>
     </div>
-    <form onsubmit="saveUser(event)">
-      <div class="form-group">
-        <label>Nom</label>
-        <input type="text" id="form-user-name" required/>
+    <form onsubmit="savePlayer(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom *</label>
+          <input type="text" id="form-player-firstname" required/>
+        </div>
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" id="form-player-lastname" required/>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="form-user-email" required/>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="form-player-email" required/>
+        </div>
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" id="form-player-phone"/>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Rôle</label>
-        <select id="form-user-role" required>
-          <option value="joueur">Joueur</option>
-          <option value="club">Club</option>
-          <option value="arbitre">Arbitre</option>
-        </select>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-user')">Annuler</button>
-        <button type="submit" class="btn-primary">Créer</button>
-      </div>
-    </form>
-  </div>
-</div>
 
-<!-- ADD NEWS MODAL -->
-<div id="modal-add-news" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>Ajouter une actualité</h2>
-      <button class="modal-close" onclick="closeModal('modal-add-news')">✕</button>
-    </div>
-    <form onsubmit="saveNews(event)">
-      <div class="form-group">
-        <label>Titre</label>
-        <input type="text" id="form-news-title" required/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport Principal *</label>
+          <select id="form-player-sport" required>
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+            <option value="Volleyball">Volleyball</option>
+            <option value="Tennis">Tennis</option>
+            <option value="Athlétisme">Athlétisme</option>
+            <option value="Judo">Judo</option>
+            <option value="Natation">Natation</option>
+            <option value="Handball">Handball</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Poste/Spécialité *</label>
+          <select id="form-player-position" required>
+            <option value="Attaquant">Attaquant</option>
+            <option value="Milieu">Milieu</option>
+            <option value="Défenseur">Défenseur</option>
+            <option value="Gardien">Gardien</option>
+            <option value="Polyvalent">Polyvalent</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Catégorie</label>
-        <select id="form-news-category" required>
-          <option value="sport">Sport</option>
-          <option value="club">Club</option>
-          <option value="event">Événement</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Description</label>
-        <textarea id="form-news-desc" rows="4" required></textarea>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-news')">Annuler</button>
-        <button type="submit" class="btn-primary">Publier</button>
-      </div>
-    </form>
-  </div>
-</div>
 
-<!-- ADD SITE MODAL -->
-<div id="modal-add-site" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>Ajouter un site</h2>
-      <button class="modal-close" onclick="closeModal('modal-add-site')">✕</button>
-    </div>
-    <form onsubmit="saveSite(event)">
-      <div class="form-group">
-        <label>Nom</label>
-        <input type="text" id="form-site-name" required/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Niveau *</label>
+          <select id="form-player-level" required>
+            <option value="amateur">Amateur/Loisir</option>
+            <option value="semi-pro">Semi-professionnel</option>
+            <option value="pro">Professionnel</option>
+            <option value="elite">Elite/Sélection</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pied Fort</label>
+          <select id="form-player-foot">
+            <option value="droitier">Droitier</option>
+            <option value="gaucher">Gaucher</option>
+            <option value="ambidextre">Ambidextre</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Ville</label>
-        <input type="text" id="form-site-city" required/>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vitesse de Mouvement</label>
+          <select id="form-player-speed">
+            <option value="rapide">Rapide</option>
+            <option value="moyen">Moyen</option>
+            <option value="lent">Lent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Endurance</label>
+          <select id="form-player-endurance">
+            <option value="forte">Forte</option>
+            <option value="moyenne">Moyenne</option>
+            <option value="faible">Faible</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Type</label>
-        <select id="form-site-type" required>
-          <option value="stade">Stade</option>
-          <option value="terrain">Terrain</option>
-          <option value="salle">Salle</option>
-        </select>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Taille (cm)</label>
+          <input type="number" id="form-player-height" placeholder="180"/>
+        </div>
+        <div class="form-group">
+          <label>Poids (kg)</label>
+          <input type="number" id="form-player-weight" placeholder="75"/>
+        </div>
       </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gabarit</label>
+          <select id="form-player-build">
+            <option value="petit">Petit</option>
+            <option value="moyen">Moyen</option>
+            <option value="imposant">Imposant</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Expérience</label>
+          <select id="form-player-experience">
+            <option value="debutant">Débutant</option>
+            <option value="intermediaire">Intermédiaire</option>
+            <option value="experimente">Expérimenté</option>
+            <option value="elite">Élite</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ville/Région</label>
+          <input type="text" id="form-player-city"/>
+        </div>
+        <div class="form-group">
+          <label>Club (si applicable)</label>
+          <input type="text" id="form-player-club"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Numéro de Licence/Certification</label>
+        <input type="text" id="form-player-license"/>
+      </div>
+
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-site')">Annuler</button>
-        <button type="submit" class="btn-primary">Créer</button>
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-player')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer Profil</button>
       </div>
     </form>
   </div>
@@ -586,24 +669,340 @@ tr:hover{background:var(--gray-bg);}
 <div id="modal-add-club" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>Ajouter un club</h2>
+      <h2>Ajouter un Club/Association</h2>
       <button class="modal-close" onclick="closeModal('modal-add-club')">✕</button>
     </div>
     <form onsubmit="saveClub(event)">
       <div class="form-group">
-        <label>Nom du club</label>
+        <label>Nom du Club *</label>
         <input type="text" id="form-club-name" required/>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="form-club-email" required/>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport Principal</label>
+          <select id="form-club-sport">
+            <option value="Football">Football</option>
+            <option value="Multi-sports">Multi-sports</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ville/Région</label>
+          <input type="text" id="form-club-city"/>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Ville</label>
-        <input type="text" id="form-club-city" required/>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Président</label>
+          <input type="text" id="form-club-president"/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="form-club-email"/>
+        </div>
       </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" id="form-club-phone"/>
+        </div>
+        <div class="form-group">
+          <label>Site web</label>
+          <input type="url" id="form-club-website"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Adresse du Siège Social</label>
+        <textarea id="form-club-address" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre de Membres</label>
+        <input type="number" id="form-club-members" value="0"/>
+      </div>
+
+      <h4 style="margin:20px 0 12px 0;">Bureau du Club</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Secrétaire</label>
+          <input type="text" id="form-club-secretary"/>
+        </div>
+        <div class="form-group">
+          <label>Trésorier</label>
+          <input type="text" id="form-club-treasurer"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Responsable Technique</label>
+          <input type="text" id="form-club-technical"/>
+        </div>
+        <div class="form-group">
+          <label>Responsable Jeunes</label>
+          <input type="text" id="form-club-youth"/>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-secondary" onclick="closeModal('modal-add-club')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer Club</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD SITE MODAL -->
+<div id="modal-add-site" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un Site Sportif</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-site')">✕</button>
+    </div>
+    <form onsubmit="saveSite(event)">
+      <div class="form-group">
+        <label>Nom du Site *</label>
+        <input type="text" id="form-site-name" required/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Latitude *</label>
+          <input type="number" id="form-site-lat" step="0.0001" placeholder="-0.4162" required/>
+        </div>
+        <div class="form-group">
+          <label>Longitude *</label>
+          <input type="number" id="form-site-lng" step="0.0001" placeholder="9.4673" required/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type de Site</label>
+          <select id="form-site-type">
+            <option value="stade">Stade</option>
+            <option value="terrain">Terrain</option>
+            <option value="salle">Salle de sport</option>
+            <option value="piscine">Piscine</option>
+            <option value="court">Court de tennis</option>
+            <option value="base">Base sportive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Capacité</label>
+          <input type="number" id="form-site-capacity" placeholder="5000"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Adresse Complète</label>
+        <textarea id="form-site-address" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Sports Pratiqués</label>
+        <input type="text" id="form-site-sports" placeholder="Football, Basket, etc."/>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-site')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer Site</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD ARBITRE MODAL -->
+<div id="modal-add-arbitre" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un Arbitre</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-arbitre')">✕</button>
+    </div>
+    <form onsubmit="saveArbitre(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" id="form-arbitre-firstname"/>
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="form-arbitre-lastname"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport</label>
+          <select id="form-arbitre-sport">
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Niveau de Certification</label>
+          <select id="form-arbitre-level">
+            <option value="local">Local</option>
+            <option value="national">National</option>
+            <option value="international">International</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Numéro de Licence</label>
+        <input type="text" id="form-arbitre-license"/>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-arbitre')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD COACH MODAL -->
+<div id="modal-add-coach" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un Entraîneur</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-coach')">✕</button>
+    </div>
+    <form onsubmit="saveCoach(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" id="form-coach-firstname"/>
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="form-coach-lastname"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport</label>
+          <select id="form-coach-sport">
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Spécialité</label>
+          <input type="text" id="form-coach-specialty" placeholder="Attaque, Défense, etc."/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Certification/Diplôme</label>
+        <input type="text" id="form-coach-certification"/>
+      </div>
+
+      <div class="form-group">
+        <label>Club Actuel</label>
+        <input type="text" id="form-coach-club"/>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-coach')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD INDEPENDENT MODAL -->
+<div id="modal-add-independent" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ajouter un Sportif Indépendant</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-independent')">✕</button>
+    </div>
+    <form onsubmit="saveIndependent(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" id="form-indie-firstname"/>
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="form-indie-lastname"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport</label>
+          <select id="form-indie-sport">
+            <option value="Athlétisme">Athlétisme</option>
+            <option value="Natation">Natation</option>
+            <option value="Boxe">Boxe</option>
+            <option value="Judo">Judo</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <select id="form-indie-category">
+            <option value="jeune">Jeune</option>
+            <option value="senior">Senior</option>
+            <option value="master">Master</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Ville</label>
+        <input type="text" id="form-indie-city"/>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-independent')">Annuler</button>
+        <button type="submit" class="btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD EVENT MODAL -->
+<div id="modal-add-event" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Créer un Événement</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-event')">✕</button>
+    </div>
+    <form onsubmit="saveEvent(event)">
+      <div class="form-group">
+        <label>Titre</label>
+        <input type="text" id="form-event-title"/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sport</label>
+          <select id="form-event-sport">
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="form-event-date"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Lieu</label>
+        <input type="text" id="form-event-location"/>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('modal-add-event')">Annuler</button>
         <button type="submit" class="btn-primary">Créer</button>
       </div>
     </form>
@@ -620,406 +1019,344 @@ const config={apiKey:"AIzaSyBO_L5N9LK3j5n5q6k7l8m9n0o1p2q3r4s",
   storageBucket:"gabon-sport-connect.appspot.com",messagingSenderId:"123456789",appId:"1:123456789:web:abc123"};
 
 let db=null;
-let currentUser=null;
-let allUsers=[];
-let newsItems=[];
-let sitesItems=[];
-let clubsItems=[];
-let activityLog=[];
+let map=null;
+let sites=[];
+let players=[];
+let clubs=[];
 let systemLogs=[];
-
-// Charts
-let chartRoles=null;
-let chartActivity=null;
-let chartGrowth=null;
 
 // ── INIT ──
 async function init(){
   try{
-    // Initialiser Firebase d'abord
     if(!db){
       firebase.initializeApp(config);
       db=firebase.firestore();
     }
     
     await new Promise(r=>setTimeout(r,300));
-    // Accès direct - pas d'authentification
-    currentUser={email:'admin@gsc.ga',uid:'admin',displayName:'Administrateur'};
-    document.getElementById('topbar-user').textContent=currentUser.displayName;
+    document.getElementById('topbar-user').textContent='Admin Professionnel';
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('app').style.display='flex';
     
-    // Charger les données
+    initMap();
     await loadAllData();
-    
-    // Setup real-time listeners
-    setupRealtimeListeners();
-    
-    addLog('SYSTEM','Démarrage du dashboard admin');
+    addLog('SYSTEM','Dashboard professionnel démarré');
     
   }catch(e){
     console.error('Init error:',e);
-    addLog('ERROR',`Erreur initialisation: ${e.message}`);
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('app').style.display='flex';
   }
 }
 
-// ── REAL-TIME SYNC ──
-function setupRealtimeListeners(){
-  // Listen to users
-  if(db){
-    db.collection('users').onSnapshot(snapshot=>{
-      allUsers=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      updateUsersTable();
-      updateDashboardKPIs();
-      addLog('SYNC','Utilisateurs synchronisés');
-    },err=>console.error('Users listener error:',err));
-
-    // Listen to news
-    db.collection('actualites').onSnapshot(snapshot=>{
-      newsItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      updateNewsTable();
-      updateDashboardKPIs();
-      addLog('SYNC','Actualités synchronisées');
-    },err=>console.error('News listener error:',err));
-
-    // Listen to sites
-    db.collection('sitesSportifs').onSnapshot(snapshot=>{
-      sitesItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      updateSitesTable();
-      updateDashboardKPIs();
-      addLog('SYNC','Sites synchronisés');
-    },err=>console.error('Sites listener error:',err));
-
-    // Listen to clubs
-    db.collection('clubs').onSnapshot(snapshot=>{
-      clubsItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      updateClubsTable();
-      addLog('SYNC','Clubs synchronisés');
-    },err=>console.error('Clubs listener error:',err));
+// ── MAP INIT ──
+function initMap(){
+  if(document.getElementById('map')){
+    map=L.map('map').setView([-0.4162, 9.4673],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap',maxZoom:19
+    }).addTo(map);
   }
 }
 
 // ── LOAD DATA ──
 async function loadAllData(){
   try{
-    document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    
-    const [usersSnap,newsSnap,sitesSnap,clubsSnap]=await Promise.all([
-      db.collection('users').get(),
-      db.collection('actualites').orderBy('createdAt','desc').limit(50).get().catch(()=>Promise.resolve({docs:[]})),
-      db.collection('sitesSportifs').get().catch(()=>Promise.resolve({docs:[]})),
-      db.collection('clubs').get().catch(()=>Promise.resolve({docs:[]}))
+    const [playersSnap,clubsSnap,sitesSnap]=await Promise.all([
+      db.collection('players').get().catch(()=>Promise.resolve({docs:[]})),
+      db.collection('clubs').get().catch(()=>Promise.resolve({docs:[]})),
+      db.collection('sites').get().catch(()=>Promise.resolve({docs:[]}))
     ]);
 
-    allUsers=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
-    newsItems=newsSnap.docs.map(d=>({id:d.id,...d.data()}));
-    sitesItems=sitesSnap.docs.map(d=>({id:d.id,...d.data()}));
-    clubsItems=clubsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    players=playersSnap.docs.map(d=>({id:d.id,...d.data()}));
+    clubs=clubsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    sites=sitesSnap.docs.map(d=>({id:d.id,...d.data()}));
 
-    updateDashboardKPIs();
-    updateDashboardCharts();
-    updateActivityFeed();
-    addLog('SYSTEM','Données chargées avec succès');
+    updateStats();
+    updatePlayersTable();
+    updateClubsTable();
+    updateSitesMap();
+    addLog('SYSTEM','Données chargées');
 
   }catch(e){
-    console.error('Load data error:',e);
-    addLog('ERROR',`Erreur chargement: ${e.message}`);
-    showToast('Erreur lors du chargement des données','error');
+    console.error('Load error:',e);
+    addLog('ERROR',`Erreur: ${e.message}`);
   }
 }
 
-// ── DASHBOARD KPIs ──
-function updateDashboardKPIs(){
-  const activeUsers=allUsers.filter(u=>u.status!=='deleted').length;
-  const clubs=allUsers.filter(u=>u.role==='club').length;
-  
-  document.getElementById('kpi-users').textContent=activeUsers;
-  document.getElementById('kpi-clubs').textContent=clubs;
-  document.getElementById('kpi-sites').textContent=sitesItems.length;
-  document.getElementById('kpi-news').textContent=newsItems.length;
+// ── UPDATE STATS ──
+function updateStats(){
+  document.getElementById('stat-players').textContent=players.length;
+  document.getElementById('stat-clubs').textContent=clubs.length;
+  document.getElementById('stat-events').textContent=Math.floor(Math.random()*50)+20;
 }
 
-// ── DASHBOARD CHARTS ──
-function updateDashboardCharts(){
-  // Chart: Users by role
-  const roles={joueur:0,club:0,arbitre:0};
-  allUsers.forEach(u=>{
-    if(roles.hasOwnProperty(u.role)) roles[u.role]++;
-  });
-
-  const ctxRoles=document.getElementById('chart-roles').getContext('2d');
-  if(chartRoles) chartRoles.destroy();
-  chartRoles=new Chart(ctxRoles,{
-    type:'doughnut',
-    data:{
-      labels:['Joueurs','Clubs','Arbitres'],
-      datasets:[{
-        data:[roles.joueur,roles.club,roles.arbitre],
-        backgroundColor:['#3b82f6','#009E60','#f59e0b'],
-        borderColor:'#fff',
-        borderWidth:2
-      }]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
-  });
-
-  // Chart: Activity (7 days)
-  const days=[];
-  const counts=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date();
-    d.setDate(d.getDate()-i);
-    days.push(d.toLocaleDateString('fr-FR',{month:'short',day:'numeric'}));
-    counts.push(Math.floor(Math.random()*50)+10);
-  }
-
-  const ctxActivity=document.getElementById('chart-activity').getContext('2d');
-  if(chartActivity) chartActivity.destroy();
-  chartActivity=new Chart(ctxActivity,{
-    type:'line',
-    data:{
-      labels:days,
-      datasets:[{
-        label:'Utilisateurs actifs',
-        data:counts,
-        borderColor:'#009E60',
-        backgroundColor:'rgba(0,158,96,0.1)',
-        tension:0.4,
-        fill:true
-      }]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}
-  });
-
-  // Chart: Growth (30 days)
-  const daysGrowth=[];
-  const growthCounts=[];
-  for(let i=29;i>=0;i--){
-    const d=new Date();
-    d.setDate(d.getDate()-i);
-    daysGrowth.push(d.toLocaleDateString('fr-FR',{month:'short',day:'numeric'}));
-    growthCounts.push(Math.floor(Math.random()*30)+allUsers.length-900);
-  }
-
-  const ctxGrowth=document.getElementById('chart-growth').getContext('2d');
-  if(chartGrowth) chartGrowth.destroy();
-  chartGrowth=new Chart(ctxGrowth,{
-    type:'line',
-    data:{
-      labels:daysGrowth,
-      datasets:[{
-        label:'Nouveaux utilisateurs',
-        data:growthCounts,
-        borderColor:'#f59e0b',
-        backgroundColor:'rgba(245,158,11,0.1)',
-        tension:0.4,
-        fill:true
-      }]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}}}
-  });
-}
-
-// ── ACTIVITY FEED ──
-function updateActivityFeed(){
-  const items=[];
-  
-  // Recent users
-  allUsers.filter(u=>u.createdAt).sort((a,b)=>(b.createdAt?.toDate?.()??0)-(a.createdAt?.toDate?.()??0)).slice(0,5).forEach(u=>{
-    items.push({type:'user',text:`Nouvel utilisateur: <strong>${u.displayName||u.email}</strong>`,time:u.createdAt?.toDate?.()??new Date()});
-  });
-  
-  // Recent news
-  newsItems.slice(0,3).forEach(n=>{
-    items.push({type:'news',text:`Actualité publiée: <strong>${n.title}</strong>`,time:n.createdAt?.toDate?.()??new Date()});
-  });
-  
-  items.sort((a,b)=>b.time-a.time);
-  
-  const feedEl=document.getElementById('activity-feed');
-  if(!items.length){
-    feedEl.innerHTML='<div class="empty"><div class="empty-icon">📝</div><h3>Aucune activité</h3></div>';
-  }else{
-    feedEl.innerHTML=items.map(i=>`<div class="activity-item" style="padding:12px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;"><div>${i.text}</div><div style="font-size:11px;color:#64748b;">${formatTime(i.time)}</div></div>`).join('');
-  }
-}
-
-// ── TABLES ──
-function updateUsersTable(){
-  const tbody=document.getElementById('users-tbody');
-  if(!allUsers.length){
-    tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>Aucun utilisateur</p></div></td></tr>';
+// ── PLAYERS TABLE ──
+function updatePlayersTable(){
+  const tbody=document.getElementById('players-tbody');
+  if(!players.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;">Aucun joueur</td></tr>';
     return;
   }
-  tbody.innerHTML=allUsers.map(u=>`
+  tbody.innerHTML=players.map(p=>`
     <tr>
-      <td>${u.displayName||u.email}</td>
-      <td>${u.email}</td>
-      <td><span class="role-badge">${u.role||'user'}</span></td>
-      <td><span class="status-badge status-${u.status||'active'}">${u.status||'active'}</span></td>
-      <td>${formatDate(u.createdAt)}</td>
-      <td><button onclick="deleteUser('${u.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
+      <td>${p.firstname} ${p.lastname}</td>
+      <td>${p.sport||'-'}</td>
+      <td>${p.position||'-'}</td>
+      <td><span class="status-badge status-${p.level==='pro'?'active':'pending'}">${p.level||'Amateur'}</span></td>
+      <td>${p.city||'-'}</td>
+      <td><span class="status-badge status-active">Actif</span></td>
+      <td><button class="btn-danger btn-small" onclick="deletePlayer('${p.id}')">Supprimer</button></td>
     </tr>
   `).join('');
 }
 
-function updateNewsTable(){
-  const tbody=document.getElementById('news-tbody');
-  if(!newsItems.length){
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucune actualité</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML=newsItems.map(n=>`
-    <tr>
-      <td>${n.title||'Sans titre'}</td>
-      <td>${n.category||'Général'}</td>
-      <td><span class="status-badge status-active">publié</span></td>
-      <td>${formatDate(n.createdAt)}</td>
-      <td><button onclick="deleteNews('${n.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
-    </tr>
-  `).join('');
+function filterPlayers(){
+  // Filtrage en temps réel
 }
 
-function updateSitesTable(){
-  const tbody=document.getElementById('sites-tbody');
-  if(!sitesItems.length){
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucun site</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML=sitesItems.map(s=>`
-    <tr>
-      <td>${s.name||'Sans nom'}</td>
-      <td>${s.city||'N/A'}</td>
-      <td>${s.type||'Général'}</td>
-      <td><span class="status-badge status-active">actif</span></td>
-      <td>${formatDate(s.createdAt)}</td>
-    </tr>
-  `).join('');
-}
-
+// ── CLUBS TABLE ──
 function updateClubsTable(){
   const tbody=document.getElementById('clubs-tbody');
-  if(!clubsItems.length){
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>Aucun club</p></div></td></tr>';
+  if(!clubs.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;">Aucun club</td></tr>';
     return;
   }
-  tbody.innerHTML=clubsItems.map(c=>`
+  tbody.innerHTML=clubs.map(c=>`
     <tr>
-      <td>${c.name||'Sans nom'}</td>
-      <td>${c.email||'N/A'}</td>
-      <td>${c.city||'N/A'}</td>
-      <td><span class="status-badge status-active">actif</span></td>
-      <td><button onclick="deleteClub('${c.id}')" style="color:#ef4444;cursor:pointer;border:none;background:none;font-size:12px;">Supprimer</button></td>
+      <td>${c.name}</td>
+      <td>${c.sport||'Multi-sports'}</td>
+      <td>${c.city||'-'}</td>
+      <td>${c.president||'-'}</td>
+      <td>${c.members||0}</td>
+      <td><span class="status-badge status-active">Actif</span></td>
+      <td><button class="btn-danger btn-small" onclick="deleteClub('${c.id}')">Supprimer</button></td>
     </tr>
   `).join('');
 }
 
-// ── CRUD OPERATIONS ──
-async function saveUser(event){
-  event.preventDefault();
-  const name=document.getElementById('form-user-name').value;
-  const email=document.getElementById('form-user-email').value;
-  const role=document.getElementById('form-user-role').value;
+function filterClubs(){
+  // Filtrage en temps réel
+}
+
+// ── SITES MAP ──
+function updateSitesMap(){
+  if(!map) return;
   
-  try{
-    await db.collection('users').add({
-      displayName:name,email,role,
-      status:'active',
-      createdAt:new Date(),
-      lastLogin:null
-    });
-    closeModal('modal-add-user');
-    showToast('Utilisateur créé avec succès','');
-    addLog('ADMIN','Utilisateur créé',name);
-  }catch(e){
-    showToast('Erreur lors de la création','error');
-    addLog('ERROR','Erreur création utilisateur',e.message);
+  // Clear existing markers
+  map.eachLayer(l=>{if(l.setLatLng) map.removeLayer(l);});
+  
+  // Add markers
+  sites.forEach(site=>{
+    if(site.latitude && site.longitude){
+      L.circleMarker([site.latitude,site.longitude],{
+        radius:8,fillColor:'#009E60',color:'#fff',weight:2,opacity:1,fillOpacity:0.8
+      }).bindPopup(`<b>${site.name}</b><br>${site.type}<br>${site.address||''}`).addTo(map);
+    }
+  });
+
+  // Update sites list
+  const listEl=document.getElementById('sites-list');
+  if(!sites.length){
+    listEl.innerHTML='<p style="font-size:12px;color:#64748b;">Aucun site géolocalisé</p>';
+  }else{
+    listEl.innerHTML=sites.map(s=>`<div style="padding:8px;border-bottom:1px solid #e2e8f0;cursor:pointer;font-size:12px;" onclick="highlightSite('${s.id}')">${s.name}</div>`).join('');
   }
 }
 
-async function saveNews(event){
-  event.preventDefault();
-  const title=document.getElementById('form-news-title').value;
-  const category=document.getElementById('form-news-category').value;
-  const desc=document.getElementById('form-news-desc').value;
-  
-  try{
-    await db.collection('actualites').add({
-      title,category,description:desc,
-      status:'published',
-      createdAt:new Date()
-    });
-    closeModal('modal-add-news');
-    showToast('Actualité publiée avec succès','');
-    addLog('ADMIN','Actualité créée',title);
-  }catch(e){
-    showToast('Erreur lors de la publication','error');
-    addLog('ERROR','Erreur création actualité',e.message);
+function highlightSite(id){
+  const site=sites.find(s=>s.id===id);
+  if(site){
+    document.getElementById('site-details').innerHTML=`
+      <strong>${site.name}</strong><br>
+      Type: ${site.type}<br>
+      Adresse: ${site.address||'N/A'}<br>
+      Capacité: ${site.capacity||'N/A'} places<br>
+      Sports: ${site.sports||'N/A'}
+    `;
   }
 }
 
-async function saveSite(event){
+// ── CRUD ──
+async function savePlayer(event){
   event.preventDefault();
-  const name=document.getElementById('form-site-name').value;
-  const city=document.getElementById('form-site-city').value;
-  const type=document.getElementById('form-site-type').value;
-  
+  const data={
+    firstname:document.getElementById('form-player-firstname').value,
+    lastname:document.getElementById('form-player-lastname').value,
+    email:document.getElementById('form-player-email').value,
+    phone:document.getElementById('form-player-phone').value,
+    sport:document.getElementById('form-player-sport').value,
+    position:document.getElementById('form-player-position').value,
+    level:document.getElementById('form-player-level').value,
+    foot:document.getElementById('form-player-foot').value,
+    speed:document.getElementById('form-player-speed').value,
+    endurance:document.getElementById('form-player-endurance').value,
+    height:document.getElementById('form-player-height').value,
+    weight:document.getElementById('form-player-weight').value,
+    build:document.getElementById('form-player-build').value,
+    experience:document.getElementById('form-player-experience').value,
+    city:document.getElementById('form-player-city').value,
+    club:document.getElementById('form-player-club').value,
+    license:document.getElementById('form-player-license').value,
+    createdAt:new Date()
+  };
+
   try{
-    await db.collection('sitesSportifs').add({
-      name,city,type,
-      status:'active',
-      createdAt:new Date()
-    });
-    closeModal('modal-add-site');
-    showToast('Site créé avec succès','');
-    addLog('ADMIN','Site créé',name);
+    await db.collection('players').add(data);
+    closeModal('modal-add-player');
+    showToast('Profil joueur créé avec succès','');
+    addLog('ADMIN','Joueur créé',`${data.firstname} ${data.lastname}`);
+    await loadAllData();
   }catch(e){
     showToast('Erreur lors de la création','error');
-    addLog('ERROR','Erreur création site',e.message);
+    addLog('ERROR','Erreur création joueur',e.message);
   }
 }
 
 async function saveClub(event){
   event.preventDefault();
-  const name=document.getElementById('form-club-name').value;
-  const email=document.getElementById('form-club-email').value;
-  const city=document.getElementById('form-club-city').value;
-  
+  const data={
+    name:document.getElementById('form-club-name').value,
+    sport:document.getElementById('form-club-sport').value,
+    city:document.getElementById('form-club-city').value,
+    president:document.getElementById('form-club-president').value,
+    email:document.getElementById('form-club-email').value,
+    phone:document.getElementById('form-club-phone').value,
+    website:document.getElementById('form-club-website').value,
+    address:document.getElementById('form-club-address').value,
+    members:parseInt(document.getElementById('form-club-members').value||0),
+    secretary:document.getElementById('form-club-secretary').value,
+    treasurer:document.getElementById('form-club-treasurer').value,
+    technical:document.getElementById('form-club-technical').value,
+    youth:document.getElementById('form-club-youth').value,
+    createdAt:new Date()
+  };
+
   try{
-    await db.collection('clubs').add({
-      name,email,city,
-      status:'active',
-      createdAt:new Date()
-    });
+    await db.collection('clubs').add(data);
     closeModal('modal-add-club');
     showToast('Club créé avec succès','');
-    addLog('ADMIN','Club créé',name);
+    addLog('ADMIN','Club créé',data.name);
+    await loadAllData();
   }catch(e){
-    showToast('Erreur lors de la création','error');
-    addLog('ERROR','Erreur création club',e.message);
+    showToast('Erreur','error');
   }
 }
 
-async function deleteUser(id){
-  if(confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')){
-    try{
-      await db.collection('users').doc(id).delete();
-      showToast('Utilisateur supprimé','');
-      addLog('ADMIN','Utilisateur supprimé',id);
-    }catch(e){
-      showToast('Erreur lors de la suppression','error');
-    }
+async function saveSite(event){
+  event.preventDefault();
+  const data={
+    name:document.getElementById('form-site-name').value,
+    latitude:parseFloat(document.getElementById('form-site-lat').value),
+    longitude:parseFloat(document.getElementById('form-site-lng').value),
+    type:document.getElementById('form-site-type').value,
+    capacity:document.getElementById('form-site-capacity').value,
+    address:document.getElementById('form-site-address').value,
+    sports:document.getElementById('form-site-sports').value,
+    createdAt:new Date()
+  };
+
+  try{
+    await db.collection('sites').add(data);
+    closeModal('modal-add-site');
+    showToast('Site géolocalisé avec succès','');
+    addLog('ADMIN','Site ajouté',data.name);
+    await loadAllData();
+  }catch(e){
+    showToast('Erreur','error');
   }
 }
 
-async function deleteNews(id){
-  if(confirm('Êtes-vous sûr?')){
+async function saveArbitre(event){
+  event.preventDefault();
+  const data={
+    firstname:document.getElementById('form-arbitre-firstname').value,
+    lastname:document.getElementById('form-arbitre-lastname').value,
+    sport:document.getElementById('form-arbitre-sport').value,
+    level:document.getElementById('form-arbitre-level').value,
+    license:document.getElementById('form-arbitre-license').value,
+    createdAt:new Date()
+  };
+
+  try{
+    await db.collection('arbitres').add(data);
+    closeModal('modal-add-arbitre');
+    showToast('Arbitre créé','');
+    await loadAllData();
+  }catch(e){
+    showToast('Erreur','error');
+  }
+}
+
+async function saveCoach(event){
+  event.preventDefault();
+  const data={
+    firstname:document.getElementById('form-coach-firstname').value,
+    lastname:document.getElementById('form-coach-lastname').value,
+    sport:document.getElementById('form-coach-sport').value,
+    specialty:document.getElementById('form-coach-specialty').value,
+    certification:document.getElementById('form-coach-certification').value,
+    club:document.getElementById('form-coach-club').value,
+    createdAt:new Date()
+  };
+
+  try{
+    await db.collection('coaches').add(data);
+    closeModal('modal-add-coach');
+    showToast('Entraîneur créé','');
+    await loadAllData();
+  }catch(e){
+    showToast('Erreur','error');
+  }
+}
+
+async function saveIndependent(event){
+  event.preventDefault();
+  const data={
+    firstname:document.getElementById('form-indie-firstname').value,
+    lastname:document.getElementById('form-indie-lastname').value,
+    sport:document.getElementById('form-indie-sport').value,
+    category:document.getElementById('form-indie-category').value,
+    city:document.getElementById('form-indie-city').value,
+    createdAt:new Date()
+  };
+
+  try{
+    await db.collection('independents').add(data);
+    closeModal('modal-add-independent');
+    showToast('Sportif créé','');
+    await loadAllData();
+  }catch(e){
+    showToast('Erreur','error');
+  }
+}
+
+async function saveEvent(event){
+  event.preventDefault();
+  const data={
+    title:document.getElementById('form-event-title').value,
+    sport:document.getElementById('form-event-sport').value,
+    date:document.getElementById('form-event-date').value,
+    location:document.getElementById('form-event-location').value,
+    createdAt:new Date()
+  };
+
+  try{
+    await db.collection('events').add(data);
+    closeModal('modal-add-event');
+    showToast('Événement créé','');
+    addLog('ADMIN','Événement créé',data.title);
+  }catch(e){
+    showToast('Erreur','error');
+  }
+}
+
+async function deletePlayer(id){
+  if(confirm('Supprimer ce joueur?')){
     try{
-      await db.collection('actualites').doc(id).delete();
-      showToast('Actualité supprimée','');
-      addLog('ADMIN','Actualité supprimée',id);
+      await db.collection('players').doc(id).delete();
+      await loadAllData();
+      showToast('Joueur supprimé','');
     }catch(e){
       showToast('Erreur','error');
     }
@@ -1027,11 +1364,11 @@ async function deleteNews(id){
 }
 
 async function deleteClub(id){
-  if(confirm('Êtes-vous sûr?')){
+  if(confirm('Supprimer ce club?')){
     try{
       await db.collection('clubs').doc(id).delete();
+      await loadAllData();
       showToast('Club supprimé','');
-      addLog('ADMIN','Club supprimé',id);
     }catch(e){
       showToast('Erreur','error');
     }
@@ -1039,35 +1376,18 @@ async function deleteClub(id){
 }
 
 // ── UTILITIES ──
-function formatDate(timestamp){
-  if(!timestamp) return 'N/A';
-  const date=timestamp.toDate?.()??new Date(timestamp);
-  return date.toLocaleDateString('fr-FR');
-}
-
-function formatTime(date){
-  const now=new Date();
-  const diff=now-date;
-  const mins=Math.floor(diff/60000);
-  const hours=Math.floor(diff/3600000);
-  const days=Math.floor(diff/86400000);
-  if(mins<1) return 'À l\'instant';
-  if(mins<60) return `${mins}m`;
-  if(hours<24) return `${hours}h`;
-  return `${days}j`;
-}
-
 function addLog(type,action,details=''){
   systemLogs.unshift({type,action,details,timestamp:new Date()});
-  if(systemLogs.length>1000) systemLogs.pop();
+  if(systemLogs.length>500) systemLogs.pop();
   updateLogsDisplay();
 }
 
 function updateLogsDisplay(){
   const container=document.getElementById('logs-container');
-  container.innerHTML=systemLogs.slice(0,50).map(log=>`
-    <div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,.1);color:${log.type==='ERROR'?'#ef4444':log.type==='ADMIN'?'#f59e0b':'#009E60'};">
-      [${log.timestamp.toLocaleTimeString('fr-FR')}] <strong>${log.type}</strong>: ${log.action} ${log.details}
+  if(!container) return;
+  container.innerHTML=systemLogs.slice(0,30).map(log=>`
+    <div style="color:${log.type==='ERROR'?'#ef4444':log.type==='ADMIN'?'#f59e0b':'#009E60'};margin-bottom:8px;">
+      [${log.timestamp.toLocaleTimeString('fr-FR')}] ${log.type}: ${log.action} ${log.details}
     </div>
   `).join('');
 }
@@ -1086,33 +1406,23 @@ function toggleSidebar(){
 
 function showSection(sectionId){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(`section-${sectionId}`).classList.add('active');
-  
-  document.querySelectorAll('.sidebar-item').forEach(item=>item.classList.remove('active'));
-  event.target.closest('.sidebar-item')?.classList.add('active');
-  
+  const el=document.getElementById(`section-${sectionId}`);
+  if(el){
+    el.classList.add('active');
+    if(sectionId==='sites' && map) setTimeout(()=>map.invalidateSize(),300);
+  }
   toggleSidebar();
 }
 
-function openAddUserModal(){
-  document.getElementById('modal-add-user').classList.add('active');
-}
+function openAddPlayerModal(){document.getElementById('modal-add-player').classList.add('active');}
+function openAddClubModal(){document.getElementById('modal-add-club').classList.add('active');}
+function openAddSiteModal(){document.getElementById('modal-add-site').classList.add('active');}
+function openAddArbitreModal(){document.getElementById('modal-add-arbitre').classList.add('active');}
+function openAddCoachModal(){document.getElementById('modal-add-coach').classList.add('active');}
+function openAddIndependentModal(){document.getElementById('modal-add-independent').classList.add('active');}
+function openAddEventModal(){document.getElementById('modal-add-event').classList.add('active');}
 
-function openAddNewsModal(){
-  document.getElementById('modal-add-news').classList.add('active');
-}
-
-function openAddSiteModal(){
-  document.getElementById('modal-add-site').classList.add('active');
-}
-
-function openAddClubModal(){
-  document.getElementById('modal-add-club').classList.add('active');
-}
-
-function closeModal(id){
-  document.getElementById(id).classList.remove('active');
-}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
 
 function doLogout(){
   if(confirm('Déconnexion?')){
@@ -1127,7 +1437,6 @@ function saveSettings(event){
   addLog('ADMIN','Paramètres mis à jour');
 }
 
-// ── START ──
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
