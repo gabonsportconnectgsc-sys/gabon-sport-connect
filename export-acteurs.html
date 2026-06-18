@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export Acteurs Sportifs - GSC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #0d3a1f 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      color: #0a1628;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .export-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      border: 1.5px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .export-card:hover {
+      border-color: #009e60;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,158,96,0.15);
+    }
+    
+    .card-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0a1628;
+      margin-bottom: 4px;
+    }
+    
+    .card-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    
+    .card-stats {
+      background: #f4f6f8;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0a1628;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-csv {
+      background: #009e60;
+      color: white;
+    }
+    
+    .btn-csv:hover {
+      background: #007a47;
+      transform: translateY(-1px);
+    }
+    
+    .btn-json {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-json:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+    
+    .btn-pdf {
+      background: #8b5cf6;
+      color: white;
+    }
+    
+    .btn-pdf:hover {
+      background: #7c3aed;
+      transform: translateY(-1px);
+    }
+    
+    .filters-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    .filters-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0a1628;
+      margin-bottom: 12px;
+    }
+    
+    .filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .filter-btn {
+      padding: 8px 14px;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: #009e60;
+      border-color: #009e60;
+      color: white;
+    }
+    
+    .data-preview {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      display: none;
+    }
+    
+    .data-preview.show {
+      display: block;
+    }
+    
+    .preview-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0a1628;
+      margin-bottom: 12px;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    
+    .data-table th {
+      background: #f4f6f8;
+      padding: 10px;
+      text-align: left;
+      font-weight: 700;
+      color: #0a1628;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .data-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+    }
+    
+    .data-table tr:hover td {
+      background: #f8fafc;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #009e60;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.error {
+      background: #ef4444;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .stats-summary {
+      background: linear-gradient(135deg, #009e60, #007a47);
+      border-radius: 12px;
+      padding: 20px;
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,158,96,0.25);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="header">
+    <h1>⚽ Export Acteurs Sportifs GSC</h1>
+    <p>Exportez les données des membres par catégories en plusieurs formats</p>
+  </div>
+  
+  <div class="stats-summary">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="total-count">28</div>
+        <div class="stat-label">Total Acteurs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="players-count">15</div>
+        <div class="stat-label">Joueurs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="coaches-count">7</div>
+        <div class="stat-label">Entraîneurs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="arbiters-count">6</div>
+        <div class="stat-label">Arbitres</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="filters-section">
+    <div class="filters-title">🔍 Filtrer par catégorie</div>
+    <div class="filter-options">
+      <button class="filter-btn active" onclick="setFilter('all')">Tous</button>
+      <button class="filter-btn" onclick="setFilter('joueur')">⚽ Joueurs/Athlètes</button>
+      <button class="filter-btn" onclick="setFilter('entraineur')">📋 Entraîneurs</button>
+      <button class="filter-btn" onclick="setFilter('arbitre')">🟨 Arbitres</button>
+      <button class="filter-btn" onclick="setFilter('club')">🏟️ Clubs</button>
+      <button class="filter-btn" onclick="setFilter('federation')">🏛️ Fédérations</button>
+      <button class="filter-btn" onclick="setFilter('verified')">✅ Vérifiés uniquement</button>
+    </div>
+  </div>
+  
+  <div class="export-grid">
+    
+    <!-- JOUEURS/ATHLÈTES -->
+    <div class="export-card">
+      <span class="card-icon">⚽</span>
+      <div class="card-title">Joueurs & Athlètes</div>
+      <div class="card-desc">Données complètes des 15 joueurs inscrits</div>
+      <div class="card-stats">
+        Inscrits: 15 | Vérifiés: 12 | En attente: 3
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('joueur', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('joueur', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('joueur', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- ENTRAÎNEURS/COACHS -->
+    <div class="export-card">
+      <span class="card-icon">📋</span>
+      <div class="card-title">Entraîneurs & Coachs</div>
+      <div class="card-desc">Données des 7 entraîneurs (clubs + fédérations)</div>
+      <div class="card-stats">
+        Inscrits: 7 | Clubs: 4 | Fédérations: 3
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('entraineur', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('entraineur', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('entraineur', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- ARBITRES -->
+    <div class="export-card">
+      <span class="card-icon">🟨</span>
+      <div class="card-title">Arbitres & Officiels</div>
+      <div class="card-desc">Données des 6 arbitres professionnels</div>
+      <div class="card-stats">
+        Inscrits: 6 | Officiels: 5 | Assistants: 1
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('arbitre', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('arbitre', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('arbitre', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- CLUBS SPORTIFS -->
+    <div class="export-card">
+      <span class="card-icon">🏟️</span>
+      <div class="card-title">Clubs Sportifs</div>
+      <div class="card-desc">Données des 11 clubs affiliés au réseau GSC</div>
+      <div class="card-stats">
+        Clubs: 11 | Actifs: 10 | En audit: 1
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('club', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('club', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('club', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- FÉDÉRATIONS -->
+    <div class="export-card">
+      <span class="card-icon">🏛️</span>
+      <div class="card-title">Fédérations Sportives</div>
+      <div class="card-desc">Données des 2 fédérations nationales</div>
+      <div class="card-stats">
+        Fédérations: 2 | Sportifs affiliés: 18 | Clubs: 8
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('federation', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('federation', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('federation', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- ASSOCIATIONS -->
+    <div class="export-card">
+      <span class="card-icon">🤝</span>
+      <div class="card-title">Associations & Organisations</div>
+      <div class="card-desc">Données des partenaires et organisations</div>
+      <div class="card-stats">
+        Organisations: 1 | Membres: 8 | Projets: 3
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('association', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('association', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('association', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
+    <!-- EXPORT COMPLET -->
+    <div class="export-card">
+      <span class="card-icon">📦</span>
+      <div class="card-title">Export Complet</div>
+      <div class="card-desc">Tous les acteurs et métadonnées (export full backup)</div>
+      <div class="card-stats">
+        Données complètes | Incluant historique | Avec photos URLs
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('all', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('all', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('all', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="data-preview" id="preview">
+    <div class="preview-title">📊 Aperçu des données</div>
+    <table class="data-table" id="preview-table">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  
+</div>
+
+<script>
+  // MOCK DATA - À remplacer par Firebase en production
+  const SPORTS_ACTORS = {
+    joueur: [
+      {id: 1, nom: 'Kozangue', prenom: 'Patrick', role: 'Joueur', club: 'GSC', position: 'Attaquant', numero: 23, status: 'active', verified: true},
+      {id: 2, nom: 'N\'dong', prenom: 'Benjamin', role: 'Joueur', club: 'FC Libreville', position: 'Gardien', numero: 1, status: 'active', verified: true},
+      {id: 3, nom: 'Traore', prenom: 'Mamadou', role: 'Joueur', club: 'AS Stade Renew', position: 'Défenseur', numero: 4, status: 'active', verified: true},
+      {id: 4, nom: 'Dupont', prenom: 'Jean', role: 'Joueur', club: 'GFC', position: 'Milieu', numero: 8, status: 'pending', verified: false},
+      {id: 5, nom: 'Mikobi', prenom: 'Yves', role: 'Athlète', club: 'Indépendant', position: 'Sprinter', numero: '-', status: 'active', verified: true},
+      {id: 6, nom: 'Sano', prenom: 'Moussa', role: 'Joueur', club: 'ASSP', position: 'Ailier', numero: 11, status: 'active', verified: true},
+      {id: 7, nom: 'Bessala', prenom: 'Roger', role: 'Joueur', club: 'Olympique', position: 'Arrière', numero: 2, status: 'active', verified: true},
+      {id: 8, nom: 'Ebang', prenom: 'Armand', role: 'Joueur', club: 'Petro', position: 'Avant', numero: 9, status: 'pending', verified: false},
+      {id: 9, nom: 'Togo', prenom: 'Raphaël', role: 'Joueur', club: 'AC Albigeois', position: 'Défenseur', numero: 5, status: 'active', verified: true},
+      {id: 10, nom: 'Kombila', prenom: 'Serge', role: 'Joueur', club: 'FC Nkembi', position: 'Milieu', numero: 7, status: 'active', verified: true},
+      {id: 11, nom: 'Mve Ondo', prenom: 'Daniel', role: 'Joueur', club: 'Indépendant', position: 'Attaquant', numero: '-', status: 'active', verified: false},
+      {id: 12, nom: 'Biyogo', prenom: 'Christophe', role: 'Athlète', club: 'Indépendant', position: 'Haltérophilie', numero: '-', status: 'active', verified: true},
+      {id: 13, nom: 'Nchobi', prenom: 'Patricia', role: 'Athlète', club: 'AC Stade', position: 'Sprint', numero: '-', status: 'active', verified: true},
+      {id: 14, nom: 'Evang', prenom: 'Marcel', role: 'Joueur', club: 'UNS', position: 'Gardien', numero: 1, status: 'pending', verified: false},
+      {id: 15, nom: 'Nguema', prenom: 'Fabrice', role: 'Joueur', club: 'ASFA', position: 'Défenseur', numero: 3, status: 'active', verified: true},
+    ],
+    entraineur: [
+      {id: 101, nom: 'Cissokho', prenom: 'Alain', role: 'Entraîneur', club: 'GSC', certification: 'UEFA B', experience: '15 ans', status: 'active', verified: true},
+      {id: 102, nom: 'Diallo', prenom: 'Moussa', role: 'Entraîneur', club: 'FC Libreville', certification: 'CAF A', experience: '12 ans', status: 'active', verified: true},
+      {id: 103, nom: 'Kombila', prenom: 'André', role: 'Coach', club: 'Stade Renew', certification: 'UEFA C', experience: '8 ans', status: 'active', verified: true},
+      {id: 104, nom: 'Mvé', prenom: 'Christian', role: 'Entraîneur', club: 'Olympique', certification: 'Fédération', experience: '10 ans', status: 'pending', verified: false},
+      {id: 105, nom: 'Ondo', prenom: 'Ferdinand', role: 'Entraîneur', organization: 'Fédération Gabon', certification: 'FIFA C', experience: '20 ans', status: 'active', verified: true},
+      {id: 106, nom: 'Ngani', prenom: 'Benoît', role: 'Coach', organization: 'Fédération Athlétisme', certification: 'World Athletics', experience: '18 ans', status: 'active', verified: true},
+      {id: 107, nom: 'Bounzemi', prenom: 'Joseph', role: 'Entraîneur', club: 'Petro', certification: 'UEFA D', experience: '6 ans', status: 'active', verified: true},
+    ],
+    arbitre: [
+      {id: 201, nom: 'Aboh', prenom: 'Gérard', role: 'Arbitre', licence: 'FIFA', category: 'International', status: 'active', verified: true},
+      {id: 202, nom: 'Nyame', prenom: 'Albert', role: 'Arbitre', licence: 'CAF', category: 'National', status: 'active', verified: true},
+      {id: 203, nom: 'Ibinga', prenom: 'François', role: 'Arbitre Assistant', licence: 'CAF', category: 'National', status: 'active', verified: true},
+      {id: 204, nom: 'Nkomo', prenom: 'Serge', role: 'Arbitre', licence: 'Nationale', category: 'Régional', status: 'active', verified: true},
+      {id: 205, nom: 'Kanza', prenom: 'Laurent', role: 'Arbitre', licence: 'CAF', category: 'National', status: 'pending', verified: false},
+      {id: 206, nom: 'Okoungha', prenom: 'Thierry', role: 'Arbitre Assistant', licence: 'Nationale', category: 'Régional', status: 'active', verified: true},
+    ],
+    club: [
+      {id: 301, nom: 'GSC - Gabon Sport Connect', type: 'Club', presidente: 'Nkoghe Evouna', membres: 45, status: 'active', verified: true},
+      {id: 302, nom: 'FC Libreville', type: 'Club', presidente: 'Traore Moussa', membres: 32, status: 'active', verified: true},
+      {id: 303, nom: 'AS Stade Renew', type: 'Club', presidente: 'Kombila André', membres: 28, status: 'active', verified: true},
+      {id: 304, nom: 'GFC - Gabon Football Club', type: 'Club', presidente: 'Dupont Jean', membres: 35, status: 'active', verified: true},
+      {id: 305, nom: 'ASSP Stade', type: 'Club', presidente: 'Sano Moussa', membres: 30, status: 'active', verified: true},
+      {id: 306, nom: 'Olympique Libreville', type: 'Club', presidente: 'Bessala Roger', membres: 42, status: 'active', verified: true},
+      {id: 307, nom: 'Petro FC', type: 'Club', presidente: 'Ebang Armand', membres: 38, status: 'pending', verified: false},
+      {id: 308, nom: 'AC Albigeois', type: 'Club', presidente: 'Togo Raphaël', membres: 25, status: 'active', verified: true},
+      {id: 309, nom: 'FC Nkembi', type: 'Club', presidente: 'Kombila Serge', membres: 27, status: 'active', verified: true},
+      {id: 310, nom: 'UNS Sports', type: 'Club', presidente: 'Evang Marcel', membres: 50, status: 'active', verified: true},
+      {id: 311, nom: 'ASFA Gabon', type: 'Club', presidente: 'Nguema Fabrice', membres: 33, status: 'active', verified: true},
+    ],
+    federation: [
+      {id: 401, nom: 'Fédération Gabonaise de Football', type: 'Fédération', directeur: 'Ondo Ferdinand', clubs_affilies: 48, athletes: 850, status: 'active', verified: true},
+      {id: 402, nom: 'Fédération Gabonaise d\'Athlétisme', type: 'Fédération', directeur: 'Ngani Benoît', clubs_affilies: 12, athletes: 280, status: 'active', verified: true},
+    ],
+    association: [
+      {id: 501, nom: 'Association Gabon Sport Développement', type: 'Association', presidente: 'Nkoghe Evouna', membres: 8, projets: 3, status: 'active', verified: true},
+    ]
+  };
+  
+  let currentFilter = 'all';
+  
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+  
+  function getFilteredData() {
+    const allData = Object.values(SPORTS_ACTORS).flat();
+    
+    if (currentFilter === 'all') return allData;
+    if (currentFilter === 'verified') return allData.filter(d => d.verified === true);
+    return SPORTS_ACTORS[currentFilter] || [];
+  }
+  
+  function exportData(category, format) {
+    const data = category === 'all' 
+      ? Object.values(SPORTS_ACTORS).flat()
+      : SPORTS_ACTORS[category] || [];
+    
+    if (!data.length) {
+      showToast('Aucune donnée à exporter', 'error');
+      return;
+    }
+    
+    try {
+      if (format === 'csv') exportCSV(data, category);
+      else if (format === 'json') exportJSON(data, category);
+      else if (format === 'pdf') exportPDF(data, category);
+      
+      showToast(`✅ Export ${category} en ${format.toUpperCase()} réussi!`);
+      showPreview(data.slice(0, 5));
+    } catch (error) {
+      showToast('Erreur lors de l\'export: ' + error.message, 'error');
+    }
+  }
+  
+  function exportCSV(data, category) {
+    if (!data.length) return;
+    
+    const keys = Object.keys(data[0]);
+    const headers = keys.join(',');
+    const rows = data.map(row => 
+      keys.map(key => {
+        const val = row[key];
+        return typeof val === 'string' && val.includes(',') 
+          ? `"${val}"` 
+          : val;
+      }).join(',')
+    );
+    
+    const csv = [headers, ...rows].join('\n');
+    downloadFile(csv, `acteurs-${category}-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+  }
+  
+  function exportJSON(data, category) {
+    const json = JSON.stringify(data, null, 2);
+    downloadFile(json, `acteurs-${category}-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+  }
+  
+  function exportPDF(data, category) {
+    let html = `
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Export ${category}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #009e60; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #009e60; color: white; }
+            tr:nth-child(even) { background: #f4f6f8; }
+            .timestamp { color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <h1>📊 Export Acteurs Sportifs - ${category}</h1>
+          <p class="timestamp">Généré le: ${new Date().toLocaleString('fr-FR')}</p>
+          <table>
+            <thead>
+              <tr>
+                ${Object.keys(data[0]).map(k => `<th>${k}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(row => `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    downloadFile(html, `acteurs-${category}-${new Date().toISOString().split('T')[0]}.html`, 'text/html');
+  }
+  
+  function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  
+  function showPreview(data) {
+    const preview = document.getElementById('preview');
+    const table = document.getElementById('preview-table');
+    
+    if (!data.length) {
+      preview.classList.remove('show');
+      return;
+    }
+    
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    
+    thead.innerHTML = `<tr>${Object.keys(data[0]).map(k => `<th>${k}</th>`).join('')}</tr>`;
+    tbody.innerHTML = data.map(row => 
+      `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
+    ).join('');
+    
+    preview.classList.add('show');
+  }
+  
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type === 'error' ? 'error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+</script>
+
+</body>
+</html>
