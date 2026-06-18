@@ -175,6 +175,26 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .player-photo-container img{width:100%;height:100%;object-fit:cover;}
 .upload-trigger{position:absolute;bottom:6px;right:6px;width:28px;height:28px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;}
 #photo-input{display:none;}
+/* ─── PHOTOS SECTION ─── */
+.ph-actor-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid transparent;transition:all .3s;}
+.ph-actor-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.12);border-color:var(--green);}
+.ph-photo-zone{width:100%;height:150px;background:linear-gradient(135deg,rgba(0,158,96,.1),rgba(255,215,0,.1));display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:background .2s;}
+.ph-photo-zone:hover{background:linear-gradient(135deg,rgba(0,158,96,.2),rgba(255,215,0,.2));}
+.ph-avatar{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#fff;overflow:hidden;position:relative;}
+.ph-avatar img{width:100%;height:100%;object-fit:cover;}
+.ph-hover-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0;transition:opacity .2s;}
+.ph-photo-zone:hover .ph-hover-overlay{opacity:1;}
+.ph-info{padding:12px 10px;text-align:center;}
+.ph-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ph-role{font-size:10px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;margin-bottom:6px;}
+.ph-actions{display:flex;gap:5px;padding:0 10px 10px;}
+.ph-btn{flex:1;padding:6px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;}
+.ph-btn.upload{background:var(--green-lt);color:var(--green-dk);}
+.ph-btn.upload:hover{background:var(--green);color:#fff;}
+.ph-btn.remove{background:rgba(239,68,68,.12);color:var(--danger);}
+.ph-btn.remove:hover{background:rgba(239,68,68,.25);}
+.ph-has-photo{border-color:var(--green)!important;}
+.ph-has-photo .ph-photo-zone{background:transparent;}
 .score-row{display:flex;align-items:center;gap:10px;}
 .score-row input{text-align:center;font-weight:800;font-size:18px;max-width:65px;}
 .score-sep{font-size:18px;font-weight:800;color:var(--gray-txt);}
@@ -246,6 +266,9 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
         <button class="nav-item" id="nav-joueurs" onclick="switchTab('joueurs',this)">
           <span class="nav-icon">👥</span><span>Joueurs</span>
         </button>
+        <button class="nav-item" id="nav-photos" onclick="switchTab('photos',this)">
+          <span class="nav-icon">📸</span><span>Photos & Logos</span>
+        </button>
         <button class="nav-item" id="nav-matchs" onclick="switchTab('matchs',this)">
           <span class="nav-icon">📅</span><span>Matchs</span>
         </button>
@@ -300,6 +323,29 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
         </div>
         <div id="players-grid" class="players-grid"></div>
         <div id="empty-state" class="empty" style="display:none;"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères</p></div>
+      </div>
+
+      <!-- PHOTOS & LOGOS -->
+      <div id="photos" class="section">
+        <div class="page-header">
+          <div class="page-title">📸 Photos &amp; Logos de profil</div>
+        </div>
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
+          <div class="stat-card"><div class="stat-val" id="ph-stat-total">0</div><div class="stat-lbl">Acteurs</div></div>
+          <div class="stat-card"><div class="stat-val" id="ph-stat-photos">0</div><div class="stat-lbl">Avec photo</div></div>
+          <div class="stat-card"><div class="stat-val" id="ph-stat-rate">0%</div><div class="stat-lbl">Taux couverture</div></div>
+        </div>
+        <!-- Filters -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ph-filter-bar">
+          <button class="filter-btn active" data-phfilter="all" onclick="filterPhotosSection('all',this)">📊 Tous</button>
+          <button class="filter-btn" data-phfilter="joueur" onclick="filterPhotosSection('joueur',this)">🏃 Joueurs</button>
+          <button class="filter-btn" data-phfilter="club" onclick="filterPhotosSection('club',this)">⚽ Clubs</button>
+          <button class="filter-btn" data-phfilter="federation" onclick="filterPhotosSection('federation',this)">🏆 Fédérations</button>
+          <button class="filter-btn" data-phfilter="association" onclick="filterPhotosSection('association',this)">🏢 Associations</button>
+        </div>
+        <!-- Grid -->
+        <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
       </div>
 
       <!-- MATCHS -->
@@ -412,6 +458,7 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 <div class="mobile-nav">
   <button class="mn-btn active" id="mnav-dashboard" onclick="switchTabMobile('dashboard','mnav-dashboard')"><span class="mn-icon">📊</span><span>Dashboard</span></button>
   <button class="mn-btn" id="mnav-joueurs" onclick="switchTabMobile('joueurs','mnav-joueurs')"><span class="mn-icon">👥</span><span>Joueurs</span></button>
+  <button class="mn-btn" id="mnav-photos" onclick="switchTabMobile('photos','mnav-photos')"><span class="mn-icon">📸</span><span>Photos</span></button>
   <button class="mn-btn" id="mnav-matchs" onclick="switchTabMobile('matchs','mnav-matchs')"><span class="mn-icon">📅</span><span>Matchs</span></button>
 </div>
 
@@ -450,10 +497,11 @@ function switchTab(tab,btn){
   const sec=$(tab);if(sec)sec.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  const titles={dashboard:'Dashboard',joueurs:'Gestion des Joueurs',matchs:'Gestion des Matchs'};
+  const titles={dashboard:'Dashboard',joueurs:'Gestion des Joueurs',matchs:'Gestion des Matchs',photos:'Photos & Logos de Profil'};
   const subs={joueurs:`(${allPlayers.length})`,matchs:`(${allMatches.length})`};
   setText('topbar-title',titles[tab]||tab);
   setText('topbar-sub',subs[tab]||'');
+  if(tab==='photos') renderPhotosSection('all');
   closeSidebar();
 }
 function switchTabMobile(tab,id){
@@ -635,6 +683,116 @@ function closeModal(id){const el=$(id);if(el)el.classList.remove('open');}
 function showSync(){const el=$('sync-indicator');if(el)el.style.display='flex';}
 function hideSync(){setTimeout(()=>{const el=$('sync-indicator');if(el)el.style.display='none';},600);}
 function toast(msg,type='info'){const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2800);}
+
+// ═══════════════════════════════════════════════════════════
+// PHOTOS & LOGOS MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+
+const PHOTO_STORE_KEY = 'gsc_profile_photos';
+
+function getPhotoStorage(){
+  try{ const s=localStorage.getItem(PHOTO_STORE_KEY); return s?JSON.parse(s):{actors:{},photos:{}}; }
+  catch(e){ return {actors:{},photos:{}}; }
+}
+function savePhotoStorage(store){
+  try{ localStorage.setItem(PHOTO_STORE_KEY, JSON.stringify(store)); } catch(e){ toast('⚠️ Stockage plein. Réduire la taille des images.','warn'); }
+}
+
+function renderPhotosSection(filter){
+  const store = getPhotoStorage();
+  // Merge allPlayers into the store if not already there
+  allPlayers.forEach(p=>{
+    if(!store.actors[p.id]){
+      const roleMap={Athlète:'joueur',Entraîneur:'entraineur',Arbitre:'arbitre','Joueur':'joueur','Club':'club','Association':'association','Fédération':'federation'};
+      store.actors[p.id]={id:p.id,name:p.nom||'Sans nom',type:roleMap[p.role]||'joueur',role:p.role,email:p.email||'',photo:!!p.photo};
+      if(p.photo&&p.photo.startsWith('data:')) store.photos[p.id]=p.photo;
+    }
+  });
+  savePhotoStorage(store);
+
+  const actors=Object.values(store.actors).filter(a=>filter==='all'||a.type===filter);
+  const withPhotos=Object.values(store.actors).filter(a=>a.photo||store.photos[a.id]);
+  const total=Object.values(store.actors).length;
+  const el=id=>document.getElementById(id);
+  if(el('ph-stat-total')) el('ph-stat-total').textContent=total;
+  if(el('ph-stat-photos')) el('ph-stat-photos').textContent=withPhotos.length;
+  if(el('ph-stat-rate')) el('ph-stat-rate').textContent=total?Math.round(withPhotos.length/total*100)+'%':'0%';
+
+  const typeIcons={joueur:'🏃',entraineur:'🎯',arbitre:'🏁',club:'⚽',association:'🏢',federation:'🏆',independant:'🌟',organisateur:'📋'};
+  const typeLabel={joueur:'Joueur',entraineur:'Entraîneur',arbitre:'Arbitre',club:'Club',association:'Association',federation:'Fédération',independant:'Indépendant',organisateur:'Organisateur'};
+
+  const grid=el('photos-grid');
+  if(!grid) return;
+  if(!actors.length){ grid.innerHTML='<p style="color:var(--gray-txt);font-size:13px;padding:20px;">Aucun acteur dans cette catégorie.</p>'; return; }
+
+  grid.innerHTML=actors.map(a=>{
+    const photo=store.photos[a.id]||null;
+    const hasPhoto=!!(photo||a.photo);
+    const icon=typeIcons[a.type]||'👤';
+    const label=typeLabel[a.type]||a.type;
+    return `
+      <div class="ph-actor-card ${hasPhoto?'ph-has-photo':''}" id="ph-card-${a.id}">
+        <div class="ph-photo-zone" onclick="triggerPhotoUpload('${a.id}')">
+          <div class="ph-avatar">
+            ${photo?`<img src="${photo}" alt="${a.name}" />`:`<span>${icon}</span>`}
+          </div>
+          <div class="ph-hover-overlay">📸</div>
+        </div>
+        <div class="ph-info">
+          <div class="ph-name">${a.name}</div>
+          <div class="ph-role">${label}</div>
+        </div>
+        <div class="ph-actions">
+          <button class="ph-btn upload" onclick="triggerPhotoUpload('${a.id}')">📷 Photo</button>
+          ${hasPhoto?`<button class="ph-btn remove" onclick="removeActorPhoto('${a.id}')">🗑️</button>`:''}
+        </div>
+        <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" id="ph-input-${a.id}" onchange="handlePhotoUpload(event,'${a.id}')" />
+      </div>`;
+  }).join('');
+}
+
+function triggerPhotoUpload(actorId){
+  const inp=document.getElementById('ph-input-'+actorId);
+  if(inp) inp.click();
+}
+
+function handlePhotoUpload(event, actorId){
+  const file=event.target.files[0];
+  if(!file) return;
+  if(file.size>5*1024*1024){ toast('⚠️ Image trop lourde (max 5 Mo)','warn'); return; }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const store=getPhotoStorage();
+    store.photos[actorId]=e.target.result;
+    if(store.actors[actorId]) store.actors[actorId].photo=true;
+    // Sync vers allPlayers si existant
+    const player=allPlayers.find(p=>p.id===actorId);
+    if(player){ player.photo=e.target.result; savePlayerToDb&&savePlayerToDb(); }
+    savePhotoStorage(store);
+    toast('✅ Photo enregistrée !','success');
+    renderPhotosSection(document.querySelector('[data-phfilter].active')?.dataset.phfilter||'all');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeActorPhoto(actorId){
+  if(!confirm('Supprimer la photo ?')) return;
+  const store=getPhotoStorage();
+  delete store.photos[actorId];
+  if(store.actors[actorId]) store.actors[actorId].photo=false;
+  const player=allPlayers.find(p=>p.id===actorId);
+  if(player){ player.photo=null; savePlayerToDb&&savePlayerToDb(); }
+  savePhotoStorage(store);
+  toast('🗑️ Photo supprimée','info');
+  renderPhotosSection(document.querySelector('[data-phfilter].active')?.dataset.phfilter||'all');
+}
+
+function filterPhotosSection(filter, btn){
+  document.querySelectorAll('[data-phfilter]').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderPhotosSection(filter);
+}
+
 window.addEventListener('load',init);
 </script>
 </body>
