@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSC Documents Professionnels</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
+  --yellow:#FFD700;--navy:#0A1628;--navy-md:#1a2d4a;
+  --white:#fff;--gray-bg:#F0F2F5;--gray-bd:#e2e8f0;
+  --gray-txt:#64748b;--danger:#ef4444;--warn:#f59e0b;
+  --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--gray-bg);color:var(--navy);min-height:100vh;overflow-x:hidden;}
+
+.header{background:linear-gradient(135deg,var(--navy),#0d3a1f);color:#fff;padding:28px 24px;margin-bottom:32px;box-shadow:var(--shadow);}
+.header-title{font-size:24px;font-weight:800;margin-bottom:6px;}
+.header-sub{font-size:13px;opacity:.8;}
+
+.container{max-width:1400px;margin:0 auto;padding:0 24px 40px;}
+
+.nav-tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:2px solid var(--gray-bd);flex-wrap:wrap;}
+.nav-tab{padding:12px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--gray-txt);border-bottom:3px solid transparent;transition:all .2s;position:relative;top:2px;}
+.nav-tab:hover{color:var(--navy);}
+.nav-tab.active{color:var(--green);border-bottom-color:var(--green);}
+
+.section{display:none;}
+.section.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* GESTION ACTEURS */
+.actors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;}
+.actor-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent;}
+.actor-card:hover{border-color:var(--green);transform:translateY(-2px);}
+.actor-card.active{border-color:var(--green);background:var(--green-lt);}
+.actor-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;overflow:hidden;}
+.actor-avatar img{width:100%;height:100%;object-fit:cover;}
+.actor-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;word-break:break-word;}
+.actor-role{font-size:11px;color:var(--gray-txt);font-weight:600;}
+
+/* PROFIL ACTEUR */
+.profile-container{display:grid;grid-template-columns:280px 1fr;gap:24px;}
+.profile-sidebar{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);height:fit-content;position:sticky;top:20px;}
+.profile-header{text-align:center;margin-bottom:20px;}
+.profile-avatar{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto 16px;overflow:hidden;}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-name{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.profile-role{font-size:12px;color:var(--gray-txt);margin-bottom:12px;}
+.profile-badge{display:inline-block;padding:4px 10px;background:var(--green-lt);color:var(--green);font-size:11px;font-weight:700;border-radius:20px;margin-bottom:20px;}
+
+.profile-main{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+.section-title{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+
+/* DOCUMENTS REQUIRED */
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.doc-requirement{background:var(--gray-bg);border-radius:10px;padding:12px;text-align:center;border:2px solid var(--gray-bd);transition:all .2s;}
+.doc-requirement.required{border-color:var(--danger);background:rgba(239,68,68,.05);}
+.doc-requirement.optional{border-color:var(--warn);background:rgba(245,158,11,.05);}
+.doc-requirement.uploaded{border-color:var(--green);background:var(--green-lt);}
+.doc-icon{font-size:28px;margin-bottom:8px;}
+.doc-name{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.doc-status{font-size:10px;font-weight:600;}
+.doc-required{color:var(--danger);}
+.doc-optional{color:var(--warn);}
+.doc-uploaded{color:var(--green);}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--gray-bd);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:#fff;}
+.upload-zone:hover{border-color:var(--green);background:var(--green-lt);}
+.upload-zone.dragover{border-color:var(--green);background:var(--green-lt);transform:scale(1.02);}
+.upload-icon{font-size:40px;margin-bottom:12px;}
+.upload-text{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--gray-txt);}
+input[type="file"]{display:none;}
+
+/* DOCUMENTS LIST */
+.docs-list{display:flex;flex-direction:column;gap:12px;}
+.doc-item{display:grid;grid-template-columns:50px 1fr auto;gap:12px;align-items:center;padding:12px;background:var(--gray-bg);border-radius:10px;border-left:4px solid var(--green);}
+.doc-thumbnail{width:50px;height:50px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;}
+.doc-thumbnail img{width:100%;height:100%;object-fit:cover;}
+.doc-info{min-width:0;}
+.doc-info-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.doc-info-meta{font-size:10px;color:var(--gray-txt);display:flex;gap:12px;}
+.doc-actions{display:flex;gap:6px;}
+.btn-small{padding:6px 12px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-preview{background:var(--blue);color:#fff;}
+.btn-delete{background:var(--danger);color:#fff;}
+.btn-verify{background:var(--green);color:#fff;}
+.btn-small:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15);}
+
+/* FORMULAIRES */
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--green);background:var(--green-lt);}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal.open{display:flex;}
+.modal-content{background:#fff;border-radius:var(--radius);padding:32px;max-width:600px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;}
+.modal-footer{display:flex;gap:12px;margin-top:24px;justify-content:flex-end;}
+
+/* BOUTONS */
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn.green{background:var(--green);color:#fff;}
+.btn.blue{background:var(--blue);color:#fff;}
+.btn.gray{background:var(--gray-bg);color:var(--navy);}
+.btn.green:hover{background:var(--green-dk);}
+
+/* BADGES & STATUS */
+.badge{display:inline-block;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;}
+.badge.verify{background:rgba(0,158,96,.2);color:var(--green);}
+.badge.pending{background:rgba(245,158,11,.2);color:#b45309;}
+.badge.missing{background:rgba(239,68,68,.2);color:var(--danger);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--gray-bg);padding:16px;border-radius:10px;text-align:center;}
+.stat-value{font-size:24px;font-weight:800;color:var(--green);margin-bottom:4px;}
+.stat-label{font-size:11px;color:var(--gray-txt);font-weight:600;text-transform:uppercase;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .profile-container{grid-template-columns:1fr;}
+  .profile-sidebar{position:relative;top:0;}
+  .docs-grid{grid-template-columns:repeat(2,1fr);}
+  .doc-item{grid-template-columns:1fr;}
+  .actors-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">📋 Gestion Documents Professionnels</div>
+  <div class="header-sub">Photos, certificats, contrats, licences selon rôles et disciplines</div>
+</div>
+
+<div class="container">
+  <!-- NAV TABS -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchSection('actors')">👥 Acteurs</button>
+    <button class="nav-tab" onclick="switchSection('profile')">📄 Profil & Documents</button>
+    <button class="nav-tab" onclick="switchSection('verification')">✅ Vérification</button>
+    <button class="nav-tab" onclick="switchSection('compliance')">⚖️ Conformité</button>
+  </div>
+
+  <!-- SECTION ACTEURS -->
+  <div class="section active" id="section-actors">
+    <div style="margin-bottom:24px;display:flex;gap:12px;align-items:center;">
+      <h2 style="font-size:18px;font-weight:800;color:var(--navy);">Gestion des Acteurs</h2>
+      <button class="btn green" onclick="openModal('actor-modal')">➕ Ajouter Acteur</button>
+    </div>
+    
+    <div class="actors-grid" id="actors-grid">
+      <!-- Dynamique -->
+    </div>
+  </div>
+
+  <!-- SECTION PROFIL -->
+  <div class="section" id="section-profile">
+    <div id="no-actor" style="background:#fff;border-radius:var(--radius);padding:40px;text-align:center;color:var(--gray-txt);">
+      Sélectionnez un acteur pour gérer ses documents
+    </div>
+    
+    <div id="profile-view" style="display:none;">
+      <div class="profile-container">
+        <!-- SIDEBAR -->
+        <div class="profile-sidebar">
+          <div class="profile-header">
+            <div class="profile-avatar" id="profile-avatar">👤</div>
+            <div class="profile-name" id="profile-name">—</div>
+            <div class="profile-role" id="profile-role">—</div>
+            <span class="profile-badge" id="profile-status">—</span>
+            <div style="font-size:11px;color:var(--gray-txt);margin-bottom:16px;">
+              <div><strong>Email:</strong> <span id="profile-email">—</span></div>
+              <div><strong>Tél:</strong> <span id="profile-phone">—</span></div>
+              <div><strong>Discipline:</strong> <span id="profile-discipline">—</span></div>
+              <div><strong>Club:</strong> <span id="profile-club">—</span></div>
+            </div>
+            <button class="btn green" style="width:100%;margin-top:12px;" onclick="openModal('edit-actor-modal')">✏️ Éditer</button>
+            <button class="btn gray" style="width:100%;margin-top:8px;" onclick="deleteActor()">🗑️ Supprimer</button>
+          </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="profile-main">
+          <!-- DOCUMENTS REQUIS -->
+          <div class="section-title">📋 Documents Requis</div>
+          <div class="docs-grid" id="docs-required">
+            <!-- Dynamique selon rôle -->
+          </div>
+
+          <!-- UPLOAD ZONE -->
+          <div class="section-title">⬆️ Ajouter Documents</div>
+          <div class="upload-zone" onclick="triggerFileUpload()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Glissez-déposez documents ou cliquez</div>
+            <div class="upload-sub">Images (JPG, PNG), PDF — Max 10 Mo</div>
+            <input type="file" id="file-input" multiple accept="image/*,.pdf" onchange="handleFileUpload(event)"/>
+          </div>
+
+          <!-- DOCUMENTS UPLOADÉS -->
+          <div class="section-title" style="margin-top:28px;">✅ Documents Uploadés</div>
+          <div class="docs-list" id="docs-uploaded">
+            <div style="color:var(--gray-txt);text-align:center;padding:20px;">Aucun document</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION VÉRIFICATION -->
+  <div class="section" id="section-verification">
+    <div style="background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+      <h2 class="section-title">✅ Vérification des Documents</h2>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Acteurs Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-verified">0</div>
+          <div class="stat-label">Vérifiés ✅</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-pending">0</div>
+          <div class="stat-label">En Attente</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-incomplete">0</div>
+          <div class="stat-label">Incomplets</div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <h3 class="section-title">📊 Liste de Vérification</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:var(--gray-bg);border-bottom:2px solid var(--gray-bd);">
+              <th style="text-align:left;padding:12px;font-weight:700;">Acteur</th>
+              <th style="text-align:center;padding:12px;font-weight:700;">Rôle</th>
+              <th style="text-align:center;padding:12px;font-weight:700;">Complétude</th>
+              <th style="text-align:center;padding:12px;font-weight:700;">Statut</th>
+            </tr>
+          </thead>
+          <tbody id="verification-table">
+            <tr>
+              <td colspan="4" style="text-align:center;padding:30px;color:var(--gray-txt);">Aucun acteur</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION CONFORMITÉ -->
+  <div class="section" id="section-compliance">
+    <div style="background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+      <h2 class="section-title">⚖️ Conformité aux Standards</h2>
+      
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px;">
+        <!-- JOUEUR -->
+        <div style="border-left:4px solid #3b82f6;padding:16px;background:#f0f9ff;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">⚽ Joueur</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Photo d'identité (couleur)</li>
+            <li>✓ Photo sportive officielle</li>
+            <li>✓ Certificat médical (FMF)</li>
+            <li>✓ Licence fédérale</li>
+            <li>✓ Contrat club (si professionnel)</li>
+            <li>✓ Diplôme/Qualification</li>
+          </ul>
+        </div>
+
+        <!-- ENTRAÎNEUR -->
+        <div style="border-left:4px solid #8b5cf6;padding:16px;background:#faf5ff;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">🎯 Entraîneur</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Photo d'identité</li>
+            <li>✓ Diplôme d'entraîneur</li>
+            <li>✓ Certificat technique (UEFA/CAF)</li>
+            <li>✓ Licence d'entraîneur</li>
+            <li>✓ Antécédents judiciaires</li>
+            <li>✓ Contrat club</li>
+          </ul>
+        </div>
+
+        <!-- ARBITRE -->
+        <div style="border-left:4px solid #f97316;padding:16px;background:#fff7ed;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">🏁 Arbitre</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Photo d'identité</li>
+            <li>✓ Diplôme d'arbitre</li>
+            <li>✓ Certificat technique (FIFA/CAF)</li>
+            <li>✓ Licence d'arbitrage</li>
+            <li>✓ Dossier antécédents</li>
+            <li>✓ Formation continue</li>
+          </ul>
+        </div>
+
+        <!-- CLUB -->
+        <div style="border-left:4px solid #009e60;padding:16px;background:#f0fdf4;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">⚽ Club</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Statuts légaux</li>
+            <li>✓ Licence fédérale</li>
+            <li>✓ Registre des joueurs</li>
+            <li>✓ Agréments installations</li>
+            <li>✓ Certificat conformité</li>
+            <li>✓ Affiliation ligue</li>
+          </ul>
+        </div>
+
+        <!-- FÉDÉRATION -->
+        <div style="border-left:4px solid #dc2626;padding:16px;background:#fef2f2;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">🏆 Fédération</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Statuts officiels</li>
+            <li>✓ Reconnaissance gouvernementale</li>
+            <li>✓ Affiliations internationales</li>
+            <li>✓ Registre des membres</li>
+            <li>✓ Rapports financiers</li>
+            <li>✓ Codes de conduite</li>
+          </ul>
+        </div>
+
+        <!-- ASSOCIATION -->
+        <div style="border-left:4px solid #7c3aed;padding:16px;background:#faf5ff;border-radius:10px;">
+          <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">🏢 Association</h3>
+          <ul style="font-size:12px;color:var(--navy);list-style:none;gap:8px;display:flex;flex-direction:column;">
+            <li>✓ Acte de création</li>
+            <li>✓ Statuts approuvés</li>
+            <li>✓ Numéro d'immatriculation</li>
+            <li>✓ Conseil d'administration</li>
+            <li>✓ Comptes annuels</li>
+            <li>✓ Assurances responsabilité</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER ACTEUR -->
+<div class="modal" id="actor-modal">
+  <div class="modal-content">
+    <div class="modal-title">➕ Ajouter Nouvel Acteur</div>
+    
+    <div class="form-group">
+      <label class="form-label">Rôle/Type</label>
+      <select class="form-select" id="actor-role" onchange="updateDocRequirements()">
+        <option value="">Sélectionner...</option>
+        <option value="joueur">⚽ Joueur</option>
+        <option value="entraineur">🎯 Entraîneur</option>
+        <option value="arbitre">🏁 Arbitre</option>
+        <option value="club">⚽ Club</option>
+        <option value="federation">🏆 Fédération</option>
+        <option value="association">🏢 Association</option>
+        <option value="responsable">👤 Responsable</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nom Complet</label>
+      <input type="text" class="form-input" id="actor-name" placeholder="Jean Dupont ou AS Mangasport"/>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="actor-email" placeholder="email@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input type="tel" class="form-input" id="actor-phone" placeholder="+241 ..."/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Discipline Sportive</label>
+      <select class="form-select" id="actor-discipline">
+        <option value="">Sélectionner...</option>
+        <option value="football">⚽ Football</option>
+        <option value="basketball">🏀 Basketball</option>
+        <option value="handball">🤾 Handball</option>
+        <option value="volleyball">⚾ Volleyball</option>
+        <option value="athletisme">🏃 Athlétisme</option>
+        <option value="tennis">🎾 Tennis</option>
+        <option value="judo">🥋 Judo</option>
+        <option value="lutte">💪 Lutte</option>
+        <option value="badminton">🏸 Badminton</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Club/Organisation (si applicable)</label>
+      <input type="text" class="form-input" id="actor-club" placeholder="AS Mangasport"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Numéro d'Identification (Licence, SIRET, etc.)</label>
+      <input type="text" class="form-input" id="actor-id-number" placeholder="Ex: LIC-2025-001"/>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn gray" onclick="closeModal('actor-modal')">Annuler</button>
+      <button class="btn green" onclick="createActor()">Créer Acteur</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ÉDITER ACTEUR -->
+<div class="modal" id="edit-actor-modal">
+  <div class="modal-content">
+    <div class="modal-title">✏️ Éditer Acteur</div>
+    
+    <div class="form-group">
+      <label class="form-label">Rôle/Type</label>
+      <select class="form-select" id="edit-actor-role" onchange="updateDocRequirements()">
+        <option value="joueur">⚽ Joueur</option>
+        <option value="entraineur">🎯 Entraîneur</option>
+        <option value="arbitre">🏁 Arbitre</option>
+        <option value="club">⚽ Club</option>
+        <option value="federation">🏆 Fédération</option>
+        <option value="association">🏢 Association</option>
+        <option value="responsable">👤 Responsable</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nom Complet</label>
+      <input type="text" class="form-input" id="edit-actor-name"/>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="edit-actor-email"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input type="tel" class="form-input" id="edit-actor-phone"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Discipline</label>
+      <select class="form-select" id="edit-actor-discipline">
+        <option value="">Sélectionner...</option>
+        <option value="football">⚽ Football</option>
+        <option value="basketball">🏀 Basketball</option>
+        <option value="handball">🤾 Handball</option>
+        <option value="volleyball">⚾ Volleyball</option>
+        <option value="athletisme">🏃 Athlétisme</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Club/Organisation</label>
+      <input type="text" class="form-input" id="edit-actor-club"/>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn gray" onclick="closeModal('edit-actor-modal')">Annuler</button>
+      <button class="btn green" onclick="saveActor()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DOCUMENTS REQUIRED PAR RÔLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DOCUMENTS_REQUIRED = {
+  joueur: [
+    { name: 'Photo Identité', icon: '🆔', type: 'image', required: true, description: 'Couleur, claire' },
+    { name: 'Photo Sportive', icon: '📸', type: 'image', required: true, description: 'Officielle, couleur' },
+    { name: 'Certificat Médical', icon: '🏥', type: 'pdf', required: true, description: 'FMF validé' },
+    { name: 'Licence Fédérale', icon: '🎫', type: 'pdf', required: true, description: 'Saison courante' },
+    { name: 'Contrat Club', icon: '📄', type: 'pdf', required: false, description: 'Si professionnel' },
+    { name: 'Diplôme/Qualification', icon: '🎓', type: 'pdf', required: false, description: 'Certifications' },
+  ],
+  entraineur: [
+    { name: 'Photo Identité', icon: '🆔', type: 'image', required: true, description: 'Couleur' },
+    { name: 'Diplôme Entraîneur', icon: '🎓', type: 'pdf', required: true, description: 'Officiel' },
+    { name: 'Certificat Technique', icon: '📜', type: 'pdf', required: true, description: 'UEFA/CAF' },
+    { name: 'Licence Entraîneur', icon: '🎫', type: 'pdf', required: true, description: 'Saison courante' },
+    { name: 'Antécédents Judiciaires', icon: '⚖️', type: 'pdf', required: true, description: 'Vierge obligatoire' },
+    { name: 'Contrat Club', icon: '📋', type: 'pdf', required: false, description: 'Emploi/Mission' },
+  ],
+  arbitre: [
+    { name: 'Photo Identité', icon: '🆔', type: 'image', required: true, description: 'Couleur' },
+    { name: 'Diplôme Arbitre', icon: '🎓', type: 'pdf', required: true, description: 'Officiel' },
+    { name: 'Certificat FIFA/CAF', icon: '⚽', type: 'pdf', required: true, description: 'International' },
+    { name: 'Licence Arbitrage', icon: '🎫', type: 'pdf', required: true, description: 'Saison courante' },
+    { name: 'Antécédents', icon: '⚖️', type: 'pdf', required: true, description: 'Vierge' },
+    { name: 'Formation Continue', icon: '📚', type: 'pdf', required: true, description: 'Mise à jour règles' },
+  ],
+  club: [
+    { name: 'Statuts Légaux', icon: '📋', type: 'pdf', required: true, description: 'Acte constitutif' },
+    { name: 'Licence Fédérale', icon: '🎫', type: 'pdf', required: true, description: 'Saison courante' },
+    { name: 'Registre Joueurs', icon: '📊', type: 'pdf', required: true, description: 'Liste officielle' },
+    { name: 'Agréments Installations', icon: '🏟️', type: 'pdf', required: true, description: 'Stade/Équipements' },
+    { name: 'Certificat Conformité', icon: '✅', type: 'pdf', required: true, description: 'Normes FIFA' },
+    { name: 'Logo Club', icon: '🏳️', type: 'image', required: false, description: 'Emblème officiel' },
+  ],
+  federation: [
+    { name: 'Statuts Officiels', icon: '📋', type: 'pdf', required: true, description: 'Acte fondateur' },
+    { name: 'Reconnaissance Gouv.', icon: '🏛️', type: 'pdf', required: true, description: 'Décret officiel' },
+    { name: 'Affiliations Internat.', icon: '🌍', type: 'pdf', required: true, description: 'FIFA, CAF, etc.' },
+    { name: 'Registre Membres', icon: '📊', type: 'pdf', required: true, description: 'Clubs affiliés' },
+    { name: 'Rapports Financiers', icon: '💰', type: 'pdf', required: true, description: 'Audités' },
+    { name: 'Code de Conduite', icon: '⚖️', type: 'pdf', required: true, description: 'Règlement' },
+  ],
+  association: [
+    { name: 'Acte de Création', icon: '📄', type: 'pdf', required: true, description: 'Original' },
+    { name: 'Statuts Approuvés', icon: '✅', type: 'pdf', required: true, description: 'Légalisés' },
+    { name: 'Immatriculation', icon: '🔢', type: 'pdf', required: true, description: 'Journal officiel' },
+    { name: 'Conseil Admin.', icon: '👥', type: 'pdf', required: true, description: 'Membres liste' },
+    { name: 'Comptes Annuels', icon: '💼', type: 'pdf', required: true, description: 'Derniers rapports' },
+    { name: 'Assurances', icon: '🛡️', type: 'pdf', required: true, description: 'Responsabilité civile' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTION DONNÉES
+// ═══════════════════════════════════════════════════════════════════════════
+
+let allActors = JSON.parse(localStorage.getItem('gsc_actors')) || [];
+let currentActorId = null;
+
+function saveActors() {
+  localStorage.setItem('gsc_actors', JSON.stringify(allActors));
+}
+
+function switchSection(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if(section === 'actors') renderActorsGrid();
+  if(section === 'verification') renderVerification();
+  if(section === 'profile' && !currentActorId) showNoActorMessage();
+}
+
+function renderActorsGrid() {
+  const grid = document.getElementById('actors-grid');
+  if(!allActors.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--gray-txt);text-align:center;padding:40px;">Aucun acteur — Créez le premier!</div>';
+    return;
+  }
+  
+  grid.innerHTML = allActors.map(a => `
+    <div class="actor-card ${currentActorId === a.id ? 'active' : ''}" onclick="selectActor('${a.id}')">
+      <div class="actor-avatar">${a.avatar || '👤'}</div>
+      <div class="actor-name">${a.name}</div>
+      <div class="actor-role">${a.role}</div>
+    </div>
+  `).join('');
+}
+
+function selectActor(id) {
+  currentActorId = id;
+  const actor = allActors.find(a => a.id === id);
+  if(!actor) return;
+  
+  // Afficher profil
+  document.getElementById('no-actor').style.display = 'none';
+  document.getElementById('profile-view').style.display = 'block';
+  
+  // Remplir info
+  document.getElementById('profile-avatar').textContent = actor.avatar || '👤';
+  document.getElementById('profile-name').textContent = actor.name;
+  document.getElementById('profile-role').textContent = actor.role;
+  document.getElementById('profile-status').textContent = actor.verified ? '✅ Vérifiés' : '⏳ En Attente';
+  document.getElementById('profile-email').textContent = actor.email || '—';
+  document.getElementById('profile-phone').textContent = actor.phone || '—';
+  document.getElementById('profile-discipline').textContent = actor.discipline || '—';
+  document.getElementById('profile-club').textContent = actor.club || '—';
+  
+  // Remplir form édition
+  document.getElementById('edit-actor-role').value = actor.role;
+  document.getElementById('edit-actor-name').value = actor.name;
+  document.getElementById('edit-actor-email').value = actor.email;
+  document.getElementById('edit-actor-phone').value = actor.phone;
+  document.getElementById('edit-actor-discipline').value = actor.discipline;
+  document.getElementById('edit-actor-club').value = actor.club;
+  
+  renderDocsRequired(actor.role);
+  renderDocsList(actor);
+  renderActorsGrid();
+}
+
+function renderDocsRequired(role) {
+  const docs = DOCUMENTS_REQUIRED[role] || [];
+  const container = document.getElementById('docs-required');
+  
+  container.innerHTML = docs.map(doc => {
+    const actor = allActors.find(a => a.id === currentActorId);
+    const uploaded = actor && actor.documents && actor.documents.find(d => d.name === doc.name);
+    
+    return `
+      <div class="doc-requirement ${uploaded ? 'uploaded' : (doc.required ? 'required' : 'optional')}">
+        <div class="doc-icon">${doc.icon}</div>
+        <div class="doc-name">${doc.name}</div>
+        <div class="doc-status ${uploaded ? 'doc-uploaded' : (doc.required ? 'doc-required' : 'doc-optional')}">
+          ${uploaded ? '✓ Uploadé' : (doc.required ? '* Requis' : '○ Optionnel')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDocsList(actor) {
+  const container = document.getElementById('docs-uploaded');
+  if(!actor.documents || !actor.documents.length) {
+    container.innerHTML = '<div style="color:var(--gray-txt);text-align:center;padding:20px;">Aucun document</div>';
+    return;
+  }
+  
+  container.innerHTML = actor.documents.map(doc => `
+    <div class="doc-item">
+      <div class="doc-thumbnail">
+        ${doc.type === 'image' ? `<img src="${doc.data}" alt="${doc.name}"/>` : '📄'}
+      </div>
+      <div class="doc-info">
+        <div class="doc-info-name">${doc.name}</div>
+        <div class="doc-info-meta">
+          <span>${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}</span>
+          <span>${(doc.size / 1024 / 1024).toFixed(1)} Mo</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn-small btn-preview" onclick="previewDoc('${doc.id}')">👁️</button>
+        <button class="btn-small btn-verify" onclick="verifyDoc('${doc.id}')">✅</button>
+        <button class="btn-small btn-delete" onclick="deleteDoc('${doc.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderVerification() {
+  const stats = {
+    total: allActors.length,
+    verified: allActors.filter(a => a.verified).length,
+    pending: allActors.filter(a => !a.verified && (!a.documents || a.documents.length < 3)).length,
+    incomplete: allActors.filter(a => !a.verified && (!a.documents || a.documents.length < 3)).length
+  };
+  
+  document.getElementById('stat-total').textContent = stats.total;
+  document.getElementById('stat-verified').textContent = stats.verified;
+  document.getElementById('stat-pending').textContent = stats.pending;
+  document.getElementById('stat-incomplete').textContent = stats.incomplete;
+  
+  const tbody = document.querySelector('#verification-table tbody');
+  if(!allActors.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--gray-txt);">Aucun acteur</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = allActors.map(a => {
+    const docs = a.documents || [];
+    const required = DOCUMENTS_REQUIRED[a.role] || [];
+    const completed = required.filter(r => r.required && docs.find(d => d.name === r.name)).length;
+    const completeness = Math.round((completed / required.filter(r => r.required).length) * 100) || 0;
+    
+    return `
+      <tr style="border-bottom:1px solid var(--gray-bd);">
+        <td style="padding:12px;"><strong>${a.name}</strong></td>
+        <td style="padding:12px;text-align:center;">${a.role}</td>
+        <td style="padding:12px;text-align:center;"><strong>${completeness}%</strong></td>
+        <td style="padding:12px;text-align:center;">
+          <span class="badge ${a.verified ? 'verify' : 'pending'}">
+            ${a.verified ? '✅ Vérifiés' : '⏳ Attente'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UPLOAD FILES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function triggerFileUpload() {
+  document.getElementById('file-input').click();
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('dragover');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  handleFileUpload({ target: { files: e.dataTransfer.files } });
+}
+
+function handleFileUpload(event) {
+  if(!currentActorId) { alert('Sélectionnez un acteur'); return; }
+  
+  const actor = allActors.find(a => a.id === currentActorId);
+  if(!actor.documents) actor.documents = [];
+  
+  Array.from(event.target.files).forEach(file => {
+    if(file.size > 10 * 1024 * 1024) {
+      alert(`${file.name} est trop volumineux (max 10 Mo)`);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = e => {
+      actor.documents.push({
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type.startsWith('image') ? 'image' : 'pdf',
+        size: file.size,
+        data: e.target.result,
+        uploadedAt: new Date().toISOString(),
+        verified: false
+      });
+      saveActors();
+      renderDocsList(actor);
+      renderDocsRequired(actor.role);
+      alert('✅ Document uploadé!');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function deleteDoc(docId) {
+  if(!confirm('Supprimer ce document?')) return;
+  const actor = allActors.find(a => a.id === currentActorId);
+  actor.documents = actor.documents.filter(d => d.id !== docId);
+  saveActors();
+  renderDocsList(actor);
+  renderDocsRequired(actor.role);
+}
+
+function verifyDoc(docId) {
+  const actor = allActors.find(a => a.id === currentActorId);
+  const doc = actor.documents.find(d => d.id === docId);
+  if(doc) doc.verified = true;
+  saveActors();
+  renderDocsList(actor);
+}
+
+function previewDoc(docId) {
+  const actor = allActors.find(a => a.id === currentActorId);
+  const doc = actor.documents.find(d => d.id === docId);
+  if(doc) window.open(doc.data, '_blank');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTION ACTEURS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function createActor() {
+  const role = document.getElementById('actor-role').value;
+  const name = document.getElementById('actor-name').value;
+  const email = document.getElementById('actor-email').value;
+  const phone = document.getElementById('actor-phone').value;
+  const discipline = document.getElementById('actor-discipline').value;
+  const club = document.getElementById('actor-club').value;
+  const idNumber = document.getElementById('actor-id-number').value;
+  
+  if(!role || !name) { alert('Rôle et nom requis'); return; }
+  
+  const roleIcons = {
+    joueur: '⚽', entraineur: '🎯', arbitre: '🏁',
+    club: '⚽', federation: '🏆', association: '🏢', responsable: '👤'
+  };
+  
+  const actor = {
+    id: Date.now().toString(),
+    role, name, email, phone, discipline, club, idNumber,
+    avatar: roleIcons[role] || '👤',
+    documents: [],
+    verified: false,
+    createdAt: new Date().toISOString()
+  };
+  
+  allActors.push(actor);
+  saveActors();
+  closeModal('actor-modal');
+  renderActorsGrid();
+  alert('✅ Acteur créé!');
+}
+
+function saveActor() {
+  if(!currentActorId) return;
+  const actor = allActors.find(a => a.id === currentActorId);
+  if(actor) {
+    actor.role = document.getElementById('edit-actor-role').value;
+    actor.name = document.getElementById('edit-actor-name').value;
+    actor.email = document.getElementById('edit-actor-email').value;
+    actor.phone = document.getElementById('edit-actor-phone').value;
+    actor.discipline = document.getElementById('edit-actor-discipline').value;
+    actor.club = document.getElementById('edit-actor-club').value;
+    saveActors();
+    selectActor(currentActorId);
+    closeModal('edit-actor-modal');
+    alert('✅ Acteur mis à jour!');
+  }
+}
+
+function deleteActor() {
+  if(!confirm('Supprimer cet acteur et tous ses documents?')) return;
+  allActors = allActors.filter(a => a.id !== currentActorId);
+  saveActors();
+  currentActorId = null;
+  document.getElementById('no-actor').style.display = 'block';
+  document.getElementById('profile-view').style.display = 'none';
+  renderActorsGrid();
+  alert('✅ Acteur supprimé!');
+}
+
+function updateDocRequirements() {
+  const role = document.getElementById('actor-role').value || document.getElementById('edit-actor-role').value;
+  // À faire: afficher les docs requis lors de la création
+}
+
+function showNoActorMessage() {
+  if(!currentActorId) {
+    document.getElementById('no-actor').style.display = 'block';
+    document.getElementById('profile-view').style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODALES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// INIT
+document.addEventListener('DOMContentLoaded', () => {
+  renderActorsGrid();
+  showNoActorMessage();
+});
+</script>
+</body>
+</html>
