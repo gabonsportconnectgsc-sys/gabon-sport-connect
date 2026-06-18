@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSC Admin — Ligues & OGSSU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
+  --yellow:#FFD700;--navy:#0A1628;--navy-md:#1a2d4a;
+  --white:#fff;--gray-bg:#F0F2F5;--gray-bd:#e2e8f0;
+  --gray-txt:#64748b;--danger:#ef4444;--warn:#f59e0b;
+  --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--gray-bg);color:var(--navy);min-height:100vh;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.container{max-width:1400px;margin:0 auto;padding:24px;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding:20px;background:linear-gradient(135deg,var(--navy),#0d3a1f);border-radius:var(--radius);color:#fff;}
+.header-title{font-size:26px;font-weight:800;}
+.header-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px;}
+
+.nav-tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:2px solid var(--gray-bd);flex-wrap:wrap;}
+.nav-tab{padding:12px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--gray-txt);border-bottom:3px solid transparent;transition:all .2s;position:relative;top:2px;}
+.nav-tab:hover{color:var(--navy);}
+.nav-tab.active{color:var(--green);border-bottom-color:var(--green);}
+
+.section{display:none;animation:fadeUp .3s ease;}
+.section.active{display:block;}
+
+/* LIGUES SECTION */
+.ligues-container{display:grid;grid-template-columns:250px 1fr;gap:24px;}
+.ligues-sidebar{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);height:fit-content;position:sticky;top:20px;}
+.sidebar-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.ligue-item{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--navy);transition:all .2s;border-left:3px solid transparent;margin-bottom:6px;}
+.ligue-item:hover{background:var(--green-lt);color:var(--green);}
+.ligue-item.active{background:var(--green-lt);color:var(--green);border-left-color:var(--green);font-weight:600;}
+.ligue-icon{display:inline-block;margin-right:8px;}
+
+.ligues-main{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+.ligue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.ligue-name{font-size:20px;font-weight:800;color:var(--navy);}
+.ligue-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.info-card{background:var(--gray-bg);padding:14px;border-radius:10px;text-align:center;}
+.info-value{font-size:18px;font-weight:800;color:var(--green);}
+.info-label{font-size:10px;color:var(--gray-txt);margin-top:4px;text-transform:uppercase;}
+
+.matches-table{width:100%;border-collapse:collapse;font-size:13px;}
+.matches-table th{background:var(--gray-bg);padding:12px;text-align:left;font-weight:700;color:var(--navy);border-bottom:2px solid var(--gray-bd);}
+.matches-table td{padding:12px;border-bottom:1px solid var(--gray-bd);}
+.matches-table tbody tr:hover{background:var(--green-lt);}
+.match-teams{display:flex;align-items:center;gap:8px;flex:1;}
+.team-name{font-weight:600;color:var(--navy);}
+.match-score{font-size:16px;font-weight:800;color:var(--green);min-width:60px;text-align:center;}
+.match-status{display:inline-block;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;}
+.match-status.pending{background:rgba(245,158,11,.2);color:#b45309;}
+.match-status.played{background:rgba(0,158,96,.2);color:var(--green);}
+.match-status.live{background:rgba(59,130,246,.2);color:var(--blue);animation:pulse 1.5s infinite;}
+.match-actions{display:flex;gap:6px;}
+.btn-sm{padding:6px 12px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-sm.edit{background:var(--blue);color:#fff;}
+.btn-sm.delete{background:var(--danger);color:#fff;}
+.btn-sm:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15);}
+
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px;}
+.form-input,.form-select{width:100%;padding:10px 12px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--green);background:var(--green-lt);}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
+.modal.open{display:flex;}
+.modal-content{background:#fff;border-radius:var(--radius);padding:28px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:16px;}
+.modal-footer{display:flex;gap:12px;margin-top:24px;justify-content:flex-end;}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn.green{background:var(--green);color:#fff;}
+.btn.gray{background:var(--gray-bg);color:var(--navy);}
+.btn.green:hover{background:var(--green-dk);}
+.btn.gray:hover{background:#e2e8f0;}
+
+/* OGSSU SECTION */
+.ogssu-container{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+.ogssu-header{background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;padding:20px;border-radius:10px;margin-bottom:24px;}
+.ogssu-title{font-size:18px;font-weight:800;margin-bottom:4px;}
+.ogssu-subtitle{font-size:12px;opacity:.8;}
+
+.editions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px;}
+.edition-card{background:var(--gray-bg);border-radius:10px;padding:16px;border-left:4px solid var(--purple);}
+.edition-year{font-size:14px;font-weight:800;color:var(--navy);}
+.edition-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:12px;}
+.edition-stat{padding:8px;background:#fff;border-radius:6px;}
+.edition-stat-label{color:var(--gray-txt);font-weight:600;}
+.edition-stat-value{color:var(--purple);font-weight:800;font-size:14px;}
+
+.disciplines-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.discipline-badge{padding:10px;background:var(--gray-bg);border-radius:8px;text-align:center;border:1.5px solid var(--gray-bd);}
+.discipline-icon{font-size:20px;display:block;margin-bottom:6px;}
+.discipline-name{font-size:12px;font-weight:700;color:var(--navy);}
+
+.results-card{background:var(--gray-bg);border-radius:10px;padding:16px;margin-bottom:16px;}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.results-title{font-size:13px;font-weight:800;color:var(--navy);}
+.btn-add{padding:8px 14px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;}
+.results-list{display:flex;flex-direction:column;gap:8px;}
+.result-item{display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fff;border-radius:6px;}
+.result-teams{font-size:12px;font-weight:600;color:var(--navy);}
+.result-score{font-size:14px;font-weight:800;color:var(--green);margin:0 12px;}
+.result-actions{display:flex;gap:6px;}
+
+/* STANDINGS */
+.standings-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;}
+.standings-table th{background:var(--gray-bg);padding:10px;text-align:left;font-weight:700;color:var(--navy);border-bottom:2px solid var(--gray-bd);}
+.standings-table td{padding:10px;border-bottom:1px solid var(--gray-bd);}
+.standings-table tbody tr:hover{background:var(--green-lt);}
+.rank{font-weight:800;color:var(--navy);width:30px;}
+.team{font-weight:600;flex:1;}
+.stat{text-align:center;width:40px;color:var(--gray-txt);}
+.stat.points{font-weight:800;color:var(--green);width:50px;}
+
+/* RESPONSIVE */
+@media (max-width:768px){
+  .ligues-container{grid-template-columns:1fr;}
+  .ligues-sidebar{position:relative;top:0;}
+  .ligue-info{grid-template-columns:repeat(2,1fr);}
+  .nav-tabs{flex-direction:column;}
+  .editions-grid{grid-template-columns:1fr;}
+  .matches-table{font-size:11px;}
+  .modal-content{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-title">⚽ Gestion des Ligues & OGSSU</div>
+      <div class="header-sub">Modération, résultats, classements en temps réel</div>
+    </div>
+    <div style="font-size:32px;">🏆</div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchSection('ligues')">⚽ LINAFP & Ligues</button>
+    <button class="nav-tab" onclick="switchSection('ogssu')">🎓 OGSSU Scolaire</button>
+    <button class="nav-tab" onclick="switchSection('standings')">📊 Classements</button>
+    <button class="nav-tab" onclick="switchSection('moderation')">🛡️ Modération</button>
+  </div>
+
+  <!-- SECTION LIGUES -->
+  <div class="section active" id="section-ligues">
+    <div class="ligues-container">
+      <!-- SIDEBAR LIGUES -->
+      <div class="ligues-sidebar">
+        <div class="sidebar-title">🏆 LINAFP</div>
+        <div class="ligue-item active" onclick="selectLigue('nf1')"><span class="ligue-icon">🥇</span> National Foot 1</div>
+        <div class="ligue-item" onclick="selectLigue('nf2')"><span class="ligue-icon">🥈</span> National Foot 2</div>
+        
+        <div class="sidebar-title" style="margin-top:20px;">🏙️ Provinciales</div>
+        <div class="ligue-item" onclick="selectLigue('estuaire')"><span class="ligue-icon">🏙️</span> Estuaire</div>
+        <div class="ligue-item" onclick="selectLigue('hogooue')"><span class="ligue-icon">⛏️</span> Haut-Ogooué</div>
+        <div class="ligue-item" onclick="selectLigue('ogmartime')"><span class="ligue-icon">🌊</span> Ogooué-Maritime</div>
+        <div class="ligue-item" onclick="selectLigue('woleuntem')"><span class="ligue-icon">🌳</span> Woleu-Ntem</div>
+        <div class="ligue-item" onclick="selectLigue('moyen')"><span class="ligue-icon">📍</span> Moyen-Ogooué</div>
+        <div class="ligue-item" onclick="selectLigue('ngouniu')"><span class="ligue-icon">📍</span> Ngounié</div>
+        <div class="ligue-item" onclick="selectLigue('nyanga')"><span class="ligue-icon">📍</span> Nyanga</div>
+        <div class="ligue-item" onclick="selectLigue('ogounindivo')"><span class="ligue-icon">📍</span> Ogooué-Ivindo</div>
+        <div class="ligue-item" onclick="selectLigue('ogogolo')"><span class="ligue-icon">📍</span> Ogooué-Lolo</div>
+      </div>
+
+      <!-- MAIN CONTENT LIGUES -->
+      <div class="ligues-main">
+        <div class="ligue-header">
+          <div class="ligue-name" id="ligue-title">National Foot 1 — LINAFP</div>
+          <button class="btn green" onclick="openModal('match-modal')">➕ Ajouter Match</button>
+        </div>
+
+        <div class="ligue-info" id="ligue-info">
+          <div class="info-card">
+            <div class="info-value" id="info-clubs">14</div>
+            <div class="info-label">Clubs</div>
+          </div>
+          <div class="info-card">
+            <div class="info-value" id="info-matches">0</div>
+            <div class="info-label">Matchs Joués</div>
+          </div>
+          <div class="info-card">
+            <div class="info-value" id="info-pending">0</div>
+            <div class="info-label">En Attente</div>
+          </div>
+          <div class="info-card">
+            <div class="info-value" id="info-saison">2025-26</div>
+            <div class="info-label">Saison</div>
+          </div>
+        </div>
+
+        <table class="matches-table">
+          <thead>
+            <tr>
+              <th style="width:35%;">Équipes</th>
+              <th style="width:15%;">Score</th>
+              <th style="width:20%;">Date</th>
+              <th style="width:15%;">Statut</th>
+              <th style="width:15%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="matches-list">
+            <tr>
+              <td colspan="5" style="text-align:center;padding:40px;color:var(--gray-txt);">Aucun match — Créez le premier ! ➕</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION OGSSU -->
+  <div class="section" id="section-ogssu">
+    <div class="ogssu-container">
+      <div class="ogssu-header">
+        <div class="ogssu-title">🎓 OGSSU — Jeux Scolaires & Universitaires</div>
+        <div class="ogssu-subtitle">Gestion des éditions et résultats nationaux</div>
+      </div>
+
+      <!-- ÉDITIONS -->
+      <div style="margin-bottom:32px;">
+        <h3 style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;">📅 Éditions</h3>
+        <div class="editions-grid" id="ogssu-editions">
+          <!-- Éditions dynamiques -->
+        </div>
+      </div>
+
+      <!-- DISCIPLINES -->
+      <div style="margin-bottom:32px;">
+        <h3 style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;">🏅 Disciplines</h3>
+        <div class="disciplines-grid" id="ogssu-disciplines">
+          <!-- Disciplines dynamiques -->
+        </div>
+      </div>
+
+      <!-- RÉSULTATS FINALES FOOTBALL -->
+      <div>
+        <h3 style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;">⚽ Résultats Finales — Football (41e Édition)</h3>
+        <div class="results-card">
+          <div class="results-header">
+            <div class="results-title">Catégories & Finalistes</div>
+            <button class="btn-add" onclick="openModal('result-modal')">➕ Ajouter Résultat</button>
+          </div>
+          <div class="results-list" id="ogssu-results">
+            <div style="color:var(--gray-txt);text-align:center;padding:20px;">Aucun résultat enregistré</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STANDINGS OGSSU -->
+      <div style="margin-top:24px;">
+        <h3 style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;">🏆 Classement des Provinces (41e Édition)</h3>
+        <table class="standings-table" id="ogssu-standings">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Province</th>
+              <th>Or</th>
+              <th>Argent</th>
+              <th>Bronze</th>
+              <th>Total Titres</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamique -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION STANDINGS -->
+  <div class="section" id="section-standings">
+    <div style="background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+      <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;">📊 Classements Détaillés</h2>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <h3 style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:12px;">National Foot 1</h3>
+          <table class="standings-table" id="nf1-standings">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Club</th>
+                <th>J</th>
+                <th>G</th>
+                <th>N</th>
+                <th>P</th>
+                <th>Pts</th>
+              </tr>
+            </thead>
+            <tbody id="nf1-standings-body">
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:12px;">National Foot 2</h3>
+          <table class="standings-table" id="nf2-standings">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Club</th>
+                <th>J</th>
+                <th>G</th>
+                <th>N</th>
+                <th>P</th>
+                <th>Pts</th>
+              </tr>
+            </thead>
+            <tbody id="nf2-standings-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION MODÉRATION -->
+  <div class="section" id="section-moderation">
+    <div style="background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+      <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:20px;">🛡️ Modération & Validation</h2>
+      
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+        <div style="background:var(--gray-bg);padding:16px;border-radius:10px;">
+          <div style="font-size:12px;color:var(--gray-txt);font-weight:700;margin-bottom:6px;text-transform:uppercase;">Matchs en Attente</div>
+          <div style="font-size:28px;font-weight:800;color:var(--warn);" id="pending-count">0</div>
+        </div>
+        <div style="background:var(--gray-bg);padding:16px;border-radius:10px;">
+          <div style="font-size:12px;color:var(--gray-txt);font-weight:700;margin-bottom:6px;text-transform:uppercase;">Validés</div>
+          <div style="font-size:28px;font-weight:800;color:var(--green);" id="validated-count">0</div>
+        </div>
+        <div style="background:var(--gray-bg);padding:16px;border-radius:10px;">
+          <div style="font-size:12px;color:var(--gray-txt);font-weight:700;margin-bottom:6px;text-transform:uppercase;">Rejetés</div>
+          <div style="font-size:28px;font-weight:800;color:var(--danger);" id="rejected-count">0</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:12px;">Matchs à Réviser</h3>
+      <table class="matches-table">
+        <thead>
+          <tr>
+            <th>Ligue</th>
+            <th>Équipes</th>
+            <th>Score</th>
+            <th>Soumis par</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="moderation-list">
+          <tr>
+            <td colspan="5" style="text-align:center;padding:30px;color:var(--gray-txt);">Tous les matchs sont validés ✅</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MATCH -->
+<div class="modal" id="match-modal">
+  <div class="modal-content">
+    <div class="modal-title">➕ Ajouter un Match</div>
+    <div class="form-group">
+      <label class="form-label">Ligue</label>
+      <select class="form-select" id="match-ligue">
+        <option value="nf1">National Foot 1</option>
+        <option value="nf2">National Foot 2</option>
+        <option value="estuaire">Ligue Estuaire</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Équipe 1</label>
+        <select class="form-select" id="match-team1">
+          <option value="">Sélectionner...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Équipe 2</label>
+        <select class="form-select" id="match-team2">
+          <option value="">Sélectionner...</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Score Équipe 1</label>
+        <input type="number" class="form-input" id="match-score1" placeholder="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Score Équipe 2</label>
+        <input type="number" class="form-input" id="match-score2" placeholder="0" min="0"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date & Heure</label>
+      <input type="datetime-local" class="form-input" id="match-date"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Stade/Lieu</label>
+      <input type="text" class="form-input" id="match-lieu" placeholder="ex: Stade Omnisports de Libreville"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn gray" onclick="closeModal('match-modal')">Annuler</button>
+      <button class="btn green" onclick="saveMatch()">Enregistrer Match</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RÉSULTAT OGSSU -->
+<div class="modal" id="result-modal">
+  <div class="modal-content">
+    <div class="modal-title">➕ Ajouter un Résultat</div>
+    <div class="form-group">
+      <label class="form-label">Catégorie</label>
+      <select class="form-select" id="result-category">
+        <option value="">Sélectionner...</option>
+        <option value="lycees-garcons">Lycées & Collèges — Garçons</option>
+        <option value="lycees-filles">Lycées & Collèges — Filles</option>
+        <option value="universites">Universités & Grandes Écoles</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Champion</label>
+        <select class="form-select" id="result-champion">
+          <option value="">Province gagnante...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Finaliste</label>
+        <select class="form-select" id="result-finaliste">
+          <option value="">Province finaliste...</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-input" id="result-notes" placeholder="Détails supplémentaires..." style="resize:vertical;min-height:80px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn gray" onclick="closeModal('result-modal')">Annuler</button>
+      <button class="btn green" onclick="saveOGSSUResult()">Enregistrer Résultat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DONNÉES CENTRALISÉES
+// ═══════════════════════════════════════════════════════════
+
+const LIGUES_DATA = {
+  nf1: {
+    nom: 'National Foot 1 — LINAFP',
+    niveau: 'National Professionnel',
+    saison: '2025-2026',
+    clubs: 14,
+    clubs_list: [
+      'AS Mangasport','Stade Migovéen','Oyem AC','Ogooué FC',
+      'FC 105','AS Stade Mandji','AS Police Nationale','Akanda FC',
+      'US Bitam','RC Bouenguidi','AS Sogéa','FC Diables Noirs',
+      'US Owendo','Abeilles FC'
+    ]
+  },
+  nf2: {
+    nom: 'National Foot 2 — LINAFP',
+    niveau: 'Deuxième Échelon',
+    saison: '2025-2026',
+    clubs: 12,
+    clubs_list: [
+      'AS Perroquets Verts','FC Renaissance','Jeunesse Sportive Libreville',
+      'AS Cheminots','Moanda FC B','AS Moabi','US Tchibanga','AC Koulamoutou',
+      'Jeunesse Oyem','AS Lastoursville','US Fougamou','African Stars United'
+    ]
+  },
+  estuaire: {
+    nom: '🏙️ Ligue de l\'Estuaire',
+    niveau: 'Provincial',
+    saison: '2025-2026',
+    clubs: 24,
+    clubs_list: [
+      'AS Libreville Nord','FC Owendo','AS Ntoum','Akanda FC B',
+      'JS Libreville','AS Sibang','FC Malibé','US Kango','AS Ndzomé',
+      'FC Port Môle','AS Angondjé','FC PK5','AS Lalala','Jeunesse PK8',
+      'AS Lendoho','FC Bikélé','US Cocobeach','AS Andock',
+      'FC Bolokoboué','AS Ekouk','JS Sibang','FC Alibandeng',
+      'AS Nomba','US Akok'
+    ]
+  }
+};
+
+const OGSSU_DATA = {
+  id: 'ogssu',
+  nom: 'OGSSU — Sport Scolaire & Universitaire',
+  jeux: [
+    { edition: '40e Édition', annee: 2024, champion: 'Woleu-Ntem' },
+    { edition: '41e Édition', annee: 2025, champion: 'TBD' }
+  ],
+  provinces: ['Estuaire','Haut-Ogooué','Moyen-Ogooué','Ngounié','Nyanga','Ogooué-Ivindo','Ogooué-Lolo','Ogooué-Maritime','Woleu-Ntem'],
+  disciplines: ['⚽ Football','🏀 Basketball','🤾 Handball','⚾ Volleyball','🏃 Athlétisme']
+};
+
+let currentLigue = 'nf1';
+let matchesData = JSON.parse(localStorage.getItem('gsc_matches')) || [];
+let ogssuResults = JSON.parse(localStorage.getItem('gsc_ogssu_results')) || [];
+
+// ═══════════════════════════════════════════════════════════
+// UI FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function switchSection(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  if(section === 'ligues') renderLigueView();
+  if(section === 'ogssu') renderOGSSUView();
+  if(section === 'standings') renderStandings();
+  if(section === 'moderation') renderModeration();
+}
+
+function selectLigue(ligueId) {
+  currentLigue = ligueId;
+  document.querySelectorAll('.ligue-item').forEach(i => i.classList.remove('active'));
+  event.target.closest('.ligue-item').classList.add('active');
+  renderLigueView();
+}
+
+function renderLigueView() {
+  const ligue = LIGUES_DATA[currentLigue];
+  if(!ligue) return;
+  document.getElementById('ligue-title').textContent = ligue.nom;
+  document.getElementById('info-clubs').textContent = ligue.clubs;
+  document.getElementById('info-saison').textContent = ligue.saison.split('-')[0];
+  
+  const ligueMatches = matchesData.filter(m => m.ligue === currentLigue);
+  document.getElementById('info-matches').textContent = ligueMatches.filter(m => m.score1 !== null).length;
+  document.getElementById('info-pending').textContent = ligueMatches.filter(m => m.score1 === null).length;
+  
+  // Populate teams dropdown
+  const t1 = document.getElementById('match-team1');
+  const t2 = document.getElementById('match-team2');
+  t1.innerHTML = '<option value="">Sélectionner...</option>';
+  t2.innerHTML = '<option value="">Sélectionner...</option>';
+  ligue.clubs_list.forEach(team => {
+    t1.innerHTML += `<option value="${team}">${team}</option>`;
+    t2.innerHTML += `<option value="${team}">${team}</option>`;
+  });
+  
+  // Render matches table
+  const tbody = document.getElementById('matches-list');
+  if(!ligueMatches.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray-txt);">Aucun match — Créez le premier ! ➕</td></tr>';
+  } else {
+    tbody.innerHTML = ligueMatches.map(m => `
+      <tr>
+        <td><div class="match-teams"><span class="team-name">${m.team1}</span> <span style="color:var(--gray-txt);margin:0 6px;">vs</span> <span class="team-name">${m.team2}</span></div></td>
+        <td><span class="match-score">${m.score1 !== null ? m.score1 + '-' + m.score2 : '—'}</span></td>
+        <td>${m.date ? new Date(m.date).toLocaleDateString('fr-FR') : 'TBD'}</td>
+        <td><span class="match-status ${m.score1 !== null ? 'played' : 'pending'}">${m.score1 !== null ? '✅ Joué' : '⏳ Attente'}</span></td>
+        <td><div class="match-actions"><button class="btn-sm edit" onclick="editMatch('${m.id}')">Éditer</button><button class="btn-sm delete" onclick="deleteMatch('${m.id}')">Supprimer</button></div></td>
+      </tr>
+    `).join('');
+  }
+}
+
+function renderOGSSUView() {
+  // Éditions
+  const edDiv = document.getElementById('ogssu-editions');
+  edDiv.innerHTML = OGSSU_DATA.jeux.map(j => `
+    <div class="edition-card">
+      <div class="edition-year">${j.edition}</div>
+      <div class="edition-info">
+        <div class="edition-stat">
+          <div class="edition-stat-label">Année</div>
+          <div class="edition-stat-value">${j.annee}</div>
+        </div>
+        <div class="edition-stat">
+          <div class="edition-stat-label">Champion</div>
+          <div class="edition-stat-value">${j.champion}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Disciplines
+  const disDiv = document.getElementById('ogssu-disciplines');
+  const icons = ['⚽','🏀','🤾','⚾','🏃'];
+  disDiv.innerHTML = OGSSU_DATA.disciplines.map((d, i) => `
+    <div class="discipline-badge">
+      <span class="discipline-icon">${d.split(' ')[0]}</span>
+      <span class="discipline-name">${d.split(' ').slice(1).join(' ')}</span>
+    </div>
+  `).join('');
+  
+  // Résultats
+  const resDiv = document.getElementById('ogssu-results');
+  if(!ogssuResults.length) {
+    resDiv.innerHTML = '<div style="color:var(--gray-txt);text-align:center;padding:20px;">Aucun résultat enregistré</div>';
+  } else {
+    resDiv.innerHTML = ogssuResults.map(r => `
+      <div class="result-item">
+        <div class="result-teams"><strong>${r.category}</strong> — ${r.champion} vs ${r.finaliste}</div>
+        <div class="result-actions"><button class="btn-sm delete" onclick="deleteOGSSUResult('${r.id}')">🗑️</button></div>
+      </div>
+    `).join('');
+  }
+  
+  // Standings
+  const standingsBody = document.getElementById('ogssu-standings').querySelector('tbody');
+  const provinceScores = {};
+  OGSSU_DATA.provinces.forEach(p => provinceScores[p] = { or: 0, argent: 0, bronze: 0 });
+  ogssuResults.forEach(r => {
+    if(provinceScores[r.champion]) provinceScores[r.champion].or++;
+    if(provinceScores[r.finaliste]) provinceScores[r.finaliste].argent++;
+  });
+  standingsBody.innerHTML = Object.entries(provinceScores)
+    .sort((a, b) => (b[1].or + b[1].argent) - (a[1].or + a[1].argent))
+    .map((p, i) => `
+      <tr>
+        <td class="rank">${i + 1}</td>
+        <td class="team">${p[0]}</td>
+        <td class="stat">${p[1].or}</td>
+        <td class="stat">${p[1].argent}</td>
+        <td class="stat">0</td>
+        <td class="stat points">${p[1].or + p[1].argent}</td>
+      </tr>
+    `).join('');
+}
+
+function renderStandings() {
+  const nf1Body = document.getElementById('nf1-standings-body');
+  const nf2Body = document.getElementById('nf2-standings-body');
+  
+  LIGUES_DATA.nf1.clubs_list.forEach((club, i) => {
+    nf1Body.innerHTML += `
+      <tr>
+        <td class="rank">${i + 1}</td>
+        <td class="team">${club}</td>
+        <td class="stat">0</td>
+        <td class="stat">0</td>
+        <td class="stat">0</td>
+        <td class="stat">0</td>
+        <td class="stat points">0</td>
+      </tr>
+    `;
+  });
+}
+
+function renderModeration() {
+  const pending = matchesData.filter(m => m.score1 === null);
+  document.getElementById('pending-count').textContent = pending.length;
+  document.getElementById('validated-count').textContent = matchesData.filter(m => m.score1 !== null).length;
+  document.getElementById('rejected-count').textContent = 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveMatch() {
+  const match = {
+    id: Date.now().toString(),
+    ligue: document.getElementById('match-ligue').value,
+    team1: document.getElementById('match-team1').value,
+    team2: document.getElementById('match-team2').value,
+    score1: document.getElementById('match-score1').value ? parseInt(document.getElementById('match-score1').value) : null,
+    score2: document.getElementById('match-score2').value ? parseInt(document.getElementById('match-score2').value) : null,
+    date: document.getElementById('match-date').value,
+    lieu: document.getElementById('match-lieu').value
+  };
+  if(!match.team1 || !match.team2) { alert('Sélectionnez les deux équipes'); return; }
+  matchesData.push(match);
+  localStorage.setItem('gsc_matches', JSON.stringify(matchesData));
+  closeModal('match-modal');
+  renderLigueView();
+  alert('✅ Match enregistré !');
+}
+
+function saveOGSSUResult() {
+  const result = {
+    id: Date.now().toString(),
+    category: document.getElementById('result-category').value,
+    champion: document.getElementById('result-champion').value,
+    finaliste: document.getElementById('result-finaliste').value,
+    notes: document.getElementById('result-notes').value
+  };
+  if(!result.champion || !result.finaliste) { alert('Sélectionnez champion et finaliste'); return; }
+  ogssuResults.push(result);
+  localStorage.setItem('gsc_ogssu_results', JSON.stringify(ogssuResults));
+  closeModal('result-modal');
+  renderOGSSUView();
+  alert('✅ Résultat enregistré !');
+}
+
+function deleteMatch(id) {
+  if(!confirm('Supprimer ce match ?')) return;
+  matchesData = matchesData.filter(m => m.id !== id);
+  localStorage.setItem('gsc_matches', JSON.stringify(matchesData));
+  renderLigueView();
+}
+
+function deleteOGSSUResult(id) {
+  if(!confirm('Supprimer ce résultat ?')) return;
+  ogssuResults = ogssuResults.filter(r => r.id !== id);
+  localStorage.setItem('gsc_ogssu_results', JSON.stringify(ogssuResults));
+  renderOGSSUView();
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  renderLigueView();
+});
+</script>
+</body>
+</html>
