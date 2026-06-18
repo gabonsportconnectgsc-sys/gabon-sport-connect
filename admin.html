@@ -4,7 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>GSC Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
@@ -13,9 +14,10 @@
   --yellow:#FFD700;--navy:#0A1628;--navy-md:#1a2d4a;
   --white:#fff;--gray-bg:#F0F2F5;--gray-bd:#e2e8f0;
   --gray-txt:#64748b;--danger:#ef4444;--warn:#f59e0b;
-  --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;
+  --blue:#3b82f6;--purple:#8b5cf6;--orange:#f97316;--teal:#0d9488;
   --sidebar-w:240px;--topbar-h:60px;--mobile-nav-h:62px;
-  --font:'Inter',system-ui,sans-serif;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);
+  --font:'Inter',system-ui,sans-serif;--font-display:'Syne',sans-serif;
+  --radius:12px;--radius-lg:22px;--shadow:0 2px 12px rgba(0,0,0,.08);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-height:100vh;overflow-x:hidden;}
@@ -38,7 +40,7 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .sidebar-header{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
 .sidebar-brand{display:flex;align-items:center;gap:10px;}
 .brand-icon{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--green),var(--green-dk));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.brand-text{font-size:15px;font-weight:800;color:#fff;}
+.brand-text{font-family:var(--font-display);font-size:15px;font-weight:800;color:#fff;}
 .brand-sub{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;}
 .admin-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:var(--yellow);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;}
 .sidebar-nav{flex:1;padding:10px 8px;}
@@ -59,7 +61,7 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 
 .topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--gray-bd);display:flex;align-items:center;gap:12px;padding:0 20px;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .btn-menu{display:none;width:36px;height:36px;border-radius:9px;border:1.5px solid var(--gray-bd);background:#fff;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;}
-.topbar-title{font-size:17px;font-weight:700;color:var(--navy);flex:1;}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--navy);flex:1;}
 .topbar-sub{font-size:12px;font-weight:500;color:var(--gray-txt);margin-left:6px;}
 .sync-indicator{display:none;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--green);background:var(--green-lt);padding:5px 10px;border-radius:20px;}
 .sync-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease infinite;}
@@ -69,6 +71,10 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .section.active{display:block;}
 
 /* DASHBOARD */
+.admin-header{background:linear-gradient(135deg,var(--navy),var(--navy-md) 55%,#0d3a1f);border-radius:var(--radius-lg);padding:24px 22px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+.admin-header::after{content:'⚙️';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:60px;opacity:.1;}
+.admin-header-title{font-family:var(--font-display);font-size:22px;font-weight:800;}
+.admin-header-sub{font-size:13px;opacity:.65;margin-top:4px;}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
 .stat-card{border-radius:14px;padding:20px 16px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.1);position:relative;overflow:hidden;}
 .stat-card::after{content:'';position:absolute;right:-14px;bottom:-14px;width:65px;height:65px;border-radius:50%;background:rgba(255,255,255,.08);}
@@ -78,12 +84,12 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .stat-card.c4{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
 .stat-icon{font-size:26px;flex-shrink:0;}
 .stat-data{flex:1;z-index:1;}
-.stat-value{font-size:28px;font-weight:800;color:#fff;line-height:1;}
+.stat-value{font-family:var(--font-display);font-size:28px;font-weight:800;color:#fff;line-height:1;}
 .stat-label{font-size:10px;color:rgba(255,255,255,.65);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.4px;}
 .stat-trend{font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;}
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .dash-card{background:#fff;border-radius:14px;padding:18px;box-shadow:var(--shadow);}
-.dash-card-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.dash-card-title{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
 .status-bars{display:flex;flex-direction:column;gap:12px;}
 .sb-item{display:flex;flex-direction:column;gap:5px;}
 .sb-label{display:flex;justify-content:space-between;font-size:12px;font-weight:600;}
@@ -104,15 +110,28 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 
 /* JOUEURS */
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
-.page-title{font-size:18px;font-weight:800;color:var(--navy);}
+.page-title{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--navy);}
 .filters-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
 .filter-btn{padding:7px 14px;border:1.5px solid var(--gray-bd);background:#fff;color:var(--navy);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green);}
 .search-box{flex:1;min-width:200px;display:flex;gap:8px;background:#fff;border:1.5px solid var(--gray-bd);border-radius:8px;padding:8px 12px;}
 .search-box input{border:none;outline:none;flex:1;font-size:13px;color:var(--navy);}
-.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;}
-.player-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:all .3s;border:1.5px solid transparent;}
-.player-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12);border-color:var(--green);}
+.users-table-wrap{overflow-x:auto;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);}
+table.users-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.users-table th{background:var(--gray-bg);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);border-bottom:2px solid var(--gray-bd);}
+table.users-table td{padding:12px;border-bottom:1px solid var(--gray-bd);color:var(--navy);vertical-align:middle;}
+table.users-table tr{cursor:pointer;transition:background .15s;}
+table.users-table tr:hover td{background:#f8fafc;}
+table.users-table tr:last-child td{border-bottom:none;}
+.user-row-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
+.user-row-avatar img{width:100%;height:100%;object-fit:cover;}
+.user-name-cell{display:flex;align-items:center;gap:10px;}
+.user-name-txt{font-weight:700;color:var(--navy);white-space:nowrap;}
+.status-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;display:inline-block;}
+.status-active{background:#dcfce7;color:#166534;}
+.status-hidden{background:#fef9c3;color:#92400e;}
+.status-deleted{background:#fee2e2;color:#991b1b;}
+.status-pending{background:#dbeafe;color:#1e40af;}
 .player-image{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden;}
 .player-image img{width:100%;height:100%;object-fit:cover;}
 .player-info{padding:12px;text-align:center;}
@@ -121,8 +140,9 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .player-badges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
 .badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;}
 .badge.verified{background:#dcfce7;color:#166534;}
-.badge.pending{background:#fef3c7;color:#92400e;}
-.badge.hidden{background:#fee2e2;color:#991b1b;}
+.badge.pending{background:#dbeafe;color:#1e40af;}
+.badge.hidden{background:#fef9c3;color:#92400e;}
+.badge.deleted{background:#fee2e2;color:#991b1b;}
 .empty{text-align:center;padding:50px 20px;color:var(--gray-txt);}
 .empty-icon{font-size:44px;margin-bottom:10px;}
 .empty h3{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:5px;}
@@ -230,7 +250,8 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
   .stat-value{font-size:22px;}
   .stat-card{padding:14px 12px;}
   .dash-grid{grid-template-columns:1fr;}
-  .players-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+  table.users-table{font-size:12px;}
+  table.users-table th,table.users-table td{padding:8px;}
   .grid2{grid-template-columns:1fr;}
   .modal{width:97%;max-height:88vh;}
   .match-card{padding:12px 10px;gap:10px;}
@@ -292,6 +313,10 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 
       <!-- DASHBOARD -->
       <div id="dashboard" class="section active">
+        <div class="admin-header">
+          <div class="admin-header-title">⚙️ Panneau d'administration</div>
+          <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total inscrits</div></div></div>
           <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">0</div><div class="stat-label">Vérifiés</div><div class="stat-trend">Comptes actifs</div></div></div>
@@ -321,7 +346,12 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
           <button class="filter-btn" onclick="filterPlayers('Arbitre',this)">Arbitres</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…" oninput="searchPlayers()"/></div>
         </div>
-        <div id="players-grid" class="players-grid"></div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Membre</th><th>Rôle</th><th>Club</th><th>Statut</th></tr></thead>
+            <tbody id="players-grid"></tbody>
+          </table>
+        </div>
         <div id="empty-state" class="empty" style="display:none;"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères</p></div>
       </div>
 
@@ -532,11 +562,14 @@ function renderPlayers(){
   if(!grid||!empty)return;
   if(!filtered.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  grid.innerHTML=filtered.map(p=>`<div class="player-card" onclick="openPlayerModal('${p.id}')">
-    <div class="player-image">${p.photo?`<img src="${p.photo}" alt="${p.nom}"/>`:p.role==='Athlète'?'🏃':p.role==='Entraîneur'?'🎯':p.role==='Arbitre'?'🏁':'⚽'}</div>
-    <div class="player-info"><div class="player-name">${p.nom||'Sans nom'}</div><div class="player-role">${p.role||'Membre'}</div>
-    <div class="player-badges">${p.status==='verified'?'<span class="badge verified">✓ Vérifié</span>':p.status==='pending'?'<span class="badge pending">⏳ Attente</span>':p.status==='hidden'?'<span class="badge hidden">👁️ Masqué</span>':''}</div></div>
-  </div>`).join('');
+  const statusMap={verified:'<span class="status-badge status-active">✓ Vérifié</span>',pending:'<span class="status-badge status-pending">⏳ Attente</span>',hidden:'<span class="status-badge status-hidden">👁️ Masqué</span>',deleted:'<span class="status-badge status-deleted">🗑️ Supprimé</span>'};
+  const roleIcon=r=>r==='Athlète'?'🏃':r==='Entraîneur'?'🎯':r==='Arbitre'?'🏁':'⚽';
+  grid.innerHTML=filtered.map(p=>`<tr onclick="openPlayerModal('${p.id}')">
+    <td><div class="user-name-cell"><div class="user-row-avatar">${p.photo?`<img src="${p.photo}" alt="${p.nom}"/>`:roleIcon(p.role)}</div><span class="user-name-txt">${p.nom||'Sans nom'}</span></div></td>
+    <td>${p.role||'Membre'}</td>
+    <td>${p.club||'—'}</td>
+    <td>${statusMap[p.status]||'<span class="status-badge status-pending">⏳ Attente</span>'}</td>
+  </tr>`).join('');
 }
 
 function filterPlayers(role,btn){currentFilter=role;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderPlayers();}
