@@ -348,6 +348,38 @@
     .toast.error{background:#fef2f2;color:#991b1b;border-left:4px solid var(--danger);}
     .toast.info{background:#eff6ff;color:#1e40af;border-left:4px solid var(--blue);}
 
+    /* ── GSC ID + QR CODE SYSTEM (public) ── */
+    .profile-gsc-id-block{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+    .gsc-id-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 14px;font-family:monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;cursor:default;user-select:all;}
+    .gsc-id-pill .id-icon{font-size:13px;}
+    .btn-show-qr{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;}
+    .btn-show-qr:hover{background:rgba(255,255,255,.22);}
+    /* QR popup for own profile */
+    .qr-profile-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;}
+    .qr-profile-modal.open{display:flex;}
+    .qr-profile-box{background:#fff;border-radius:var(--radius-lg);padding:28px 24px;width:90%;max-width:360px;text-align:center;box-shadow:var(--shadow-lg);animation:slideUp .3s ease;position:relative;}
+    .qr-profile-title{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+    .qr-profile-sub{font-size:12px;color:var(--gray-txt);margin-bottom:6px;}
+    .qr-profile-gscid{font-family:monospace;font-size:12px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:14px;}
+    .qr-profile-canvas-wrap{width:200px;height:200px;margin:0 auto 16px;border-radius:12px;border:2px solid var(--gray-bd);overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;}
+    .qr-profile-canvas-wrap canvas{width:100% !important;height:100% !important;}
+    .qr-profile-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+    .qr-profile-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+    .qr-profile-btn.print-btn{background:linear-gradient(135deg,var(--navy),var(--navy-md));color:#fff;}
+    .qr-profile-btn.dl-btn{background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;}
+    .qr-profile-btn.print-btn:hover,.qr-profile-btn.dl-btn:hover{transform:translateY(-1px);}
+    /* QR in actor detail modal */
+    .actor-qr-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 0;border-top:1px solid var(--gray-bg);margin-top:8px;}
+    .actor-qr-mini{width:56px;height:56px;border-radius:8px;border:1.5px solid var(--gray-bd);overflow:hidden;flex-shrink:0;cursor:pointer;transition:box-shadow .2s;}
+    .actor-qr-mini:hover{box-shadow:0 4px 16px rgba(0,0,0,.15);}
+    .actor-qr-mini canvas{width:100%!important;height:100%!important;}
+    .actor-gsc-id-small{font-family:monospace;font-size:11px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:4px 10px;border-radius:20px;letter-spacing:.5px;}
+    @media print{
+      body *{visibility:hidden!important;}
+      .qr-print-profile,.qr-print-profile *{visibility:visible!important;}
+      .qr-print-profile{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff!important;}
+    }
+
     /* ── ADMIN ── */
     #view-admin{display:none;}#view-admin.active{display:block;}
     .admin-header{background:linear-gradient(135deg,#1a0a00,#3d1a00,#7a3800);border-radius:var(--radius-lg);padding:24px 20px;color:var(--white);margin-bottom:20px;position:relative;overflow:hidden;}
@@ -657,6 +689,10 @@
     .anim-target{display:inline-block;animation:targetSpin 2s ease-in-out infinite;}
     .anim-runner{display:inline-block;animation:runnerSlide 1.4s ease-in-out infinite;}
     .anim-bars{display:inline-block;animation:barsFluctuate 1.6s ease-in-out infinite;transform-origin:bottom center;}
+.sf-attr-btn.active{background:linear-gradient(135deg,#6d28d9,#7c3aed) !important;color:#fff !important;}
+#btn-view-grid.vm-active,#btn-view-list.vm-active{background:rgba(255,255,255,.3) !important;}
+.actors-grid.list-mode{grid-template-columns:1fr !important;}
+.actors-grid.list-mode .actor-card{display:flex;flex-direction:row;align-items:center;gap:10px;}
 </style>
 </head>
 <body>
@@ -1060,7 +1096,187 @@
         </div>
       </div>
 
-      <!-- Filters -->
+      <!-- ══ SYSTÈME RECHERCHE RECRUTEURS / SÉLECTIONNEURS (public) ══ -->
+      <div class="card mb-16 fade-up" id="scout-search-panel">
+        <div class="card-header" style="background:linear-gradient(135deg,#0A1628,#1a2d4a);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;">
+            <span style="font-size:20px;flex-shrink:0;">🎯</span>
+            <div style="min-width:0;flex:1;">
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#fff;line-height:1.25;">Recherche Sélectionneur / Recruteur</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;">Filtres avancés par profil physique, technique & sportif</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;width:100%;">
+            <button id="btn-view-grid" onclick="setViewMode('grid')" title="Vue cartes" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.15);color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">⊞</button>
+            <button id="btn-view-list" onclick="setViewMode('list')" title="Liste compacte" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">☰</button>
+            <button onclick="toggleScoutPanel()" id="scout-toggle-btn" style="padding:5px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">▼ Filtres</button>
+          </div>
+        </div>
+
+        <!-- Panneau filtres avancés (collapsible, replié par défaut en mode public) -->
+        <div id="scout-filters-body" style="display:none;">
+          <div style="padding:16px 16px 8px;">
+
+            <!-- LIGNE 1 : Rôle + Sport + Niveau -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Rôle</label>
+                <select id="sf-role" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Tous</option>
+                  <option value="joueur">⚽ Joueur/Athlète</option>
+                  <option value="arbitre">🟨 Arbitre</option>
+                  <option value="entraineur">📋 Entraîneur</option>
+                  <option value="independant">🏃 Indépendant</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Sport</label>
+                <select id="sf-sport" class="search-input" onchange="applyScoutFilters();updatePositionOptions()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Tous sports</option>
+                  <option>Football</option><option>Basketball</option><option>Handball</option>
+                  <option>Volleyball</option><option>Athlétisme</option><option>Natation</option>
+                  <option>Boxe</option><option>Judo</option><option>Tennis</option><option>Rugby</option>
+                  <option>Taekwondo</option><option>Cyclisme</option><option>Lutte</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Niveau</label>
+                <select id="sf-niveau" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Tous niveaux</option>
+                  <option>Amateur</option><option>Régional</option><option>National</option><option>International</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- LIGNE 2 : Poste/Position (dynamique selon sport) -->
+            <div id="sf-poste-wrap" style="margin-bottom:10px;display:none;">
+              <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Poste / Position</label>
+              <div id="sf-poste-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+            </div>
+
+            <!-- LIGNE 3 : Physique -->
+            <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">💪 Profil physique</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Taille min (cm)</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-taille-min" min="140" max="220" value="140" oninput="document.getElementById('sf-taille-min-val').textContent=this.value+'cm';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-taille-min-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:38px;">140cm</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Taille max (cm)</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-taille-max" min="140" max="230" value="230" oninput="document.getElementById('sf-taille-max-val').textContent=this.value+'cm';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-taille-max-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:38px;">230cm</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Poids min (kg)</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-poids-min" min="40" max="150" value="40" oninput="document.getElementById('sf-poids-min-val').textContent=this.value+'kg';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-poids-min-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:38px;">40kg</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Poids max (kg)</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-poids-max" min="40" max="160" value="160" oninput="document.getElementById('sf-poids-max-val').textContent=this.value+'kg';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-poids-max-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:38px;">160kg</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Âge min</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-age-min" min="14" max="60" value="14" oninput="document.getElementById('sf-age-min-val').textContent=this.value+' ans';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-age-min-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:42px;">14 ans</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--gray-txt);display:block;margin-bottom:4px;">Âge max</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="range" id="sf-age-max" min="14" max="65" value="65" oninput="document.getElementById('sf-age-max-val').textContent=this.value+' ans';applyScoutFilters()" style="flex:1;accent-color:var(--green);">
+                    <span id="sf-age-max-val" style="font-size:11px;font-weight:700;color:var(--navy);min-width:42px;">65 ans</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LIGNE 4 : Attributs techniques -->
+            <div style="background:linear-gradient(135deg,#fdf4ff,#f3e8ff);border:1px solid #d8b4fe;border-radius:10px;padding:12px;margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">⚡ Attributs techniques</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;" id="sf-attrs">
+                <button class="sf-attr-btn" data-attr="rapide" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">⚡ Rapide</button>
+                <button class="sf-attr-btn" data-attr="grand" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">📏 Grand</button>
+                <button class="sf-attr-btn" data-attr="petit" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">🤸 Petit gabarit</button>
+                <button class="sf-attr-btn" data-attr="puissant" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">💪 Puissant</button>
+                <button class="sf-attr-btn" data-attr="technique" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">🎯 Technique</button>
+                <button class="sf-attr-btn" data-attr="leader" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">👑 Leader</button>
+                <button class="sf-attr-btn" data-attr="experience" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">🏆 Expérimenté</button>
+                <button class="sf-attr-btn" data-attr="jeune" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">🌱 Jeune talent</button>
+              </div>
+            </div>
+
+            <!-- LIGNE 5 : Pied fort + Disponibilité + Santé -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:10px;">
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Pied fort</label>
+                <select id="sf-pied" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Tous</option>
+                  <option value="Droit">🦶 Droit</option>
+                  <option value="Gauche">🦶 Gauche</option>
+                  <option value="Ambidextre">✌️ Ambidextre</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Disponibilité</label>
+                <select id="sf-dispo" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Toutes</option>
+                  <option value="disponible">✅ Disponible</option>
+                  <option value="sous_contrat">📄 Sous contrat</option>
+                  <option value="libre">🔓 Agent libre</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">État de santé</label>
+                <select id="sf-sante" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Tous</option>
+                  <option value="fit">💚 En forme</option>
+                  <option value="blesse">🔴 Blessé</option>
+                  <option value="convalescent">🟡 Convalescent</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- LIGNE 6 : Recherche nom + Ville -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px;">
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Nom / Prénom</label>
+                <input class="search-input" id="sf-nom" placeholder="🔍 Rechercher…" oninput="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Ville / Province</label>
+                <select id="sf-ville" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
+                  <option value="">Toutes villes</option>
+                  <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
+                  <option>Oyem</option><option>Moanda</option><option>Mouila</option><option>Lambaréné</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Actions filtres + compteur résultats -->
+            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--gray-bd);flex-wrap:wrap;">
+              <div id="scout-results-count" style="font-size:12px;font-weight:700;color:var(--green);flex:1;">
+                <span id="scout-count-num">—</span> acteurs trouvés
+              </div>
+              <button onclick="resetScoutFilters()" style="padding:8px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-size:12px;font-weight:700;color:var(--gray-txt);cursor:pointer;">↺ Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres rapides par type (gardés mais redesignés) -->
       <div class="card mb-16 fade-up">
         <div class="card-body" style="padding-bottom:0;">
           <div class="actors-filters" id="actor-type-filters">
@@ -1129,6 +1345,11 @@
           <span class="chip" id="prof-chip-sport">—</span>
           <span class="chip" id="prof-chip-ville">—</span>
           <span class="chip" id="prof-chip-poste">—</span>
+        </div>
+        <!-- GSC ID + QR Code block (visible for joueur, independant, club, admin) -->
+        <div class="profile-gsc-id-block" id="prof-gsc-id-block" style="display:none;">
+          <span class="gsc-id-pill"><span class="id-icon">🔖</span><span id="prof-gsc-id-text">—</span></span>
+          <button class="btn-show-qr" onclick="openProfileQrModal()">📱 Mon QR Code</button>
         </div>
       </div>
 
@@ -4822,5 +5043,486 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ── SCOUT SEARCH SYSTEM (mode public — lecture seule) ──
+var scoutViewMode = 'grid'; // 'grid' | 'list'
+var scoutSelectedAttrs = new Set();
+var scoutSelectedPostes = new Set();
+
+function setViewMode(mode){
+  scoutViewMode = mode;
+  const grid = document.getElementById('actors-grid');
+  const btnG = document.getElementById('btn-view-grid');
+  const btnL = document.getElementById('btn-view-list');
+  if(mode === 'list'){
+    grid?.classList.add('list-mode');
+    btnL?.classList.add('vm-active');
+    btnG?.classList.remove('vm-active');
+  } else {
+    grid?.classList.remove('list-mode');
+    btnG?.classList.add('vm-active');
+    btnL?.classList.remove('vm-active');
+  }
+}
+window.setViewMode = setViewMode;
+
+function toggleScoutPanel(){
+  const body = document.getElementById('scout-filters-body');
+  const btn = document.getElementById('scout-toggle-btn');
+  if(!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? 'block' : 'none';
+  if(btn) btn.textContent = hidden ? '▲ Filtres' : '▼ Filtres';
+}
+window.toggleScoutPanel = toggleScoutPanel;
+
+function toggleAttr(btn){
+  const attr = btn.dataset.attr;
+  if(scoutSelectedAttrs.has(attr)){
+    scoutSelectedAttrs.delete(attr);
+    btn.classList.remove('active');
+    btn.style.background='#fff'; btn.style.color='#6d28d9';
+  } else {
+    scoutSelectedAttrs.add(attr);
+    btn.classList.add('active');
+    btn.style.background='linear-gradient(135deg,#6d28d9,#7c3aed)'; btn.style.color='#fff';
+  }
+  applyScoutFilters();
+}
+window.toggleAttr = toggleAttr;
+
+function updatePositionOptions(){
+  const sport = document.getElementById('sf-sport')?.value || '';
+  const role = document.getElementById('sf-role')?.value || '';
+  const wrap = document.getElementById('sf-poste-wrap');
+  const container = document.getElementById('sf-poste-btns');
+  if(!container || !wrap) return;
+  let postes = [];
+  if(role === 'arbitre'){
+    postes = POSTES['Arbitre'] || [];
+  } else if(sport && POSTES[sport]){
+    postes = POSTES[sport];
+  }
+  if(!postes.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  container.innerHTML = postes.map(p =>
+    `<button class="sf-attr-btn" data-poste="${p}" onclick="togglePoste(this)" style="padding:5px 10px;border:1.5px solid #bae6fd;border-radius:20px;background:#fff;font-size:10px;font-weight:700;color:#0369a1;cursor:pointer;transition:all .2s;">${p}</button>`
+  ).join('');
+}
+window.updatePositionOptions = updatePositionOptions;
+
+function togglePoste(btn){
+  const poste = btn.dataset.poste;
+  if(scoutSelectedPostes.has(poste)){
+    scoutSelectedPostes.delete(poste);
+    btn.style.background = '#fff'; btn.style.color = '#0369a1';
+  } else {
+    scoutSelectedPostes.add(poste);
+    btn.style.background = 'linear-gradient(135deg,#0369a1,#0284c7)'; btn.style.color = '#fff';
+  }
+  applyScoutFilters();
+}
+window.togglePoste = togglePoste;
+
+function getActorAge(a){
+  if(!a.dateNaissance) return null;
+  return new Date().getFullYear() - new Date(a.dateNaissance).getFullYear();
+}
+function getActorAttrs(a){
+  const attrs = new Set();
+  const taille = a.taille || 0;
+  const poids = a.poids || 0;
+  const age = getActorAge(a);
+  if(taille >= 185) attrs.add('grand');
+  if(taille > 0 && taille < 175) attrs.add('petit');
+  if(poids >= 85) attrs.add('puissant');
+  if(age !== null && age <= 23) attrs.add('jeune');
+  if(age !== null && age >= 30) attrs.add('experience');
+  const bio = (a.bio||'').toLowerCase();
+  if(bio.includes('rapide')||bio.includes('vitesse')) attrs.add('rapide');
+  if(bio.includes('technique')||bio.includes('dribble')) attrs.add('technique');
+  if(bio.includes('leader')||bio.includes('capitaine')) attrs.add('leader');
+  (a.attrs||[]).forEach(attr => attrs.add(attr));
+  return attrs;
+}
+
+function applyScoutFilters(){
+  const role = document.getElementById('sf-role')?.value||'';
+  const sport = document.getElementById('sf-sport')?.value||'';
+  const niveau = document.getElementById('sf-niveau')?.value||'';
+  const pied = document.getElementById('sf-pied')?.value||'';
+  const dispo = document.getElementById('sf-dispo')?.value||'';
+  const sante = document.getElementById('sf-sante')?.value||'';
+  const nom = (document.getElementById('sf-nom')?.value||'').toLowerCase();
+  const ville = document.getElementById('sf-ville')?.value||'';
+  const tailleMin = parseInt(document.getElementById('sf-taille-min')?.value||140);
+  const tailleMax = parseInt(document.getElementById('sf-taille-max')?.value||230);
+  const poidsMin = parseInt(document.getElementById('sf-poids-min')?.value||40);
+  const poidsMax = parseInt(document.getElementById('sf-poids-max')?.value||160);
+  const ageMin = parseInt(document.getElementById('sf-age-min')?.value||14);
+  const ageMax = parseInt(document.getElementById('sf-age-max')?.value||65);
+
+  let filtered = allActors.filter(a => {
+    if(role && a.role !== role) return false;
+    if(sport && a.sport !== sport && !(a.sports||[]).includes(sport)) return false;
+    if(niveau && a.niveau !== niveau) return false;
+    if(pied && a.pied !== pied) return false;
+    if(ville && a.ville !== ville) return false;
+    if(nom){
+      const fullname = ([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')).toLowerCase();
+      if(!fullname.includes(nom)) return false;
+    }
+    const isPersonnel = ['joueur','arbitre','entraineur','independant'].includes(a.role);
+    if(isPersonnel){
+      if(a.taille && (a.taille < tailleMin || a.taille > tailleMax)) return false;
+      if(a.poids && (a.poids < poidsMin || a.poids > poidsMax)) return false;
+      const age = getActorAge(a);
+      if(age !== null && (age < ageMin || age > ageMax)) return false;
+    }
+    if(dispo){
+      if(dispo==='disponible' && a.disponibilite !== 'disponible' && a.club) return false;
+      if(dispo==='libre' && a.club) return false;
+      if(dispo==='sous_contrat' && !a.club) return false;
+    }
+    if(sante){
+      if(sante==='fit' && a.blesse) return false;
+      if(sante==='blesse' && !a.blesse) return false;
+      if(sante==='convalescent' && !a.convalescent) return false;
+    }
+    if(scoutSelectedAttrs.size > 0){
+      const actorAttrs = getActorAttrs(a);
+      for(const attr of scoutSelectedAttrs){
+        if(!actorAttrs.has(attr)) return false;
+      }
+    }
+    if(scoutSelectedPostes.size > 0){
+      if(!scoutSelectedPostes.has(a.poste)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById('scout-count-num');
+  if(countEl) countEl.textContent = filtered.length;
+
+  // Combine avec le filtre rapide par type (boutons Tous/Joueurs/Arbitres…)
+  if(typeof currentActorType !== 'undefined' && currentActorType !== 'tous'){
+    filtered = filtered.filter(a=>{
+      if(currentActorType==='association') return ['club','association'].includes(a.role);
+      if(currentActorType==='supporter') return a.isSupporter===true||a.role==='supporter';
+      return a.role===currentActorType;
+    });
+  }
+  renderActors(filtered);
+}
+window.applyScoutFilters = applyScoutFilters;
+
+function resetScoutFilters(){
+  ['sf-role','sf-sport','sf-niveau','sf-pied','sf-dispo','sf-sante','sf-ville'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const nomEl=document.getElementById('sf-nom'); if(nomEl) nomEl.value='';
+  const sliders=[{id:'sf-taille-min',val:'sf-taille-min-val',min:140,unit:'cm'},{id:'sf-taille-max',val:'sf-taille-max-val',min:230,unit:'cm'},{id:'sf-poids-min',val:'sf-poids-min-val',min:40,unit:'kg'},{id:'sf-poids-max',val:'sf-poids-max-val',min:160,unit:'kg'},{id:'sf-age-min',val:'sf-age-min-val',min:14,unit:' ans'},{id:'sf-age-max',val:'sf-age-max-val',min:65,unit:' ans'}];
+  sliders.forEach(s=>{
+    const el=document.getElementById(s.id); if(el){el.value=s.min;}
+    const lbl=document.getElementById(s.val); if(lbl){lbl.textContent=s.min+s.unit;}
+  });
+  scoutSelectedAttrs.clear();
+  scoutSelectedPostes.clear();
+  document.querySelectorAll('#sf-attrs .sf-attr-btn').forEach(b=>{b.classList.remove('active');b.style.background='#fff';b.style.color='#6d28d9';});
+  document.querySelectorAll('#sf-poste-btns button').forEach(b=>{b.style.background='#fff';b.style.color='#0369a1';});
+  const wrap=document.getElementById('sf-poste-wrap'); if(wrap) wrap.style.display='none';
+  const countEl=document.getElementById('scout-count-num');
+  if(countEl) countEl.textContent=allActors.length;
+  renderActors(allActors);
+  if(typeof toast === 'function') toast('↺ Filtres réinitialisés','info');
+}
+window.resetScoutFilters = resetScoutFilters;
+</script>
+
+<!-- ── QR PROFILE MODAL (own profile: joueur, independant, club, admin) ── -->
+<div class="qr-profile-modal" id="qr-profile-modal" onclick="if(event.target===this)closeProfileQrModal()">
+  <div class="qr-profile-box">
+    <button style="position:absolute;top:14px;right:14px;background:var(--gray-bg);border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;" onclick="closeProfileQrModal()">✕</button>
+    <div class="qr-profile-title" id="qr-prof-name">—</div>
+    <div class="qr-profile-sub" id="qr-prof-role">—</div>
+    <div class="qr-profile-gscid" id="qr-prof-gscid">—</div>
+    <div class="qr-profile-canvas-wrap"><canvas id="qr-prof-canvas"></canvas></div>
+    <div class="qr-profile-actions">
+      <button class="qr-profile-btn print-btn" onclick="printProfileQr()">🖨️ Imprimer</button>
+      <button class="qr-profile-btn dl-btn" onclick="downloadProfileQr()">⬇️ Télécharger</button>
+    </div>
+    <!-- Print zone -->
+    <div class="qr-print-profile" id="qr-print-profile" style="display:none;">
+      <div style="text-align:center;font-family:sans-serif;padding:28px;">
+        <div style="font-size:13px;font-weight:800;color:#0A1628;letter-spacing:1px;margin-bottom:4px;">GABON SPORT CONNECT</div>
+        <div style="font-size:20px;font-weight:800;color:#0A1628;" id="qr-print-prof-name">—</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:14px;" id="qr-print-prof-role">—</div>
+        <canvas id="qr-print-prof-canvas" style="width:200px;height:200px;display:block;margin:0 auto 14px;"></canvas>
+        <div style="font-family:monospace;font-size:13px;font-weight:700;color:#009E60;letter-spacing:.8px;" id="qr-print-prof-gscid">—</div>
+        <div style="font-size:9px;color:#64748b;margin-top:8px;">Scannez pour accéder à la fiche officielle — gabonsportconnect.ga</div>
+        <div style="margin-top:10px;font-size:9px;color:#94a3b8;">🇬🇦 Plateforme Nationale du Sport Gabonais</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GSC QR SYSTEM (public) ──
+const ROLE_CODES_QR = {
+  joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
+  association:'ASS', federation:'FED', independant:'IND',
+  admin:'ADM', supporter:'SUP', organisateur:'ORG'
+};
+// Rôles autorisés à avoir un QR imprimable
+const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin'];
+
+function generateGscId(uid, role){
+  if(!uid) return null;
+  const roleCode = ROLE_CODES_QR[role] || 'ACT';
+  let hash = 0;
+  for(let i = 0; i < uid.length; i++){
+    hash = ((hash << 5) - hash) + uid.charCodeAt(i);
+    hash |= 0;
+  }
+  const abs = Math.abs(hash).toString(36).toUpperCase().padStart(6,'0').slice(-6);
+  return `GSC-${roleCode}-${abs}`;
+}
+
+function buildQrUrl(uid){
+  const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
+  return `${base}?actor=${uid}`;
+}
+
+function drawQrOnCanvas(canvas, text, size){
+  canvas.width = size; canvas.height = size;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,size,size);
+    ctx.drawImage(img,0,0,size,size);
+  };
+  img.onerror = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
+    ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('QR GSC', size/2, size/2 - 6);
+  };
+  img.src = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}&choe=UTF-8&chld=M|2`;
+}
+
+// ─── Show GSC ID + QR button in own profile ───
+function renderProfileGscId(){
+  if(!userProfile || !currentUser) return;
+  const p = userProfile;
+  const uid = p.uid || currentUser.uid;
+  const role = p.role || 'joueur';
+  // Only show for allowed roles
+  const block = document.getElementById('prof-gsc-id-block');
+  if(!block) return;
+  if(!QR_ENABLED_ROLES.includes(role)){ block.style.display = 'none'; return; }
+  const gscId = p.gscId || generateGscId(uid, role);
+  document.getElementById('prof-gsc-id-text').textContent = gscId;
+  block.style.display = 'flex';
+}
+
+// ─── Open profile QR modal ───
+function openProfileQrModal(){
+  if(!userProfile || !currentUser) return;
+  const p = userProfile;
+  const uid = p.uid || currentUser.uid;
+  const role = p.role || 'joueur';
+  const gscId = p.gscId || generateGscId(uid, role);
+  const name = [p.prenom, p.nom, p.nomOrganisation].filter(Boolean).join(' ') || p.email?.split('@')[0] || '—';
+  const roleLabel = (typeof ROLE_LABELS !== 'undefined' ? ROLE_LABELS[role] : null) || role;
+  document.getElementById('qr-prof-name').textContent = name;
+  document.getElementById('qr-prof-role').textContent = roleLabel;
+  document.getElementById('qr-prof-gscid').textContent = gscId;
+  document.getElementById('qr-print-prof-name').textContent = name;
+  document.getElementById('qr-print-prof-role').textContent = roleLabel;
+  document.getElementById('qr-print-prof-gscid').textContent = gscId;
+  const url = buildQrUrl(uid);
+  drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
+  drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
+  document.getElementById('qr-profile-modal').classList.add('open');
+}
+function closeProfileQrModal(){
+  document.getElementById('qr-profile-modal').classList.remove('open');
+}
+function printProfileQr(){
+  const pz = document.getElementById('qr-print-profile');
+  pz.style.display = 'flex';
+  setTimeout(()=>{ window.print(); setTimeout(()=>{ pz.style.display = 'none'; }, 800); }, 300);
+}
+function downloadProfileQr(){
+  const canvas = document.getElementById('qr-prof-canvas');
+  const name = document.getElementById('qr-prof-name').textContent.replace(/\s+/g,'_');
+  const link = document.createElement('a');
+  link.download = `QR_GSC_${name}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ─── QR mini dans les fiches acteurs (actor detail modal) ───
+function injectActorQr(uid, role, containerSelector){
+  const container = document.querySelector(containerSelector);
+  if(!container) return;
+  const existing = container.querySelector('.actor-qr-row');
+  if(existing) existing.remove();
+  const gscId = generateGscId(uid, role);
+  const url = buildQrUrl(uid);
+  const row = document.createElement('div');
+  row.className = 'actor-qr-row';
+  row.innerHTML = `
+    <div class="actor-qr-mini" title="QR Code d'identification" onclick="openActorQrZoom('${uid}','${role}')">
+      <canvas id="actor-qr-${uid}" width="56" height="56"></canvas>
+    </div>
+    <div>
+      <div class="actor-gsc-id-small">${gscId}</div>
+      <div style="font-size:10px;color:var(--gray-txt);margin-top:2px;">Identification GSC</div>
+    </div>`;
+  container.appendChild(row);
+  setTimeout(()=>{ drawQrOnCanvas(document.getElementById(`actor-qr-${uid}`), url, 56); }, 80);
+}
+
+// Zoom QR depuis fiche acteur
+function openActorQrZoom(uid, role){
+  const actor = allActors.find(a=>(a.id||a.uid)===uid)||{};
+  const gscId = generateGscId(uid, role);
+  const name = [actor.prenom,actor.nom,actor.nomOrganisation].filter(Boolean).join(' ')||uid.slice(0,8);
+  const roleLabel = (typeof ROLE_LABELS!=='undefined'?ROLE_LABELS[role]:null)||role;
+  document.getElementById('qr-prof-name').textContent = name;
+  document.getElementById('qr-prof-role').textContent = roleLabel;
+  document.getElementById('qr-prof-gscid').textContent = gscId;
+  document.getElementById('qr-print-prof-name').textContent = name;
+  document.getElementById('qr-print-prof-role').textContent = roleLabel;
+  document.getElementById('qr-print-prof-gscid').textContent = gscId;
+  const url = buildQrUrl(uid);
+  drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
+  drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
+  document.getElementById('qr-profile-modal').classList.add('open');
+}
+
+// ─── Patch renderProfile to show GSC ID block ───
+document.addEventListener('firebase-ready', ()=>{
+  // Patch: watch profile view activation
+  const _origShowView = window.showView;
+  window.showView = function(v){
+    if(_origShowView) _origShowView(v);
+    if(v==='profil') setTimeout(renderProfileGscId, 200);
+  };
+  // Also patch renderDashboard if it exists
+  const _origRenderDash = window.renderDashboard;
+  window.renderDashboard = function(){
+    if(_origRenderDash) _origRenderDash();
+    setTimeout(renderProfileGscId, 100);
+  };
+});
+
+// ─── Patch openActorDetail to inject QR in actor modal ───
+const _origOpenActorDetail = window.openActorDetail;
+window.openActorDetail = function(uid){
+  if(_origOpenActorDetail) _origOpenActorDetail(uid);
+  const actor = allActors.find(a=>(a.id||a.uid)===uid);
+  if(!actor) return;
+  const role = actor.role || 'joueur';
+  // Inject QR after short delay (modal must be open)
+  setTimeout(()=>{ injectActorQr(uid, role, '.adm-body'); }, 200);
+};
+
+// Handle deep link ?actor=uid — open actor detail directly
+(function handleActorDeepLink(){
+  const uid = new URLSearchParams(window.location.search).get('actor');
+  if(!uid) return;
+  document.addEventListener('firebase-ready', ()=>{
+    setTimeout(()=>{
+      if(typeof showView === 'function') showView('annuaire');
+      setTimeout(()=>{
+        if(typeof openActorDetail === 'function') openActorDetail(uid);
+      }, 1000);
+    }, 800);
+  });
+})();
+
+window.openProfileQrModal = openProfileQrModal;
+window.closeProfileQrModal = closeProfileQrModal;
+window.printProfileQr = printProfileQr;
+window.downloadProfileQr = downloadProfileQr;
+window.openActorQrZoom = openActorQrZoom;
+window.generateGscId = generateGscId;
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- GSC SYNC SYSTEM — Mode libre (Accès public)                    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Firebase SDK (Firestore seulement, pas d'authentification) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+<!-- Configuration Firebase -->
+<script src="/config/firebase-init.js"></script>
+
+<!-- Système de synchronisation Admin ↔ App Publique -->
+<script src="/config/gsc-sync-config.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉVÉNEMENTS GSC — Écouter les données synchronisées             -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+  /**
+   * Événement: Données synchronisées depuis Firestore
+   * Utiliser cet événement pour afficher les données dynamiques
+   */
+  window.addEventListener('gsc-data-synced', function(event) {
+    const {
+      sports = [],
+      clubs = [],
+      championships = [],
+      actors = [],
+      players = [],
+      documents = [],
+      config = {}
+    } = event.detail;
+
+    console.log('✅ GSC Data Synced:', {
+      sports: sports.length,
+      clubs: clubs.length,
+      championships: championships.length,
+      actors: actors.length,
+      players: players.length,
+      documents: documents.length
+    });
+
+    // ─── À PERSONNALISER SELON VOTRE APP ───
+    // Remplacer les données statiques par les données Firestore
+    // Exemple:
+    // if (window.allSports) window.allSports = sports;
+    // if (window.allClubs) window.allClubs = clubs;
+    // etc.
+  });
+
+  /**
+   * Événement: Synchronisation prête
+   * Appelle quand le SyncManager est complètement initialisé
+   */
+  window.addEventListener('gsc-sync-ready', function(event) {
+    const { sync } = event.detail;
+    console.log('🔄 GSC Sync Ready - Vous pouvez utiliser:', {
+      'getGSCSync()': 'Obtenir l\'instance SyncManager',
+      'sync.syncAll()': 'Forcer une synchronisation',
+      'sync.saveDocument(collection, id, data)': 'Sauvegarder',
+      'sync.deleteDocument(collection, id)': 'Supprimer',
+      'sync.getCache(collection)': 'Obtenir données en cache'
+    });
+  });
+
+  /**
+   * Événement: Erreur initialisation Firebase
+   */
+  window.addEventListener('firebase-init-error', function(event) {
+    console.error('❌ Firebase Error:', event.detail.error);
+  });
 </script>
 </body>
+</html>
