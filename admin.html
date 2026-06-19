@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- Module de synchronisation temps réel -->
+<script src="realtime-sync-module.js"></script>
 <style>
 :root{
   --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -65,6 +67,15 @@ body{font-family:var(--font);background:var(--gray-bg);color:var(--navy);min-hei
 .topbar-sub{font-size:12px;font-weight:500;color:var(--gray-txt);margin-left:6px;}
 .sync-indicator{display:none;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--green);background:var(--green-lt);padding:5px 10px;border-radius:20px;}
 .sync-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease infinite;}
+/* Badge sync global (realtime-sync-module) */
+#gsc-sync-badge{position:fixed;top:14px;right:16px;background:var(--green);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;display:none;align-items:center;gap:7px;z-index:9999;box-shadow:0 4px 14px rgba(0,158,96,.3);}
+#gsc-sync-badge .gsc-sync-dot{width:7px;height:7px;background:#fff;border-radius:50%;animation:pulse 1.4s ease infinite;}
+/* Toast styles */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideIn .3s ease;}
+.toast.success{background:#009E60;}.toast.error{background:var(--danger);}.toast.warn{background:var(--warn);color:var(--navy);}.toast.info{background:var(--blue);}
+/* Indicateur temps réel dans topbar */
+.realtime-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,158,96,.12);border:1px solid rgba(0,158,96,.25);color:var(--green);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-left:8px;}
+.realtime-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s ease infinite;}
 
 .main-content{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);padding:22px;min-height:calc(100vh - var(--topbar-h));}
 .section{display:none;animation:fadeUp .3s ease;}
@@ -314,7 +325,11 @@ table.users-table tr:last-child td{border-bottom:none;}
       <button class="btn-menu" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbar-title">Dashboard<span class="topbar-sub" id="topbar-sub"></span></div>
       <div class="sync-indicator" id="sync-indicator"><div class="sync-dot"></div><span>Sync…</span></div>
+      <div id="realtime-status" class="realtime-badge" style="display:none;"><div class="realtime-dot"></div><span>Temps réel</span></div>
     </div>
+
+    <!-- Badge sync global (utilisé par realtime-sync-module.js) -->
+    <div id="gsc-sync-badge"><div class="gsc-sync-dot"></div><span class="gsc-sync-label">Synchronisation…</span></div>
 
     <div class="main-content">
 
@@ -520,13 +535,66 @@ async function init(){
     if(typeof firebase!=='undefined'){
       firebase.initializeApp(firebaseConfig);
       db=firebase.firestore();
-      await loadPlayers();
-      await loadMatches();
+
+      /* ── Initialiser le module temps réel ── */
+      if(window.realtimeSync){
+        window.realtimeSync.initialize(db);
+      }
+
+      /* ── Listeners temps réel ── */
+      startRealtimeListeners();
+
     }else{
       toast('Mode hors-ligne','warn');
       updateDashboard();
     }
   }catch(e){toast('Firebase: '+e.message,'error');updateDashboard();}
+}
+
+/* ════════════════════════════════════════════════════════
+ *  Listeners onSnapshot — synchronisation temps réel
+ * ════════════════════════════════════════════════════════ */
+function startRealtimeListeners(){
+  if(!db) return;
+
+  /* ── Joueurs / Membres ── */
+  db.collection('users').onSnapshot(
+    snapshot=>{
+      allPlayers = snapshot.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .filter(p=>p.status!=='deleted');
+      renderPlayers();
+      updateDashboard();
+      hideSync();
+      /* Activer le badge "Temps réel" dans la topbar */
+      const rt=$('realtime-status');
+      if(rt) rt.style.display='inline-flex';
+    },
+    err=>{
+      toast('Joueurs: '+err.message,'error');
+      hideSync();
+    }
+  );
+
+  /* ── Matchs ── */
+  db.collection('matchs').orderBy('date','desc').onSnapshot(
+    snapshot=>{
+      allMatches = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      renderMatches();
+      updateDashboard();
+    },
+    err=>{
+      /* Si orderBy échoue (pas d'index), fallback sans orderBy */
+      db.collection('matchs').onSnapshot(
+        snap=>{
+          allMatches = snap.docs.map(d=>({id:d.id,...d.data()}));
+          renderMatches();
+          updateDashboard();
+        },
+        e2=>{ allMatches=[]; renderMatches(); }
+      );
+    }
+  );
 }
 
 addClickListener('logout-btn',()=>location.reload());
