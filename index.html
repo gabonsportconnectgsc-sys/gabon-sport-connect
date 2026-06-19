@@ -2223,7 +2223,7 @@ async function sendResetEmail(){
     const fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     const {initializeApp} = fb;
     const {getFirestore,doc,setDoc,getDoc,updateDoc,collection,
-           addDoc,getDocs,query,orderBy,serverTimestamp,deleteDoc,where,limit} = fs;
+           addDoc,getDocs,query,orderBy,serverTimestamp,deleteDoc,where,limit,onSnapshot} = fs;
     const app = initializeApp(FIREBASE_CONFIG);
     window._fbApp = app;
     window.db = getFirestore(app);
@@ -2232,7 +2232,7 @@ async function sendResetEmail(){
     window.updateDoc=updateDoc; window.collection=collection; window.addDoc=addDoc;
     window.getDocs=getDocs; window.query=query; window.orderBy=orderBy;
     window.serverTimestamp=serverTimestamp; window.deleteDoc=deleteDoc;
-    window.where=where; window.limit=limit;
+    window.where=where; window.limit=limit; window.onSnapshot=onSnapshot;
     try{
       const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
       window.sRef = sm.ref;
@@ -5792,122 +5792,73 @@ window.generateGscId = generateGscId;
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- GSC SYNC SYSTEM — Mode libre (Accès public)                    -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<!-- Module de synchronisation temps réel (doit être chargé en premier) -->
-<script src="realtime-sync-module.js"></script>
-
-<!-- Firebase SDK (Firestore seulement, pas d'authentification) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-
-<!-- Configuration Firebase -->
-<script src="/config/firebase-init.js"></script>
-
-<!-- Système de synchronisation Admin ↔ App Publique -->
-<script src="/config/gsc-sync-config.js"></script>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- ÉVÉNEMENTS GSC — Écouter les données synchronisées             -->
+<!-- GSC SYNC SYSTEM — Synchronisation temps réel Firestore         -->
+<!-- (branchée sur la collection 'users' réellement utilisée par    -->
+<!-- l'app — partagée avec admin.html. Remplace l'ancien système    -->
+<!-- qui référençait des fichiers inexistants.)                     -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <script>
-  /**
-   * Événement: Données synchronisées depuis Firestore
-   * Met à jour les variables globales de l'app en temps réel
-   */
-  window.addEventListener('gsc-data-synced', function(event) {
-    const {
-      sports        = [],
-      clubs         = [],
-      championships = [],
-      actors        = [],
-      players       = [],
-      documents     = [],
-      matches       = [],
-      config        = {}
-    } = event.detail;
+(function(){
+  let _unsubUsers = null;
 
-    console.log('✅ GSC Data Synced:', {
-      sports: sports.length, clubs: clubs.length,
-      actors: actors.length, players: players.length,
-      matches: matches.length
-    });
-
-    /* ── Injecter dans les variables globales de l'app ── */
-    if (typeof window.allActors !== 'undefined' && actors.length)   window.allActors   = actors;
-    if (typeof window.allPlayers !== 'undefined' && players.length) window.allPlayers  = players;
-    if (typeof window.allClubs !== 'undefined' && clubs.length)     window.allClubs    = clubs;
-    if (typeof window.allSports !== 'undefined' && sports.length)   window.allSports   = sports;
-    if (typeof window.allMatches !== 'undefined' && matches.length) window.allMatches  = matches;
-
-    /* ── Rafraîchir l'UI si une vue est active ── */
-    const refresh = () => {
-      if (typeof window.renderAnnuaire  === 'function') window.renderAnnuaire();
-      if (typeof window.renderDashboard === 'function') window.renderDashboard();
-      if (typeof window.renderMatches   === 'function') window.renderMatches();
-      if (typeof window.renderClubs     === 'function') window.renderClubs();
-    };
-    // Léger délai pour ne pas perturber un rendu en cours
-    setTimeout(refresh, 50);
-  });
-
-  /**
-   * Événement: Synchronisation prête
-   */
-  window.addEventListener('gsc-sync-ready', function(event) {
-    console.log('🔄 GSC Sync Ready');
-    // Indicateur visuel optionnel dans l'app publique
+  function _showSyncIndicator(){
     const indicator = document.createElement('div');
     indicator.style.cssText = 'position:fixed;bottom:70px;right:12px;background:rgba(0,158,96,.85);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;z-index:999;pointer-events:none;opacity:0;transition:opacity .5s;';
     indicator.textContent = '🔄 Temps réel';
     document.body.appendChild(indicator);
     setTimeout(()=>{ indicator.style.opacity='1'; }, 100);
     setTimeout(()=>{ indicator.style.opacity='0'; setTimeout(()=>indicator.remove(),500); }, 3000);
+  }
+
+  function _refreshViews(){
+    if (typeof window.renderActors    === 'function') window.renderActors(window.allActors);
+    if (typeof window.searchAnnuaire  === 'function') window.searchAnnuaire();
+    if (typeof window.loadGlobalStats === 'function') window.loadGlobalStats();
+  }
+
+  function startUsersSync(){
+    if (!window.db || typeof window.collection !== 'function' || typeof window.onSnapshot !== 'function') {
+      console.warn('GSC sync: Firestore non disponible, écoute temps réel désactivée.');
+      return;
+    }
+    if (_unsubUsers) return; // déjà actif
+    try{
+      _unsubUsers = window.onSnapshot(window.collection(window.db,'users'), function(snap){
+        const dbActors = snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+        const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
+        const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
+        window.allActors = [...dbActors, ...seedActors];
+        _refreshViews();
+        console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
+        window.dispatchEvent(new Event('gsc-data-synced'));
+      }, function(err){
+        console.warn('GSC sync users error:', err);
+      });
+      _showSyncIndicator();
+      window.dispatchEvent(new Event('gsc-sync-ready'));
+    }catch(e){
+      console.warn('GSC sync: impossible de démarrer l\'écoute temps réel —', e);
+    }
+  }
+
+  document.addEventListener('firebase-ready', function(){
+    if (window._firebaseReady && typeof window.onSnapshot === 'function') {
+      startUsersSync();
+    } else if (window._firebaseReady) {
+      // onSnapshot n'a pas été exposé par le bootstrap principal — l'importer.
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js").then(function(fs){
+        window.onSnapshot = fs.onSnapshot;
+        startUsersSync();
+      }).catch(function(e){ console.warn('GSC sync: import onSnapshot échoué —', e); });
+    } else {
+      console.warn('GSC sync: Firebase indisponible, l\'app fonctionne avec les données locales/seed uniquement.');
+    }
   });
 
-  /**
-   * Événement: Erreur initialisation Firebase
-   */
   window.addEventListener('firebase-init-error', function(event) {
-    console.error('❌ Firebase Error:', event.detail.error);
+    console.error('❌ Firebase Error:', event.detail && event.detail.error);
   });
-
-  /**
-   * ══ SYNCHRONISATION DONNÉES ADMIN ══
-   * Synchronise les données utilisateurs avec le système admin
-   */
-  window.syncUserDataToAdmin = function() {
-    try {
-      const adminData = {
-        users: (window._actorsList || []).map(user => ({
-          id: user.uid,
-          name: user.name || user.displayName || 'Sans nom',
-          email: user.email,
-          role: user.role || 'utilisateur',
-          status: user.status || 'active',
-          createdAt: user.createdAt || Date.now(),
-          photoURL: user.photoURL || null
-        })),
-        lastSync: Date.now(),
-        appVersion: '2.1.0'
-      };
-      
-      localStorage.setItem('gsc_admin_data', JSON.stringify(adminData));
-      console.log('✓ Sync admin:', adminData.users.length, 'utilisateurs');
-    } catch(e) {
-      console.error('Erreur synchro admin:', e);
-    }
-  };
-
-  /**
-   * Synchronisation automatique toutes les 2 minutes
-   */
-  setInterval(() => {
-    if (typeof window.syncUserDataToAdmin === 'function') {
-      window.syncUserDataToAdmin();
-    }
-  }, 120000);
+})();
 </script>
 </body>
 </html>
