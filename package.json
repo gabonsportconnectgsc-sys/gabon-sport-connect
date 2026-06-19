@@ -1,0 +1,26 @@
+{
+  "name": "gsc-admin-reports",
+  "version": "2.0.0",
+  "description": "Système de rapports, statistiques et intégrations API pour GSC Admin Panel",
+  "main": "js/reports-stats-module.js",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "test": "echo \"Run tests with your test framework\""
+  },
+  "keywords": [
+    "reports",
+    "statistics",
+    "charts",
+    "dashboard",
+    "gsc",
+    "sports",
+    "admin",
+    "api-integration",
+    "fifa",
+    "caf"
+  ],
+  "author": "GSC Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}

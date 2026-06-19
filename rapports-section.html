@@ -1,0 +1,389 @@
+<!-- 
+  ════════════════════════════════════════════════════════════════
+  GSC ADMIN — SECTION RAPPORTS & STATISTIQUES
+  rapports-section.html  |  Juin 2026
+  ════════════════════════════════════════════════════════════════
+  À intégrer dans admin.html après la section dashboard
+-->
+
+<div id="rapports" class="section">
+  <!-- Header -->
+  <div class="admin-header">
+    <div class="admin-header-title">📊 Rapports & Statistiques</div>
+    <div class="admin-header-sub">Analyse détaillée, graphiques et exports</div>
+  </div>
+
+  <!-- Barre d'outils rapide -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button class="btn-action green" id="btn-refresh-reports">🔄 Actualiser</button>
+    <button class="btn-action blue" id="btn-export-csv">📥 Exporter CSV</button>
+    <button class="btn-action orange" id="btn-export-pdf">📄 Exporter PDF</button>
+    <button class="btn-action outline" id="btn-share-report">🔗 Partager</button>
+    <button class="btn-action outline" id="btn-integrations">⚙️ Intégrations API</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       1. STATISTIQUES CLÉS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="dash-grid" style="margin-bottom:24px;">
+    <div class="dash-card">
+      <div class="dash-card-title">👥 Joueurs</div>
+      <div style="padding:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;padding:10px;background:#f0f9ff;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#009E60;" id="stat-total-joueurs">0</div>
+            <div style="font-size:11px;color:#64748b;">Total</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#e6f7ef;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#007a47;" id="stat-actifs-joueurs">0</div>
+            <div style="font-size:11px;color:#64748b;">Actifs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-title">⚽ Matchs</div>
+      <div style="padding:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;padding:10px;background:#fef3c7;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#f59e0b;" id="stat-matchs-joues">0</div>
+            <div style="font-size:11px;color:#64748b;">Joués</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#dbeafe;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#3b82f6;" id="stat-matchs-avenir">0</div>
+            <div style="font-size:11px;color:#64748b;">À venir</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-title">🎯 Performance</div>
+      <div style="padding:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;padding:10px;background:#fecaca;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#ef4444;" id="stat-buts-total">0</div>
+            <div style="font-size:11px;color:#64748b;">Buts</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#e0e7ff;border-radius:8px;">
+            <div style="font-size:24px;font-weight:700;color:#6366f1;" id="stat-moy-buts">0</div>
+            <div style="font-size:11px;color:#64748b;">Moy/match</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-title">📸 Couverture</div>
+      <div style="padding:12px;">
+        <div style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:#009E60;" id="stat-couverture-pct">0%</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">Photos de profil</div>
+          <div style="font-size:12px;color:#7c3aed;margin-top:6px;font-weight:600;" id="stat-couverture-nb">0 / 0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       2. GRAPHIQUES INTERACTIFS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="dash-grid">
+    <!-- Graphique 1: Distribution des rôles -->
+    <div class="dash-card">
+      <div class="dash-card-title">👥 Distribution des rôles</div>
+      <div style="position:relative;height:260px;">
+        <canvas id="chart-roles"></canvas>
+      </div>
+    </div>
+
+    <!-- Graphique 2: Résultats des matchs -->
+    <div class="dash-card">
+      <div class="dash-card-title">🏆 Résultats des matchs</div>
+      <div style="position:relative;height:260px;">
+        <canvas id="chart-results"></canvas>
+      </div>
+    </div>
+
+    <!-- Graphique 3: Statut des comptes -->
+    <div class="dash-card">
+      <div class="dash-card-title">✅ Statut des comptes</div>
+      <div style="position:relative;height:260px;">
+        <canvas id="chart-status"></canvas>
+      </div>
+    </div>
+
+    <!-- Graphique 4: Tendance des matchs -->
+    <div class="dash-card">
+      <div class="dash-card-title">📈 Tendance des matchs</div>
+      <div style="position:relative;height:260px;">
+        <canvas id="chart-trend"></canvas>
+      </div>
+    </div>
+
+    <!-- Graphique 5: Top joueurs -->
+    <div class="dash-card" style="grid-column: 1 / -1;">
+      <div class="dash-card-title">🏅 Top 8 meilleurs buteurs</div>
+      <div style="position:relative;height:300px;">
+        <canvas id="chart-top-players"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       3. TABLEAU DÉTAILLÉ DES JOUEURS
+       ═════════════════════════════════════════════════════════== -->
+  <div style="margin-top:24px;">
+    <div style="background:#fff;padding:18px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#0A1628;">📋 Détail des joueurs par statistiques</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="border-bottom:2px solid #e2e8f0;">
+              <th style="text-align:left;padding:10px;font-weight:600;color:#64748b;">Joueur</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Matchs</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Buts</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Passes</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Club</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Taille</th>
+              <th style="text-align:center;padding:10px;font-weight:600;color:#64748b;">Poids</th>
+            </tr>
+          </thead>
+          <tbody id="rapport-joueurs-table">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:#64748b;">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════
+       4. RÉSUMÉ DES MATCHS
+       ═════════════════════════════════════════════════════════════ -->
+  <div style="margin-top:24px;">
+    <div style="background:#fff;padding:18px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#0A1628;">⚽ Résumé des matchs</div>
+      <div id="rapport-matchs-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div style="padding:12px;background:#f0f9ff;border-radius:8px;border-left:4px solid #3b82f6;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total Matchs</div>
+          <div style="font-size:20px;font-weight:700;color:#3b82f6;" id="summary-total-matchs">0</div>
+        </div>
+        <div style="padding:12px;background:#e6f7ef;border-radius:8px;border-left:4px solid #009E60;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Victoires GSC</div>
+          <div style="font-size:20px;font-weight:700;color:#009E60;" id="summary-victoires">0</div>
+        </div>
+        <div style="padding:12px;background:#fecaca;border-radius:8px;border-left:4px solid #ef4444;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Défaites</div>
+          <div style="font-size:20px;font-weight:700;color:#ef4444;" id="summary-defaites">0</div>
+        </div>
+        <div style="padding:12px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Matchs nuls</div>
+          <div style="font-size:20px;font-weight:700;color:#f59e0b;" id="summary-nuls">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: Partage -->
+<div id="share-modal" class="modal-overlay">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">🔗 Partager le rapport</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="msection">
+        <div class="msection-title">Lien de partage temporaire</div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;color:#64748b;margin-bottom:6px;display:block;">Durée de validité</label>
+          <select id="share-expiry" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;">
+            <option value="1">1 jour</option>
+            <option value="7" selected>7 jours</option>
+            <option value="30">30 jours</option>
+            <option value="90">90 jours</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="share-link" readonly style="flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f9fafb;">
+          <button id="btn-copy-link" style="padding:10px 16px;background:#009E60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Copier</button>
+        </div>
+      </div>
+
+      <div class="msection">
+        <div class="msection-title">Permissions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="perm-view" checked>
+            <span>Affichage des statistiques</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="perm-export">
+            <span>Export des données</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="perm-comment">
+            <span>Ajout de commentaires</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-generate-share">🔗 Générer lien</button>
+        <button class="btn btn-secondary" id="btn-close-share">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Intégrations API -->
+<div id="integrations-modal" class="modal-overlay">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Intégrations API</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-content" style="max-height:600px;overflow-y:auto;">
+      
+      <!-- FIFA -->
+      <div class="msection">
+        <div class="msection-title">⚽ FIFA</div>
+        <div style="padding:10px;background:#f0f9ff;border-radius:8px;margin-bottom:12px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">Synchronisez vos données avec FIFA</div>
+          <div id="fifa-status" style="font-size:11px;padding:6px;background:#fff;border-radius:4px;margin-bottom:8px;">
+            <span style="color:#999;">Déconnecté</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input type="password" class="api-token" placeholder="Token API FIFA" style="flex:1;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;">
+            <button class="btn-integrate" data-api="fifa" style="padding:8px 16px;background:#009E60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Connecter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAF -->
+      <div class="msection">
+        <div class="msection-title">🏆 CAF (Confédération Africaine)</div>
+        <div style="padding:10px;background:#f0f9ff;border-radius:8px;margin-bottom:12px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">Synchronisez vos données avec CAF</div>
+          <div id="caf-status" style="font-size:11px;padding:6px;background:#fff;border-radius:4px;margin-bottom:8px;">
+            <span style="color:#999;">Déconnecté</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input type="password" class="api-token" placeholder="Token API CAF" style="flex:1;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;">
+            <button class="btn-integrate" data-api="caf" style="padding:8px 16px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Connecter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Custom -->
+      <div class="msection">
+        <div class="msection-title">🔌 API Custom</div>
+        <div style="padding:10px;background:#f0f9ff;border-radius:8px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">Connectez votre propre API</div>
+          <input type="text" id="custom-api-url" placeholder="https://api.exemple.com/sync" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;margin-bottom:8px;">
+          <input type="password" id="custom-api-token" placeholder="Token API" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;margin-bottom:8px;">
+          <button class="btn-integrate" data-api="custom" style="width:100%;padding:10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Connecter</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:12px;background:#e6f7ef;border-radius:8px;border-left:4px solid #009E60;">
+        <div style="font-size:12px;font-weight:600;color:#007a47;margin-bottom:4px;">💡 Info</div>
+        <div style="font-size:12px;color:#064e3b;">Les données sont synchronisées de manière sécurisée. Les tokens API ne sont jamais stockés en clair.</div>
+      </div>
+
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btn-close-integrations">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .dash-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .dash-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0A1628;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-action {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-action.green {
+    background: #009E60;
+    color: #fff;
+  }
+
+  .btn-action.blue {
+    background: #3b82f6;
+    color: #fff;
+  }
+
+  .btn-action.orange {
+    background: #f97316;
+    color: #fff;
+  }
+
+  .btn-action.outline {
+    background: #f9fafb;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .msection {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .msection:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .msection-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0A1628;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .dash-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
