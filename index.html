@@ -144,9 +144,9 @@
     .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--gray-txt);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;}
     .bnav-item .bnav-icon{font-size:26px;}
     .bnav-item.active{color:var(--green);}
-    .main-content{padding-top:calc(var(--nav-h) + 16px);padding-bottom:80px;padding-left:16px;padding-right:16px;max-width:960px;margin:0 auto;}
+    .main-content{padding-top:calc(var(--nav-h) + 12px);padding-bottom:80px;padding-left:10px;padding-right:10px;max-width:100%;margin:0 auto;width:100%;overflow-x:hidden;box-sizing:border-box;}
     .view{display:none;}.view.active{display:block;animation:fadeUp .35s ease;}
-    .card{background:var(--white);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--gray-bd);overflow:hidden;}
+    .card{background:var(--white);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--gray-bd);overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;}
     .card-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
     .card-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--navy);}
     .card-body{padding:20px;}
@@ -767,6 +767,23 @@
 .acr-badge.federation{background:#fef3c7;color:#92400e;}
 .acr-badge.supporter{background:#fce7f3;color:#9d174d;}
 .acr-badge.admin{background:#fef9c3;color:#78350f;}
+
+/* ═══ MOBILE RESPONSIVE ═══ */
+@media (max-width: 640px) {
+  .main-content { padding-left: 8px; padding-right: 8px; }
+  .card-header, .card-body { padding: 14px 12px; }
+  .card-title { font-size: 15px; }
+  .dashboard-hero { padding: 20px 16px; }
+  .stats-grid { gap: 10px; }
+  .stats-grid > * { min-height: auto; padding: 12px !important; }
+  .modal-card, .actor-detail-card { max-width: calc(100vw - 20px); }
+  table { font-size: 12px; }
+  th, td { padding: 10px 8px; }
+  .quick-btn { min-width: 80px; padding: 12px 8px; font-size: 11px; }
+  .bottom-nav { height: 56px; }
+  body { overflow-x: hidden; }
+  * { max-width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -1034,7 +1051,7 @@
       <!-- Tuile résumé total -->
       <div class="stats-grid fade-up" id="dashboard-stats" style="grid-template-columns:1fr;margin-bottom:8px;">
         <button class="stat-card stat-card-1" onclick="showView('annuaire')" style="flex-direction:row;align-items:center;gap:16px;padding:16px 20px;">
-          <span style="font-size:32px;">👥</span>
+          <svg style="width:40px;height:40px;flex-shrink:0;" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><g id="stairs"><rect x="20" y="240" width="60" height="40" fill="#ddd"/><rect x="90" y="200" width="60" height="80" fill="#e8e8e8"/><rect x="160" y="160" width="60" height="120" fill="#e0e0e0"/><rect x="230" y="120" width="60" height="160" fill="#d8d8d8"/><rect x="300" y="80" width="60" height="200" fill="#d0d0d0"/></g><g id="football-player" transform="translate(50, 180)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1e40af" rx="2"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="15" r="5" fill="#fff"/><ellipse cx="25" cy="15" rx="5" ry="4" fill="none" stroke="#000" stroke-width="1"/></g><g id="referee" transform="translate(120, 140)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1a1a1a" rx="2"/><polygon points="0,-10 -3,-5 3,-5" fill="#dc2626"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><rect x="22" y="0" width="6" height="8" fill="#fbbf24"/></g><g id="basketball-player" transform="translate(190, 100)"><circle cx="0" cy="-25" r="12" fill="#8b4513"/><rect x="-10" y="-10" width="20" height="22" fill="#f97316" rx="2"/><line x1="-10" y1="-5" x2="-22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-20" r="8" fill="#f97316" stroke="#1a1a1a" stroke-width="1.5"/><path d="M -30 -28 Q -30 -12 -30 -28" fill="none" stroke="#1a1a1a" stroke-width="0.8"/><path d="M -38 -20 Q -22 -20 -38 -20" fill="none" stroke="#1a1a1a" stroke-width="0.8"/></g><g id="tennis-player" transform="translate(260, 60)"><circle cx="0" cy="-25" r="12" fill="#f5c4a1"/><path d="M -10 -30 Q -12 -35 0 -37 Q 12 -35 10 -30" fill="#b45309"/><rect x="-10" y="-10" width="20" height="22" fill="#f5f5f5" rx="2"/><circle cx="-7" cy="-6" r="2" fill="#ec4899"/><circle cx="7" cy="-6" r="2" fill="#ec4899"/><line x1="-10" y1="-5" x2="-26" y2="-18" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="8" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-25" r="10" fill="none" stroke="#795548" stroke-width="2"/><line x1="-30" y1="-25" x2="-24" y2="-12" stroke="#795548" stroke-width="2"/><path d="M -30 -25 Q -28 -20 -32 -20" fill="none" stroke="#fbbf24" stroke-width="1.5"/></g><ellipse cx="200" cy="285" rx="180" ry="8" fill="#000000" opacity="0.1"/></svg>
           <div style="flex:1;text-align:left;">
             <div class="stat-val" id="stat-total-acteurs" style="font-size:28px;">—</div>
             <div class="stat-lbl">Total acteurs enregistrés</div>
@@ -5855,6 +5872,42 @@ window.generateGscId = generateGscId;
   window.addEventListener('firebase-init-error', function(event) {
     console.error('❌ Firebase Error:', event.detail.error);
   });
+
+  /**
+   * ══ SYNCHRONISATION DONNÉES ADMIN ══
+   * Synchronise les données utilisateurs avec le système admin
+   */
+  window.syncUserDataToAdmin = function() {
+    try {
+      const adminData = {
+        users: (window._actorsList || []).map(user => ({
+          id: user.uid,
+          name: user.name || user.displayName || 'Sans nom',
+          email: user.email,
+          role: user.role || 'utilisateur',
+          status: user.status || 'active',
+          createdAt: user.createdAt || Date.now(),
+          photoURL: user.photoURL || null
+        })),
+        lastSync: Date.now(),
+        appVersion: '2.1.0'
+      };
+      
+      localStorage.setItem('gsc_admin_data', JSON.stringify(adminData));
+      console.log('✓ Sync admin:', adminData.users.length, 'utilisateurs');
+    } catch(e) {
+      console.error('Erreur synchro admin:', e);
+    }
+  };
+
+  /**
+   * Synchronisation automatique toutes les 2 minutes
+   */
+  setInterval(() => {
+    if (typeof window.syncUserDataToAdmin === 'function') {
+      window.syncUserDataToAdmin();
+    }
+  }, 120000);
 </script>
 </body>
 </html>
