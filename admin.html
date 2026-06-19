@@ -11,6 +11,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
+<!-- Chart.js (requis par l'onglet Rapports) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -459,6 +462,29 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 .mn-btn.active { color: var(--green); }
 
+.stat-val { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1; }
+
+.stat-lbl { font-size: 10px; color: var(--gray-txt); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.report-canvas-wrap { position: relative; height: 220px; }
+
+.report-meta-line { font-size: 11px; color: var(--gray-txt); font-family: monospace; margin-bottom: 14px; }
+
+.btn-report { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-width: medium; border-style: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+.btn-report.primary { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
+
+.btn-report.outline { background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); color: var(--navy); }
+
+.btn-report:hover { transform: translateY(-1px); }
+
+@media print {
+  .sidebar, .topbar, .mobile-nav, .sidebar-overlay, #gsc-sync-badge, .toast, .btn-report { display: none !important; }
+  .main-content { margin: 0px; padding: 0px; }
+  .dash-card, .stat-card { box-shadow: none; border: 1px solid var(--gray-bd); break-inside: avoid; }
+  body { background: rgb(255, 255, 255); }
+}
+
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }
   .sidebar { width: 240px; transform: translateX(-100%); }
@@ -512,6 +538,9 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
         </button>
         <button class="nav-item" id="nav-matchs">
           <span class="nav-icon">📅</span><span>Matchs</span>
+        </button>
+        <button class="nav-item" id="nav-rapports">
+          <span class="nav-icon">📈</span><span>Rapports</span>
         </button>
       </div>
       <div class="sidebar-footer">
@@ -618,6 +647,42 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
         <div id="matches-list" class="matches-list"><div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div></div>
       </div>
 
+      <!-- RAPPORTS -->
+      <div id="rapports" class="section">
+        <div class="page-header">
+          <div class="page-title">📈 Rapports &amp; statistiques</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-report outline" id="btn-refresh-rapports">🔄 Actualiser</button>
+            <button class="btn-report primary" id="btn-print-rapports">🖨️ Imprimer</button>
+          </div>
+        </div>
+        <div class="report-meta-line" id="report-generated-line">Généré le —</div>
+
+        <div class="stats-grid">
+          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="report-stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total enregistrés</div></div></div>
+          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="report-stat-actifs">0</div><div class="stat-label">Actifs</div><div class="stat-trend">Fiches actives</div></div></div>
+          <div class="stat-card c4"><div class="stat-icon">🏟️</div><div class="stat-data"><div class="stat-value" id="report-stat-clubs">0</div><div class="stat-label">Organisations</div><div class="stat-trend">Clubs / Féd. / Assoc.</div></div></div>
+          <div class="stat-card c3"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="report-stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-card-title">🥧 Répartition par rôle</div><div class="report-canvas-wrap"><canvas id="chart-roles"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">✅ Répartition par statut</div><div class="report-canvas-wrap"><canvas id="chart-statuts"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">🏟️ Membres par club</div><div class="report-canvas-wrap"><canvas id="chart-clubs"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">⚽ Top buteurs</div><div class="report-canvas-wrap"><canvas id="chart-buteurs"></canvas></div></div>
+        </div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">📋 Synthèse chiffrée</div>
+          <div class="users-table-wrap">
+            <table class="users-table">
+              <thead><tr><th>#</th><th>Indicateur</th><th>Valeur</th></tr></thead>
+              <tbody id="report-summary-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -722,6 +787,164 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 <script src="firebase-init.js"></script>
 <script src="realtime-sync-module.js"></script>
 <script src="admin-controller.js"></script>
+
+<!-- Module Rapports — autonome, lit le cache de realtime-sync-module.js -->
+<script>
+(function () {
+  'use strict';
+
+  let _reportCharts = {};
+
+  const ROLE_LABELS = {
+    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur'
+  };
+  const ROLE_COLORS = {
+    joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
+    club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628'
+  };
+  const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  /* Lit les données déjà synchronisées par realtime-sync-module.js
+     (admin-controller.js a déjà ouvert les listeners "users"/"matchs",
+     ce module ne fait qu'en lire le cache — aucun listener dupliqué). */
+  function getUsers() {
+    return (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+  }
+  function getMatches() {
+    return (window.realtimeSync && window.realtimeSync.getCache('matchs')) || [];
+  }
+
+  function mkChart(canvasId, type, labels, data, colors) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (_reportCharts[canvasId]) { _reportCharts[canvasId].destroy(); delete _reportCharts[canvasId]; }
+    if (!labels.length) return;
+    _reportCharts[canvasId] = new Chart(ctx, {
+      type,
+      data: { labels, datasets: [{ data, backgroundColor: colors || PALETTE, borderWidth: type === 'line' ? 2 : 1, borderColor: type === 'bar' ? (colors || PALETTE) : '#fff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+        scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {}
+      }
+    });
+  }
+
+  function renderReports() {
+    const users = getUsers();
+    const matches = getMatches();
+    const now = new Date();
+    setText('report-generated-line', `Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · Réf. RPT-${now.getTime().toString().slice(-8)}`);
+
+    setText('report-stat-total', users.length);
+    setText('report-stat-matchs', matches.length);
+
+    if (!users.length) {
+      ['chart-roles', 'chart-statuts', 'chart-clubs', 'chart-buteurs'].forEach(id => {
+        if (_reportCharts[id]) { _reportCharts[id].destroy(); delete _reportCharts[id]; }
+      });
+      setText('report-stat-actifs', 0);
+      setText('report-stat-clubs', 0);
+      const tbody = document.getElementById('report-summary-tbody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-txt)">Aucune donnée disponible pour le moment.</td></tr>`;
+      return;
+    }
+
+    const visible = users.filter(u => u.status !== 'deleted');
+
+    const byRole = {};
+    visible.forEach(u => { const r = ROLE_LABELS[u.role] || u.role || 'Autre'; byRole[r] = (byRole[r] || 0) + 1; });
+    const roleColors = Object.keys(byRole).map(label => {
+      const key = Object.keys(ROLE_LABELS).find(k => ROLE_LABELS[k] === label);
+      return ROLE_COLORS[key] || '#94a3b8';
+    });
+
+    const byStatus = { 'Actif': 0, 'En attente': 0, 'Masqué': 0 };
+    users.forEach(u => {
+      if (u.status === 'pending') byStatus['En attente']++;
+      else if (u.status === 'hidden') byStatus['Masqué']++;
+      else if (u.status !== 'deleted') byStatus['Actif']++;
+    });
+
+    const byClub = {};
+    visible.forEach(u => { const c = (u.club || '').trim(); if (c) byClub[c] = (byClub[c] || 0) + 1; });
+
+    const topScorers = visible
+      .filter(u => Number(u.buts) > 0)
+      .sort((a, b) => (Number(b.buts) || 0) - (Number(a.buts) || 0))
+      .slice(0, 8);
+
+    mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
+    mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
+    mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
+    mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
+
+    const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
+    const totalPending = users.filter(u => u.status === 'pending').length;
+    const totalOrgs = visible.filter(u => ['club', 'federation', 'association'].includes(u.role)).length;
+
+    setText('report-stat-actifs', totalActifs);
+    setText('report-stat-clubs', totalOrgs);
+
+    const rows = [
+      ['Membres enregistrés (total)', users.length],
+      ['Fiches actives', totalActifs],
+      ['Fiches en attente de validation', totalPending],
+      ['Clubs / Fédérations / Associations', totalOrgs],
+      ['Matchs enregistrés', matches.length],
+      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
+      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
+    ];
+    const tbody = document.getElementById('report-summary-tbody');
+    if (tbody) tbody.innerHTML = rows.map((r, i) =>
+      `<tr><td style="font-size:12px;color:var(--gray-txt)">RPT-${String(i + 1).padStart(3, '0')}</td><td>${esc(r[0])}</td><td style="font-weight:700">${esc(r[1])}</td></tr>`
+    ).join('');
+  }
+
+  function showRapportsSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('rapports');
+    if (target) target.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-rapports');
+    if (navBtn) navBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Rapports';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    renderReports();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const navBtn = document.getElementById('nav-rapports');
+    if (navBtn) navBtn.addEventListener('click', showRapportsSection);
+
+    const printBtn = document.getElementById('btn-print-rapports');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+    const refreshBtn = document.getElementById('btn-refresh-rapports');
+    if (refreshBtn) refreshBtn.addEventListener('click', renderReports);
+  });
+})();
+</script>
 
 </body>
 </html>
