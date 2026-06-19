@@ -5456,6 +5456,9 @@ window.generateGscId = generateGscId;
 <!-- GSC SYNC SYSTEM — Mode libre (Accès public)                    -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 
+<!-- Module de synchronisation temps réel (doit être chargé en premier) -->
+<script src="realtime-sync-module.js"></script>
+
 <!-- Firebase SDK (Firestore seulement, pas d'authentification) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
@@ -5472,49 +5475,56 @@ window.generateGscId = generateGscId;
 <script>
   /**
    * Événement: Données synchronisées depuis Firestore
-   * Utiliser cet événement pour afficher les données dynamiques
+   * Met à jour les variables globales de l'app en temps réel
    */
   window.addEventListener('gsc-data-synced', function(event) {
     const {
-      sports = [],
-      clubs = [],
+      sports        = [],
+      clubs         = [],
       championships = [],
-      actors = [],
-      players = [],
-      documents = [],
-      config = {}
+      actors        = [],
+      players       = [],
+      documents     = [],
+      matches       = [],
+      config        = {}
     } = event.detail;
 
     console.log('✅ GSC Data Synced:', {
-      sports: sports.length,
-      clubs: clubs.length,
-      championships: championships.length,
-      actors: actors.length,
-      players: players.length,
-      documents: documents.length
+      sports: sports.length, clubs: clubs.length,
+      actors: actors.length, players: players.length,
+      matches: matches.length
     });
 
-    // ─── À PERSONNALISER SELON VOTRE APP ───
-    // Remplacer les données statiques par les données Firestore
-    // Exemple:
-    // if (window.allSports) window.allSports = sports;
-    // if (window.allClubs) window.allClubs = clubs;
-    // etc.
+    /* ── Injecter dans les variables globales de l'app ── */
+    if (typeof window.allActors !== 'undefined' && actors.length)   window.allActors   = actors;
+    if (typeof window.allPlayers !== 'undefined' && players.length) window.allPlayers  = players;
+    if (typeof window.allClubs !== 'undefined' && clubs.length)     window.allClubs    = clubs;
+    if (typeof window.allSports !== 'undefined' && sports.length)   window.allSports   = sports;
+    if (typeof window.allMatches !== 'undefined' && matches.length) window.allMatches  = matches;
+
+    /* ── Rafraîchir l'UI si une vue est active ── */
+    const refresh = () => {
+      if (typeof window.renderAnnuaire  === 'function') window.renderAnnuaire();
+      if (typeof window.renderDashboard === 'function') window.renderDashboard();
+      if (typeof window.renderMatches   === 'function') window.renderMatches();
+      if (typeof window.renderClubs     === 'function') window.renderClubs();
+    };
+    // Léger délai pour ne pas perturber un rendu en cours
+    setTimeout(refresh, 50);
   });
 
   /**
    * Événement: Synchronisation prête
-   * Appelle quand le SyncManager est complètement initialisé
    */
   window.addEventListener('gsc-sync-ready', function(event) {
-    const { sync } = event.detail;
-    console.log('🔄 GSC Sync Ready - Vous pouvez utiliser:', {
-      'getGSCSync()': 'Obtenir l\'instance SyncManager',
-      'sync.syncAll()': 'Forcer une synchronisation',
-      'sync.saveDocument(collection, id, data)': 'Sauvegarder',
-      'sync.deleteDocument(collection, id)': 'Supprimer',
-      'sync.getCache(collection)': 'Obtenir données en cache'
-    });
+    console.log('🔄 GSC Sync Ready');
+    // Indicateur visuel optionnel dans l'app publique
+    const indicator = document.createElement('div');
+    indicator.style.cssText = 'position:fixed;bottom:70px;right:12px;background:rgba(0,158,96,.85);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;z-index:999;pointer-events:none;opacity:0;transition:opacity .5s;';
+    indicator.textContent = '🔄 Temps réel';
+    document.body.appendChild(indicator);
+    setTimeout(()=>{ indicator.style.opacity='1'; }, 100);
+    setTimeout(()=>{ indicator.style.opacity='0'; setTimeout(()=>indicator.remove(),500); }, 3000);
   });
 
   /**
