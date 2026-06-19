@@ -141,8 +141,8 @@
     @media (min-width:760px){.side-menu{width:320px;}}
     .btn-icon:hover{background:rgba(255,255,255,.18);}
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--white);border-top:1px solid var(--gray-bd);display:flex;height:64px;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
-    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;color:var(--gray-txt);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:8px 2px;}
-    .bnav-item .bnav-icon{font-size:20px;}
+    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--gray-txt);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;}
+    .bnav-item .bnav-icon{font-size:26px;}
     .bnav-item.active{color:var(--green);}
     .main-content{padding-top:calc(var(--nav-h) + 16px);padding-bottom:80px;padding-left:16px;padding-right:16px;max-width:960px;margin:0 auto;}
     .view{display:none;}.view.active{display:block;animation:fadeUp .35s ease;}
@@ -210,7 +210,7 @@
     .quick-btn .qb-icon{font-size:22px;flex-shrink:0;}
 
     /* ── ANNUAIRE ACTEURS ── */
-    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;align-items:center;padding:0 8px;}
     .actors-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .actor-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);overflow:hidden;cursor:pointer;transition:all .2s;}
     .actor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -437,8 +437,8 @@
     .actor-type-card .at-icon{font-size:24px;margin-bottom:4px;}
     .actor-type-card .at-label{font-size:11px;font-weight:700;color:var(--navy);}
     .public-form-note{background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--green-dk);margin-bottom:16px;line-height:1.5;}
-    .action-btns{display:flex;gap:6px;flex-wrap:wrap;}
-    .admin-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+    .action-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;padding:0 8px;}
+    .admin-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;align-items:center;padding:0 8px;}
     .admin-tab{padding:8px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-size:12px;font-weight:700;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
     .admin-tab.active{background:var(--warn);color:var(--white);border-color:var(--warn);}
     .admin-section{display:none;}.admin-section.active{display:block;}
@@ -448,7 +448,7 @@
     .admin-site-meta{font-size:12px;color:var(--gray-txt);margin-top:2px;}
 
     /* ── LEGAL ── */
-    .legal-tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;}
+    .legal-tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;align-items:center;padding:0 8px;}
     .legal-tab{padding:8px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-size:13px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
     .legal-tab.active{background:var(--navy);color:var(--white);border-color:var(--navy);}
     .legal-pane{display:none;font-size:14px;line-height:1.7;color:#374151;}
@@ -489,7 +489,7 @@
     .filter-pill:hover .real-icon{transform:scale(1.1);}
 
     /* ── ANNUAIRE FILTER BUTTONS (now uses filter-pill base) ── */
-    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;}
+    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;align-items:center;padding:0 8px;}
     .actor-filter-btn{
       padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
       background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
@@ -507,7 +507,7 @@
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
 
     /* ── CARTE / SITES FILTER BUTTONS ── */
-    .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;}
     .site-filter-btn{
       padding:7px 14px;border:2px solid var(--gray-bd);border-radius:20px;
       background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
@@ -683,7 +683,7 @@
     .maps-stat-chip{background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-sm);padding:12px;text-align:center;}
     .maps-stat-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--green);}
     .maps-stat-lbl{font-size:11px;color:var(--gray-txt);margin-top:4px;text-transform:uppercase;font-weight:600;}
-    .libreville-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+    .libreville-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;}
     .libreville-badge{background:var(--green);color:var(--white);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
 
     /* ── PROF SUPPORTER CARD ── */
@@ -1049,58 +1049,58 @@
       </div>
       <div class="stats-grid fade-up" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
 
-        <!-- Joueurs / Athlètes -->
+        <!-- Joueurs / Athlètes — joueur de football avec ballon -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
-          <span class="anim-ball" style="font-size:32px;margin-bottom:6px;display:inline-block;">⚽</span>
+          <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>⚽</span>'">
           <div class="stat-val" id="stat-total-joueurs">—</div>
           <div class="stat-lbl">Joueurs / Athlètes</div>
         </button>
 
-        <!-- Clubs -->
+        <!-- Clubs — maillots de football accrochés -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('club')"
           style="background:linear-gradient(135deg,#f97316,#c2410c);padding:16px 12px;">
-          <span class="anim-stadium" style="font-size:32px;margin-bottom:6px;display:inline-block;">🏟️</span>
+          <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏟️</span>'">
           <div class="stat-val" id="stat-total-clubs">—</div>
           <div class="stat-lbl">Clubs sportifs</div>
         </button>
 
-        <!-- Arbitres -->
+        <!-- Arbitres — carton jaune / sifflet -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
           style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
-          <span class="anim-card" style="font-size:32px;margin-bottom:6px;display:inline-block;">🟨</span>
+          <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🟨</span>'">
           <div class="stat-val" id="stat-total-arbitres">—</div>
           <div class="stat-lbl">Arbitres</div>
         </button>
 
-        <!-- Entraîneurs -->
+        <!-- Entraîneurs — coach avec tablette tactique -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('entraineur')"
           style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:16px 12px;">
-          <span class="anim-clipboard" style="font-size:32px;margin-bottom:6px;display:inline-block;">📋</span>
+          <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>📋</span>'">
           <div class="stat-val" id="stat-total-entraineurs">—</div>
           <div class="stat-lbl">Entraîneurs / Coachs</div>
         </button>
 
-        <!-- Fédérations -->
+        <!-- Fédérations — salle de réunion institutionnelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('federation')"
           style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:16px 12px;">
-          <span class="anim-building" style="font-size:32px;margin-bottom:6px;display:inline-block;">🏛️</span>
+          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏛️</span>'">
           <div class="stat-val" id="stat-total-federations">—</div>
           <div class="stat-lbl">Fédérations</div>
         </button>
 
-        <!-- Organisateurs -->
+        <!-- Organisateurs — événement / cérémonie sportive -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('organisateur')"
           style="background:linear-gradient(135deg,#b45309,#92400e);padding:16px 12px;">
-          <span class="anim-target" style="font-size:32px;margin-bottom:6px;display:inline-block;">🎪</span>
+          <img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🎯</span>'">
           <div class="stat-val" id="stat-total-organisateurs">—</div>
           <div class="stat-lbl">Organisateurs</div>
         </button>
 
-        <!-- Indépendants -->
+        <!-- Indépendants — athlète solo / course individuelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('independant')"
           style="background:linear-gradient(135deg,#0369a1,#075985);padding:16px 12px;">
-          <span class="anim-runner" style="font-size:32px;margin-bottom:6px;display:inline-block;">🚴</span>
+          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏃</span>'">
           <div class="stat-val" id="stat-total-independants">—</div>
           <div class="stat-lbl">Sportifs indépendants</div>
         </button>
@@ -1238,7 +1238,7 @@
             <!-- LIGNE 2 : Poste/Position (dynamique selon sport) -->
             <div id="sf-poste-wrap" style="margin-bottom:10px;display:none;">
               <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Poste / Position</label>
-              <div id="sf-poste-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              <div id="sf-poste-btns" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;padding:0 8px;"></div>
             </div>
 
             <!-- LIGNE 3 : Physique -->
@@ -1293,7 +1293,7 @@
             <!-- LIGNE 4 : Attributs techniques -->
             <div style="background:linear-gradient(135deg,#fdf4ff,#f3e8ff);border:1px solid #d8b4fe;border-radius:10px;padding:12px;margin-bottom:10px;">
               <div style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">⚡ Attributs techniques</div>
-              <div style="display:flex;flex-wrap:wrap;gap:6px;" id="sf-attrs">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;padding:4px;" id="sf-attrs">
                 <button class="sf-attr-btn" data-attr="rapide" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">⚡ Rapide</button>
                 <button class="sf-attr-btn" data-attr="grand" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">📏 Grand</button>
                 <button class="sf-attr-btn" data-attr="petit" onclick="toggleAttr(this)" style="padding:6px 12px;border:1.5px solid #d8b4fe;border-radius:20px;background:#fff;font-size:11px;font-weight:700;color:#6d28d9;cursor:pointer;transition:all .2s;">🤸 Petit gabarit</button>
@@ -1353,7 +1353,7 @@
             </div>
 
             <!-- Actions filtres + compteur résultats -->
-            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--gray-bd);flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--gray-bd);flex-wrap:wrap;justify-content:center;padding:0 8px;">
               <div id="scout-results-count" style="font-size:12px;font-weight:700;color:var(--green);flex:1;">
                 <span id="scout-count-num">—</span> acteurs trouvés
               </div>
@@ -1566,7 +1566,7 @@
           <button class="btn-sm" onclick="refreshOnlineNews()" id="btn-refresh-news">↺ Actualiser</button>
         </div>
         <div class="card-body" style="padding-bottom:8px;">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="news-cat-filters">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;" id="news-cat-filters">
             <button class="news-filter-btn active" onclick="filterNews('all',this)">🌍 Tout</button>
             <button class="news-filter-btn" onclick="filterNews('Football',this)">⚽ Football</button>
             <button class="news-filter-btn" onclick="filterNews('Basketball',this)">🏀 Basketball</button>
