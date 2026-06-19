@@ -1194,8 +1194,8 @@
             </div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;width:100%;">
-            <button id="btn-view-grid" onclick="setViewMode('grid')" title="Vue cartes" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.15);color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">⊞</button>
-            <button id="btn-view-list" onclick="setViewMode('list')" title="Liste compacte" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">☰</button>
+            <button id="btn-view-grid" onclick="setViewMode('grid')" title="Vue cartes" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">⊞</button>
+            <button id="btn-view-list" onclick="setViewMode('list')" title="Liste compacte" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.15);color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">☰</button>
             <button onclick="toggleScoutPanel()" id="scout-toggle-btn" style="padding:5px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">▼ Filtres</button>
           </div>
         </div>
@@ -2030,7 +2030,7 @@
 </div>
 
 <!-- MODAL: ADD SITE -->
-<div class="modal" id="modal-site">
+<div class="modal" id="modal-site" onclick="if(event.target===this)closeModal('modal-site')">
   <div class="modal-card">
     <button class="modal-close-x" onclick="closeModal('modal-site')" aria-label="Fermer">✕</button>
     <div class="modal-title">📍 Géolocaliser un site sportif</div>
@@ -2066,7 +2066,7 @@
 </div>
 
 <!-- MODAL: EDIT USER (admin) -->
-<div class="modal" id="modal-edit-user">
+<div class="modal" id="modal-edit-user" onclick="if(event.target===this)closeModal('modal-edit-user')">
   <div class="modal-card">
     <button class="modal-close-x" onclick="closeModal('modal-edit-user')" aria-label="Fermer">✕</button>
     <div class="modal-title">✏️ Modifier l'utilisateur</div>
@@ -2110,13 +2110,13 @@
 </div>
 
 <!-- PHOTO GALLERY MODAL -->
-<div class="gallery-modal" id="gallery-modal">
+<div class="gallery-modal" id="gallery-modal" onclick="if(event.target===this)closeGalleryModal()">
   <button class="gallery-modal-close" onclick="closeGalleryModal()">✕</button>
   <img id="gallery-modal-img" src="" alt="Photo">
 </div>
 
 <!-- ACTOR DETAIL MODAL -->
-<div class="actor-detail-modal" id="actor-detail-modal">
+<div class="actor-detail-modal" id="actor-detail-modal" onclick="if(event.target===this)closeActorDetail()">
   <div class="actor-detail-card">
     <div class="adm-hero">
       <button class="adm-close" onclick="closeActorDetail()">✕</button>
@@ -2859,11 +2859,10 @@ function renderActors(actors){
     // ── MODE LISTE COMPACT ──
     const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗'};
     const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin'};
-    grid.style.display='block';
-    grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>{
+
+    const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
-      const initial=name[0]?.toUpperCase()||'?';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
       const roleKey=a.role||'joueur';
       const roleShort=ROLE_SHORT[roleKey]||roleKey;
@@ -2884,16 +2883,71 @@ function renderActors(actors){
           <canvas id="qr-canvas-mini-${idx}" width="28" height="28"></canvas>
         </div>
       </div>`;
-    }).join('')+`</div>`;
+    };
+
+    grid.style.display='block';
+
+    const groupAll = (typeof currentActorType==='undefined' || currentActorType==='tous');
+    let html='';
+    let orderedActors=actors;
+
+    if(groupAll){
+      // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
+      const GROUP_ORDER=['joueur','entraineur','arbitre','club','federation','association','organisateur','independant','supporter','admin'];
+      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs'};
+      const buckets={};
+      actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
+      orderedActors=[];
+      GROUP_ORDER.forEach(role=>{
+        const list=buckets[role];
+        if(!list||!list.length) return;
+        // Tri alphabétique au sein du groupe pour un rendu pro
+        list.sort((a,b)=>{
+          const an=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ');
+          const bn=[b.prenom,b.nom,b.nomOrganisation].filter(Boolean).join(' ');
+          return an.localeCompare(bn,'fr');
+        });
+        html+=`<div class="actors-group-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;margin-top:10px;">
+          <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">${GROUP_LABELS[role]||role}</span>
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-radius:12px;padding:2px 9px;">${list.length}</span>
+        </div>`;
+        html+=`<div class="actors-compact-list">`+list.map((a,i)=>renderRow(a,'g'+role+i)).join('')+`</div>`;
+        orderedActors=orderedActors.concat(list);
+      });
+      // Tout rôle non prévu dans l'ordre (sécurité)
+      Object.keys(buckets).forEach(role=>{
+        if(!GROUP_ORDER.includes(role)){
+          const list=buckets[role];
+          html+=`<div class="actors-group-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;margin-top:10px;">
+            <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">👤 ${role}</span>
+            <span style="font-size:11px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-radius:12px;padding:2px 9px;">${list.length}</span>
+          </div>`;
+          html+=`<div class="actors-compact-list">`+list.map((a,i)=>renderRow(a,'g'+role+i)).join('')+`</div>`;
+          orderedActors=orderedActors.concat(list);
+        }
+      });
+      grid.innerHTML=html;
+    } else {
+      grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>renderRow(a,idx)).join('')+`</div>`;
+    }
+
     // Generate mini QR codes
-    actors.forEach((a,idx)=>{
+    orderedActors.forEach((a,idx)=>{
       const id=a.uid||a.id;
       const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
-      const canvas=document.getElementById('qr-canvas-mini-'+idx);
-      if(canvas&&typeof QRCode!=='undefined'){
+      // idx ici n'est pas utilisé pour les groupes (ids déjà posés via 'g'+role+i) — on régénère par sélecteur data
+    });
+    // QR codes : reciblage via les canvases réellement présents dans le DOM
+    document.querySelectorAll('#actors-grid canvas[id^="qr-canvas-mini-"]').forEach(canvas=>{
+      const rowEl=canvas.closest('.actor-compact-row');
+      const onclickAttr=rowEl?.getAttribute('onclick')||'';
+      const m=onclickAttr.match(/openActorDetail\('([^']+)'\)/);
+      const id=m?m[1]:null;
+      if(!id) return;
+      const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
+      if(typeof QRCode!=='undefined'){
         try{QRCode.toCanvas(canvas,url,{width:28,margin:0,color:{dark:'#0A1628',light:'#ffffff'}});}catch(e){}
-      } else if(canvas){
-        // Fallback: show icon
+      } else {
         const ctx=canvas.getContext('2d');
         if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
       }
@@ -5291,9 +5345,27 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── SCOUT SEARCH SYSTEM (mode public — lecture seule) ──
-var scoutViewMode = 'grid'; // 'grid' | 'list'
+var scoutViewMode = 'list'; // 'grid' | 'list' — vue compacte par défaut
 var scoutSelectedAttrs = new Set();
 var scoutSelectedPostes = new Set();
+
+// ── Fermeture universelle des fenêtres éphémères (Échap) ──
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  const byId = id => document.getElementById(id);
+  const siteModal = byId('modal-site');
+  const editModal = byId('modal-edit-user');
+  const gallery = byId('gallery-modal');
+  const actorDetail = byId('actor-detail-modal');
+  const sideMenu = byId('side-menu');
+  const qrModal = byId('qr-profile-modal');
+  if(siteModal && siteModal.classList.contains('open')) return closeModal('modal-site');
+  if(editModal && editModal.classList.contains('open')) return closeModal('modal-edit-user');
+  if(gallery && gallery.classList.contains('open')) return closeGalleryModal();
+  if(actorDetail && actorDetail.classList.contains('open')) return closeActorDetail();
+  if(qrModal && qrModal.classList.contains('open')) return closeProfileQrModal();
+  if(sideMenu && sideMenu.classList.contains('open')) return closeMenu();
+});
 
 function setViewMode(mode){
   scoutViewMode = mode;

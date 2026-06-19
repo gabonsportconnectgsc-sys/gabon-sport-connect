@@ -688,11 +688,11 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 </div>
 
 <!-- MODAL JOUEUR -->
-<div id="player-modal" class="modal-overlay">
+<div id="player-modal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal">
     <div class="modal-header">
       <div><div class="modal-title" id="modal-player-name">Fiche Joueur</div><div class="modal-subtitle" id="modal-player-role"></div></div>
-      <button class="modal-close">✕</button>
+      <button class="modal-close" onclick="document.getElementById('player-modal').classList.remove('open')">✕</button>
     </div>
     <div class="modal-content">
       <div class="player-photo-section">
@@ -728,18 +728,18 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary">💾 Enregistrer</button>
-        <button class="btn btn-secondary">Fermer</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('player-modal').classList.remove('open')">Fermer</button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- MODAL MATCH -->
-<div id="match-modal" class="modal-overlay">
+<div id="match-modal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="match-modal-title">Nouveau Match</div>
-      <button class="modal-close">✕</button>
+      <button class="modal-close" onclick="document.getElementById('match-modal').classList.remove('open')">✕</button>
     </div>
     <div class="modal-content">
       <div class="msection">
@@ -768,7 +768,7 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary">💾 Enregistrer</button>
-        <button class="btn btn-secondary">Annuler</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('match-modal').classList.remove('open')">Annuler</button>
         <button class="btn btn-danger" id="btn-delete-match" style="display:none">🗑️ Supprimer</button>
       </div>
     </div>
@@ -781,6 +781,7 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
   <button class="mn-btn" id="mnav-joueurs"><span class="mn-icon">👥</span><span>Joueurs</span></button>
   <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
   <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
+  <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
 </div>
 
 <!-- Module de synchronisation temps réel -->
@@ -794,6 +795,13 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
   'use strict';
 
   let _reportCharts = {};
+
+  // ── Fermeture universelle des fenêtres éphémères (Échap) ──
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  });
+
 
   const ROLE_LABELS = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
@@ -921,6 +929,8 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
     document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-rapports');
     if (navBtn) navBtn.classList.add('active');
+    const mnavBtn = document.getElementById('mnav-rapports');
+    if (mnavBtn) mnavBtn.classList.add('active');
 
     const topbarTitle = document.getElementById('topbar-title');
     if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Rapports';
@@ -936,6 +946,9 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
   window.addEventListener('DOMContentLoaded', () => {
     const navBtn = document.getElementById('nav-rapports');
     if (navBtn) navBtn.addEventListener('click', showRapportsSection);
+
+    const mnavBtn = document.getElementById('mnav-rapports');
+    if (mnavBtn) mnavBtn.addEventListener('click', showRapportsSection);
 
     const printBtn = document.getElementById('btn-print-rapports');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
