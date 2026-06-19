@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
@@ -736,6 +737,36 @@
 #btn-view-grid.vm-active,#btn-view-list.vm-active{background:rgba(255,255,255,.3) !important;}
 .actors-grid.list-mode{grid-template-columns:1fr !important;}
 .actors-grid.list-mode .actor-card{display:flex;flex-direction:row;align-items:center;gap:10px;}
+
+/* ── MODE LISTE COMPACTE ── */
+.actors-compact-list{display:flex;flex-direction:column;gap:0;}
+.actor-compact-row{
+  display:grid;grid-template-columns:32px 1fr auto 36px;align-items:center;gap:8px;
+  padding:9px 12px;border-bottom:1px solid var(--gray-bd);background:var(--white);
+  cursor:pointer;transition:background .15s;
+}
+.actor-compact-row:first-child{border-radius:var(--radius-md) var(--radius-md) 0 0;}
+.actor-compact-row:last-child{border-radius:0 0 var(--radius-md) var(--radius-md);border-bottom:none;}
+.actor-compact-row:hover{background:#f0faf5;}
+.acr-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
+.acr-avatar img{width:100%;height:100%;object-fit:cover;}
+.acr-info{min-width:0;}
+.acr-name{font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.acr-meta{font-size:10px;color:var(--gray-txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.acr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+.acr-qr{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--gray-bg);border:1px solid var(--gray-bd);cursor:pointer;transition:background .15s;}
+.acr-qr:hover{background:var(--green-lt);}
+.acr-qr canvas,.acr-qr img{width:28px!important;height:28px!important;}
+/* Badge colors per role */
+.acr-badge.joueur,.acr-badge.athlete{background:#d1fae5;color:#065f46;}
+.acr-badge.arbitre{background:#ede9fe;color:#5b21b6;}
+.acr-badge.entraineur{background:#ccfbf1;color:#134e4a;}
+.acr-badge.club{background:#ffedd5;color:#9a3412;}
+.acr-badge.association{background:#ffe4e6;color:#9f1239;}
+.acr-badge.independant{background:#e0f2fe;color:#075985;}
+.acr-badge.federation{background:#fef3c7;color:#92400e;}
+.acr-badge.supporter{background:#fce7f3;color:#9d174d;}
+.acr-badge.admin{background:#fef9c3;color:#78350f;}
 </style>
 </head>
 <body>
@@ -1021,7 +1052,7 @@
         <!-- Joueurs / Athlètes -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-ball style=font-size:28px;margin-bottom:6px;>⚽</span>'">
+          <span class="anim-ball" style="font-size:32px;margin-bottom:6px;display:inline-block;">⚽</span>
           <div class="stat-val" id="stat-total-joueurs">—</div>
           <div class="stat-lbl">Joueurs / Athlètes</div>
         </button>
@@ -1029,7 +1060,7 @@
         <!-- Clubs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('club')"
           style="background:linear-gradient(135deg,#f97316,#c2410c);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-stadium style=font-size:28px;margin-bottom:6px;>🏟️</span>'">
+          <span class="anim-stadium" style="font-size:32px;margin-bottom:6px;display:inline-block;">🏟️</span>
           <div class="stat-val" id="stat-total-clubs">—</div>
           <div class="stat-lbl">Clubs sportifs</div>
         </button>
@@ -1037,7 +1068,7 @@
         <!-- Arbitres -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
           style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-card style=font-size:28px;margin-bottom:6px;>🟨</span>'">
+          <span class="anim-card" style="font-size:32px;margin-bottom:6px;display:inline-block;">🟨</span>
           <div class="stat-val" id="stat-total-arbitres">—</div>
           <div class="stat-lbl">Arbitres</div>
         </button>
@@ -1045,7 +1076,7 @@
         <!-- Entraîneurs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('entraineur')"
           style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-clipboard style=font-size:28px;margin-bottom:6px;>📋</span>'">
+          <span class="anim-clipboard" style="font-size:32px;margin-bottom:6px;display:inline-block;">📋</span>
           <div class="stat-val" id="stat-total-entraineurs">—</div>
           <div class="stat-lbl">Entraîneurs / Coachs</div>
         </button>
@@ -1053,7 +1084,7 @@
         <!-- Fédérations -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('federation')"
           style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-building style=font-size:28px;margin-bottom:6px;>🏛️</span>'">
+          <span class="anim-building" style="font-size:32px;margin-bottom:6px;display:inline-block;">🏛️</span>
           <div class="stat-val" id="stat-total-federations">—</div>
           <div class="stat-lbl">Fédérations</div>
         </button>
@@ -1061,7 +1092,7 @@
         <!-- Organisateurs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('organisateur')"
           style="background:linear-gradient(135deg,#b45309,#92400e);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-target style=font-size:28px;margin-bottom:6px;>🎯</span>'">
+          <span class="anim-target" style="font-size:32px;margin-bottom:6px;display:inline-block;">🎪</span>
           <div class="stat-val" id="stat-total-organisateurs">—</div>
           <div class="stat-lbl">Organisateurs</div>
         </button>
@@ -1069,7 +1100,7 @@
         <!-- Indépendants -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('independant')"
           style="background:linear-gradient(135deg,#0369a1,#075985);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-runner style=font-size:28px;margin-bottom:6px;>🏃</span>'">
+          <span class="anim-runner" style="font-size:32px;margin-bottom:6px;display:inline-block;">🚴</span>
           <div class="stat-val" id="stat-total-independants">—</div>
           <div class="stat-lbl">Sportifs indépendants</div>
         </button>
@@ -1337,28 +1368,28 @@
         <div class="card-body" style="padding-bottom:0;">
           <div class="actors-filters" id="actor-type-filters">
             <button class="actor-filter-btn active" data-type="tous" onclick="filterActors('tous')" style="--abtn-color:#009E60;">
-              <img src="https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="tous" onerror="this.style.display='none'">Tous
+              <span style="font-size:18px;line-height:1;">👥</span>Tous
             </button>
             <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')" style="--abtn-color:#1a2d4a;">
-              <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="joueur" onerror="this.style.display='none'">Joueurs
+              <span style="font-size:18px;line-height:1;">⚽</span>Joueurs
             </button>
             <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')" style="--abtn-color:#8b5cf6;">
-              <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="arbitre" onerror="this.style.display='none'">Arbitres
+              <span style="font-size:18px;line-height:1;">🟨</span>Arbitres
             </button>
             <button class="actor-filter-btn" data-type="entraineur" onclick="filterActors('entraineur')" style="--abtn-color:#0d9488;">
-              <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="coach" onerror="this.style.display='none'">Entraîneurs
+              <span style="font-size:18px;line-height:1;">📋</span>Entraîneurs
             </button>
             <button class="actor-filter-btn" data-type="club" onclick="filterActors('club')" style="--abtn-color:#f97316;">
-              <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="club" onerror="this.style.display='none'">Clubs
+              <span style="font-size:18px;line-height:1;">🏟️</span>Clubs
             </button>
             <button class="actor-filter-btn" data-type="association" onclick="filterActors('association')" style="--abtn-color:#e11d48;">
-              <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="asso" onerror="this.style.display='none'">Associations
+              <span style="font-size:18px;line-height:1;">🤝</span>Associations
             </button>
             <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')" style="--abtn-color:#ec4899;">
-              <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="supporters" onerror="this.style.display='none'">Supporters
+              <span style="font-size:18px;line-height:1;">💗</span>Supporters
             </button>
             <button class="actor-filter-btn" data-type="independant" onclick="filterActors('independant')" style="--abtn-color:#0ea5e9;">
-              <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=56&h=56&fit=crop&auto=format" class="real-icon" alt="independant" onerror="this.style.display='none'">Indépendants
+              <span style="font-size:18px;line-height:1;">🚴</span>Indépendants
             </button>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
@@ -2812,6 +2843,7 @@ function searchAnnuaire(){
 }
 
 function renderActors(actors){
+  window._lastRenderedActors = actors;
   const grid=document.getElementById('actors-grid');
   if(!actors.length){
     grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="es-icon">🔍</div><h3>Aucun acteur trouvé</h3><p>Essayez d'autres filtres.</p></div>`;
@@ -2821,34 +2853,82 @@ function renderActors(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};};}catch(e){}
 
-  grid.innerHTML=actors.map(a=>{
-    const id=a.uid||a.id;
-    const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
-    const initial=name[0]?.toUpperCase()||'?';
-    const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur'}[a.role]||a.role;
-    const badgeClass='badge-'+(a.role||'joueur');
-    const typeIcons={joueur:'🏃',arbitre:'🏁',entraineur:'🎯',club:'⚽',association:'🏢',federation:'🏆',independant:'🌟',organisateur:'📋'};
-    const typeDotIcon=typeIcons[a.role]||'👤';
-    // Photo : priorité Firebase photoURL, puis localStorage (admin uploads)
-    const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
-    return `
-      <div class="actor-card" onclick="openActorDetail('${id}')">
-        <div class="actor-card-header">
-          <div class="actor-avatar-wrap">
-            <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[a.role]||initial)}</div>
-            <div class="actor-type-dot ${a.role||'joueur'}" title="${roleName}">${typeDotIcon}</div>
-          </div>
-          <div class="actor-name">${name}</div>
+  const isListMode = scoutViewMode === 'list';
+
+  if(isListMode){
+    // ── MODE LISTE COMPACT ──
+    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗'};
+    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin'};
+    grid.style.display='block';
+    grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>{
+      const id=a.uid||a.id;
+      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const initial=name[0]?.toUpperCase()||'?';
+      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
+      const roleKey=a.role||'joueur';
+      const roleShort=ROLE_SHORT[roleKey]||roleKey;
+      const roleIcon=ROLE_ICONS_MAP[roleKey]||'👤';
+      const discipline=a.sport||a.sports?.join(',')||'';
+      const poste=a.poste||'';
+      const gscId=a.gscId||('GSC-'+id?.slice(0,6)?.toUpperCase());
+      const meta=[discipline,poste,a.ville].filter(Boolean).join(' · ');
+      const avatarHtml=photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
+      return `<div class="actor-compact-row" onclick="openActorDetail('${id}')">
+        <div class="acr-avatar">${avatarHtml}</div>
+        <div class="acr-info">
+          <div class="acr-name">${name}</div>
+          <div class="acr-meta">${gscId}${meta?' · '+meta:''}</div>
         </div>
-        <div class="actor-card-body">
-          <div style="margin-bottom:6px;"><span class="actor-type-badge ${badgeClass}">${roleName}</span></div>
-          <div class="actor-meta-row">🏅 ${a.sport||a.sports?.join(', ')||'—'}</div>
-          <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
-          ${a.club?`<div class="actor-meta-row">🏟️ ${a.club}</div>`:''}
-          ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
+        <span class="acr-badge ${roleKey}">${roleShort}</span>
+        <div class="acr-qr" title="QR Code" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-mini-${idx}">
+          <canvas id="qr-canvas-mini-${idx}" width="28" height="28"></canvas>
         </div>
       </div>`;
-  }).join('');
+    }).join('')+`</div>`;
+    // Generate mini QR codes
+    actors.forEach((a,idx)=>{
+      const id=a.uid||a.id;
+      const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
+      const canvas=document.getElementById('qr-canvas-mini-'+idx);
+      if(canvas&&typeof QRCode!=='undefined'){
+        try{QRCode.toCanvas(canvas,url,{width:28,margin:0,color:{dark:'#0A1628',light:'#ffffff'}});}catch(e){}
+      } else if(canvas){
+        // Fallback: show icon
+        const ctx=canvas.getContext('2d');
+        if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
+      }
+    });
+  } else {
+    // ── MODE GRILLE (défaut) ──
+    grid.style.display='';
+    grid.innerHTML=actors.map(a=>{
+      const id=a.uid||a.id;
+      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const initial=name[0]?.toUpperCase()||'?';
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur'}[a.role]||a.role;
+      const badgeClass='badge-'+(a.role||'joueur');
+      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪'};
+      const typeDotIcon=typeIcons[a.role]||'👤';
+      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
+      return `
+        <div class="actor-card" onclick="openActorDetail('${id}')">
+          <div class="actor-card-header">
+            <div class="actor-avatar-wrap">
+              <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[a.role]||initial)}</div>
+              <div class="actor-type-dot ${a.role||'joueur'}" title="${roleName}">${typeDotIcon}</div>
+            </div>
+            <div class="actor-name">${name}</div>
+          </div>
+          <div class="actor-card-body">
+            <div style="margin-bottom:6px;"><span class="actor-type-badge ${badgeClass}">${roleName}</span></div>
+            <div class="actor-meta-row">🏅 ${a.sport||a.sports?.join(', ')||'—'}</div>
+            <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
+            ${a.club?`<div class="actor-meta-row">🏟️ ${a.club}</div>`:''}
+            ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
+          </div>
+        </div>`;
+    }).join('');
+  }
 }
 
 function openActorDetail(uid){
@@ -5229,6 +5309,9 @@ function setViewMode(mode){
     btnG?.classList.add('vm-active');
     btnL?.classList.remove('vm-active');
   }
+  // Re-render in new mode
+  const currentActors = window._lastRenderedActors || allActors;
+  renderActors(currentActors);
 }
 window.setViewMode = setViewMode;
 
