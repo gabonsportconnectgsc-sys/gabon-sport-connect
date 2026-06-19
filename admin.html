@@ -3,10 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>GSC Admin — Tableau de Bord</title>
+<title>GSC Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase (SDK compat — requis par realtime-sync-module.js) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js (requis par l'onglet Rapports) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -14,481 +21,929 @@
 
 body { font-family: var(--font); background: var(--gray-bg); color: var(--navy); min-height: 100vh; overflow-x: hidden; }
 
-@keyframes fadeUp { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0px); } }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes fadeUp { 
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+
+@keyframes spin { 
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse { 
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes bounceIn { 
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideIn { 
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0px); opacity: 1; }
+}
 
 #loading-screen { position: fixed; inset: 0px; background: linear-gradient(135deg,var(--navy),#0d3a1f); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 9999; }
+
 .loading-logo { font-size: 56px; animation: 0.6s ease 0s 1 normal none running bounceIn; }
+
 .loading-title { font-size: 22px; font-weight: 800; color: rgb(255, 255, 255); }
+
 .loading-sub { font-size: 13px; color: rgba(255, 255, 255, 0.5); animation: 1.5s ease 0s infinite normal none running pulse; }
-.spinner { width: 36px; height: 36px; border: 3px solid rgba(255, 255, 255, 0.12); border-top-color: var(--green); border-radius: 50%; animation: 0.8s linear 0s infinite normal none running spin; }
+
+.spinner { width: 36px; height: 36px; border-width: 3px; border-style: solid; border-right-color: rgba(255, 255, 255, 0.12); border-bottom-color: rgba(255, 255, 255, 0.12); border-left-color: rgba(255, 255, 255, 0.12); border-image: initial; border-top-color: var(--green); border-radius: 50%; animation: 0.8s linear 0s infinite normal none running spin; }
 
 #app { display: none; }
+
 .layout { display: flex; min-height: 100vh; }
+
 .sidebar { width: var(--sidebar-w); background: linear-gradient(180deg,var(--navy),#0d2035); position: fixed; top: 0px; left: 0px; height: 100vh; z-index: 200; display: flex; flex-direction: column; transition: transform 0.3s; overflow-y: auto; }
 
 .sidebar-header { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
 .sidebar-brand { display: flex; align-items: center; gap: 10px; }
+
 .brand-icon { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg,var(--green),var(--green-dk)); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
 .brand-text { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: rgb(255, 255, 255); }
+
+.brand-sub { font-size: 10px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.5px; }
+
 .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.3); color: var(--yellow); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-top: 8px; }
 
 .sidebar-nav { flex: 1 1 0%; padding: 10px 8px; }
+
 .nav-label { font-size: 10px; font-weight: 700; color: rgba(255, 255, 255, 0.28); text-transform: uppercase; letter-spacing: 0.8px; padding: 12px 10px 5px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: 0.18s; color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 500; background: none; width: 100%; text-align: left; position: relative; border: none; }
+
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: 0.18s; color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 500; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: none; width: 100%; text-align: left; position: relative; }
+
 .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: rgb(255, 255, 255); }
+
 .nav-item.active { background: linear-gradient(135deg, rgba(0, 158, 96, 0.35), rgba(0, 158, 96, 0.12)); color: rgb(255, 255, 255); font-weight: 600; }
+
 .nav-item.active::before { content: ""; position: absolute; left: 0px; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--green); border-radius: 0px 4px 4px 0px; }
+
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 
-.main-layout { margin-left: var(--sidebar-w); display: flex; flex-direction: column; flex: 1; }
-.topbar { background: var(--white); height: var(--topbar-h); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid var(--gray-bd); position: sticky; top: 0; z-index: 100; }
-.topbar-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--navy); }
-.topbar-actions { display: flex; align-items: center; gap: 16px; }
-.btn-logout { padding: 8px 16px; background: var(--danger); color: var(--white); border: none; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-.btn-logout:hover { background: #dc2626; transform: translateY(-1px); }
+.sidebar-footer { padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 
-.content { flex: 1; overflow-y: auto; padding: 24px; }
+.admin-profile { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); margin-bottom: 8px; }
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; animation: fadeUp 0.4s ease; }
-.stat-box { background: var(--white); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--gray-bd); box-shadow: var(--shadow); }
-.stat-box.critical { border-left: 4px solid var(--danger); }
-.stat-box.warning { border-left: 4px solid var(--warn); }
-.stat-box.success { border-left: 4px solid var(--green); }
-.stat-icon { font-size: 24px; margin-bottom: 12px; }
-.stat-value { font-size: 28px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
-.stat-label { font-size: 12px; color: var(--gray-txt); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-change { font-size: 11px; margin-top: 8px; padding: 6px 8px; border-radius: 6px; background: var(--green-lt); color: var(--green-dk); font-weight: 600; }
+.admin-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--navy); flex-shrink: 0; }
 
-.panel { background: var(--white); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--gray-bd); box-shadow: var(--shadow); margin-bottom: 20px; }
-.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-bd); }
-.panel-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+.admin-info { flex: 1 1 0%; min-width: 0px; }
 
-.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.data-table th { background: var(--gray-bg); padding: 12px; text-align: left; font-weight: 700; color: var(--navy); border-bottom: 2px solid var(--gray-bd); white-space: nowrap; }
-.data-table td { padding: 12px; border-bottom: 1px solid var(--gray-bd); }
-.data-table tr:hover { background: var(--gray-bg); }
-.data-table .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-.status-active { background: var(--green-lt); color: var(--green-dk); }
-.status-pending { background: #fef3c7; color: #b45309; }
-.status-inactive { background: #fee2e2; color: var(--danger); }
+.admin-name { font-size: 12px; font-weight: 700; color: rgb(255, 255, 255); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.btn-group { display: flex; gap: 8px; align-items: center; }
-.btn-sm { padding: 6px 12px; font-size: 11px; border: 1px solid var(--gray-bd); background: var(--white); border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 600; }
-.btn-sm:hover { background: var(--gray-bg); border-color: var(--green); color: var(--green); }
-.btn-sm-danger { color: var(--danger); border-color: var(--danger); }
-.btn-sm-danger:hover { background: #fee2e2; }
+.admin-role { font-size: 10px; color: rgba(255, 255, 255, 0.4); }
 
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--white); border-radius: var(--radius-lg); padding: 24px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-.modal-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-bd); display: flex; justify-content: space-between; align-items: center; }
-.modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-txt); }
+.btn-logout { width: 100%; padding: 9px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); color: rgb(252, 165, 165); font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
 
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--navy); }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--gray-bd); border-radius: 8px; font-family: var(--font); font-size: 13px; }
-.form-group textarea { resize: vertical; min-height: 80px; }
+.btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
 
-.btn-primary { padding: 12px 24px; background: var(--green); color: var(--white); border: none; border-radius: 8px; font-family: var(--font-display); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-.btn-primary:hover { background: var(--green-dk); transform: translateY(-1px); }
+.topbar { position: fixed; top: 0px; left: var(--sidebar-w); right: 0px; height: var(--topbar-h); background: rgb(255, 255, 255); border-bottom: 1px solid var(--gray-bd); display: flex; align-items: center; gap: 12px; padding: 0px 20px; z-index: 100; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px; }
 
-.chart-container { position: relative; height: 300px; margin-bottom: 20px; }
+.btn-menu { display: none; width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; }
 
-.alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
-.alert-success { background: var(--green-lt); color: var(--green-dk); border: 1px solid var(--green); }
-.alert-danger { background: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
+.topbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--navy); flex: 1 1 0%; }
+
+.topbar-sub { font-size: 12px; font-weight: 500; color: var(--gray-txt); margin-left: 6px; }
+
+.sync-indicator { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 5px 10px; border-radius: 20px; }
+
+.sync-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: 1.5s ease 0s infinite normal none running pulse; }
+
+#gsc-sync-badge { position: fixed; top: 14px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: none; align-items: center; gap: 7px; z-index: 9999; box-shadow: rgba(0, 158, 96, 0.3) 0px 4px 14px; }
+
+#gsc-sync-badge .gsc-sync-dot { width: 7px; height: 7px; background: rgb(255, 255, 255); border-radius: 50%; animation: 1.4s ease 0s infinite normal none running pulse; }
+
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--navy); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 10000; box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 16px; animation: 0.3s ease 0s 1 normal none running slideIn; }
+
+.toast.success { background: rgb(0, 158, 96); }
+
+.toast.error { background: var(--danger); }
+
+.toast.warn { background: var(--warn); color: var(--navy); }
+
+.toast.info { background: var(--blue); }
+
+.realtime-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 158, 96, 0.12); border: 1px solid rgba(0, 158, 96, 0.25); color: var(--green); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-left: 8px; }
+
+.realtime-dot { width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: 2s ease 0s infinite normal none running pulse; }
+
+.main-content { margin-left: var(--sidebar-w); margin-top: var(--topbar-h); padding: 22px; min-height: calc(100vh - var(--topbar-h)); }
+
+.section { display: none; animation: 0.3s ease 0s 1 normal none running fadeUp; }
+
+.section.active { display: block; }
+
+.admin-header { background: linear-gradient(135deg,var(--navy),var(--navy-md) 55%,#0d3a1f); border-radius: var(--radius-lg); padding: 24px 22px; color: rgb(255, 255, 255); margin-bottom: 20px; position: relative; overflow: hidden; }
+
+.admin-header::after { content: "⚙️"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 60px; opacity: 0.1; }
+
+.admin-header-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
+
+.admin-header-sub { font-size: 13px; opacity: 0.65; margin-top: 4px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+
+.stat-card { border-radius: 14px; padding: 20px 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 18px; position: relative; overflow: hidden; }
+
+.stat-card::after { content: ""; position: absolute; right: -14px; bottom: -14px; width: 65px; height: 65px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); }
+
+.stat-card.c1 { background: linear-gradient(135deg, rgb(0, 158, 96), rgb(0, 122, 71)); }
+
+.stat-card.c2 { background: linear-gradient(135deg, rgb(26, 45, 74), rgb(15, 52, 96)); }
+
+.stat-card.c3 { background: linear-gradient(135deg, rgb(249, 115, 22), rgb(194, 65, 12)); }
+
+.stat-card.c4 { background: linear-gradient(135deg, rgb(139, 92, 246), rgb(109, 40, 217)); }
+
+.stat-icon { font-size: 26px; flex-shrink: 0; }
+
+.stat-data { flex: 1 1 0%; z-index: 1; }
+
+.stat-value { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: rgb(255, 255, 255); line-height: 1; }
+
+.stat-label { font-size: 10px; color: rgba(255, 255, 255, 0.65); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.stat-trend { font-size: 10px; color: rgba(255, 255, 255, 0.45); margin-top: 4px; }
+
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.dash-card { background: rgb(255, 255, 255); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+
+.dash-card-title { font-family: var(--font-display); font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+
+.status-bars { display: flex; flex-direction: column; gap: 12px; }
+
+.sb-item { display: flex; flex-direction: column; gap: 5px; }
+
+.sb-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
+
+.sb-track { height: 6px; background: var(--gray-bg); border-radius: 6px; overflow: hidden; }
+
+.sb-fill { height: 100%; border-radius: 6px; transition: width 0.7s; }
+
+.activity-list { display: flex; flex-direction: column; gap: 8px; }
+
+.act-item { display: flex; align-items: center; gap: 9px; padding: 7px 0px; border-bottom: 1px solid var(--gray-bg); }
+
+.act-item:last-child { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
+
+.act-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.act-text { font-size: 12px; color: var(--navy); flex: 1 1 0%; }
+
+.act-time { font-size: 10px; color: var(--gray-txt); }
+
+.quick-actions { display: flex; flex-direction: column; gap: 8px; }
+
+.btn-action { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
+
+.btn-action.green { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
+
+.btn-action.blue { background: linear-gradient(135deg,var(--blue),#2563eb); color: rgb(255, 255, 255); }
+
+.btn-action.outline { background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); color: var(--navy); }
+
+.btn-action:hover { transform: translateY(-1px); }
+
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+
+.page-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--navy); }
+
+.filters-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+
+.filter-btn { padding: 7px 14px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); color: var(--navy); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+
+.filter-btn:hover, .filter-btn.active { background: var(--green); color: rgb(255, 255, 255); border-color: var(--green); }
+
+.search-box { flex: 1 1 0%; min-width: 200px; display: flex; gap: 8px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 8px; padding: 8px 12px; }
+
+.search-box input { border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; outline: none; flex: 1 1 0%; font-size: 13px; color: var(--navy); }
+
+.users-table-wrap { overflow-x: auto; background: rgb(255, 255, 255); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+table.users-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+table.users-table th { background: var(--gray-bg); padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-txt); border-bottom: 2px solid var(--gray-bd); white-space: nowrap; }
+
+table.users-table td { padding: 12px; border-bottom: 1px solid var(--gray-bd); color: var(--navy); vertical-align: middle; }
+
+table.users-table tr { cursor: pointer; transition: background 0.15s; }
+
+table.users-table tr:hover td { background: rgb(248, 250, 252); }
+
+table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
+
+.user-row-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: rgb(255, 255, 255); flex-shrink: 0; overflow: hidden; }
+
+.user-row-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.user-name-cell { display: flex; align-items: center; gap: 10px; min-width: 0px; }
+
+.user-name-txt { font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: inline-block; white-space: nowrap; }
+
+.status-active { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
+
+.status-hidden { background: rgb(254, 249, 195); color: rgb(146, 64, 14); }
+
+.status-deleted { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+
+.status-pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
+
+@media (max-width: 640px) {
+  table.users-table thead { display: none; }
+  table.users-table, table.users-table tbody, table.users-table tr, table.users-table td { display: block; width: 100%; }
+  table.users-table tr { border-bottom: 1px solid var(--gray-bd); padding: 10px 12px; }
+  table.users-table td { padding: 3px 0px; border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  table.users-table td::before { content: attr(data-label); font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+  table.users-table td:first-child::before { display: none; }
+  table.users-table td:first-child { justify-content: flex-start; padding-bottom: 6px; }
+}
+
+.player-image { width: 100%; aspect-ratio: 3 / 4; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 44px; overflow: hidden; }
+
+.player-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.player-info { padding: 12px; text-align: center; }
+
+.player-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.player-role { font-size: 10px; color: var(--gray-txt); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 7px; }
+
+.player-badges { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+
+.badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+
+.badge.verified { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
+
+.badge.pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
+
+.badge.hidden { background: rgb(254, 249, 195); color: rgb(146, 64, 14); }
+
+.badge.deleted { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+
+.empty { text-align: center; padding: 50px 20px; color: var(--gray-txt); }
+
+.empty-icon { font-size: 44px; margin-bottom: 10px; }
+
+.empty h3 { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+
+.empty p { font-size: 13px; }
+
+.match-tabs { display: flex; gap: 5px; margin-bottom: 16px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 10px; padding: 4px; }
+
+.match-tab { flex: 1 1 0%; padding: 8px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--gray-txt); transition: 0.2s; }
+
+.match-tab.active { background: var(--green); color: rgb(255, 255, 255); }
+
+.btn-add { display: flex; align-items: center; gap: 7px; padding: 9px 16px; background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+.btn-add:hover { transform: translateY(-1px); box-shadow: rgba(0, 158, 96, 0.3) 0px 5px 14px; }
+
+.matches-list { display: flex; flex-direction: column; gap: 11px; }
+
+.match-card { background: rgb(255, 255, 255); border-radius: 13px; padding: 15px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 13px; cursor: pointer; transition: 0.2s; border: 1.5px solid transparent; }
+
+.match-card:hover { border-color: var(--green); box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 18px; }
+
+.match-date-col { text-align: center; min-width: 44px; }
+
+.match-day { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1; }
+
+.match-month { font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.4px; }
+
+.match-divider { width: 1px; height: 46px; background: var(--gray-bd); flex-shrink: 0; }
+
+.match-info { flex: 1 1 0%; min-width: 0px; }
+
+.match-teams { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.match-meta { font-size: 11px; color: var(--gray-txt); display: flex; gap: 8px; flex-wrap: wrap; }
+
+.match-score-col { text-align: center; flex-shrink: 0; }
+
+.match-score { font-size: 20px; font-weight: 800; color: var(--navy); }
+
+.match-result { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 3px; display: inline-block; }
+
+.match-result.win { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
+
+.match-result.loss { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+
+.match-result.draw { background: rgb(254, 243, 199); color: rgb(146, 64, 14); }
+
+.match-result.upcoming { background: var(--gray-bg); color: var(--gray-txt); }
+
+.modal-overlay { display: none; position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.45); z-index: 500; align-items: center; justify-content: center; }
+
+.modal-overlay.open { display: flex; }
+
+.modal { background: rgb(255, 255, 255); border-radius: 16px; width: 90%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.25) 0px 20px 60px; animation: 0.3s ease 0s 1 normal none running bounceIn; }
+
+.modal-header { padding: 18px 20px; border-bottom: 1.5px solid var(--gray-bd); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0px; background: rgb(255, 255, 255); z-index: 10; }
+
+.modal-title { font-size: 16px; font-weight: 800; color: var(--navy); }
+
+.modal-subtitle { font-size: 11px; color: var(--gray-txt); margin-top: 2px; }
+
+.modal-close { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+
+.modal-close:hover { background: var(--gray-bg); }
+
+.modal-content { padding: 18px 20px; }
+
+.msection { margin-bottom: 18px; }
+
+.msection-title { font-size: 10px; font-weight: 800; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+
+.field label { font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.3px; }
+
+.field input, .field select { padding: 9px 11px; border: 1.5px solid var(--gray-bd); border-radius: 8px; font-size: 13px; color: var(--navy); outline: none; background: rgb(255, 255, 255); width: 100%; font-family: var(--font); }
+
+.field input:focus, .field select:focus { border-color: var(--green); }
+
+.field .val { font-size: 13px; font-weight: 600; color: var(--navy); }
+
+.player-photo-section { text-align: center; margin-bottom: 16px; }
+
+.player-photo-container { width: 110px; height: 145px; margin: 0px auto; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; border: 2px solid var(--gray-bd); }
+
+.player-photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+.upload-trigger { position: absolute; bottom: 6px; right: 6px; width: 28px; height: 28px; background: var(--green); color: rgb(255, 255, 255); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
+
+#photo-input { display: none; }
+
+.ph-actor-card { background: rgb(255, 255, 255); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1.5px solid transparent; transition: 0.3s; }
+
+.ph-actor-card:hover { transform: translateY(-2px); box-shadow: rgba(0, 0, 0, 0.12) 0px 8px 20px; border-color: var(--green); }
+
+.ph-photo-zone { width: 100%; height: 150px; background: linear-gradient(135deg, rgba(0, 158, 96, 0.1), rgba(255, 215, 0, 0.1)); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: background 0.2s; }
+
+.ph-photo-zone:hover { background: linear-gradient(135deg, rgba(0, 158, 96, 0.2), rgba(255, 215, 0, 0.2)); }
+
+.ph-avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: rgb(255, 255, 255); overflow: hidden; position: relative; }
+
+.ph-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.ph-hover-overlay { position: absolute; inset: 0px; background: rgba(0, 0, 0, 0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: 0; transition: opacity 0.2s; }
+
+.ph-photo-zone:hover .ph-hover-overlay { opacity: 1; }
+
+.ph-info { padding: 12px 10px; text-align: center; }
+
+.ph-name { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ph-role { font-size: 10px; font-weight: 600; color: var(--gray-txt); text-transform: uppercase; margin-bottom: 6px; }
+
+.ph-actions { display: flex; gap: 5px; padding: 0px 10px 10px; }
+
+.ph-btn { flex: 1 1 0%; padding: 6px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+.ph-btn.upload { background: var(--green-lt); color: var(--green-dk); }
+
+.ph-btn.upload:hover { background: var(--green); color: rgb(255, 255, 255); }
+
+.ph-btn.remove { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+.ph-btn.remove:hover { background: rgba(239, 68, 68, 0.25); }
+
+.ph-has-photo { border-color: var(--green) !important; }
+
+.ph-has-photo .ph-photo-zone { background: transparent; }
+
+.score-row { display: flex; align-items: center; gap: 10px; }
+
+.score-row input { text-align: center; font-weight: 800; font-size: 18px; max-width: 65px; }
+
+.score-sep { font-size: 18px; font-weight: 800; color: var(--gray-txt); }
+
+.modal-actions { display: flex; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1.5px solid var(--gray-bd); }
+
+.btn { padding: 10px 16px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+.btn-primary { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
+
+.btn-primary:hover { transform: translateY(-1px); }
+
+.btn-secondary { background: var(--gray-bg); color: var(--navy); border: 1.5px solid var(--gray-bd); }
+
+.btn-danger { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+
+.toast { position: fixed; bottom: 80px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; box-shadow: rgba(0, 0, 0, 0.15) 0px 6px 20px; animation: 0.3s ease 0s 1 normal none running slideIn; z-index: 1000; }
+
+.toast.error { background: var(--danger); }
+
+.toast.warn { background: var(--warn); }
+
+.toast.info { background: var(--blue); }
+
+.sidebar-overlay { display: none; position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.45); z-index: 199; }
+
+.sidebar-overlay.open { display: block; }
+
+.mobile-nav { display: none; position: fixed; bottom: 0px; left: 0px; right: 0px; height: var(--mobile-nav-h); background: rgb(255, 255, 255); border-top: 1px solid var(--gray-bd); z-index: 150; align-items: center; justify-content: space-around; box-shadow: rgba(0, 0, 0, 0.06) 0px -2px 10px; }
+
+.mn-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--gray-txt); background: none; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; padding: 8px 20px; }
+
+.mn-icon { font-size: 21px; }
+
+.mn-btn.active { color: var(--green); }
+
+.stat-val { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1; }
+
+.stat-lbl { font-size: 10px; color: var(--gray-txt); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.report-canvas-wrap { position: relative; height: 220px; }
+
+.report-meta-line { font-size: 11px; color: var(--gray-txt); font-family: monospace; margin-bottom: 14px; }
+
+.btn-report { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-width: medium; border-style: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+.btn-report.primary { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
+
+.btn-report.outline { background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); color: var(--navy); }
+
+.btn-report:hover { transform: translateY(-1px); }
+
+@media print {
+  .sidebar, .topbar, .mobile-nav, .sidebar-overlay, #gsc-sync-badge, .toast, .btn-report { display: none !important; }
+  .main-content { margin: 0px; padding: 0px; }
+  .dash-card, .stat-card { box-shadow: none; border: 1px solid var(--gray-bd); break-inside: avoid; }
+  body { background: rgb(255, 255, 255); }
+}
 
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main-layout { margin-left: 0; }
-  .stats-grid { grid-template-columns: 1fr; }
-  .data-table { font-size: 12px; }
+  :root { --sidebar-w: 0px; }
+  .sidebar { width: 240px; transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0px); }
+  .topbar { left: 0px; padding: 0px 14px; }
+  .btn-menu { display: flex; }
+  .main-content { margin-left: 0px; padding-top: 14px; padding-right: 12px; padding-left: 12px; padding-bottom: calc(var(--mobile-nav-h) + 8px); }
+  .mobile-nav { display: flex; }
+  .toast { bottom: calc(var(--mobile-nav-h) + 8px); }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-value { font-size: 22px; }
+  .stat-card { padding: 14px 12px; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+  .modal { width: 97%; max-height: 88vh; }
+  .match-card { padding: 12px 10px; gap: 10px; }
+  .match-teams { font-size: 13px; }
 }
 </style>
 </head>
 <body>
 
-<div id="loading-screen">
+<div id="loading-screen" style="display: none;">
   <div class="loading-logo">⚽</div>
   <div class="loading-title">GSC Admin</div>
-  <div class="loading-sub">Initialisation...</div>
+  <div class="loading-sub">Chargement du panneau…</div>
   <div class="spinner"></div>
 </div>
 
-<div id="app">
+<div id="app" style="display: block;">
   <div class="layout">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+
+    <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
           <div class="brand-icon">⚽</div>
-          <div>
-            <div class="brand-text">GSC Admin</div>
-            <div class="admin-badge">🔐 Administrateur</div>
-          </div>
+          <div><div class="brand-text">GSC Admin</div><div class="brand-sub">Dashboard</div></div>
+        </div>
+        <div class="admin-badge">✨ Admin</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <button class="nav-item active" id="nav-dashboard">
+          <span class="nav-icon">📊</span><span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="nav-joueurs">
+          <span class="nav-icon">👥</span><span>Joueurs</span>
+        </button>
+        <button class="nav-item" id="nav-photos">
+          <span class="nav-icon">📸</span><span>Photos &amp; Logos</span>
+        </button>
+        <button class="nav-item" id="nav-matchs">
+          <span class="nav-icon">📅</span><span>Matchs</span>
+        </button>
+        <button class="nav-item" id="nav-rapports">
+          <span class="nav-icon">📈</span><span>Rapports</span>
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="admin-profile">
+          <div class="admin-avatar">A</div>
+          <div class="admin-info"><div class="admin-name">Admin</div><div class="admin-role">Administrateur</div></div>
+        </div>
+        <button class="btn-logout" id="logout-btn">🚪 Déconnexion</button>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <button class="btn-menu">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard<span class="topbar-sub" id="topbar-sub"></span></div>
+      <div class="sync-indicator" id="sync-indicator" style="display: none;"><div class="sync-dot"></div><span>Sync…</span></div>
+      <div id="realtime-status" class="realtime-badge" style="display: inline-flex;"><div class="realtime-dot"></div><span>Temps réel</span></div>
+    </div>
+
+    <!-- Badge sync global (utilisé par realtime-sync-module.js) -->
+    <div id="gsc-sync-badge"><div class="gsc-sync-dot"></div><span class="gsc-sync-label">Synchronisation…</span></div>
+
+    <div class="main-content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="section active">
+        <div class="admin-header">
+          <div class="admin-header-title">⚙️ Panneau d'administration</div>
+          <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Membres</div><div class="stat-trend">Total inscrits</div></div></div>
+          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs</div><div class="stat-trend">Comptes actifs</div></div></div>
+          <div class="stat-card c3"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
+          <div class="stat-card c4"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur / Athlète</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
+          <div class="dash-card"><div class="dash-card-title">🕐 Activité récente</div><div class="activity-list" id="activity-list"><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">6 membre(s) actif(s)</div><div class="act-time">—</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div></div></div>
+          <div class="dash-card"><div class="dash-card-title">📅 Prochain match</div><div id="next-match-preview" style="text-align:center;padding:16px;color:var(--gray-txt);font-size:13px"><div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div></div></div>
+          <div class="dash-card"><div class="dash-card-title">⚡ Actions rapides</div><div class="quick-actions">
+            <button class="btn-action green">👥 Gérer les joueurs</button>
+            <button class="btn-action blue">➕ Ajouter un match</button>
+            <button class="btn-action outline">📅 Voir les matchs</button>
+          </div></div>
         </div>
       </div>
-      <nav class="sidebar-nav">
-        <div class="nav-label">Tableau de bord</div>
-        <button class="nav-item active" onclick="showTab('dashboard')"><span class="nav-icon">📊</span>Aperçu</button>
-        <button class="nav-item" onclick="showTab('utilisateurs')"><span class="nav-icon">👥</span>Utilisateurs</button>
-        <button class="nav-item" onclick="showTab('donnees')"><span class="nav-icon">📊</span>Données</button>
-        
-        <div class="nav-label" style="margin-top:16px;">Gestion</div>
-        <button class="nav-item" onclick="showTab('moderation')"><span class="nav-icon">⚖️</span>Modération</button>
-        <button class="nav-item" onclick="showTab('parametres')"><span class="nav-icon">⚙️</span>Paramètres</button>
-      </nav>
-    </aside>
 
-    <!-- MAIN -->
-    <div class="main-layout">
-      <div class="topbar">
-        <div class="topbar-title">📊 Tableau de Bord Administrateur</div>
-        <div class="topbar-actions">
-          <div id="sync-status" style="font-size:12px;color:var(--green);">✓ Synchronisé</div>
-          <button class="btn-logout" onclick="logout()">Déconnexion</button>
+      <!-- JOUEURS -->
+      <div id="joueurs" class="section">
+        <div class="page-header"><div class="page-title">Gestion des Joueurs</div></div>
+        <div class="filters-bar">
+          <button class="filter-btn role-all active">Tous</button>
+          <button class="filter-btn role-joueur">Joueurs</button>
+          <button class="filter-btn role-entraineur">Entraîneurs</button>
+          <button class="filter-btn role-arbitre">Arbitres</button>
+          <button class="filter-btn role-club">Clubs</button>
+          <button class="filter-btn role-federation">Fédérations</button>
+          <button class="filter-btn role-association">Associations</button>
+          <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
         </div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Membre</th><th>Rôle</th><th>Club</th><th>Statut</th></tr></thead>
+            <tbody id="players-grid"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty" style="display:none;"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères</p></div>
       </div>
 
-      <div class="content">
-        <!-- DASHBOARD TAB -->
-        <div id="tab-dashboard" class="tab-content">
-          <div class="stats-grid" id="stats-container">
-            <div class="stat-box success">
-              <div class="stat-icon">👥</div>
-              <div class="stat-value" id="stat-total-users">—</div>
-              <div class="stat-label">Utilisateurs Totaux</div>
-              <div class="stat-change" id="stat-users-change">+0 cette semaine</div>
-            </div>
-            <div class="stat-box success">
-              <div class="stat-icon">⚽</div>
-              <div class="stat-value" id="stat-joueurs">—</div>
-              <div class="stat-label">Joueurs / Athlètes</div>
-              <div class="stat-change" id="stat-joueurs-change">+0 cette semaine</div>
-            </div>
-            <div class="stat-box success">
-              <div class="stat-icon">🏢</div>
-              <div class="stat-value" id="stat-clubs">—</div>
-              <div class="stat-label">Clubs / Organisations</div>
-              <div class="stat-change" id="stat-clubs-change">+0 cette semaine</div>
-            </div>
-            <div class="stat-box warning">
-              <div class="stat-icon">⏳</div>
-              <div class="stat-value" id="stat-attente">—</div>
-              <div class="stat-label">En Attente de Validation</div>
-              <div class="stat-change" style="background:#fef3c7;color:#b45309;">À traiter</div>
-            </div>
-          </div>
+      <!-- PHOTOS & LOGOS -->
+      <div id="photos" class="section">
+        <div class="page-header">
+          <div class="page-title">📸 Photos &amp; Logos de profil</div>
+        </div>
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
+          <div class="stat-card"><div class="stat-val" id="ph-stat-total">0</div><div class="stat-lbl">Acteurs</div></div>
+          <div class="stat-card"><div class="stat-val" id="ph-stat-photos">0</div><div class="stat-lbl">Avec photo</div></div>
+          <div class="stat-card"><div class="stat-val" id="ph-stat-rate">0%</div><div class="stat-lbl">Taux couverture</div></div>
+        </div>
+        <!-- Filters -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ph-filter-bar">
+          <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
+          <button class="filter-btn role-joueur" data-phfilter="joueur">🏃 Joueurs</button>
+          <button class="filter-btn role-club" data-phfilter="club">⚽ Clubs</button>
+          <button class="filter-btn role-federation" data-phfilter="federation">🏆 Fédérations</button>
+          <button class="filter-btn role-association" data-phfilter="association">🏢 Associations</button>
+        </div>
+        <!-- Grid -->
+        <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
+      </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">📈 Statistiques Clés</div>
-              <button class="btn-primary" onclick="syncData()" style="padding:8px 16px;font-size:12px;">Sync Données</button>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
-              <div style="padding:16px;background:var(--gray-bg);border-radius:8px;">
-                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;">Taux Activation</div>
-                <div style="font-size:24px;font-weight:800;color:var(--green);" id="stat-activation-rate">—%</div>
-              </div>
-              <div style="padding:16px;background:var(--gray-bg);border-radius:8px;">
-                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;">Données Synchronisées</div>
-                <div style="font-size:24px;font-weight:800;color:var(--blue);" id="stat-last-sync">—</div>
-              </div>
-            </div>
+      <!-- MATCHS -->
+      <div id="matchs" class="section">
+        <div class="page-header">
+          <div class="page-title">Gestion des Matchs</div>
+          <button class="btn-add">➕ Ajouter</button>
+        </div>
+        <div class="match-tabs">
+          <button class="match-tab active">Tous</button>
+          <button class="match-tab">À venir</button>
+          <button class="match-tab">Joués</button>
+        </div>
+        <div id="matches-list" class="matches-list"><div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div></div>
+      </div>
+
+      <!-- RAPPORTS -->
+      <div id="rapports" class="section">
+        <div class="page-header">
+          <div class="page-title">📈 Rapports &amp; statistiques</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-report outline" id="btn-refresh-rapports">🔄 Actualiser</button>
+            <button class="btn-report primary" id="btn-print-rapports">🖨️ Imprimer</button>
           </div>
         </div>
+        <div class="report-meta-line" id="report-generated-line">Généré le —</div>
 
-        <!-- UTILISATEURS TAB -->
-        <div id="tab-utilisateurs" class="tab-content" style="display:none;">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Liste des Utilisateurs</div>
-              <input type="text" id="user-search" placeholder="Rechercher..." style="padding:8px 12px;border:1px solid var(--gray-bd);border-radius:8px;width:200px;">
-            </div>
-            <div style="overflow-x:auto;">
-              <table class="data-table" id="users-table">
-                <thead>
-                  <tr>
-                    <th>Utilisateur</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Statut</th>
-                    <th>Inscription</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="users-tbody">
-                  <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray-txt);">Chargement...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="stats-grid">
+          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="report-stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total enregistrés</div></div></div>
+          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="report-stat-actifs">0</div><div class="stat-label">Actifs</div><div class="stat-trend">Fiches actives</div></div></div>
+          <div class="stat-card c4"><div class="stat-icon">🏟️</div><div class="stat-data"><div class="stat-value" id="report-stat-clubs">0</div><div class="stat-label">Organisations</div><div class="stat-trend">Clubs / Féd. / Assoc.</div></div></div>
+          <div class="stat-card c3"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="report-stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
 
-        <!-- DONNEES TAB -->
-        <div id="tab-donnees" class="tab-content" style="display:none;">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Intégrité des Données</div>
-              <button class="btn-primary" onclick="verifyDataIntegrity()" style="padding:8px 16px;font-size:12px;">Vérifier</button>
-            </div>
-            <div id="data-integrity-report" style="font-size:13px;">
-              <div style="padding:16px;background:var(--green-lt);border-radius:8px;margin-bottom:12px;">
-                <strong>✓ Vérification d'intégrité</strong>
-                <div style="margin-top:8px;font-size:12px;color:var(--green-dk);">Les données sont synchronisées et cohérentes.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Synchronisation</div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-              <div style="padding:16px;border:1px solid var(--gray-bd);border-radius:8px;">
-                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;">Dernière Sync</div>
-                <div id="last-sync-time" style="font-size:14px;font-weight:600;">—</div>
-              </div>
-              <div style="padding:16px;border:1px solid var(--gray-bd);border-radius:8px;">
-                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;">État</div>
-                <div style="font-size:14px;font-weight:600;color:var(--green);">✓ Actif</div>
-              </div>
-            </div>
-          </div>
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-card-title">🥧 Répartition par rôle</div><div class="report-canvas-wrap"><canvas id="chart-roles"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">✅ Répartition par statut</div><div class="report-canvas-wrap"><canvas id="chart-statuts"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">🏟️ Membres par club</div><div class="report-canvas-wrap"><canvas id="chart-clubs"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">⚽ Top buteurs</div><div class="report-canvas-wrap"><canvas id="chart-buteurs"></canvas></div></div>
         </div>
 
-        <!-- MODERATION TAB -->
-        <div id="tab-moderation" class="tab-content" style="display:none;">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">En Attente d'Approbation</div>
-            </div>
-            <table class="data-table" id="pending-table">
-              <thead>
-                <tr>
-                  <th>Utilisateur</th>
-                  <th>Type</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="pending-tbody">
-                <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-txt);">Aucune demande en attente</td></tr>
-              </tbody>
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">📋 Synthèse chiffrée</div>
+          <div class="users-table-wrap">
+            <table class="users-table">
+              <thead><tr><th>#</th><th>Indicateur</th><th>Valeur</th></tr></thead>
+              <tbody id="report-summary-tbody"></tbody>
             </table>
           </div>
         </div>
+      </div>
 
-        <!-- PARAMETRES TAB -->
-        <div id="tab-parametres" class="tab-content" style="display:none;">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">Paramètres de l'Application</div>
-            </div>
-            <div class="form-group">
-              <label>Nom de l'Application</label>
-              <input type="text" value="Gabon Sport Connect" readonly>
-            </div>
-            <div class="form-group">
-              <label>Version</label>
-              <input type="text" value="2.1.0" readonly>
-            </div>
-            <div class="form-group">
-              <label>Statut Base de Données</label>
-              <div style="padding:10px;background:var(--green-lt);border:1px solid var(--green);border-radius:8px;color:var(--green-dk);font-weight:600;">
-                ✓ Connectée - Synchronisation Active
-              </div>
-            </div>
-          </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL JOUEUR -->
+<div id="player-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-player-name">Fiche Joueur</div><div class="modal-subtitle" id="modal-player-role"></div></div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="player-photo-section">
+        <div class="player-photo-container" id="modal-photo"><span id="modal-photo-content">👤</span><div class="upload-trigger" id="modal-photo-trigger">📷</div></div>
+        <input type="file" id="photo-input" accept="image/*">
+      </div>
+      <div class="msection">
+        <div class="msection-title">📋 Informations</div>
+        <div class="grid2">
+          <div class="field"><label>Email</label><div class="val" id="modal-email">—</div></div>
+          <div class="field"><label>Téléphone</label><div class="val" id="modal-phone">—</div></div>
+          <div class="field"><label>Inscription</label><div class="val" id="modal-date">—</div></div>
+          <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="pending">⏳ En attente</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
         </div>
+      </div>
+      <div class="msection">
+        <div class="msection-title">🏃 Physique</div>
+        <div class="grid2">
+          <div class="field"><label>Taille (cm)</label><input type="number" id="modal-taille" placeholder="175"></div>
+          <div class="field"><label>Poids (kg)</label><input type="number" id="modal-poids" placeholder="70"></div>
+          <div class="field"><label>Pied fort</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
+          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droite/Gauche"></div>
+        </div>
+      </div>
+      <div class="msection">
+        <div class="msection-title">⚡ Performance</div>
+        <div class="grid2">
+          <div class="field"><label>Matchs</label><input type="number" id="modal-matchs" placeholder="0"></div>
+          <div class="field"><label>Buts</label><input type="number" id="modal-buts" placeholder="0"></div>
+          <div class="field"><label>Passes décisives</label><input type="number" id="modal-passes" placeholder="0"></div>
+          <div class="field"><label>Club</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary">💾 Enregistrer</button>
+        <button class="btn btn-secondary">Fermer</button>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-const STORAGE_KEY = 'gsc_admin_data';
-const SYNC_INTERVAL = 30000; // 30 secondes
-
-let currentTab = 'dashboard';
-let adminData = { users: [], lastSync: Date.now() };
-
-// Initialisation
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadData();
-    updateDashboard();
-    setInterval(syncData, SYNC_INTERVAL);
-  }, 1000);
-});
-
-function showTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-  document.getElementById('tab-' + tab).style.display = 'block';
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  event.target.closest('.nav-item').classList.add('active');
-  currentTab = tab;
-  
-  if (tab === 'utilisateurs') loadUsers();
-  if (tab === 'moderation') loadPendingApprovals();
-}
-
-function loadData() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      adminData = JSON.parse(stored);
-    } else {
-      adminData = { users: [], lastSync: Date.now() };
-    }
-  } catch (e) {
-    console.error('Erreur chargement données:', e);
-  }
-}
-
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(adminData));
-    syncTimestamp();
-  } catch (e) {
-    console.error('Erreur sauvegarde données:', e);
-  }
-}
-
-function syncData() {
-  adminData.lastSync = Date.now();
-  saveData();
-  document.getElementById('sync-status').textContent = '✓ Synchronisé';
-  document.getElementById('sync-status').style.color = 'var(--green)';
-  updateDashboard();
-}
-
-function syncTimestamp() {
-  const date = new Date(adminData.lastSync);
-  document.getElementById('last-sync-time').textContent = date.toLocaleString('fr-FR');
-}
-
-function updateDashboard() {
-  const users = adminData.users || [];
-  const joueurs = users.filter(u => ['joueur', 'arbitre', 'entraineur'].includes(u.role));
-  const clubs = users.filter(u => ['club', 'association', 'federation'].includes(u.role));
-  const attente = users.filter(u => u.status === 'pending').length;
-  
-  document.getElementById('stat-total-users').textContent = users.length || 0;
-  document.getElementById('stat-joueurs').textContent = joueurs.length || 0;
-  document.getElementById('stat-clubs').textContent = clubs.length || 0;
-  document.getElementById('stat-attente').textContent = attente || 0;
-  
-  const activationRate = users.length > 0 ? Math.round((users.filter(u => u.status === 'active').length / users.length) * 100) : 0;
-  document.getElementById('stat-activation-rate').textContent = activationRate + '%';
-  
-  syncTimestamp();
-}
-
-function loadUsers() {
-  const users = adminData.users || [];
-  const tbody = document.getElementById('users-tbody');
-  
-  if (users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray-txt);">Aucun utilisateur trouvé</td></tr>';
-    return;
-  }
-  
-  tbody.innerHTML = users.map((user, i) => `
-    <tr>
-      <td><strong>${user.name || 'N/A'}</strong></td>
-      <td>${user.email || '—'}</td>
-      <td><strong>${user.role || '—'}</strong></td>
-      <td><span class="status-badge status-${user.status === 'active' ? 'active' : 'pending'}">${user.status === 'active' ? 'Actif' : 'En attente'}</span></td>
-      <td>${new Date(user.createdAt || Date.now()).toLocaleDateString('fr-FR')}</td>
-      <td>
-        <div class="btn-group">
-          <button class="btn-sm" onclick="editUser(${i})">Éditer</button>
-          <button class="btn-sm btn-sm-danger" onclick="deleteUser(${i})">Supprimer</button>
+<!-- MODAL MATCH -->
+<div id="match-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="match-modal-title">Nouveau Match</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="msection">
+        <div class="msection-title">⚽ Équipes</div>
+        <div class="grid2">
+          <div class="field"><label>Équipe domicile</label><input type="text" id="match-home" placeholder="GSC" value="GSC"></div>
+          <div class="field"><label>Équipe visiteur</label><input type="text" id="match-away" placeholder="Adversaire"></div>
         </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function loadPendingApprovals() {
-  const users = (adminData.users || []).filter(u => u.status === 'pending');
-  const tbody = document.getElementById('pending-tbody');
-  
-  if (users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-txt);">Aucune demande en attente</td></tr>';
-    return;
-  }
-  
-  tbody.innerHTML = users.map((user, i) => `
-    <tr>
-      <td><strong>${user.name || 'N/A'}</strong></td>
-      <td>${user.role || '—'}</td>
-      <td>${new Date(user.createdAt || Date.now()).toLocaleDateString('fr-FR')}</td>
-      <td>
-        <div class="btn-group">
-          <button class="btn-sm" style="color:var(--green);border-color:var(--green);" onclick="approveUser(${i})">Approuver</button>
-          <button class="btn-sm btn-sm-danger" onclick="rejectUser(${i})">Rejeter</button>
+      </div>
+      <div class="msection">
+        <div class="msection-title">📅 Planification</div>
+        <div class="grid2">
+          <div class="field"><label>Date</label><input type="date" id="match-date"></div>
+          <div class="field"><label>Heure</label><input type="time" id="match-time"></div>
+          <div class="field"><label>Lieu</label><input type="text" id="match-lieu" placeholder="Stade / Terrain"></div>
+          <div class="field"><label>Compétition</label><input type="text" id="match-competition" placeholder="Championnat…"></div>
         </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function editUser(index) {
-  alert('Fonctionnalité d\'édition - Utilisateur: ' + adminData.users[index].name);
-}
-
-function deleteUser(index) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
-    adminData.users.splice(index, 1);
-    saveData();
-    loadUsers();
-  }
-}
-
-function approveUser(index) {
-  adminData.users[index].status = 'active';
-  saveData();
-  loadPendingApprovals();
-  updateDashboard();
-}
-
-function rejectUser(index) {
-  adminData.users.splice(index, 1);
-  saveData();
-  loadPendingApprovals();
-  updateDashboard();
-}
-
-function verifyDataIntegrity() {
-  const report = document.getElementById('data-integrity-report');
-  const users = adminData.users || [];
-  report.innerHTML = `
-    <div style="padding:16px;background:var(--green-lt);border-radius:8px;margin-bottom:12px;">
-      <strong>✓ Vérification Complète</strong>
-      <div style="margin-top:8px;font-size:12px;color:var(--green-dk);">
-        • Total Utilisateurs: ${users.length}<br>
-        • Enregistrements Actifs: ${users.filter(u => u.status === 'active').length}<br>
-        • En Attente: ${users.filter(u => u.status === 'pending').length}<br>
-        • Dernière Vérification: ${new Date().toLocaleTimeString('fr-FR')}
+      </div>
+      <div class="msection">
+        <div class="msection-title">🏆 Score (si joué)</div>
+        <div class="score-row">
+          <input type="number" id="match-score-home" placeholder="0" min="0">
+          <span class="score-sep">—</span>
+          <input type="number" id="match-score-away" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary">💾 Enregistrer</button>
+        <button class="btn btn-secondary">Annuler</button>
+        <button class="btn btn-danger" id="btn-delete-match" style="display:none">🗑️ Supprimer</button>
       </div>
     </div>
-  `;
-}
+  </div>
+</div>
 
-function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    localStorage.removeItem('gsc_admin_session');
-    window.location.href = 'index.html';
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="mobile-nav">
+  <button class="mn-btn active" id="mnav-dashboard"><span class="mn-icon">📊</span><span>Dashboard</span></button>
+  <button class="mn-btn" id="mnav-joueurs"><span class="mn-icon">👥</span><span>Joueurs</span></button>
+  <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
+  <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
+</div>
+
+<!-- Module de synchronisation temps réel -->
+<script src="firebase-init.js"></script>
+<script src="realtime-sync-module.js"></script>
+<script src="admin-controller.js"></script>
+
+<!-- Module Rapports — autonome, lit le cache de realtime-sync-module.js -->
+<script>
+(function () {
+  'use strict';
+
+  let _reportCharts = {};
+
+  const ROLE_LABELS = {
+    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur'
+  };
+  const ROLE_COLORS = {
+    joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
+    club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628'
+  };
+  const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
   }
-}
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  /* Lit les données déjà synchronisées par realtime-sync-module.js
+     (admin-controller.js a déjà ouvert les listeners "users"/"matchs",
+     ce module ne fait qu'en lire le cache — aucun listener dupliqué). */
+  function getUsers() {
+    return (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+  }
+  function getMatches() {
+    return (window.realtimeSync && window.realtimeSync.getCache('matchs')) || [];
+  }
+
+  function mkChart(canvasId, type, labels, data, colors) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (_reportCharts[canvasId]) { _reportCharts[canvasId].destroy(); delete _reportCharts[canvasId]; }
+    if (!labels.length) return;
+    _reportCharts[canvasId] = new Chart(ctx, {
+      type,
+      data: { labels, datasets: [{ data, backgroundColor: colors || PALETTE, borderWidth: type === 'line' ? 2 : 1, borderColor: type === 'bar' ? (colors || PALETTE) : '#fff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+        scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {}
+      }
+    });
+  }
+
+  function renderReports() {
+    const users = getUsers();
+    const matches = getMatches();
+    const now = new Date();
+    setText('report-generated-line', `Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · Réf. RPT-${now.getTime().toString().slice(-8)}`);
+
+    setText('report-stat-total', users.length);
+    setText('report-stat-matchs', matches.length);
+
+    if (!users.length) {
+      ['chart-roles', 'chart-statuts', 'chart-clubs', 'chart-buteurs'].forEach(id => {
+        if (_reportCharts[id]) { _reportCharts[id].destroy(); delete _reportCharts[id]; }
+      });
+      setText('report-stat-actifs', 0);
+      setText('report-stat-clubs', 0);
+      const tbody = document.getElementById('report-summary-tbody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-txt)">Aucune donnée disponible pour le moment.</td></tr>`;
+      return;
+    }
+
+    const visible = users.filter(u => u.status !== 'deleted');
+
+    const byRole = {};
+    visible.forEach(u => { const r = ROLE_LABELS[u.role] || u.role || 'Autre'; byRole[r] = (byRole[r] || 0) + 1; });
+    const roleColors = Object.keys(byRole).map(label => {
+      const key = Object.keys(ROLE_LABELS).find(k => ROLE_LABELS[k] === label);
+      return ROLE_COLORS[key] || '#94a3b8';
+    });
+
+    const byStatus = { 'Actif': 0, 'En attente': 0, 'Masqué': 0 };
+    users.forEach(u => {
+      if (u.status === 'pending') byStatus['En attente']++;
+      else if (u.status === 'hidden') byStatus['Masqué']++;
+      else if (u.status !== 'deleted') byStatus['Actif']++;
+    });
+
+    const byClub = {};
+    visible.forEach(u => { const c = (u.club || '').trim(); if (c) byClub[c] = (byClub[c] || 0) + 1; });
+
+    const topScorers = visible
+      .filter(u => Number(u.buts) > 0)
+      .sort((a, b) => (Number(b.buts) || 0) - (Number(a.buts) || 0))
+      .slice(0, 8);
+
+    mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
+    mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
+    mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
+    mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
+
+    const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
+    const totalPending = users.filter(u => u.status === 'pending').length;
+    const totalOrgs = visible.filter(u => ['club', 'federation', 'association'].includes(u.role)).length;
+
+    setText('report-stat-actifs', totalActifs);
+    setText('report-stat-clubs', totalOrgs);
+
+    const rows = [
+      ['Membres enregistrés (total)', users.length],
+      ['Fiches actives', totalActifs],
+      ['Fiches en attente de validation', totalPending],
+      ['Clubs / Fédérations / Associations', totalOrgs],
+      ['Matchs enregistrés', matches.length],
+      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
+      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
+    ];
+    const tbody = document.getElementById('report-summary-tbody');
+    if (tbody) tbody.innerHTML = rows.map((r, i) =>
+      `<tr><td style="font-size:12px;color:var(--gray-txt)">RPT-${String(i + 1).padStart(3, '0')}</td><td>${esc(r[0])}</td><td style="font-weight:700">${esc(r[1])}</td></tr>`
+    ).join('');
+  }
+
+  function showRapportsSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('rapports');
+    if (target) target.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-rapports');
+    if (navBtn) navBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Rapports';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    renderReports();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const navBtn = document.getElementById('nav-rapports');
+    if (navBtn) navBtn.addEventListener('click', showRapportsSection);
+
+    const printBtn = document.getElementById('btn-print-rapports');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+    const refreshBtn = document.getElementById('btn-refresh-rapports');
+    if (refreshBtn) refreshBtn.addEventListener('click', renderReports);
+  });
+})();
 </script>
 
 </body>
