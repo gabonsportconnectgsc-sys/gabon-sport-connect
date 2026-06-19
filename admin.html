@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <!-- Module de synchronisation temps réel -->
 <script src="realtime-sync-module.js"></script>
+<link rel="stylesheet" href="css/filter-luxe-styles.css">
 <style>
 :root{
   --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -361,13 +362,13 @@ table.users-table tr:last-child td{border-bottom:none;}
       <div id="joueurs" class="section">
         <div class="page-header"><div class="page-title">Gestion des Joueurs</div></div>
         <div class="filters-bar">
-          <button class="filter-btn active" onclick="filterPlayers('all',this)">Tous</button>
-          <button class="filter-btn" onclick="filterPlayers('joueur',this)">Joueurs</button>
-          <button class="filter-btn" onclick="filterPlayers('entraineur',this)">Entraîneurs</button>
-          <button class="filter-btn" onclick="filterPlayers('arbitre',this)">Arbitres</button>
-          <button class="filter-btn" onclick="filterPlayers('club',this)">Clubs</button>
-          <button class="filter-btn" onclick="filterPlayers('federation',this)">Fédérations</button>
-          <button class="filter-btn" onclick="filterPlayers('association',this)">Associations</button>
+          <button class="filter-btn role-all active" onclick="filterPlayers('all',this)">Tous</button>
+          <button class="filter-btn role-joueur" onclick="filterPlayers('joueur',this)">Joueurs</button>
+          <button class="filter-btn role-entraineur" onclick="filterPlayers('entraineur',this)">Entraîneurs</button>
+          <button class="filter-btn role-arbitre" onclick="filterPlayers('arbitre',this)">Arbitres</button>
+          <button class="filter-btn role-club" onclick="filterPlayers('club',this)">Clubs</button>
+          <button class="filter-btn role-federation" onclick="filterPlayers('federation',this)">Fédérations</button>
+          <button class="filter-btn role-association" onclick="filterPlayers('association',this)">Associations</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…" oninput="searchPlayers()"/></div>
         </div>
         <div class="users-table-wrap">
@@ -392,11 +393,11 @@ table.users-table tr:last-child td{border-bottom:none;}
         </div>
         <!-- Filters -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ph-filter-bar">
-          <button class="filter-btn active" data-phfilter="all" onclick="filterPhotosSection('all',this)">📊 Tous</button>
-          <button class="filter-btn" data-phfilter="joueur" onclick="filterPhotosSection('joueur',this)">🏃 Joueurs</button>
-          <button class="filter-btn" data-phfilter="club" onclick="filterPhotosSection('club',this)">⚽ Clubs</button>
-          <button class="filter-btn" data-phfilter="federation" onclick="filterPhotosSection('federation',this)">🏆 Fédérations</button>
-          <button class="filter-btn" data-phfilter="association" onclick="filterPhotosSection('association',this)">🏢 Associations</button>
+          <button class="filter-btn role-all active" data-phfilter="all" onclick="filterPhotosSection('all',this)">📊 Tous</button>
+          <button class="filter-btn role-joueur" data-phfilter="joueur" onclick="filterPhotosSection('joueur',this)">🏃 Joueurs</button>
+          <button class="filter-btn role-club" data-phfilter="club" onclick="filterPhotosSection('club',this)">⚽ Clubs</button>
+          <button class="filter-btn role-federation" data-phfilter="federation" onclick="filterPhotosSection('federation',this)">🏆 Fédérations</button>
+          <button class="filter-btn role-association" data-phfilter="association" onclick="filterPhotosSection('association',this)">🏢 Associations</button>
         </div>
         <!-- Grid -->
         <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>

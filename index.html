@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
       --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -209,9 +210,6 @@
 
     /* ── ANNUAIRE ACTEURS ── */
     .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-    .actor-filter-btn{--abtn-color:#009E60;padding:6px 14px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
-    .actor-filter-btn.active{background:var(--abtn-color);color:var(--white);border-color:var(--abtn-color);box-shadow:0 3px 10px rgba(0,0,0,.18);}
-    .actor-filter-btn:hover:not(.active){border-color:var(--abtn-color);color:var(--abtn-color);}
     .actors-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .actor-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);overflow:hidden;cursor:pointer;transition:all .2s;}
     .actor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -477,7 +475,19 @@
     .role-badge.supporter{background:#ec4899;color:white;}
     .badge-supporter{background:#fce7f3;color:#9d174d;}
 
-    /* ── ANNUAIRE FILTER BUTTONS AMÉLIORÉS ── */
+    /* ── UNIFIED FILTER PILL BASE CLASS ── */
+    .filter-pill{
+      padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
+      background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .filter-pill:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+    .filter-pill.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .filter-pill .real-icon{transition:transform .2s ease;}
+    .filter-pill:hover .real-icon{transform:scale(1.1);}
+
+    /* ── ANNUAIRE FILTER BUTTONS (now uses filter-pill base) ── */
     .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;}
     .actor-filter-btn{
       padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
@@ -536,7 +546,13 @@
     .stat-real-icon{width:38px;height:38px;border-radius:12px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.25);margin-bottom:6px;}
 
     /* Quick-btn image icons */
-    .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+    .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);animation:float 3s ease-in-out infinite;}
+    .quick-btn:nth-child(1) .qb-real-icon{animation-delay:0s;}
+    .quick-btn:nth-child(2) .qb-real-icon{animation-delay:.4s;}
+    .quick-btn:nth-child(3) .qb-real-icon{animation-delay:.8s;}
+    .quick-btn:nth-child(4) .qb-real-icon{animation-delay:1.2s;}
+    .quick-btn:nth-child(5) .qb-real-icon{animation-delay:1.6s;}
+    .quick-btn:nth-child(6) .qb-real-icon{animation-delay:2s;}
 
     /* ── ANIMATIONS PROFESSIONNELLES ── */
     @keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:.7}}
@@ -546,6 +562,32 @@
     .stat-card:nth-child(2) .stat-real-icon{animation-delay:.5s;}
     .stat-card:nth-child(3) .stat-real-icon{animation-delay:1s;}
     .stat-card:nth-child(4) .stat-real-icon{animation-delay:1.5s;}
+
+    /* ── CLOCK & WEATHER WIDGET ── */
+    .dashboard-clock-widget{
+      background:linear-gradient(135deg,rgba(10,22,40,.95),rgba(10,61,96,.9));
+      border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px;
+      color:var(--white);text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.15);
+      border:1px solid rgba(0,158,96,.2);animation:fadeUp .5s ease;
+    }
+    .clock-time{
+      font-family:'Syne',monospace;font-size:28px;font-weight:800;
+      letter-spacing:-1px;margin-bottom:2px;line-height:1;
+      text-shadow:0 2px 8px rgba(0,0,0,.3);
+    }
+    .clock-date{
+      font-size:11px;font-weight:600;color:rgba(255,255,255,.8);
+      margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;
+    }
+    .weather-info{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      padding-top:8px;border-top:1px solid rgba(255,255,255,.1);
+    }
+    .weather-icon{font-size:24px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(0,158,96,.2);border-radius:12px;}
+    .weather-details{text-align:left;flex:1;}
+    .weather-temp{font-size:13px;font-weight:700;margin-bottom:1px;}
+    .weather-desc{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.3px;}
+    .weather-loading{font-size:10px;color:rgba(255,255,255,.6);font-style:italic;}
 
     /* ── MENTIONS LÉGALES FOOTER ── */
     .legal-footer{
@@ -568,9 +610,9 @@
     .sport-header-content{position:relative;z-index:1;padding:20px 20px;color:white;}
     .sport-header-title{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;}
     .sport-header-sub{font-size:12px;opacity:.8;}
-    .discipline-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+    .discipline-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
     .disc-tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:20px;border:2px solid var(--gray-bd);background:var(--white);cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-txt);transition:all .2s;white-space:nowrap;}
-    .disc-tab:hover{border-color:var(--green);color:var(--green);}
+    .disc-tab:hover{transform:translateY(-2px);border-color:var(--green);color:var(--green);box-shadow:var(--shadow-sm);}
     .disc-tab.active{background:var(--navy);color:white;border-color:var(--navy);box-shadow:0 4px 14px rgba(10,22,40,.25);}
     .disc-tab img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2);}
     .fed-card{background:linear-gradient(135deg,var(--navy),var(--navy-md));border-radius:var(--radius-md);padding:18px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;}
@@ -652,9 +694,10 @@
     .supporter-stat-val{font-family:var(--font-display);font-size:18px;font-weight:800;color:#db2777;}
     .supporter-stat-lbl{font-size:10px;color:var(--gray-txt);margin-top:2px;}
     /* ── NEWS FILTER BUTTONS ── */
-    .news-filter-btn{padding:5px 12px;border:1.5px solid var(--gray-bd);border-radius:20px;background:none;font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;white-space:nowrap;}
-    .news-filter-btn.active{background:var(--green);color:var(--white);border-color:var(--green);}
-    .news-filter-btn:hover:not(.active){border-color:var(--green);color:var(--green);}
+    .news-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
+    .news-filter-btn{padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);cursor:pointer;transition:all .22s ease;white-space:nowrap;}
+    .news-filter-btn:hover{transform:translateY(-2px);border-color:var(--green);color:var(--green);box-shadow:var(--shadow-sm);}
+    .news-filter-btn.active{background:var(--green);color:var(--white);border-color:var(--green);box-shadow:0 4px 12px rgba(0,0,0,.18);}
     /* ── ONLINE NEWS CARD ── */
     .news-online-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;gap:0;}
     .news-online-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -917,6 +960,19 @@
         <span>Vous consultez en mode <strong>visiteur</strong>. Les données sont en lecture seule. <a onclick="goToAuth()">Créez un compte</a> pour gérer votre fiche.</span>
       </div>
 
+      <!-- ── DIGITAL CLOCK + WEATHER WIDGET ── -->
+      <div class="dashboard-clock-widget fade-up" id="dashboard-clock">
+        <div class="clock-time" id="clock-time">--:--</div>
+        <div class="clock-date" id="clock-date">--</div>
+        <div class="weather-info">
+          <div class="weather-icon" id="weather-icon">🌍</div>
+          <div class="weather-details">
+            <div class="weather-temp" id="weather-temp">Chargement…</div>
+            <div class="weather-desc" id="weather-desc">Localisation…</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Fiche en attente de validation -->
       <div class="readonly-notice" id="pending-self-notice" style="display:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fbbf24;color:#92400e;">
         <span class="rn-icon">⏳</span>
@@ -965,7 +1021,7 @@
         <!-- Joueurs / Athlètes -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
-          <span class="anim-ball" style="font-size:28px;margin-bottom:6px;">⚽</span>
+          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-ball style=font-size:28px;margin-bottom:6px;>⚽</span>'">
           <div class="stat-val" id="stat-total-joueurs">—</div>
           <div class="stat-lbl">Joueurs / Athlètes</div>
         </button>
@@ -973,7 +1029,7 @@
         <!-- Clubs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('club')"
           style="background:linear-gradient(135deg,#f97316,#c2410c);padding:16px 12px;">
-          <span class="anim-stadium" style="font-size:28px;margin-bottom:6px;">🏟️</span>
+          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-stadium style=font-size:28px;margin-bottom:6px;>🏟️</span>'">
           <div class="stat-val" id="stat-total-clubs">—</div>
           <div class="stat-lbl">Clubs sportifs</div>
         </button>
@@ -981,7 +1037,7 @@
         <!-- Arbitres -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
           style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
-          <span class="anim-card" style="font-size:28px;margin-bottom:6px;">🟨</span>
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-card style=font-size:28px;margin-bottom:6px;>🟨</span>'">
           <div class="stat-val" id="stat-total-arbitres">—</div>
           <div class="stat-lbl">Arbitres</div>
         </button>
@@ -989,7 +1045,7 @@
         <!-- Entraîneurs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('entraineur')"
           style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:16px 12px;">
-          <span class="anim-clipboard" style="font-size:28px;margin-bottom:6px;">📋</span>
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-clipboard style=font-size:28px;margin-bottom:6px;>📋</span>'">
           <div class="stat-val" id="stat-total-entraineurs">—</div>
           <div class="stat-lbl">Entraîneurs / Coachs</div>
         </button>
@@ -997,7 +1053,7 @@
         <!-- Fédérations -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('federation')"
           style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:16px 12px;">
-          <span class="anim-building" style="font-size:28px;margin-bottom:6px;">🏛️</span>
+          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-building style=font-size:28px;margin-bottom:6px;>🏛️</span>'">
           <div class="stat-val" id="stat-total-federations">—</div>
           <div class="stat-lbl">Fédérations</div>
         </button>
@@ -1005,7 +1061,7 @@
         <!-- Organisateurs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('organisateur')"
           style="background:linear-gradient(135deg,#b45309,#92400e);padding:16px 12px;">
-          <span class="anim-target" style="font-size:28px;margin-bottom:6px;">🎯</span>
+          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-target style=font-size:28px;margin-bottom:6px;>🎯</span>'">
           <div class="stat-val" id="stat-total-organisateurs">—</div>
           <div class="stat-lbl">Organisateurs</div>
         </button>
@@ -1013,7 +1069,7 @@
         <!-- Indépendants -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('independant')"
           style="background:linear-gradient(135deg,#0369a1,#075985);padding:16px 12px;">
-          <span class="anim-runner" style="font-size:28px;margin-bottom:6px;">🏃</span>
+          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span class=anim-runner style=font-size:28px;margin-bottom:6px;>🏃</span>'">
           <div class="stat-val" id="stat-total-independants">—</div>
           <div class="stat-lbl">Sportifs indépendants</div>
         </button>
@@ -5028,7 +5084,118 @@ document.addEventListener('DOMContentLoaded', function() {
   const qa2 = document.getElementById('quick-actions-visitor');
   if (qa1) qa1.insertAdjacentHTML('afterbegin', sportBtn('Sport Gabon'));
   if (qa2) qa2.insertAdjacentHTML('afterbegin', sportBtn('Sport Gabon'));
+
+  // ── INIT DIGITAL CLOCK & WEATHER ──
+  initDashboardClock();
 });
+
+/**
+ * Initialize digital clock and weather widget
+ */
+function initDashboardClock(){
+  const clockTime = document.getElementById('clock-time');
+  const clockDate = document.getElementById('clock-date');
+  const weatherTemp = document.getElementById('weather-temp');
+  const weatherDesc = document.getElementById('weather-desc');
+  const weatherIcon = document.getElementById('weather-icon');
+  
+  if(!clockTime) return; // Widget not present
+
+  // Update clock every second
+  function updateClock(){
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    
+    clockTime.textContent = `${h}:${m}:${s}`;
+    
+    // Update date daily
+    const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+    const day = days[now.getDay()];
+    const date = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    clockDate.textContent = `${day} ${date} ${month} ${year}`;
+  }
+  
+  updateClock(); // Initial call
+  setInterval(updateClock, 1000);
+
+  // Fetch live weather from Open-Meteo API (no API key needed)
+  async function fetchWeather(){
+    try {
+      // Get user's approximate location (Gabon center by default)
+      let lat = -1.3521, lon = 25.2332; // Libreville, Gabon
+      
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            lat = pos.coords.latitude;
+            lon = pos.coords.longitude;
+            getWeatherData(lat, lon);
+          },
+          () => { getWeatherData(lat, lon); }, // Fallback if permission denied
+          { timeout: 3000 }
+        );
+      } else {
+        getWeatherData(lat, lon);
+      }
+    } catch(e){
+      console.log('Weather fetch error:', e);
+    }
+  }
+
+  async function getWeatherData(lat, lon){
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,relative_humidity_2m&timezone=auto`);
+      const data = await res.json();
+      
+      if(data.current){
+        const current = data.current;
+        const temp = Math.round(current.temperature_2m);
+        const humidity = current.relative_humidity_2m;
+        const weatherCode = current.weather_code;
+        
+        // Map WMO weather codes to emoji and descriptions
+        const weatherMap = {
+          0: { icon: '☀️', desc: 'Ensoleillé' },
+          1: { icon: '🌤️', desc: 'Partiellement nuageux' },
+          2: { icon: '⛅', desc: 'Nuageux' },
+          3: { icon: '☁️', desc: 'Couvert' },
+          45: { icon: '🌫️', desc: 'Brouillard' },
+          48: { icon: '🌫️', desc: 'Brouillard givrant' },
+          51: { icon: '🌦️', desc: 'Léger crachin' },
+          53: { icon: '🌧️', desc: 'Crachin modéré' },
+          55: { icon: '🌧️', desc: 'Crachin dense' },
+          61: { icon: '🌧️', desc: 'Pluie légère' },
+          63: { icon: '🌧️', desc: 'Pluie modérée' },
+          65: { icon: '⛈️', desc: 'Pluie dense' },
+          80: { icon: '🌧️', desc: 'Averses légères' },
+          81: { icon: '🌧️', desc: 'Averses modérées' },
+          82: { icon: '⛈️', desc: 'Averses violentes' },
+          95: { icon: '⛈️', desc: 'Orage' },
+          96: { icon: '⛈️', desc: 'Orage + grêle' },
+          99: { icon: '⛈️', desc: 'Orage violent' }
+        };
+        
+        const weather = weatherMap[weatherCode] || { icon: '🌍', desc: 'Variable' };
+        weatherIcon.textContent = weather.icon;
+        weatherTemp.textContent = `${temp}°C · ${humidity}%`;
+        weatherDesc.textContent = weather.desc;
+      }
+    } catch(e){
+      console.log('Weather data error:', e);
+      weatherTemp.textContent = 'Données indisponibles';
+      weatherDesc.textContent = 'Rechargement en cours...';
+    }
+  }
+
+  fetchWeather();
+  // Refresh weather every 10 minutes
+  setInterval(fetchWeather, 600000);
+}
 
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator) {

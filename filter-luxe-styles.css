@@ -1,0 +1,417 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTRES DE DISCIPLINES - COULEURS DE LUXE BRILLANT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* FOOTBALL - Rouge Bordeaux Éclatant */
+.filter-football,
+.discipline-football {
+  background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #FF1744 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-football:hover,
+.discipline-football:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 23, 68, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-football.active,
+.discipline-football.active {
+  border-color: #FF1744 !important;
+  background: linear-gradient(135deg, #DC143C 0%, #FF1744 100%) !important;
+  box-shadow: 0 0 30px rgba(255, 23, 68, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* BASKETBALL - Orange Doré Éclatant */
+.filter-basketball,
+.discipline-basketball {
+  background: linear-gradient(135deg, #FF8C00 0%, #FFD700 50%, #FFA500 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(255, 165, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-basketball:hover,
+.discipline-basketball:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 165, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-basketball.active,
+.discipline-basketball.active {
+  border-color: #FFD700 !important;
+  background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%) !important;
+  box-shadow: 0 0 30px rgba(255, 165, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* HANDBALL - Bleu Violet Royal */
+.filter-handball,
+.discipline-handball {
+  background: linear-gradient(135deg, #4169E1 0%, #7851A9 50%, #9370DB 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(147, 112, 219, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-handball:hover,
+.discipline-handball:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(147, 112, 219, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-handball.active,
+.discipline-handball.active {
+  border-color: #9370DB !important;
+  background: linear-gradient(135deg, #7851A9 0%, #9370DB 100%) !important;
+  box-shadow: 0 0 30px rgba(147, 112, 219, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* VOLLEYBALL - Jaune Or Éclatant */
+.filter-volleyball,
+.discipline-volleyball {
+  background: linear-gradient(135deg, #FFD700 0%, #FFF44F 50%, #FFEA00 100%) !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5) !important;
+}
+
+.filter-volleyball:hover,
+.discipline-volleyball:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.filter-volleyball.active,
+.discipline-volleyball.active {
+  border-color: #FFD700 !important;
+  background: linear-gradient(135deg, #FFEA00 0%, #FFD700 100%) !important;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+}
+
+/* ATHLÉTISME - Cyan Turquoise Éclatant */
+.filter-athletisme,
+.filter-athletisme,
+.discipline-athletisme {
+  background: linear-gradient(135deg, #00CED1 0%, #20B2AA 50%, #00BFFF 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(0, 191, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-athletisme:hover,
+.discipline-athletisme:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 191, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-athletisme.active,
+.discipline-athletisme.active {
+  border-color: #00BFFF !important;
+  background: linear-gradient(135deg, #20B2AA 0%, #00BFFF 100%) !important;
+  box-shadow: 0 0 30px rgba(0, 191, 255, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* BOXE - Noir Crimson Intense */
+.filter-boxe,
+.discipline-boxe {
+  background: linear-gradient(135deg, #1a1a1a 0%, #8B0000 50%, #DC143C 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.5), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+.filter-boxe:hover,
+.discipline-boxe:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(220, 20, 60, 0.6), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+
+.filter-boxe.active,
+.discipline-boxe.active {
+  border-color: #DC143C !important;
+  background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%) !important;
+  box-shadow: 0 0 30px rgba(220, 20, 60, 0.8), inset 0 2px 4px rgba(255,255,255,0.15) !important;
+}
+
+/* JUDO - Blanc Bleu Nacré */
+.filter-judo,
+.discipline-judo {
+  background: linear-gradient(135deg, #F0F8FF 0%, #4169E1 50%, #1E90FF 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(30, 144, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+.filter-judo:hover,
+.discipline-judo:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(30, 144, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.filter-judo.active,
+.discipline-judo.active {
+  border-color: #1E90FF !important;
+  background: linear-gradient(135deg, #4169E1 0%, #1E90FF 100%) !important;
+  box-shadow: 0 0 30px rgba(30, 144, 255, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* NATATION - Bleu Aqua Cristal */
+.filter-natation,
+.discipline-natation {
+  background: linear-gradient(135deg, #00B4D8 0%, #0099CC 50%, #00D4FF 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-natation:hover,
+.discipline-natation:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-natation.active,
+.discipline-natation.active {
+  border-color: #00D4FF !important;
+  background: linear-gradient(135deg, #0099CC 0%, #00D4FF 100%) !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTRES DE LIEUX - COULEURS DE LUXE BRILLANT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* STADES - Vert Émeraude Brillant */
+.filter-stades,
+.location-stades {
+  background: linear-gradient(135deg, #009E60 0%, #00C878 50%, #00E676 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-stades:hover,
+.location-stades:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 230, 118, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-stades.active,
+.location-stades.active {
+  border-color: #00E676 !important;
+  background: linear-gradient(135deg, #00C878 0%, #00E676 100%) !important;
+  box-shadow: 0 0 30px rgba(0, 230, 118, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* GYMNASES - Violet Royal Élégant */
+.filter-gymnases,
+.location-gymnases {
+  background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 50%, #CE93D8 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(206, 147, 216, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-gymnases:hover,
+.location-gymnases:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(206, 147, 216, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-gymnases.active,
+.location-gymnases.active {
+  border-color: #CE93D8 !important;
+  background: linear-gradient(135deg, #BA68C8 0%, #CE93D8 100%) !important;
+  box-shadow: 0 0 30px rgba(206, 147, 216, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* PISCINES - Bleu Azur Radiant */
+.filter-piscines,
+.location-piscines {
+  background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 50%, #38BDF8 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-piscines:hover,
+.location-piscines:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-piscines.active,
+.location-piscines.active {
+  border-color: #38BDF8 !important;
+  background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%) !important;
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* COURTS - Orange Corail Vif */
+.filter-courts,
+.location-courts {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8A50 50%, #FFA06B 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(255, 160, 107, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-courts:hover,
+.location-courts:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 160, 107, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-courts.active,
+.location-courts.active {
+  border-color: #FFA06B !important;
+  background: linear-gradient(135deg, #FF8A50 0%, #FFA06B 100%) !important;
+  box-shadow: 0 0 30px rgba(255, 160, 107, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* SALLES - Gris Argenté Luxe */
+.filter-salles,
+.location-salles {
+  background: linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 50%, #E5E7EB 100%) !important;
+  color: #1F2937 !important;
+  box-shadow: 0 0 20px rgba(209, 213, 219, 0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5) !important;
+}
+
+.filter-salles:hover,
+.location-salles:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(209, 213, 219, 0.6), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.filter-salles.active,
+.location-salles.active {
+  border-color: #E5E7EB !important;
+  background: linear-gradient(135deg, #D1D5DB 0%, #E5E7EB 100%) !important;
+  box-shadow: 0 0 30px rgba(209, 213, 219, 0.8), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+}
+
+/* DOJOS - Bleu Marine Profond */
+.filter-dojos,
+.location-dojos {
+  background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #3B82F6 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
+}
+
+.filter-dojos:hover,
+.location-dojos:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+
+.filter-dojos.active,
+.location-dojos.active {
+  border-color: #3B82F6 !important;
+  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%) !important;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), inset 0 2px 4px rgba(255,255,255,0.15) !important;
+}
+
+/* TERRAINS - Vert Prairie Luxe */
+.filter-terrains,
+.location-terrains {
+  background: linear-gradient(135deg, #10B981 0%, #14B8A6 50%, #6EE7B7 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(110, 231, 183, 0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.filter-terrains:hover,
+.location-terrains:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(110, 231, 183, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.filter-terrains.active,
+.location-terrains.active {
+  border-color: #6EE7B7 !important;
+  background: linear-gradient(135deg, #14B8A6 0%, #6EE7B7 100%) !important;
+  box-shadow: 0 0 30px rgba(110, 231, 183, 0.8), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+}
+
+/* PISTES - Jaune Citron Éclatant */
+.filter-pistes,
+.location-pistes {
+  background: linear-gradient(135deg, #FBBF24 0%, #FCD34D 50%, #FEF08A 100%) !important;
+  color: #1F2937 !important;
+  box-shadow: 0 0 20px rgba(254, 240, 138, 0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5) !important;
+}
+
+.filter-pistes:hover,
+.location-pistes:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(254, 240, 138, 0.6), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.filter-pistes.active,
+.location-pistes.active {
+  border-color: #FEF08A !important;
+  background: linear-gradient(135deg, #FCD34D 0%, #FEF08A 100%) !important;
+  box-shadow: 0 0 30px rgba(254, 240, 138, 0.8), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STYLES GÉNÉRAUX POUR TOUS LES FILTRES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.filter-btn,
+.discipline-btn,
+.location-btn {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  border: 2px solid transparent !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.filter-btn::before,
+.discipline-btn::before,
+.location-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%) !important;
+  transition: left 0.6s ease !important;
+  pointer-events: none !important;
+}
+
+.filter-btn:hover::before,
+.discipline-btn:hover::before,
+.location-btn:hover::before {
+  left: 100% !important;
+}
+
+/* Animation de pulse pour le bouton actif */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px currentColor; }
+  50% { box-shadow: 0 0 30px currentColor; }
+}
+
+.filter-btn.active,
+.discipline-btn.active,
+.location-btn.active {
+  animation: pulse-glow 2s ease-in-out infinite !important;
+}
+
+/* Responsive adaptations */
+@media (max-width: 480px) {
+  .filter-btn,
+  .discipline-btn,
+  .location-btn {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+}
