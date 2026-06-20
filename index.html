@@ -113,10 +113,19 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
     .topnav-logo{font-family:var(--font-display);font-size:16px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
     .topnav-logo span{color:var(--yellow);}
-    .topnav-spacer{flex:1;}
+    .topnav-spacer{flex:1;min-width:4px;}
+    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
+    @media (max-width:400px){
+      .topnav{padding:0 10px;gap:5px;}
+      .topnav-logo{font-size:14px;}
+      .topnav-logo img{width:36px!important;height:36px!important;}
+      .visitor-banner{padding:4px 9px;font-size:10px;}
+      .user-name{max-width:64px;}
+      .btn-icon{width:30px;height:30px;font-size:15px;}
+    }
     .visitor-banner{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.5px;}
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px 12px 5px 5px;cursor:pointer;transition:background .2s;}
     .user-chip:hover{background:rgba(255,255,255,.14);}
@@ -1074,14 +1083,14 @@
   <nav class="topnav">
     <div class="topnav-logo"><img src="img/hd_image_3.png" alt="GSC" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;image-rendering:high-quality;"> <span>GSC</span></div>
     <div class="topnav-spacer"></div>
-    <div id="nav-visitor-banner" class="visitor-banner" style="display:none;">VISITEUR</div>
+    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Se connecter" style="display:none;cursor:pointer;">MEMBRE</div>
     <div id="nav-rolebadge"></div>
     <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
       <div class="user-avatar" id="nav-avatar">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
     <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
-    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" style="display:none;padding:0;overflow:hidden;"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=80&h=80&fit=crop&auto=format" style="width:34px;height:34px;object-fit:cover;border-radius:50%;" alt="" onerror="this.outerHTML='🔑'"></button>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter" style="display:none;font-size:18px;">👤</button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
     </button>

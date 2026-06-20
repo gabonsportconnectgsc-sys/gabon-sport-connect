@@ -496,9 +496,10 @@ tr.is-demo-row td { opacity: .82; }
 
 .sidebar-overlay.open { display: block; }
 
-.mobile-nav { display: none; position: fixed; bottom: 0px; left: 0px; right: 0px; height: var(--mobile-nav-h); background: rgb(255, 255, 255); border-top: 1px solid var(--gray-bd); z-index: 150; align-items: center; justify-content: space-around; box-shadow: rgba(0, 0, 0, 0.06) 0px -2px 10px; }
+.mobile-nav { display: none; position: fixed; bottom: 0px; left: 0px; right: 0px; height: var(--mobile-nav-h); background: rgb(255, 255, 255); border-top: 1px solid var(--gray-bd); z-index: 150; align-items: center; justify-content: flex-start; box-shadow: rgba(0, 0, 0, 0.06) 0px -2px 10px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.mobile-nav::-webkit-scrollbar { display: none; }
 
-.mn-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--gray-txt); background: none; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; padding: 8px 20px; }
+.mn-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--gray-txt); background: none; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; padding: 8px 14px; flex-shrink: 0; min-width: 64px; white-space: nowrap; }
 
 .mn-icon { font-size: 21px; }
 
@@ -1028,7 +1029,10 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-joueurs"><span class="mn-icon">👥</span><span>Joueurs</span></button>
   <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
   <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
+  <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
   <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
+  <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
+  <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
 </div>
 
 <!-- Module de synchronisation temps réel -->
@@ -1178,6 +1182,8 @@ tr.is-demo-row td { opacity: .82; }
     document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-rapports');
     if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById('mnav-rapports');
+    if (mNavBtn) mNavBtn.classList.add('active');
 
     const topbarTitle = document.getElementById('topbar-title');
     if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Rapports';
@@ -1193,6 +1199,8 @@ tr.is-demo-row td { opacity: .82; }
   window.addEventListener('DOMContentLoaded', () => {
     const navBtn = document.getElementById('nav-rapports');
     if (navBtn) navBtn.addEventListener('click', showRapportsSection);
+    const mNavBtn = document.getElementById('mnav-rapports');
+    if (mNavBtn) mNavBtn.addEventListener('click', showRapportsSection);
 
     const printBtn = document.getElementById('btn-print-rapports');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
@@ -1285,8 +1293,11 @@ tr.is-demo-row td { opacity: .82; }
     if (target) target.classList.add('active');
 
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-verification');
     if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById('mnav-verification');
+    if (mNavBtn) mNavBtn.classList.add('active');
 
     const topbarTitle = document.getElementById('topbar-title');
     if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Vérification internationale';
@@ -1303,6 +1314,8 @@ tr.is-demo-row td { opacity: .82; }
   window.addEventListener('DOMContentLoaded', () => {
     const navBtn = document.getElementById('nav-verification');
     if (navBtn) navBtn.addEventListener('click', showVerificationSection);
+    const mNavBtn = document.getElementById('mnav-verification');
+    if (mNavBtn) mNavBtn.addEventListener('click', showVerificationSection);
     renderEtablissements();
   });
 })();
@@ -1569,8 +1582,11 @@ tr.is-demo-row td { opacity: .82; }
     if (target) target.classList.add('active');
 
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-qrscan');
     if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById('mnav-qrscan');
+    if (mNavBtn) mNavBtn.classList.add('active');
 
     const topbarTitle = document.getElementById('topbar-title');
     if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Scanner QR';
@@ -1584,6 +1600,8 @@ tr.is-demo-row td { opacity: .82; }
   window.addEventListener('DOMContentLoaded', () => {
     const navBtn = document.getElementById('nav-qrscan');
     if (navBtn) navBtn.addEventListener('click', showQrScanSection);
+    const mNavBtn = document.getElementById('mnav-qrscan');
+    if (mNavBtn) mNavBtn.addEventListener('click', showQrScanSection);
 
     const startBtn = document.getElementById('qrscan-start-btn');
     if (startBtn) startBtn.addEventListener('click', startScan);
