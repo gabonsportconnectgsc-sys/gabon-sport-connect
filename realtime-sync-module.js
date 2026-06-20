@@ -36,6 +36,14 @@
           console.error('realtimeSync: erreur sur la collection', name, err);
           _activeSyncs = Math.max(0, _activeSyncs - 1);
           setBadge(false);
+          // Ne pas laisser les abonnés bloqués indéfiniment : on les notifie
+          // avec le cache existant (ou un tableau vide) pour qu'ils puissent
+          // au moins retomber sur leur logique de secours (ex: seed côté admin).
+          _cache[name] = _cache[name] || [];
+          (_listeners[name] || []).forEach(cb => {
+            try { cb(_cache[name]); } catch (e) { console.error('realtimeSync listener error:', e); }
+          });
+          document.dispatchEvent(new CustomEvent('gsc-sync-error', { detail: { collection: name, error: err } }));
         }
       );
     } catch (e) {

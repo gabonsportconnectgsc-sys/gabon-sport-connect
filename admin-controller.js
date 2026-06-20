@@ -460,33 +460,57 @@
   /* ═══ DOCUMENTS ═══ */
   let docSearchTerm = '';
 
+  function archiveCheck(targetUsers) {
+    const withDocs = targetUsers.filter(u => (u.documents || []).length > 0);
+    const withoutDocs = targetUsers.filter(u => (u.documents || []).length === 0);
+    return { withDocs, withoutDocs };
+  }
+
+  function renderDocsArchiveSummary() {
+    const el = document.getElementById('documents-archive-summary');
+    if (!el) return;
+    const real = realUsers.filter(u => u.status !== 'deleted');
+    if (!real.length) {
+      el.innerHTML = `<span style="color:var(--gray-txt)">Aucun acteur réel enregistré pour le moment.</span>`;
+      return;
+    }
+    const { withoutDocs } = archiveCheck(real);
+    el.innerHTML = !withoutDocs.length
+      ? `<span style="color:var(--green);font-weight:700;">✅ Tous les acteurs réels (${real.length}) ont au moins un document archivé.</span>`
+      : `<span style="color:var(--danger);font-weight:700;">⚠️ ${withoutDocs.length}/${real.length} acteur(s) réel(s) n'ont AUCUN document archivé — à vérifier avant toute réinitialisation.</span>`;
+  }
+
   function renderDocuments() {
     let list = users.filter(u => u.status !== 'deleted');
     if (docSearchTerm) {
       const t = docSearchTerm.toLowerCase();
-      list = list.filter(u => (fullName(u) + ' ' + (u.club || '')).toLowerCase().includes(t));
+      list = list.filter(u => (fullName(u) + ' ' + (u.club || u.nomOrganisation || '')).toLowerCase().includes(t));
     }
-    const docList = document.getElementById('doc-actor-list');
-    if (!docList) return;
-    docList.innerHTML = list.map(u => `
-      <div class="doc-actor-card">
-        <div class="doc-actor-header" onclick="this.parentElement.classList.toggle('expanded')">
-          <span>${esc(fullName(u))}</span>
-          <span class="doc-count">${u.documents?.length || 0} doc(s)</span>
-        </div>
-        <div class="doc-actor-content">
-          ${u.documents?.map((d, i) => `
-            <div class="doc-item">
-              <span>${esc(d.label)}</span>
-              <div class="doc-actions">
-                <a href="${esc(d.url)}" target="_blank" class="btn-sm">Voir</a>
-                <button class="btn-sm danger" onclick="window.AdminController_deleteDocument('${u.id}', ${i})">Suppr.</button>
-              </div>
-            </div>
-          `).join('') || '<p>Aucun document</p>'}
-        </div>
-      </div>
-    `).join('');
+    const tbody = document.getElementById('documents-tbody');
+    if (!tbody) { renderDocsArchiveSummary(); return; }
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-txt)">Aucun acteur trouvé.</td></tr>`;
+      renderDocsArchiveSummary();
+      return;
+    }
+    tbody.innerHTML = list.map(u => {
+      const docs = u.documents || [];
+      const docsHtml = docs.length
+        ? docs.map((d, i) => `
+            <div class="doc-chip" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-bd);border-radius:8px;padding:3px 8px;margin:2px 4px 2px 0;font-size:12px;">
+              <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}
+              ${u.isDemo ? '' : `<button class="btn-sm danger" title="Supprimer" onclick="window.AdminController_deleteDocument('${u.id}', ${i})">✕</button>`}
+            </div>`).join('')
+        : `<span style="color:var(--danger);font-weight:700;">⚠️ aucun document</span>`;
+      return `
+        <tr class="${u.isDemo ? 'is-demo-row' : ''}">
+          <td data-label="Acteur">${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
+          <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
+          <td data-label="Documents archivés">${docsHtml}</td>
+          <td data-label="Actions">${docs.length} doc(s)</td>
+        </tr>`;
+    }).join('');
+    renderDocsArchiveSummary();
   }
 
   function getUserDocs(uid) {
@@ -533,6 +557,127 @@
     } catch (e) {
       toast('Erreur : ' + e.message, 'error');
     }
+  }
+
+  /* ═══ NOUVEAU CYCLE — RÉINITIALISATION DES ACTEURS ═══ */
+  let resetSelectedRoles = new Set();
+
+  function renderResetRoleChips() {
+    const wrap = document.getElementById('reset-role-list');
+    if (!wrap) return;
+    const real = realUsers.filter(u => u.status !== 'deleted');
+    wrap.innerHTML = DASH_ROLES.map(r => {
+      const count = real.filter(u => u.role === r).length;
+      const active = resetSelectedRoles.has(r) ? ' active' : '';
+      return `<button type="button" class="filter-btn reset-role-chip${active}" data-role="${r}">${ROLE_LABELS[r] || r} (${count})</button>`;
+    }).join('');
+    wrap.querySelectorAll('.reset-role-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = btn.dataset.role;
+        if (resetSelectedRoles.has(r)) { resetSelectedRoles.delete(r); btn.classList.remove('active'); }
+        else { resetSelectedRoles.add(r); btn.classList.add('active'); }
+        updateResetScopeSummary();
+      });
+    });
+    updateResetScopeSummary();
+  }
+
+  function getResetTargets(scope) {
+    const real = realUsers.filter(u => u.status !== 'deleted');
+    return scope === 'general' ? real : real.filter(u => resetSelectedRoles.has(u.role));
+  }
+
+  function updateResetScopeSummary() {
+    const partialBtn = document.getElementById('btn-reset-partial');
+    const summaryEl = document.getElementById('reset-scope-summary');
+    if (summaryEl) {
+      summaryEl.textContent = resetSelectedRoles.size
+        ? `${getResetTargets('partial').length} acteur(s) réel(s) concerné(s) (catégories : ${[...resetSelectedRoles].map(r => ROLE_LABELS[r] || r).join(', ')})`
+        : 'Sélectionnez au moins une catégorie pour une réinitialisation partielle.';
+    }
+    if (partialBtn) partialBtn.disabled = resetSelectedRoles.size === 0;
+    const statusEl = document.getElementById('reset-archive-status');
+    if (statusEl) statusEl.innerHTML = '';
+  }
+
+  function renderArchiveStatus(targetUsers) {
+    const statusEl = document.getElementById('reset-archive-status');
+    if (!statusEl) return;
+    if (!targetUsers.length) {
+      statusEl.innerHTML = `<span style="color:var(--gray-txt)">Aucun acteur dans le périmètre actuel.</span>`;
+      return;
+    }
+    const { withDocs, withoutDocs } = archiveCheck(targetUsers);
+    let html = `<div style="margin-bottom:6px;"><strong>${withDocs.length}/${targetUsers.length}</strong> acteur(s) du périmètre ont au moins un document archivé.</div>`;
+    if (withoutDocs.length) {
+      html += `<div style="color:var(--danger);font-weight:700;margin-bottom:4px;">⚠️ ${withoutDocs.length} acteur(s) SANS AUCUN document — leurs données seront perdues définitivement :</div>`;
+      html += `<ul style="margin:0 0 4px 18px;padding:0;max-height:140px;overflow-y:auto;">${withoutDocs.map(u => `<li>${esc(fullName(u))} — ${esc(u.email || u.telephone || 'aucun contact')}</li>`).join('')}</ul>`;
+    } else {
+      html += `<div style="color:var(--green);font-weight:700;">✅ Tous les acteurs du périmètre ont au moins un document archivé.</div>`;
+    }
+    statusEl.innerHTML = html;
+  }
+
+  function exportSelectionJSON(targetUsers, filename) {
+    if (!targetUsers.length) { toast('Aucun acteur dans le périmètre à exporter', 'warn'); return; }
+    const data = JSON.stringify(targetUsers, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Export JSON téléchargé (' + targetUsers.length + ' acteur(s))', 'success');
+  }
+
+  async function executeActorReset(scope) {
+    const targets = getResetTargets(scope);
+    if (!targets.length) {
+      toast(scope === 'general' ? 'Aucun acteur réel à réinitialiser' : 'Sélectionnez au moins une catégorie', 'warn');
+      return;
+    }
+    const confirmInput = document.getElementById('reset-actors-confirm-input').value.trim();
+    if (confirmInput !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'warn'); return; }
+
+    const { withoutDocs } = archiveCheck(targets);
+    if (withoutDocs.length) {
+      const proceed = confirm(`⚠️ ${withoutDocs.length} acteur(s) sur ${targets.length} n'ont AUCUN document archivé. Leurs données seront perdues définitivement et irrémédiablement. Continuer quand même ?`);
+      if (!proceed) return;
+    }
+
+    const label = scope === 'general'
+      ? `TOUS les acteurs réels (${targets.length}) et leurs coordonnées`
+      : `les acteurs des catégories sélectionnées (${targets.length}) et leurs coordonnées`;
+    if (!confirm(`Dernière confirmation : supprimer définitivement ${label} ? Cette action est irréversible.`)) return;
+
+    try {
+      toast('Réinitialisation en cours…', 'info');
+      const BATCH_SIZE = 450;
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        const batch = window.db.batch();
+        targets.slice(i, i + BATCH_SIZE).forEach(u => batch.delete(window.db.collection('users').doc(u.id)));
+        await batch.commit();
+      }
+      document.getElementById('reset-actors-confirm-input').value = '';
+      resetSelectedRoles.clear();
+      toast(`${targets.length} acteur(s) réinitialisé(s)`, 'success');
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  }
+
+  function wireResetActorsTools() {
+    renderResetRoleChips();
+    document.getElementById('btn-verify-archives')?.addEventListener('click', () => {
+      const scope = resetSelectedRoles.size ? 'partial' : 'general';
+      renderArchiveStatus(getResetTargets(scope));
+    });
+    document.getElementById('btn-export-reset-selection')?.addEventListener('click', () => {
+      const scope = resetSelectedRoles.size ? 'partial' : 'general';
+      exportSelectionJSON(getResetTargets(scope), `gsc-export-acteurs-${scope}-${Date.now()}.json`);
+    });
+    document.getElementById('btn-reset-general')?.addEventListener('click', () => executeActorReset('general'));
+    document.getElementById('btn-reset-partial')?.addEventListener('click', () => executeActorReset('partial'));
   }
 
   /* ═══ MODALES & DIVERS ═══ */
@@ -600,13 +745,18 @@
     wirePhotoFilters();
     wireMatchTabs();
     wireModals();
+    wireResetActorsTools();
 
+    // Affichage immédiat avec le seed (même pattern que index.html) :
+    // on ne dépend pas d'un aller-retour Firestore réussi pour montrer des chiffres.
+    users = mergeWithDemo([]);
     renderDashboard();
 
     window.realtimeSync.onUpdate('users', (data) => {
       realUsers = data;
       users = mergeWithDemo(data);
       renderDashboard();
+      renderResetRoleChips();
       const active = document.querySelector('.section.active');
       if (active) {
         if (active.id === 'joueurs') renderPlayers();

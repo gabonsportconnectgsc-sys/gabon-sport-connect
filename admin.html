@@ -463,6 +463,9 @@ tr.is-demo-row td { opacity: .82; }
 .btn-secondary { background: var(--gray-bg); color: var(--navy); border: 1.5px solid var(--gray-bd); }
 
 .btn-danger { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+.btn-sm { padding: 3px 8px; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; background: var(--gray-bg); color: var(--navy); }
+.btn-sm.danger { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
 
 .toast { position: fixed; bottom: 80px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; box-shadow: rgba(0, 0, 0, 0.15) 0px 6px 20px; animation: 0.3s ease 0s 1 normal none running slideIn; z-index: 1000; }
 
@@ -731,11 +734,12 @@ tr.is-demo-row td { opacity: .82; }
             <button class="btn-report outline" id="btn-print-documents">🖨️ Imprimer la liste</button>
           </div>
         </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;max-width:680px;">
           Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur.
           Le membre lui-même, le club/l'association qui l'emploie, et l'administrateur peuvent ajouter ou supprimer un document.
           Un document marqué <strong>🔒 sous contrat</strong> ne peut plus être supprimé ni partagé tant que l'administrateur n'a pas levé le verrou.
         </p>
+        <div id="documents-archive-summary" style="font-size:13px;margin-bottom:16px;"></div>
         <div class="filters-bar">
           <div class="search-box"><span>🔍</span><input type="text" id="doc-search-input" placeholder="Nom de l'acteur…"></div>
         </div>
@@ -811,6 +815,36 @@ tr.is-demo-row td { opacity: .82; }
           </div>
         </div>
         <button class="btn btn-danger" id="btn-execute-reset">🗑️ Réinitialiser cette collection</button>
+      </div>
+
+      <!-- NOUVEAU CYCLE — RESET ACTEURS -->
+      <div class="dash-card" id="reset-actors-card" style="margin-top:16px;border:1.5px solid var(--danger);">
+        <div class="dash-card-title" style="color:var(--danger);">🔄 Nouveau cycle — Réinitialisation des acteurs</div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+          À utiliser le jour du lancement officiel pour repartir sur une base propre. Supprime les <strong>vrais</strong> acteurs enregistrés (Firestore) et leurs coordonnées. Les profils de démonstration (seed) ne sont jamais affectés.
+        </p>
+
+        <div class="field" style="margin-bottom:12px;">
+          <label>Catégories (réinitialisation partielle)</label>
+          <div id="reset-role-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+        </div>
+        <div id="reset-scope-summary" style="font-size:12px;color:var(--navy);font-weight:600;margin-bottom:12px;"></div>
+
+        <div class="grid2" style="margin-bottom:12px;">
+          <button class="btn btn-secondary" id="btn-verify-archives">🔎 Vérifier les archives avant réinitialisation</button>
+          <button class="btn btn-secondary" id="btn-export-reset-selection">📦 Exporter la sélection (JSON)</button>
+        </div>
+        <div id="reset-archive-status" style="font-size:12px;margin-bottom:14px;"></div>
+
+        <div class="field" style="margin-bottom:12px;max-width:320px;">
+          <label>Confirmation (taper SUPPRIMER)</label>
+          <input type="text" id="reset-actors-confirm-input" placeholder="SUPPRIMER">
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <button class="btn btn-danger" id="btn-reset-general">♻️ Réinitialisation générale (TOUS les acteurs)</button>
+          <button class="btn btn-danger" id="btn-reset-partial" disabled>✂️ Réinitialisation partielle (catégories sélectionnées)</button>
+        </div>
       </div>
 
     </div>
@@ -959,7 +993,11 @@ tr.is-demo-row td { opacity: .82; }
      (admin-controller.js a déjà ouvert les listeners "users"/"matchs",
      ce module ne fait qu'en lire le cache — aucun listener dupliqué). */
   function getUsers() {
-    return (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+    const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+    const seed = window.GSC_SEED_ACTORS || [];
+    const realIds = new Set(real.map(u => u.uid || u.id));
+    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    return [...real, ...demoOnly];
   }
   function getMatches() {
     return (window.realtimeSync && window.realtimeSync.getCache('matchs')) || [];
