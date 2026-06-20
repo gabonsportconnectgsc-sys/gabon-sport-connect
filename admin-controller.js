@@ -7,15 +7,17 @@
   const ROLE_LABELS = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association',
-    organisateur: '🎪 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter'
+    organisateur: '🎪 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter',
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48',
-    organisateur: '#0d9488', independant: '#64748b', supporter: '#ec4899'
+    organisateur: '#0d9488', independant: '#64748b', supporter: '#ec4899',
+    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04'
   };
-  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'supporter', 'independant'];
-  const GROUP_ORDER = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'independant', 'supporter'];
+  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'supporter', 'independant', 'eleve_etudiant', 'sportif_etranger'];
+  const GROUP_ORDER = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'independant', 'supporter', 'eleve_etudiant', 'sportif_etranger'];
 
   let users = [], matchs = [];
   let realUsers = [];   // utilisateurs réels Firestore uniquement (sans démo)
@@ -670,3 +672,4 @@
     toast('Connexion Firebase impossible — vérifiez votre réseau', 'error');
   });
 })();
+
