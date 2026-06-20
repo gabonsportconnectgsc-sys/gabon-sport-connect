@@ -217,13 +217,13 @@ body { font-family: var(--font); background: var(--gray-bg); color: var(--navy);
 
 .page-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--navy); }
 
-.filters-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filters-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 16px; align-items: stretch; }
 
-.filter-btn { padding: 7px 14px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); color: var(--navy); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.filter-btn { width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); color: var(--navy); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .filter-btn:hover, .filter-btn.active { background: var(--green); color: rgb(255, 255, 255); border-color: var(--green); }
 
-.search-box { flex: 1 1 0%; min-width: 200px; display: flex; gap: 8px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 8px; padding: 8px 12px; }
+.search-box { grid-column: 1 / -1; min-width: 200px; display: flex; gap: 8px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 8px; padding: 8px 12px; }
 
 .search-box input { border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; outline: none; flex: 1 1 0%; font-size: 13px; color: var(--navy); }
 
@@ -602,8 +602,8 @@ tr.is-demo-row td { opacity: .82; }
           <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
         </div>
         <div class="stats-grid">
-          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Membres</div><div class="stat-trend">Total inscrits</div></div></div>
-          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs</div><div class="stat-trend">Comptes actifs</div></div></div>
+          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
+          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
           <div class="stat-card c3"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
           <div class="stat-card c4"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
@@ -658,7 +658,7 @@ tr.is-demo-row td { opacity: .82; }
           <div class="stat-card"><div class="stat-val" id="ph-stat-rate">0%</div><div class="stat-lbl">Taux couverture</div></div>
         </div>
         <!-- Filters -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ph-filter-bar">
+        <div class="filters-bar" id="ph-filter-bar">
           <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
           <button class="filter-btn role-joueur" data-phfilter="joueur">🏃 Joueurs</button>
           <button class="filter-btn role-arbitre" data-phfilter="arbitre">🟨 Arbitres</button>
@@ -722,6 +722,57 @@ tr.is-demo-row td { opacity: .82; }
               <thead><tr><th>#</th><th>Indicateur</th><th>Valeur</th></tr></thead>
               <tbody id="report-summary-tbody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- OUTILS AVANCÉS -->
+        <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
+          <div class="dash-card-title" style="color:var(--danger);">⚠️ Outils avancés — Réinitialisation</div>
+          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+            Supprime <strong>définitivement</strong> tous les documents d'une collection Firestore. Action irréversible — à utiliser uniquement pour repartir d'une base propre.
+          </p>
+          <div class="grid2" style="margin-bottom:12px;">
+            <div class="field">
+              <label>Collection à réinitialiser</label>
+              <select id="reset-collection-select">
+                <option value="users">users (membres)</option>
+                <option value="matchs">matchs</option>
+                <option value="sitesSportifs">sitesSportifs</option>
+                <option value="actualites">actualites</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Confirmation (taper SUPPRIMER)</label>
+              <input type="text" id="reset-confirm-input" placeholder="SUPPRIMER">
+            </div>
+          </div>
+          <button class="btn btn-danger" id="btn-execute-reset">🗑️ Réinitialiser cette collection</button>
+        </div>
+
+        <!-- NOUVEAU CYCLE — RESET ACTEURS -->
+        <div class="dash-card" id="reset-actors-card" style="margin-top:16px;border:1.5px solid var(--danger);">
+          <div class="dash-card-title" style="color:var(--danger);">🔄 Nouveau cycle — Réinitialisation des acteurs</div>
+          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+            À utiliser le jour du lancement officiel pour repartir sur une base propre. Supprime les <strong>vrais</strong> acteurs enregistrés (Firestore) et leurs coordonnées. Les profils de démonstration (seed) ne sont jamais affectés.
+          </p>
+
+          <div class="field" style="margin-bottom:12px;">
+            <label>Catégories (réinitialisation partielle)</label>
+            <div id="reset-role-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+          </div>
+          <div id="reset-scope-summary" style="font-size:12px;color:var(--navy);font-weight:600;margin-bottom:12px;"></div>
+
+          <button class="btn btn-secondary" id="btn-verify-archives" style="width:100%;margin-bottom:12px;">🔎 Vérifier les archives avant réinitialisation</button>
+          <div id="reset-archive-status" style="font-size:12px;margin-bottom:14px;"></div>
+
+          <div class="field" style="margin-bottom:12px;max-width:320px;">
+            <label>Confirmation (taper SUPPRIMER)</label>
+            <input type="text" id="reset-actors-confirm-input" placeholder="SUPPRIMER">
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <button class="btn btn-danger" id="btn-reset-general">♻️ Réinitialisation générale (TOUS les acteurs)</button>
+            <button class="btn btn-danger" id="btn-reset-partial" disabled>✂️ Réinitialisation partielle (catégories sélectionnées)</button>
           </div>
         </div>
       </div>
@@ -789,61 +840,6 @@ tr.is-demo-row td { opacity: .82; }
             <thead><tr><th>Établissement</th><th>Ville</th><th>Type</th></tr></thead>
             <tbody id="verif-etablissements-tbody"></tbody>
           </table>
-        </div>
-      </div>
-
-
-      <!-- OUTILS AVANCÉS (sous Rapports) -->
-      <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
-        <div class="dash-card-title" style="color:var(--danger);">⚠️ Outils avancés — Réinitialisation</div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
-          Supprime <strong>définitivement</strong> tous les documents d'une collection Firestore. Action irréversible — à utiliser uniquement pour repartir d'une base propre.
-        </p>
-        <div class="grid2" style="margin-bottom:12px;">
-          <div class="field">
-            <label>Collection à réinitialiser</label>
-            <select id="reset-collection-select">
-              <option value="users">users (membres)</option>
-              <option value="matchs">matchs</option>
-              <option value="sitesSportifs">sitesSportifs</option>
-              <option value="actualites">actualites</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Confirmation (taper SUPPRIMER)</label>
-            <input type="text" id="reset-confirm-input" placeholder="SUPPRIMER">
-          </div>
-        </div>
-        <button class="btn btn-danger" id="btn-execute-reset">🗑️ Réinitialiser cette collection</button>
-      </div>
-
-      <!-- NOUVEAU CYCLE — RESET ACTEURS -->
-      <div class="dash-card" id="reset-actors-card" style="margin-top:16px;border:1.5px solid var(--danger);">
-        <div class="dash-card-title" style="color:var(--danger);">🔄 Nouveau cycle — Réinitialisation des acteurs</div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
-          À utiliser le jour du lancement officiel pour repartir sur une base propre. Supprime les <strong>vrais</strong> acteurs enregistrés (Firestore) et leurs coordonnées. Les profils de démonstration (seed) ne sont jamais affectés.
-        </p>
-
-        <div class="field" style="margin-bottom:12px;">
-          <label>Catégories (réinitialisation partielle)</label>
-          <div id="reset-role-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
-        </div>
-        <div id="reset-scope-summary" style="font-size:12px;color:var(--navy);font-weight:600;margin-bottom:12px;"></div>
-
-        <div class="grid2" style="margin-bottom:12px;">
-          <button class="btn btn-secondary" id="btn-verify-archives">🔎 Vérifier les archives avant réinitialisation</button>
-          <button class="btn btn-secondary" id="btn-export-reset-selection">📦 Exporter la sélection (JSON)</button>
-        </div>
-        <div id="reset-archive-status" style="font-size:12px;margin-bottom:14px;"></div>
-
-        <div class="field" style="margin-bottom:12px;max-width:320px;">
-          <label>Confirmation (taper SUPPRIMER)</label>
-          <input type="text" id="reset-actors-confirm-input" placeholder="SUPPRIMER">
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:10px;">
-          <button class="btn btn-danger" id="btn-reset-general">♻️ Réinitialisation générale (TOUS les acteurs)</button>
-          <button class="btn btn-danger" id="btn-reset-partial" disabled>✂️ Réinitialisation partielle (catégories sélectionnées)</button>
         </div>
       </div>
 

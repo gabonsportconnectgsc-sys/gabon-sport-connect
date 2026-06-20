@@ -58,7 +58,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-VOL-1434",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-1434",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_002",
@@ -95,7 +112,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-5552",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-5552",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_003",
@@ -139,7 +168,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-BAS-5803",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BAS-5803",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_004",
@@ -176,7 +222,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-TEN-4733",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-TEN-4733",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_005",
@@ -213,7 +271,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-FOO-6820",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-FOO-6820",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_006",
@@ -257,7 +327,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-BAS-6313",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BAS-6313",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_007",
@@ -301,7 +388,19 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-FOO-9179",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-FOO-9179",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_008",
@@ -345,7 +444,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-RUG-9348",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-RUG-9348",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_009",
@@ -389,7 +505,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-HAN-1188",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-HAN-1188",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_010",
@@ -433,7 +566,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-RUG-3927",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-RUG-3927",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_011",
@@ -470,7 +620,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-CYC-9689",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-CYC-9689",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_012",
@@ -514,7 +676,19 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-BAS-8962",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BAS-8962",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_013",
@@ -551,7 +725,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-HAN-9645",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-HAN-9645",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_014",
@@ -588,7 +774,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-JUD-6107",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-JUD-6107",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_015",
@@ -625,7 +823,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-JUD-4770",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-JUD-4770",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_016",
@@ -669,7 +879,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-FOO-7669",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-FOO-7669",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_017",
@@ -706,7 +933,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-5073",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-5073",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_018",
@@ -743,7 +982,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-HAN-9856",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-HAN-9856",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_019",
@@ -787,7 +1038,19 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-VOL-7209",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-7209",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_020",
@@ -824,7 +1087,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-BOX-9883",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BOX-9883",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_021",
@@ -861,7 +1136,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-BOX-2113",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BOX-2113",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_022",
@@ -898,7 +1185,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-TEN-9565",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-TEN-9565",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_023",
@@ -935,7 +1234,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-ATH-2638",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-ATH-2638",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_024",
@@ -972,7 +1283,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-ATH-9666",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-ATH-9666",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_025",
@@ -1009,7 +1332,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-CYC-3546",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-CYC-3546",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_026",
@@ -1053,7 +1388,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-VOL-3143",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-3143",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_027",
@@ -1090,7 +1442,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-JUD-1590",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-JUD-1590",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_028",
@@ -1127,7 +1491,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-HAN-4441",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-HAN-4441",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_029",
@@ -1164,7 +1540,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-JUD-1406",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-JUD-1406",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_030",
@@ -1201,7 +1589,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-4644",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-4644",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_031",
@@ -1245,7 +1645,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-VOL-9785",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-9785",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_032",
@@ -1282,7 +1699,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-TEN-8149",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-TEN-8149",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_033",
@@ -1319,7 +1748,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-TEN-4228",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-TEN-4228",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_034",
@@ -1356,7 +1797,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-ATH-7691",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-ATH-7691",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_035",
@@ -1400,7 +1853,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-VOL-4443",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-4443",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_036",
@@ -1437,7 +1907,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-BOX-2389",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BOX-2389",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_037",
@@ -1481,7 +1963,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-BAS-7790",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BAS-7790",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_038",
@@ -1518,7 +2017,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-1090",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-1090",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_039",
@@ -1555,7 +2066,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-5082",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-5082",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_040",
@@ -1592,7 +2115,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-BOX-8251",
     "licenceExpire": "2027-06-30",
-    "disponibilite": ""
+    "disponibilite": "",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BOX-8251",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_041",
@@ -1625,7 +2160,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Collège Bessieux",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_042",
@@ -1658,7 +2205,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Lycée d'État de Port-Gentil",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_043",
@@ -1691,7 +2250,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Université des Sciences et Techniques de Masuku (USTM)",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_044",
@@ -1724,7 +2295,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Université des Sciences et Techniques de Masuku (USTM)",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_045",
@@ -1757,7 +2340,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Lycée Quaben",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_046",
@@ -1790,7 +2385,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Université Omar Bongo (UOB)",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_047",
@@ -1823,7 +2430,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Lycée Provincial de Franceville",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_048",
@@ -1856,7 +2475,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Lycée Quaben",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_049",
@@ -1889,7 +2520,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Collège Bessieux",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_050",
@@ -1922,7 +2565,19 @@ const GSC_SEED_ACTORS = [
     "etablissementLat": null,
     "etablissementLng": null,
     "statutSportifScolaire": true,
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Certificat de scolarité — Lycée Quaben",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_051",
@@ -1966,7 +2621,24 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence FIFA/fédération internationale",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat — AS Espoir Port-Gentil",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_052",
@@ -2003,7 +2675,19 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de séjour",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_053",
@@ -2040,7 +2724,19 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de séjour",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_054",
@@ -2084,7 +2780,24 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat — Mangasport FC",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_055",
@@ -2128,7 +2841,24 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence FIFA/fédération internationale",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat — AS Police Nationale",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_056",
@@ -2165,7 +2895,19 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Visa de travail",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_057",
@@ -2209,7 +2951,24 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat — HC Port-Gentil",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_058",
@@ -2246,7 +3005,19 @@ const GSC_SEED_ACTORS = [
       "transfermarkt": "https://www.transfermarkt.com",
       "caf": "https://www.cafonline.com"
     },
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Visa de travail",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_059",
@@ -2276,7 +3047,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 50,
     "palmares": "Vainqueur de coupe 2019",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_060",
@@ -2306,7 +3089,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 143,
     "palmares": "Finaliste régional 2023",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_061",
@@ -2336,7 +3131,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 95,
     "palmares": "Vainqueur de coupe 2019",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_062",
@@ -2366,7 +3173,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 161,
     "palmares": "Finaliste régional 2023",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_063",
@@ -2396,7 +3215,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 140,
     "palmares": "—",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_064",
@@ -2426,7 +3257,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 122,
     "palmares": "—",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_065",
@@ -2456,7 +3299,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 97,
     "palmares": "Champion national 2021",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_066",
@@ -2486,7 +3341,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 96,
     "palmares": "—",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_067",
@@ -2516,7 +3383,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 87,
     "palmares": "Champion national 2021",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_068",
@@ -2546,7 +3425,24 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 39,
     "palmares": "Vainqueur de coupe 2019",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Agrément ministériel",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_069",
@@ -2576,7 +3472,24 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 79,
     "palmares": "Finaliste régional 2023",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Agrément ministériel",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_070",
@@ -2606,7 +3519,24 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 87,
     "palmares": "Vainqueur de coupe 2019",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Agrément ministériel",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_071",
@@ -2636,7 +3566,24 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 38,
     "palmares": "Champion national 2021",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Agrément ministériel",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_072",
@@ -2666,7 +3613,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 196,
     "palmares": "Finaliste régional 2023",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_073",
@@ -2696,7 +3655,19 @@ const GSC_SEED_ACTORS = [
     ],
     "effectif": 30,
     "palmares": "—",
-    "isSupporter": false
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Statuts de l'organisation",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Récépissé d'enregistrement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_074",
@@ -2733,7 +3704,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-FOO-9056",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-FOO-9056",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_075",
@@ -2770,7 +3753,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-ATH-8451",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-ATH-8451",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_076",
@@ -2807,7 +3802,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-NAT-8242",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-NAT-8242",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_077",
@@ -2851,7 +3858,24 @@ const GSC_SEED_ACTORS = [
     ],
     "licenceNumero": "GA-HAN-2527",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "sous_contrat"
+    "disponibilite": "sous_contrat",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-HAN-2527",
+        "url": "#",
+        "locked": true
+      },
+      {
+        "label": "Contrat club en cours",
+        "url": "#",
+        "locked": true
+      }
+    ]
   },
   {
     "uid": "seed_078",
@@ -2888,7 +3912,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-BOX-8736",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-BOX-8736",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_079",
@@ -2925,7 +3961,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-TEN-6568",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-TEN-6568",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_080",
@@ -2962,7 +4010,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-RUG-9903",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-RUG-9903",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_081",
@@ -2999,7 +4059,19 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-VOL-8749",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-VOL-8749",
+        "url": "#",
+        "locked": false
+      }
+    ]
   },
   {
     "uid": "seed_082",
@@ -3036,7 +4108,619 @@ const GSC_SEED_ACTORS = [
     "mandats": [],
     "licenceNumero": "GA-CYC-2644",
     "licenceExpire": "2027-06-30",
-    "disponibilite": "disponible"
+    "disponibilite": "disponible",
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Licence sportive GA-CYC-2644",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_083",
+    "id": "seed_083",
+    "email": "fabrice.mba83@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Fabrice",
+    "nom": "Mba",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Oyem",
+    "telephone": "+24123341057",
+    "bio": "Supporter fidèle du FC 105 (FC Canon Libreville).",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "FC 105 (FC Canon Libreville)",
+    "supporterSaisons": 1,
+    "supporterMatchs": 99,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — FC 105 (FC Canon Libreville)",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_084",
+    "id": "seed_084",
+    "email": "carine.mba84@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Carine",
+    "nom": "Mba",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Libreville",
+    "telephone": "+24112571945",
+    "bio": "Supporter fidèle du AS Stade Mandji.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "AS Stade Mandji",
+    "supporterSaisons": 2,
+    "supporterMatchs": 80,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — AS Stade Mandji",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_085",
+    "id": "seed_085",
+    "email": "aurel.ekomy85@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Aurel",
+    "nom": "Ekomy",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Tchibanga",
+    "telephone": "+24128536477",
+    "bio": "Supporter fidèle du BC Libreville.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "BC Libreville",
+    "supporterSaisons": 1,
+    "supporterMatchs": 76,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — BC Libreville",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_086",
+    "id": "seed_086",
+    "email": "nadege.nzigou86@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Nadège",
+    "nom": "Nzigou",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Tchibanga",
+    "telephone": "+24135661907",
+    "bio": "Supporter fidèle du HC Franceville.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "HC Franceville",
+    "supporterSaisons": 1,
+    "supporterMatchs": 102,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — HC Franceville",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_087",
+    "id": "seed_087",
+    "email": "aurel.ekomy87@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Aurel",
+    "nom": "Ekomy",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Tchibanga",
+    "telephone": "+24117022674",
+    "bio": "Supporter fidèle du AS Mangasport.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "AS Mangasport",
+    "supporterSaisons": 6,
+    "supporterMatchs": 18,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — AS Mangasport",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_088",
+    "id": "seed_088",
+    "email": "sandra.nzigou88@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Sandra",
+    "nom": "Nzigou",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Port-Gentil",
+    "telephone": "+24142322047",
+    "bio": "Supporter fidèle du US Bitam.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "US Bitam",
+    "supporterSaisons": 1,
+    "supporterMatchs": 98,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — US Bitam",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_089",
+    "id": "seed_089",
+    "email": "loic.nzigou89@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Loïc",
+    "nom": "Nzigou",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Port-Gentil",
+    "telephone": "+24114823498",
+    "bio": "Supporter fidèle du CF Mounana.",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "CF Mounana",
+    "supporterSaisons": 6,
+    "supporterMatchs": 78,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — CF Mounana",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_090",
+    "id": "seed_090",
+    "email": "sandra.mba90@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "Sandra",
+    "nom": "Mba",
+    "role": "supporter",
+    "sport": "Football",
+    "niveau": "",
+    "ville": "Tchibanga",
+    "telephone": "+24138606962",
+    "bio": "Supporter fidèle du Stade Migovéen (Lambaréné).",
+    "titrePersonnalise": "",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "club": "",
+    "poste": "",
+    "taille": 0,
+    "poids": 0,
+    "mandats": [],
+    "licenceNumero": "",
+    "licenceExpire": "",
+    "clubSupporte": "Stade Migovéen (Lambaréné)",
+    "supporterSaisons": 4,
+    "supporterMatchs": 115,
+    "supporterAbonnement": "Abonné saison 2025-2026",
+    "isSupporter": true,
+    "documents": [
+      {
+        "label": "Carte d'identité / passeport",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Carte de membre — Stade Migovéen (Lambaréné)",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_091",
+    "id": "seed_091",
+    "email": "sport.uob91@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Libreville",
+    "telephone": "+24167120868",
+    "bio": "Université basé(e) à Libreville, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Responsable des sports universitaires",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Université Omar Bongo (UOB)",
+    "typeOrganisation": "Établissement universitaire",
+    "anneeCreation": "",
+    "president": "Jean-Pierre Ndong",
+    "adresse": "Libreville",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 483,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_092",
+    "id": "seed_092",
+    "email": "sport.ustm92@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Franceville",
+    "telephone": "+24136960453",
+    "bio": "Université basé(e) à Franceville, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Responsable des sports universitaires",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Université des Sciences et Techniques de Masuku (USTM)",
+    "typeOrganisation": "Établissement universitaire",
+    "anneeCreation": "",
+    "president": "Sylvie Okoumba",
+    "adresse": "Franceville",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 579,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_093",
+    "id": "seed_093",
+    "email": "sport.lnlm93@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Libreville",
+    "telephone": "+24165479144",
+    "bio": "Lycée basé(e) à Libreville, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Professeur d'EPS / Responsable sportif",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Lycée National Léon Mba",
+    "typeOrganisation": "Établissement scolaire (lycée)",
+    "anneeCreation": "",
+    "president": "André Mboumba",
+    "adresse": "Libreville",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 296,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_094",
+    "id": "seed_094",
+    "email": "sport.lyceequaben94@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Libreville",
+    "telephone": "+24153871230",
+    "bio": "Lycée basé(e) à Libreville, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Professeur d'EPS / Responsable sportif",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Lycée Quaben",
+    "typeOrganisation": "Établissement scolaire (lycée)",
+    "anneeCreation": "",
+    "president": "Chantal Bivigou",
+    "adresse": "Libreville",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 651,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_095",
+    "id": "seed_095",
+    "email": "sport.collegebessieux95@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Libreville",
+    "telephone": "+24128755439",
+    "bio": "Collège basé(e) à Libreville, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Professeur d'EPS / Responsable sportif",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Collège Bessieux",
+    "typeOrganisation": "Établissement scolaire (collège)",
+    "anneeCreation": "",
+    "president": "Paul Edzang",
+    "adresse": "Libreville",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 927,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
+  },
+  {
+    "uid": "seed_096",
+    "id": "seed_096",
+    "email": "sport.lyceepg96@gscdemo.ga",
+    "pin": "0000",
+    "prenom": "",
+    "nom": "",
+    "role": "ecole_universite",
+    "sport": "Multi-sports",
+    "niveau": "Scolaire/Universitaire",
+    "ville": "Port-Gentil",
+    "telephone": "+24134684531",
+    "bio": "Lycée basé(e) à Port-Gentil, section sportive scolaire/universitaire.",
+    "titrePersonnalise": "Professeur d'EPS / Responsable sportif",
+    "photoURL": "",
+    "status": "active",
+    "isDemo": true,
+    "nomOrganisation": "Lycée d'État de Port-Gentil",
+    "typeOrganisation": "Établissement scolaire (lycée)",
+    "anneeCreation": "",
+    "president": "Marielle Avaro",
+    "adresse": "Port-Gentil",
+    "siteWeb": "",
+    "sports": [
+      "Football",
+      "Athlétisme",
+      "Basketball"
+    ],
+    "effectif": 814,
+    "palmares": "Participation aux championnats inter-établissements",
+    "isSupporter": false,
+    "documents": [
+      {
+        "label": "Agrément / autorisation d'ouverture",
+        "url": "#",
+        "locked": false
+      },
+      {
+        "label": "Statuts de l'établissement",
+        "url": "#",
+        "locked": false
+      }
+    ]
   }
 ];
 

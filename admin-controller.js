@@ -121,7 +121,9 @@
 
     const totalCard = document.getElementById('stat-total');
     const totalTrendEl = totalCard?.closest('.stat-data')?.querySelector('.stat-trend');
-    if (totalTrendEl) totalTrendEl.textContent = demoCount ? `${realCount} réel(s) + ${demoCount} démo` : 'Total inscrits';
+    if (totalTrendEl) totalTrendEl.textContent = demoCount
+      ? `${realCount} réel(s) + ${demoCount} démo · ${actifs.length} visible(s) sur l'app`
+      : `${actifs.length} visible(s) sur l'app`;
 
     const total = visibles.length || 1;
     const barsHtml = DASH_ROLES.map(r => {
@@ -618,18 +620,6 @@
     statusEl.innerHTML = html;
   }
 
-  function exportSelectionJSON(targetUsers, filename) {
-    if (!targetUsers.length) { toast('Aucun acteur dans le périmètre à exporter', 'warn'); return; }
-    const data = JSON.stringify(targetUsers, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    toast('Export JSON téléchargé (' + targetUsers.length + ' acteur(s))', 'success');
-  }
-
   async function executeActorReset(scope) {
     const targets = getResetTargets(scope);
     if (!targets.length) {
@@ -671,10 +661,6 @@
     document.getElementById('btn-verify-archives')?.addEventListener('click', () => {
       const scope = resetSelectedRoles.size ? 'partial' : 'general';
       renderArchiveStatus(getResetTargets(scope));
-    });
-    document.getElementById('btn-export-reset-selection')?.addEventListener('click', () => {
-      const scope = resetSelectedRoles.size ? 'partial' : 'general';
-      exportSelectionJSON(getResetTargets(scope), `gsc-export-acteurs-${scope}-${Date.now()}.json`);
     });
     document.getElementById('btn-reset-general')?.addEventListener('click', () => executeActorReset('general'));
     document.getElementById('btn-reset-partial')?.addEventListener('click', () => executeActorReset('partial'));
