@@ -2518,13 +2518,36 @@ async function checkAdminPIN(pin) {
   
   try {
     const adminDoc = await getDoc(doc(db, 'config', 'admin'));
-    if(!adminDoc.exists()) throw new Error('Configuration admin non trouvée');
+    
+    if(!adminDoc.exists()) {
+      console.warn('Config admin non trouvée - création automatique');
+      // Créer la config avec PIN par défaut
+      await setDoc(doc(db, 'config', 'admin'), {
+        pin: '1234',
+        createdAt: serverTimestamp(),
+        description: 'Configuration administrateur Gabon Sport Connect'
+      });
+      // Vérifier à nouveau
+      const adminDocRetry = await getDoc(doc(db, 'config', 'admin'));
+      if(!adminDocRetry.exists()) throw new Error('Impossible de créer la config admin');
+      const data = adminDocRetry.data();
+      const storedPin = String(data.pin).trim();
+      const inputPin = String(pin).trim();
+      if(storedPin !== inputPin) throw new Error('PIN incorrect');
+      return { uid: ADMIN_EMAIL, role: 'admin' };
+    }
     
     const adminData = adminDoc.data();
-    if(adminData.pin !== pin) throw new Error('PIN administrateur incorrect');
+    const storedPin = String(adminData.pin).trim();
+    const inputPin = String(pin).trim();
+    
+    console.log('✓ Vérification PIN admin:', {stored: storedPin, input: inputPin, match: storedPin === inputPin});
+    
+    if(storedPin !== inputPin) throw new Error('PIN incorrect');
     
     return { uid: ADMIN_EMAIL, role: 'admin' };
   } catch(e) {
+    console.error('✗ Erreur checkAdminPIN:', e.message);
     throw new Error(e.message || 'Erreur lors de la vérification admin');
   }
 }
