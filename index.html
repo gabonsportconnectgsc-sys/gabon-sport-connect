@@ -65,52 +65,6 @@
     @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
     .fade-up{animation:fadeUp .4s ease both;}
 
-    /* ── AUTH ── */
-    #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-md) 60%,#0d3a1f 100%);padding:20px;position:relative;overflow:hidden;}
-    #auth-screen::before,#auth-screen::after{content:'';position:absolute;border-radius:50%;opacity:.07;background:var(--yellow);pointer-events:none;}
-    #auth-screen::before{width:500px;height:500px;top:-150px;right:-150px;}
-    #auth-screen::after{width:300px;height:300px;bottom:-80px;left:-80px;background:var(--green);opacity:.12;}
-    .auth-card{background:var(--white);border-radius:var(--radius-lg);padding:44px 40px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);position:relative;z-index:1;animation:fadeUp .5s ease;}
-    .auth-logo{text-align:center;margin-bottom:24px;}
-    .auth-logo .logo-badge{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dk));font-size:32px;margin-bottom:12px;box-shadow:0 6px 20px rgba(0,158,96,.35);}
-    .auth-logo h1{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--navy);line-height:1.2;}
-    .auth-logo p{font-size:13px;color:var(--gray-txt);margin-top:4px;}
-
-    /* Visiteur CTA */
-    .visitor-cta{background:linear-gradient(135deg,#f0faf5,#e6f7ef);border:1.5px solid var(--green);border-radius:var(--radius-md);padding:16px;margin-bottom:20px;text-align:center;}
-    .visitor-cta p{font-size:13px;color:var(--green-dk);margin-bottom:10px;font-weight:600;}
-    .btn-visitor{width:100%;padding:12px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
-    .btn-visitor:hover{background:var(--green-dk);}
-    .auth-divider{text-align:center;font-size:12px;color:var(--gray-txt);margin:16px 0;position:relative;}
-    .auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--gray-bd);}
-    .auth-divider::before{left:0;}
-    .auth-divider::after{right:0;}
-
-    .auth-tabs{display:flex;background:var(--gray-bg);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px;gap:4px;overflow-x:auto;}
-    .auth-tab{flex:1;min-width:80px;padding:8px 6px;border:none;background:none;border-radius:6px;font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;white-space:nowrap;}
-    .auth-tab.active{background:var(--white);color:var(--navy);box-shadow:var(--shadow-sm);}
-    .auth-form{display:none;}.auth-form.active{display:block;}
-    .field-group{margin-bottom:14px;}
-    .field-group label{display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;}
-    .field-group input,.field-group select{width:100%;padding:11px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;color:var(--navy);background:var(--white);transition:border-color .2s,box-shadow .2s;outline:none;}
-    .field-group input:focus,.field-group select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
-    .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:8px;}
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,158,96,.35);}
-    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-    .auth-error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5;}
-    .pwd-wrapper{position:relative;}
-    .pwd-wrapper input{padding-right:44px;}
-    .pwd-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-txt);padding:4px;line-height:1;transition:color .2s;}
-    .pwd-toggle:hover{color:var(--navy);}
-
-    /* Rôle cards in register */
-    .role-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-    .role-card{border:2px solid var(--gray-bd);border-radius:var(--radius-sm);padding:12px 8px;cursor:pointer;text-align:center;transition:all .2s;background:var(--white);}
-    .role-card.selected{border-color:var(--green);background:var(--green-lt);}
-    .role-card .rc-icon{font-size:22px;margin-bottom:4px;}
-    .role-card .rc-label{font-size:11px;font-weight:700;color:var(--navy);}
-    .role-card .rc-sub{font-size:10px;color:var(--gray-txt);margin-top:2px;}
-
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
     .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
@@ -523,11 +477,6 @@
       .phys-grid{grid-template-columns:repeat(4,1fr);}
       .actors-grid{grid-template-columns:repeat(3,1fr);}
     }
-    @media(max-width:360px){
-      .auth-card{padding:32px 20px;}
-      .role-cards{grid-template-columns:1fr 1fr;}
-    }
-
     /* ── BADGE PINK (Supporter) ── */
     .role-badge.supporter{background:#ec4899;color:white;}
     .badge-supporter{background:#fce7f3;color:#9d174d;}
@@ -861,220 +810,6 @@
 <body>
 
 <div id="toast-container"></div>
-
-<!-- ══ AUTH SCREEN ══ -->
-<div id="auth-screen" style="display:none;">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="img/hd_image_2.png" alt="Gabon Sport Connect" style="width:130px;height:130px;border-radius:50%;object-fit:cover;box-shadow:0 6px 24px rgba(0,60,160,.3);margin-bottom:4px;image-rendering:high-quality;">
-      <h1>Gabon Sport<span style="color:var(--green)">Connect</span></h1>
-      <p>Plateforme nationale du sport gabonais</p>
-    </div>
-
-    <!-- VISITEUR CTA -->
-    <div class="visitor-cta">
-      <p>👁️ Consulter l'annuaire sans se connecter</p>
-      <button class="btn-visitor" onclick="enterAsVisitor()">🏟️ Accès visiteur — Voir les stats & acteurs</button>
-    </div>
-
-    <div class="auth-divider">ou se connecter / s'inscrire</div>
-
-    <div class="auth-error" id="auth-error"></div>
-
-    <!-- TABS -->
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Connexion</button>
-      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Inscription</button>
-      <button class="auth-tab" id="tab-admin-btn" onclick="switchAuthTab('admin')" style="background:rgba(245,158,11,.1);color:#92400e;">⚙️ Admin</button>
-    </div>
-
-    <!-- LOGIN FORM -->
-    <div id="form-login" class="auth-form active">
-      <div class="field-group">
-        <label>Adresse email</label>
-        <input type="email" id="user-login-email" placeholder="votre@email.com" oninput="hideAuthError()" />
-      </div>
-      <div class="field-group">
-        <label>PIN (4 chiffres)</label>
-        <input type="text" id="user-login-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="hideAuthError();this.value=this.value.replace(/[^0-9]/g,'')" />
-      </div>
-      <button id="btn-user-login" onclick="handleUserLogin()" class="btn-primary">🏃 Se connecter</button>
-    </div>
-
-    <!-- REGISTER FORM -->
-    <div id="form-register" class="auth-form">
-      <div class="field-group">
-        <label>Nom complet</label>
-        <input type="text" id="reg-name" placeholder="Prénom Nom" />
-      </div>
-      <div class="field-group">
-        <label>Adresse email</label>
-        <input type="email" id="reg-email" placeholder="votre@email.com" />
-      </div>
-      <div class="field-group">
-        <label>PIN (4 chiffres) — Votre code d'accès personnel</label>
-        <input type="text" id="reg-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
-        <p style="font-size:11px;color:var(--gray-txt);margin-top:6px;">Choisissez 4 chiffres faciles à retenir pour vous connecter.</p>
-      </div>
-      <div class="field-group">
-        <label>Type de compte</label>
-        <div class="role-cards" id="role-cards">
-          <div class="role-card selected" onclick="selectRole('joueur')">
-            <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Joueur / Athlète</div>
-            <div class="rc-sub">Amateur ou pro</div>
-          </div>
-          <div class="role-card" onclick="selectRole('arbitre')">
-            <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Arbitre</div>
-            <div class="rc-sub">Officiel de match</div>
-          </div>
-          <div class="role-card" onclick="selectRole('entraineur')">
-            <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Entraîneur</div>
-            <div class="rc-sub">Coach / Technicien</div>
-          </div>
-          <div class="role-card" onclick="selectRole('club')">
-            <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Club / Association</div>
-            <div class="rc-sub">Orga. de tournois</div>
-          </div>
-          <div class="role-card" onclick="selectRole('federation')">
-            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Fédération / Ligue</div>
-            <div class="rc-sub">Instance dirigeante</div>
-          </div>
-          <div class="role-card" onclick="selectRole('organisateur')">
-            <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Organisateur</div>
-            <div class="rc-sub">Évènements, tournois</div>
-          </div>
-          <div class="role-card" onclick="selectRole('independant')">
-            <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
-            <div class="rc-label">Sportif indépendant</div>
-            <div class="rc-sub">Pratiquant isolé, hors club</div>
-          </div>
-          <div class="role-card" onclick="selectRole('eleve_etudiant')">
-            <span style="font-size:26px;display:block;margin-bottom:4px;">🎓</span>
-            <div class="rc-label">Élève / Étudiant</div>
-            <div class="rc-sub">Sport scolaire / universitaire</div>
-          </div>
-          <div class="role-card" onclick="selectRole('sportif_etranger')" style="grid-column:1/-1;">
-            <span style="font-size:26px;display:block;margin-bottom:4px;">🌍</span>
-            <div class="rc-label">Sportif étranger</div>
-            <div class="rc-sub">Joueur / athlète non gabonais évoluant au Gabon</div>
-          </div>
-        </div>
-        <input type="hidden" id="reg-role" value="joueur" />
-      </div>
-      <div class="field-group" id="reg-titre-group" style="display:none;">
-        <label>Titre / rôle au sein de l'organisation</label>
-        <select id="reg-titre-select" onchange="onRegTitreChange()">
-          <option value="">Choisir un titre…</option>
-        </select>
-        <input type="text" id="reg-titre-autre" placeholder="Précisez votre titre…" style="display:none;margin-top:8px;">
-      </div>
-      <div class="field-group" id="reg-sport-group">
-        <label>Sport principal</label>
-        <select id="reg-sport">
-          <option value="Football">⚽ Football</option>
-          <option value="Basketball">🏀 Basketball</option>
-          <option value="Handball">🤾 Handball</option>
-          <option value="Volleyball">🏐 Volleyball</option>
-          <option value="Athlétisme">🏃 Athlétisme</option>
-          <option value="Natation">🏊 Natation</option>
-          <option value="Boxe">🥊 Boxe</option>
-          <option value="Judo">🥋 Judo</option>
-          <option value="Tennis">🎾 Tennis</option>
-          <option value="Rugby">🏉 Rugby</option>
-          <option value="Cyclisme">🚴 Cyclisme</option>
-          <option value="Taekwondo">🥋 Taekwondo</option>
-          <option value="Multi-sports">🏅 Multi-sports</option>
-        </select>
-      </div>
-      <div class="field-group" id="reg-niveau-group" style="display:none;">
-        <label>Niveau</label>
-        <select id="reg-niveau">
-          <option value="Amateur">Amateur / Loisir</option>
-          <option value="Regional">Régional</option>
-          <option value="National">National</option>
-          <option value="International">International</option>
-        </select>
-      </div>
-
-      <!-- ── ÉLÈVE / ÉTUDIANT : champs scolaires & universitaires ── -->
-      <div class="field-group" id="reg-niveauscolaire-group" style="display:none;">
-        <label>Niveau scolaire / universitaire</label>
-        <select id="reg-niveauscolaire">
-          <option value="Primaire">Primaire</option>
-          <option value="Collège">Collège</option>
-          <option value="Lycée">Lycée</option>
-          <option value="Licence">Licence (Bac+1 à Bac+3)</option>
-          <option value="Master">Master (Bac+4/5)</option>
-          <option value="Doctorat">Doctorat</option>
-        </select>
-      </div>
-      <div class="field-group" id="reg-etablissement-group" style="display:none;">
-        <label>Établissement scolaire / universitaire</label>
-        <input type="text" id="reg-etablissement" list="gsc-etablissements-list" placeholder="Rechercher un établissement (Gabon ou international)…" />
-        <datalist id="gsc-etablissements-list"></datalist>
-        <input type="text" id="reg-etablissement-autre" placeholder="Établissement non listé ? Précisez nom + ville/pays" style="display:none;margin-top:8px;">
-        <label style="margin-top:6px;font-size:11px;color:var(--gray-txt);"><input type="checkbox" id="reg-etablissement-toggle-autre" onchange="document.getElementById('reg-etablissement-autre').style.display=this.checked?'':'none'" style="vertical-align:middle;margin-right:4px;">Mon établissement n'est pas dans la liste</label>
-      </div>
-      <div class="field-group" id="reg-filiere-group" style="display:none;">
-        <label>Filière / spécialité</label>
-        <input type="text" id="reg-filiere" placeholder="Ex : Sciences, STAPS, Droit, Économie…" />
-      </div>
-
-      <!-- ── SPORTIF ÉTRANGER : statut & documents ── -->
-      <div class="field-group" id="reg-nationalite-group" style="display:none;">
-        <label>Nationalité</label>
-        <select id="reg-nationalite"></select>
-      </div>
-      <div class="field-group" id="reg-statutpro-group" style="display:none;">
-        <label>Statut contractuel</label>
-        <select id="reg-statutpro">
-          <option value="Libre">Joueur libre (sans contrat)</option>
-          <option value="Sous contrat">Sous contrat avec un club/employeur</option>
-        </select>
-        <input type="text" id="reg-employeur" placeholder="Nom du club / employeur (si sous contrat)" style="margin-top:8px;">
-      </div>
-      <div class="field-group" id="reg-document-group" style="display:none;">
-        <label>Document d'identité / titre de séjour</label>
-        <select id="reg-document-type">
-          <option value="Passeport">Passeport</option>
-          <option value="Carte de séjour">Carte de séjour</option>
-          <option value="Visa de travail">Visa de travail</option>
-          <option value="Licence FIFA/fédération">Licence FIFA / fédération internationale</option>
-        </select>
-        <input type="text" id="reg-document-numero" placeholder="Numéro du document" style="margin-top:8px;">
-        <div style="font-size:11px;color:var(--gray-txt);margin-top:8px;line-height:1.5;">
-          ℹ️ La validité de votre document et de votre contrat sera vérifiée par l'administrateur via les registres internationaux (FIFA Clearing House / TMS, fédérations internationales, Transfermarkt).
-        </div>
-      </div>
-      <button id="btn-register" onclick="handleRegister()" class="btn-primary">✅ Créer mon compte</button>
-    </div>
-
-    <!-- ADMIN FORM -->
-    <div id="form-admin" class="auth-form">
-      <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fbbf24;border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
-        <div style="font-weight:700;color:#7a5500;font-size:13px;margin-bottom:4px;">⚙️ Accès administrateur réservé</div>
-        <div style="font-size:12px;color:#92400e;">Saisissez le PIN secret pour accéder au panel d'administration</div>
-      </div>
-      <div class="field-group">
-        <label>PIN administrateur (4 chiffres)</label>
-        <input type="text" id="admin-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="hideAuthError();this.value=this.value.replace(/[^0-9]/g,'')" />
-      </div>
-      <button id="btn-login" onclick="handleLogin()" class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔐 Accéder au panel</button>
-    </div>
-
-    <p style="text-align:center;font-size:11px;color:var(--gray-txt);margin-top:20px;">
-      Plateforme nationale du sport gabonais &mdash; 2026<br>
-      <a href="https://gabonsportconnectgsc-sys.github.io" target="_blank" style="color:var(--green);text-decoration:none;">gabonsportconnectgsc-sys.github.io</a>
-      <br><a href="?admin=1" style="color:rgba(100,116,139,.4);text-decoration:none;font-size:10px;">·</a>
-    </p>
-  </div>
-</div>
 
 <!-- ══ APP SCREEN ══ -->
 <div id="app-screen" style="display:block;">
@@ -2336,42 +2071,6 @@ const ROLE_ICONS = {
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍'
 };
 
-function showAuthError(msg){
-  var el=document.getElementById('auth-error');
-  el.innerHTML='⚠️ '+msg; el.style.display='block';
-}
-function hideAuthError(){ document.getElementById('auth-error').style.display='none'; }
-
-// Suggestions de titres par rôle — l'utilisateur peut toujours choisir "Autre" pour
-// saisir librement un titre qui n'existe pas encore dans la liste.
-const TITRE_SUGGESTIONS={
-  club:['Président','Secrétaire général','Trésorier','Directeur sportif','Manager général','Responsable communication'],
-  association:['Président','Secrétaire général','Trésorier','Chargé de projets','Responsable communication'],
-  federation:['Président','Secrétaire général','Trésorier','Directeur technique national','Responsable des compétitions','Chargé de communication'],
-  organisateur:['Organisateur principal','Coordinateur d\'évènement','Responsable logistique','Responsable billetterie','Chargé de partenariats'],
-  arbitre:['Arbitre central','Arbitre assistant','Arbitre de touche','Commissaire de match','Arbitre vidéo (VAR)']
-};
-
-function populateTitreOptions(role){
-  const sel=document.getElementById('reg-titre-select');
-  if(!sel) return;
-  const opts=TITRE_SUGGESTIONS[role]||[];
-  sel.innerHTML='<option value="">Choisir un titre…</option>'
-    +opts.map(o=>`<option value="${o}">${o}</option>`).join('')
-    +'<option value="__autre__">✏️ Autre (préciser)</option>';
-  document.getElementById('reg-titre-autre').style.display='none';
-  document.getElementById('reg-titre-autre').value='';
-}
-
-function onRegTitreChange(){
-  const sel=document.getElementById('reg-titre-select');
-  const autre=document.getElementById('reg-titre-autre');
-  if(!sel||!autre) return;
-  autre.style.display=sel.value==='__autre__'?'':'none';
-  if(sel.value==='__autre__') autre.focus();
-}
-window.onRegTitreChange=onRegTitreChange;
-
 // Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
 // lat/lng utilisés pour la géolocalisation sur la carte sportive.
 const ETABLISSEMENTS_GA=[
@@ -2391,44 +2090,6 @@ const ETABLISSEMENTS_GA=[
   {nom:'Lycée Provincial de Franceville',ville:'Franceville',type:'Lycée',lat:-1.6333,lng:13.5833},
   {nom:'Établissement international (hors Gabon)',ville:'International',type:'International',lat:null,lng:null}
 ];
-function populateEtablissements(){
-  const dl=document.getElementById('gsc-etablissements-list');
-  if(!dl) return;
-  dl.innerHTML=ETABLISSEMENTS_GA.map(e=>`<option value="${e.nom}">${e.ville}</option>`).join('');
-}
-
-// Liste de pays pour le statut "Sportif étranger"
-const PAYS_LIST=['Cameroun','Congo','République Démocratique du Congo','Guinée Équatoriale','Tchad',
-  'Sénégal','Côte d\'Ivoire','Mali','Burkina Faso','Bénin','Togo','Nigeria','Ghana','Maroc','Algérie',
-  'Tunisie','Égypte','Afrique du Sud','France','Belgique','Brésil','Argentine','Portugal','Espagne','Autre'];
-function populateNationalites(){
-  const sel=document.getElementById('reg-nationalite');
-  if(!sel) return;
-  sel.innerHTML=PAYS_LIST.map(p=>`<option value="${p}">${p}</option>`).join('');
-}
-document.addEventListener('DOMContentLoaded',()=>{populateEtablissements();populateNationalites();});
-
-function selectRole(role){
-  document.getElementById('reg-role').value=role;
-  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  // Show/hide extra fields
-  var showSport=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(role);
-  var showNiveau=['joueur','arbitre','independant','eleve_etudiant','sportif_etranger'].includes(role);
-  var showTitre=['club','association','federation','organisateur','arbitre'].includes(role);
-  var showScolaire=role==='eleve_etudiant';
-  var showEtranger=role==='sportif_etranger';
-  document.getElementById('reg-sport-group').style.display=showSport?'':'none';
-  document.getElementById('reg-niveau-group').style.display=showNiveau?'':'none';
-  document.getElementById('reg-titre-group').style.display=showTitre?'':'none';
-  document.getElementById('reg-niveauscolaire-group').style.display=showScolaire?'':'none';
-  document.getElementById('reg-etablissement-group').style.display=showScolaire?'':'none';
-  document.getElementById('reg-filiere-group').style.display=showScolaire?'':'none';
-  document.getElementById('reg-nationalite-group').style.display=showEtranger?'':'none';
-  document.getElementById('reg-statutpro-group').style.display=showEtranger?'':'none';
-  document.getElementById('reg-document-group').style.display=showEtranger?'':'none';
-  if(showTitre) populateTitreOptions(role);
-}
 
 </script>
 
@@ -2491,13 +2152,6 @@ var db=null, _fbApp=null;
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
     query, orderBy, serverTimestamp, deleteDoc, where, limit;
 
-const ADMIN_EMAIL = 'gabonsportconnectgsc@gmail.com';
-
-// ── ADMIN DIRECT LINK HELPER ──
-function isAdminLinkRequested(){
-  return new URLSearchParams(window.location.search).get('admin') === '1';
-}
-
 // ── POSTES ──
 const POSTES = {
   Football:['Gardien','Défenseur central','Latéral droit','Latéral gauche','Milieu défensif','Milieu central','Milieu offensif','Ailier droit','Ailier gauche','Attaquant','Avant-centre'],
@@ -2515,118 +2169,7 @@ const POSTES = {
   Arbitre:['Arbitre central','Arbitre assistant','Arbitre de touche','Chronométreur','Juge de ligne'],
 };
 
-// ── FONCTIONS D'AUTHENTIFICATION PIN (FIRESTORE) ──
-
-async function checkUserPIN(email, pin) {
-  if(!db || typeof getDoc !== 'function') throw new Error('Firestore non disponible');
-  if(!pin || pin.length !== 4) throw new Error('PIN invalide');
-  
-  try {
-    const queryResult = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
-    if(queryResult.empty) throw new Error('Email non trouvé');
-    
-    const userDoc = queryResult.docs[0];
-    const userData = userDoc.data();
-    
-    if(userData.pin !== pin) throw new Error('PIN incorrect');
-    
-    return { uid: userDoc.id, email: userData.email };
-  } catch(e) {
-    throw new Error(e.message || 'Erreur lors de la vérification');
-  }
-}
-
-async function createUserWithPIN(email, pin, profileData) {
-  if(!db || typeof setDoc !== 'function') throw new Error('Firestore non disponible');
-  if(!pin || pin.length !== 4) throw new Error('PIN invalide (4 chiffres requis)');
-  if(!email) throw new Error('Email requis');
-  
-  try {
-    // Vérifier que l'email n'existe pas déjà
-    const queryResult = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
-    if(!queryResult.empty) throw new Error('Email déjà utilisé');
-    
-    // Créer un nouvel utilisateur dans Firestore
-    const uid = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    const userData = {
-      uid,
-      email,
-      pin, // Stocké en clair (en production, utiliser hachage)
-      ...profileData,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-    
-    await setDoc(doc(db, 'users', uid), userData);
-    return { uid, email };
-  } catch(e) {
-    throw new Error(e.message || 'Erreur lors de la création');
-  }
-}
-
-async function checkAdminPIN(pin) {
-  if(!db || typeof getDoc !== 'function') throw new Error('Firestore non disponible');
-  if(!pin || pin.length !== 4) throw new Error('PIN invalide');
-  
-  try {
-    const adminDoc = await getDoc(doc(db, 'config', 'admin'));
-    
-    if(!adminDoc.exists()) {
-      console.warn('Config admin non trouvée - création automatique');
-      // Créer la config avec PIN par défaut
-      await setDoc(doc(db, 'config', 'admin'), {
-        pin: '1234',
-        createdAt: serverTimestamp(),
-        description: 'Configuration administrateur Gabon Sport Connect'
-      });
-      // Vérifier à nouveau
-      const adminDocRetry = await getDoc(doc(db, 'config', 'admin'));
-      if(!adminDocRetry.exists()) throw new Error('Impossible de créer la config admin');
-      const data = adminDocRetry.data();
-      const storedPin = String(data.pin).trim();
-      const inputPin = String(pin).trim();
-      if(storedPin !== inputPin) throw new Error('PIN incorrect');
-      return { uid: ADMIN_EMAIL, role: 'admin' };
-    }
-    
-    const adminData = adminDoc.data();
-    const storedPin = String(adminData.pin).trim();
-    const inputPin = String(pin).trim();
-    
-    console.log('✓ Vérification PIN admin:', {stored: storedPin, input: inputPin, match: storedPin === inputPin});
-    
-    if(storedPin !== inputPin) throw new Error('PIN incorrect');
-    
-    return { uid: ADMIN_EMAIL, role: 'admin' };
-  } catch(e) {
-    console.error('✗ Erreur checkAdminPIN:', e.message);
-    throw new Error(e.message || 'Erreur lors de la vérification admin');
-  }
-}
-
-function restSignOut() { 
-  _idToken = null;
-  _uid = null;
-  localStorage.removeItem('gsc_session'); 
-}
-
-function getStoredSession() {
-  try {
-    const s = localStorage.getItem('gsc_session');
-    if(!s) return null;
-    const d = JSON.parse(s);
-    if(Date.now() > d.exp) { localStorage.removeItem('gsc_session'); return null; }
-    _idToken = d.idToken;
-    _uid = d.uid;
-    return { uid: d.uid, email: d.email };
-  } catch(e) { return null; }
-}
-
 // ── EXPOSE GLOBALS ──
-window.switchAuthTab=switchAuthTab;
-window.handleLogin=handleLogin;
-window.handleUserLogin=handleUserLogin;
-window.handleRegister=handleRegister;
 window.handleLogout=handleLogout;
 window.enterAsVisitor=enterAsVisitor;
 window.goToAuth=goToAuth;
@@ -2678,8 +2221,6 @@ function enterAsVisitor(silent=false){
   isVisitor=true;
   currentUser=null;userProfile=null;
   showApp();
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app-screen').style.display='block';
   document.getElementById('visitor-notice').style.display='flex';
   document.getElementById('nav-visitor-banner').style.display='';
   document.getElementById('nav-login-btn').style.display='';
@@ -2712,15 +2253,9 @@ function enterAsVisitor(silent=false){
 }
 
 function goToAuth(tab){
-  document.getElementById('auth-screen').style.display='flex';
-  document.getElementById('app-screen').style.display='none';
-  if(tab) switchAuthTab(tab);
-  // Pre-fill admin email when accessed via ?admin=1 link
-  if(isAdminLinkRequested()){
-    switchAuthTab('admin');
-    const emailField = document.getElementById('login-email');
-    if(emailField && !emailField.value) emailField.value = ADMIN_EMAIL;
-  }
+  // L'écran de connexion a été retiré — un nouveau système d'authentification
+  // (gestion Firestore) sera ajouté prochainement.
+  toast('🔒 La connexion sera bientôt disponible.','info');
 }
 
 // ── MENU LATÉRAL (plan de l'application) ──
@@ -2808,7 +2343,6 @@ function handleChipClick(){
 }
 
 function showApp(){
-  document.getElementById('auth-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
 }
 
@@ -2839,170 +2373,7 @@ function enterApp(){
   loadActors();
 }
 
-// ── AUTH FUNCTIONS ──
-function switchAuthTab(tab){
-  ['login','register','admin'].forEach(t=>{
-    document.getElementById('form-'+t)?.classList.toggle('active',t===tab);
-    document.getElementById('tab-'+t+'-btn')?.classList.toggle('active',t===tab);
-  });
-  hideAuthError();
-}
-
-async function handleLogin(){
-  const pin = document.getElementById('admin-pin').value.trim();
-  if(!pin) return showAuthError('Veuillez entrer le PIN administrateur.');
-  if(pin.length !== 4) return showAuthError('Le PIN doit contenir 4 chiffres.');
-  
-  setLoading('btn-login', true, 'Vérification…');
-  try {
-    const admin = await checkAdminPIN(pin);
-    currentUser = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL };
-    userProfile = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL, role: 'admin', prenom: 'Admin', nom: 'GSC' };
-    _idToken = 'admin_' + Date.now();
-    _uid = ADMIN_EMAIL;
-    localStorage.setItem('gsc_session', JSON.stringify({ idToken: _idToken, uid: _uid, email: ADMIN_EMAIL, exp: Date.now() + 3500000 }));
-    await postAuthSuccess();
-  } catch(e) {
-    setLoading('btn-login', false, '🔐 Accéder au panel');
-    showAuthError('PIN administrateur incorrect.');
-  }
-}
-
-async function handleUserLogin(){
-  const email = document.getElementById('user-login-email').value.trim();
-  const pin = document.getElementById('user-login-pin').value.trim();
-  
-  if(!email || !pin) return showAuthError('Veuillez remplir tous les champs.');
-  if(pin.length !== 4) return showAuthError('Le PIN doit contenir 4 chiffres.');
-  
-  setLoading('btn-user-login', true, 'Connexion…');
-  try {
-    const u = await checkUserPIN(email, pin);
-    currentUser = u;
-    await loadUserProfile(u.uid);
-    localStorage.setItem('gsc_session', JSON.stringify({ idToken: 'user_' + Date.now(), uid: u.uid, email, exp: Date.now() + 3500000 }));
-    await postAuthSuccess();
-  } catch(e) {
-    setLoading('btn-user-login', false, '🏃 Se connecter');
-    const errorMsg = e.message.includes('non trouvé') ? 'Email non trouvé. Veuillez vous inscrire.' 
-                    : e.message.includes('incorrect') ? 'PIN incorrect.'
-                    : 'Erreur de connexion.';
-    showAuthError(errorMsg);
-  }
-}
-
-async function handleRegister(){
-  if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
-  const name=document.getElementById('reg-name').value.trim();
-  const email=document.getElementById('reg-email').value.trim();
-  const pin=document.getElementById('reg-pin').value.trim();
-  let role=document.getElementById('reg-role').value;
-  const sport=document.getElementById('reg-sport')?.value||'Multi-sports';
-  const niveau=document.getElementById('reg-niveau')?.value||'Amateur';
-  // Titre / rôle personnalisé : choisi dans la liste suggérée, ou saisi librement via "Autre"
-  const titreSel=document.getElementById('reg-titre-select')?.value||'';
-  const titrePersonnalise=titreSel==='__autre__'
-    ? (document.getElementById('reg-titre-autre')?.value.trim()||'')
-    : titreSel;
-  if(!name||!email||!pin) return showAuthError('Veuillez remplir tous les champs.');
-  if(pin.length!==4) return showAuthError('Le PIN doit contenir exactement 4 chiffres.');
-  if(email===ADMIN_EMAIL) role='admin';
-  else if(role==='admin') role='joueur';
-  setLoading('btn-register',true,'Création…');
-  try{
-    const parts=name.split(' ');
-    const baseProfile={
-      email,pin,
-      prenom:parts[0]||name,nom:parts.slice(1).join(' ')||'',
-      role,sport,niveau,ville:'',telephone:'',bio:'',
-      titrePersonnalise,
-      photoURL:'',status:role==='admin'?'active':'pending',
-      createdAt:serverTimestamp(),updatedAt:serverTimestamp()
-    };
-    // Role-specific fields
-    if(['joueur','arbitre','entraineur','independant'].includes(role)){
-      Object.assign(baseProfile,{
-        club:'',clubsPrecedents:'',poste:'',
-        matchsJoues:0,buts:0,passes:0,trophees:0,
-        taille:0,poids:0,pied:'',main:'',
-        cartonsJaunes:0,cartonsRouges:0,
-        mandats:[], // [{club, dateDebut, dateFin, poste}]
-        licenceNumero:'',licenceExpire:'',
-        gereParFederation:false
-      });
-    } else if(['club','association','federation','organisateur'].includes(role)){
-      const typeMap={club:'Club sportif',association:'Association',federation:'Fédération',organisateur:'Organisation d\'évènements'};
-      Object.assign(baseProfile,{
-        nomOrganisation:name,typeOrganisation:typeMap[role]||'Organisation',
-        anneeCreation:'',president:'',adresse:'',siteWeb:'',
-        sports:[sport],effectif:0,palmares:''
-      });
-    } else if(role==='eleve_etudiant'){
-      const etabToggle=document.getElementById('reg-etablissement-toggle-autre')?.checked;
-      const etablissement=etabToggle
-        ? (document.getElementById('reg-etablissement-autre')?.value.trim()||'')
-        : (document.getElementById('reg-etablissement')?.value.trim()||'');
-      const niveauScolaire=document.getElementById('reg-niveauscolaire')?.value||'';
-      const filiere=document.getElementById('reg-filiere')?.value.trim()||'';
-      const etabRef=ETABLISSEMENTS_GA.find(e=>e.nom===etablissement);
-      Object.assign(baseProfile,{
-        club:'',poste:'',taille:0,poids:0,
-        mandats:[],licenceNumero:'',licenceExpire:'',
-        niveauScolaire,etablissement,filiere,
-        etablissementVille:etabRef?.ville||'',
-        etablissementLat:etabRef?.lat||null,
-        etablissementLng:etabRef?.lng||null,
-        statutSportifScolaire:true
-      });
-    } else if(role==='sportif_etranger'){
-      const nationalite=document.getElementById('reg-nationalite')?.value||'';
-      const statutPro=document.getElementById('reg-statutpro')?.value||'Libre';
-      const employeur=document.getElementById('reg-employeur')?.value.trim()||'';
-      const documentType=document.getElementById('reg-document-type')?.value||'';
-      const documentNumero=document.getElementById('reg-document-numero')?.value.trim()||'';
-      Object.assign(baseProfile,{
-        club:employeur,poste:'',taille:0,poids:0,
-        mandats:[],licenceNumero:'',licenceExpire:'',
-        nationalite,statutPro,employeur,documentType,documentNumero,
-        documentVerifie:false,
-        liensVerification:{
-          fifaTms:'https://tms.fifa.com',
-          transfermarkt:'https://www.transfermarkt.com',
-          caf:'https://www.cafonline.com'
-        }
-      });
-    }
-    // Créer l'utilisateur avec PIN dans Firestore
-    const cred = await createUserWithPIN(email, pin, baseProfile);
-    const uid = cred.uid;
-    userProfile = { uid, ...baseProfile };
-    currentUser = cred;
-    // Stocker la session
-    localStorage.setItem('gsc_session', JSON.stringify({ idToken: 'user_' + Date.now(), uid, email, exp: Date.now() + 3500000 }));
-    toast(role==='admin'?'✅ Bienvenue ! Votre compte a été créé.':'✅ Compte créé ! Votre fiche sera visible dans l\'annuaire après validation par l\'administrateur.','success');
-    await postAuthSuccess();
-  }catch(e){
-    setLoading('btn-register',false,'✅ Créer mon compte');
-    const errorMsg = e.message.includes('Email déjà utilisé') ? 'Cet email est déjà utilisé. Veuillez vous connecter.' 
-                   : e.message.includes('PIN') ? 'Erreur PIN : doit contenir 4 chiffres.'
-                   : 'Erreur lors de la création du compte.';
-    showAuthError(errorMsg);
-  }
-}
-
-async function postAuthSuccess(){
-  enterApp();
-  await loadActors();
-  if(userProfile?.role==='admin'){
-    loadAdminUsers();loadAdminSites();loadAdminStats();
-    // If accessed via the special admin link, jump straight to the admin panel
-    if(isAdminLinkRequested()) { showView('admin'); return; }
-  }
-  showView('dashboard');
-}
-
 async function handleLogout(){
-  restSignOut();
   currentUser=null;userProfile=null;
   toast('Déconnecté.','info');
   enterAsVisitor(true);
@@ -4916,45 +4287,13 @@ document.addEventListener('firebase-ready', async function(){
     return;
   }
 
-  // ── INITIALISER PIN ADMIN ──
-  // Vérifier et créer la config admin si elle n'existe pas
-  try {
-    const adminConfigRef = doc(db, 'config', 'admin');
-    const adminConfigSnap = await getDoc(adminConfigRef);
-    if(!adminConfigSnap.exists()) {
-      // Créer la config avec PIN par défaut 1234
-      await setDoc(adminConfigRef, {
-        pin: '1234',
-        createdAt: serverTimestamp(),
-        description: 'Configuration administrateur Gabon Sport Connect'
-      });
-      console.log('ℹ️ Config admin créée avec PIN par défaut: 1234');
-    }
-  } catch(e) {
-    console.warn('Erreur lors de l\'initialisation admin:', e);
-  }
-
-  const session = getStoredSession();
-  if(session){
-    currentUser = session;
-    await loadUserProfile(session.uid);
-    enterApp();
-    // If restored session is admin AND special link was used → jump to admin panel directly
-    if(userProfile?.role==='admin' && isAdminLinkRequested()){
-      loadAdminUsers();loadAdminSites();loadAdminStats();
-      showView('admin');
-    }
-  } else {
-    loadGlobalStats();
-    await loadNewsFromDb();
-    renderNews();
-    showApp();
-    enterAsVisitor(true);
-    // If no session but ?admin=1 in URL → open auth on Admin tab with email pre-filled
-    if(isAdminLinkRequested()){
-      goToAuth('admin');
-    }
-  }
+  // L'app démarre toujours en mode visiteur (lecture seule).
+  // L'authentification (gestion Firestore) sera réintroduite ultérieurement.
+  loadGlobalStats();
+  await loadNewsFromDb();
+  renderNews();
+  showApp();
+  enterAsVisitor(true);
   loadActors();
 });
 
