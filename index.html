@@ -845,24 +845,10 @@
         <input type="email" id="user-login-email" placeholder="votre@email.com" oninput="hideAuthError()" />
       </div>
       <div class="field-group">
-        <label>Mot de passe</label>
-        <div class="pwd-wrapper">
-          <input type="password" id="user-login-password" placeholder="••••••••" oninput="hideAuthError()" />
-          <button type="button" class="pwd-toggle" onclick="togglePwd('user-login-password',this)">👁️</button>
-        </div>
+        <label>PIN (4 chiffres)</label>
+        <input type="text" id="user-login-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="hideAuthError();this.value=this.value.replace(/[^0-9]/g,'')" />
       </div>
       <button id="btn-user-login" onclick="handleUserLogin()" class="btn-primary">🏃 Se connecter</button>
-      <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--gray-txt);">
-        <a href="#" onclick="event.preventDefault();showForgotPassword()" style="color:var(--green);text-decoration:none;font-weight:600;">Mot de passe oublié ?</a>
-      </p>
-      <div id="forgot-panel" style="display:none;margin-top:16px;background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:16px;">
-        <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;">🔑 Réinitialisation du mot de passe</p>
-        <div class="field-group" style="margin-bottom:10px;">
-          <input type="email" id="forgot-email" placeholder="Votre adresse email" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-size:14px;outline:none;" />
-        </div>
-        <button id="btn-forgot" onclick="sendResetEmail()" class="btn-primary" style="margin-top:0;">📧 Envoyer le lien</button>
-        <button onclick="closeForgotPanel()" style="width:100%;margin-top:8px;padding:8px;background:none;border:none;color:var(--gray-txt);font-size:13px;cursor:pointer;">Annuler</button>
-      </div>
     </div>
 
     <!-- REGISTER FORM -->
@@ -876,11 +862,9 @@
         <input type="email" id="reg-email" placeholder="votre@email.com" />
       </div>
       <div class="field-group">
-        <label>Mot de passe</label>
-        <div class="pwd-wrapper">
-          <input type="password" id="reg-password" placeholder="Minimum 6 caractères" />
-          <button type="button" class="pwd-toggle" onclick="togglePwd('reg-password',this)">👁️</button>
-        </div>
+        <label>PIN (4 chiffres) — Votre code d'accès personnel</label>
+        <input type="text" id="reg-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+        <p style="font-size:11px;color:var(--gray-txt);margin-top:6px;">Choisissez 4 chiffres faciles à retenir pour vous connecter.</p>
       </div>
       <div class="field-group">
         <label>Type de compte</label>
@@ -1024,21 +1008,14 @@
     <!-- ADMIN FORM -->
     <div id="form-admin" class="auth-form">
       <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fbbf24;border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
-        <div style="font-weight:700;color:#7a5500;font-size:13px;margin-bottom:4px;">⚙️ Accès réservé</div>
-        <div style="font-size:12px;color:#92400e;">Panel d'administration Gabon Sport Connect</div>
+        <div style="font-weight:700;color:#7a5500;font-size:13px;margin-bottom:4px;">⚙️ Accès administrateur réservé</div>
+        <div style="font-size:12px;color:#92400e;">Saisissez le PIN secret pour accéder au panel d'administration</div>
       </div>
       <div class="field-group">
-        <label>Email administrateur</label>
-        <input type="email" id="login-email" placeholder="gabonsportconnectgsc@gmail.com" />
+        <label>PIN administrateur (4 chiffres)</label>
+        <input type="text" id="admin-pin" placeholder="0000" maxlength="4" inputmode="numeric" oninput="hideAuthError();this.value=this.value.replace(/[^0-9]/g,'')" />
       </div>
-      <div class="field-group">
-        <label>Mot de passe</label>
-        <div class="pwd-wrapper">
-          <input type="password" id="login-password" placeholder="••••••••" />
-          <button type="button" class="pwd-toggle" onclick="togglePwd('login-password',this)">👁️</button>
-        </div>
-      </div>
-      <button id="btn-login" onclick="handleLogin()" class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔐 Connexion Admin</button>
+      <button id="btn-login" onclick="handleLogin()" class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔐 Accéder au panel</button>
     </div>
 
     <p style="text-align:center;font-size:11px;color:var(--gray-txt);margin-top:20px;">
@@ -2293,7 +2270,6 @@
 <!-- GLOBAL FUNCTIONS (non-module) -->
 <script>
 // ── CLÉ API Firebase (partagée avec le bloc module bootstrap) ──
-const FIREBASE_API_KEY = ['AIza','SyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi','14VM'].join('');
 
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
@@ -2313,18 +2289,6 @@ function showAuthError(msg){
   el.innerHTML='⚠️ '+msg; el.style.display='block';
 }
 function hideAuthError(){ document.getElementById('auth-error').style.display='none'; }
-
-function togglePwd(inputId,btn){
-  var input=document.getElementById(inputId);
-  if(input.type==='password'){input.type='text';btn.textContent='🙈';}
-  else{input.type='password';btn.textContent='👁️';}
-}
-function showForgotPassword(){
-  var email=document.getElementById('user-login-email')?.value.trim();
-  if(email) document.getElementById('forgot-email').value=email;
-  document.getElementById('forgot-panel').style.display='block';
-}
-function closeForgotPanel(){ document.getElementById('forgot-panel').style.display='none'; }
 
 // Suggestions de titres par rôle — l'utilisateur peut toujours choisir "Autre" pour
 // saisir librement un titre qui n'existe pas encore dans la liste.
@@ -2414,24 +2378,6 @@ function selectRole(role){
   if(showTitre) populateTitreOptions(role);
 }
 
-async function sendResetEmail(){
-  var emailToSend=document.getElementById('forgot-email').value.trim();
-  var btn=document.getElementById('btn-forgot');
-  if(!emailToSend){showAuthError('Entrez votre email.');return;}
-  btn.disabled=true;btn.textContent='Envoi…';
-  try{
-    var res=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key='+FIREBASE_API_KEY,
-      {method:'POST',headers:{'Content-Type':'application/json'},
-       body:JSON.stringify({requestType:'PASSWORD_RESET',email:emailToSend})});
-    var data=await res.json();
-    if(data.error) throw data.error;
-    closeForgotPanel();hideAuthError();
-    toast('📧 Email envoyé à '+emailToSend,'success');
-  }catch(e){
-    btn.disabled=false;btn.textContent='📧 Envoyer le lien';
-    showAuthError('Erreur : adresse introuvable ou invalide.');
-  }
-}
 </script>
 
 <!-- Firebase bootstrap: type="module" allows dynamic import() on all origins -->
@@ -2517,70 +2463,88 @@ const POSTES = {
   Arbitre:['Arbitre central','Arbitre assistant','Arbitre de touche','Chronométreur','Juge de ligne'],
 };
 
-function mapFirebaseRestError(message){
-  if(!message) return 'auth/unknown';
-  const msg=message.toUpperCase();
-  if(msg.includes('EMAIL_NOT_FOUND')||msg.includes('USER_DISABLED')) return 'auth/user-not-found';
-  if(msg.includes('INVALID_PASSWORD')) return 'auth/wrong-password';
-  if(msg.includes('INVALID_LOGIN_CREDENTIALS')||msg.includes('INVALID_EMAIL')&&msg.includes('PASSWORD')) return 'auth/invalid-credential';
-  if(msg.includes('INVALID_EMAIL')) return 'auth/invalid-email';
-  if(msg.includes('TOO_MANY_ATTEMPTS')||msg.includes('TOO_MANY_REQUESTS')) return 'auth/too-many-requests';
-  if(msg.includes('EMAIL_EXISTS')) return 'auth/email-already-in-use';
-  if(msg.includes('WEAK_PASSWORD')) return 'auth/weak-password';
-  return 'auth/invalid-credential';
-}
-function formatError(code){
-  const map={
-    'auth/user-not-found':'Aucun compte trouvé avec cet email.',
-    'auth/wrong-password':'Mot de passe incorrect.',
-    'auth/email-already-in-use':'Cet email est déjà utilisé. Connectez-vous.',
-    'auth/weak-password':'Mot de passe trop court (min 6 caractères).',
-    'auth/invalid-email':'Adresse email invalide.',
-    'auth/too-many-requests':'Trop de tentatives. Attendez quelques minutes.',
-    'auth/invalid-credential':'Email ou mot de passe incorrect.',
-    'auth/network-request-failed':'Erreur réseau. Vérifiez votre connexion.'
-  };
-  return map[code]||('Erreur : '+code);
-}
+// ── FONCTIONS D'AUTHENTIFICATION PIN (FIRESTORE) ──
 
-async function restSignIn(email,password){
-  if(!FIREBASE_API_KEY) throw {code:'auth/network-request-failed',message:'Clé API Firebase manquante.'};
-  try{
-    const res=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
-      {method:'POST',headers:{'Content-Type':'application/json'},
-       body:JSON.stringify({email,password,returnSecureToken:true})});
-    if(!res.ok && res.status!==400) throw {code:'auth/network-request-failed',message:'Erreur réseau (HTTP '+res.status+').'};
-    const data=await res.json();
-    if(data.error) throw {code:mapFirebaseRestError(data.error.message),message:data.error.message,raw:data.error};
-    _idToken=data.idToken;_uid=data.localId;
-    localStorage.setItem('gsc_session',JSON.stringify({idToken:data.idToken,uid:data.localId,email,exp:Date.now()+3500000}));
-    return {uid:data.localId,email};
-  }catch(e){
-    if(e.raw) throw e;
-    throw {code:'auth/network-request-failed',message:e.message||'Network error'};
+async function checkUserPIN(email, pin) {
+  if(!db || typeof getDoc !== 'function') throw new Error('Firestore non disponible');
+  if(!pin || pin.length !== 4) throw new Error('PIN invalide');
+  
+  try {
+    const queryResult = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+    if(queryResult.empty) throw new Error('Email non trouvé');
+    
+    const userDoc = queryResult.docs[0];
+    const userData = userDoc.data();
+    
+    if(userData.pin !== pin) throw new Error('PIN incorrect');
+    
+    return { uid: userDoc.id, email: userData.email };
+  } catch(e) {
+    throw new Error(e.message || 'Erreur lors de la vérification');
   }
 }
-async function restSignUp(email,password){
-  if(!FIREBASE_API_KEY) throw {code:'auth/network-request-failed',message:'Clé API Firebase manquante.'};
-  const res=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
-    {method:'POST',headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({email,password,returnSecureToken:true})});
-  const data=await res.json();
-  if(data.error) throw {code:mapFirebaseRestError(data.error.message),message:data.error.message};
-  _idToken=data.idToken;_uid=data.localId;
-  localStorage.setItem('gsc_session',JSON.stringify({idToken:data.idToken,uid:data.localId,email,exp:Date.now()+3500000}));
-  return {uid:data.localId,email};
+
+async function createUserWithPIN(email, pin, profileData) {
+  if(!db || typeof setDoc !== 'function') throw new Error('Firestore non disponible');
+  if(!pin || pin.length !== 4) throw new Error('PIN invalide (4 chiffres requis)');
+  if(!email) throw new Error('Email requis');
+  
+  try {
+    // Vérifier que l'email n'existe pas déjà
+    const queryResult = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+    if(!queryResult.empty) throw new Error('Email déjà utilisé');
+    
+    // Créer un nouvel utilisateur dans Firestore
+    const uid = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const userData = {
+      uid,
+      email,
+      pin, // Stocké en clair (en production, utiliser hachage)
+      ...profileData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    await setDoc(doc(db, 'users', uid), userData);
+    return { uid, email };
+  } catch(e) {
+    throw new Error(e.message || 'Erreur lors de la création');
+  }
 }
-function restSignOut(){ _idToken=null;_uid=null;localStorage.removeItem('gsc_session'); }
-function getStoredSession(){
-  try{
-    const s=localStorage.getItem('gsc_session');
+
+async function checkAdminPIN(pin) {
+  if(!db || typeof getDoc !== 'function') throw new Error('Firestore non disponible');
+  if(!pin || pin.length !== 4) throw new Error('PIN invalide');
+  
+  try {
+    const adminDoc = await getDoc(doc(db, 'config', 'admin'));
+    if(!adminDoc.exists()) throw new Error('Configuration admin non trouvée');
+    
+    const adminData = adminDoc.data();
+    if(adminData.pin !== pin) throw new Error('PIN administrateur incorrect');
+    
+    return { uid: ADMIN_EMAIL, role: 'admin' };
+  } catch(e) {
+    throw new Error(e.message || 'Erreur lors de la vérification admin');
+  }
+}
+
+function restSignOut() { 
+  _idToken = null;
+  _uid = null;
+  localStorage.removeItem('gsc_session'); 
+}
+
+function getStoredSession() {
+  try {
+    const s = localStorage.getItem('gsc_session');
     if(!s) return null;
-    const d=JSON.parse(s);
-    if(Date.now()>d.exp){localStorage.removeItem('gsc_session');return null;}
-    _idToken=d.idToken;_uid=d.uid;
-    return {uid:d.uid,email:d.email};
-  }catch(e){return null;}
+    const d = JSON.parse(s);
+    if(Date.now() > d.exp) { localStorage.removeItem('gsc_session'); return null; }
+    _idToken = d.idToken;
+    _uid = d.uid;
+    return { uid: d.uid, email: d.email };
+  } catch(e) { return null; }
 }
 
 // ── EXPOSE GLOBALS ──
@@ -2810,35 +2774,45 @@ function switchAuthTab(tab){
 }
 
 async function handleLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const pwd=document.getElementById('login-password').value;
-  if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
-  if(email!==ADMIN_EMAIL) return showAuthError("Ce panneau est réservé à l'administrateur.");
-  setLoading('btn-login',true,'Connexion…');
-  try{
-    const u=await restSignIn(email,pwd);
-    currentUser=u;
-    await loadUserProfile(u.uid);
+  const pin = document.getElementById('admin-pin').value.trim();
+  if(!pin) return showAuthError('Veuillez entrer le PIN administrateur.');
+  if(pin.length !== 4) return showAuthError('Le PIN doit contenir 4 chiffres.');
+  
+  setLoading('btn-login', true, 'Vérification…');
+  try {
+    const admin = await checkAdminPIN(pin);
+    currentUser = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL };
+    userProfile = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL, role: 'admin', prenom: 'Admin', nom: 'GSC' };
+    _idToken = 'admin_' + Date.now();
+    _uid = ADMIN_EMAIL;
+    localStorage.setItem('gsc_session', JSON.stringify({ idToken: _idToken, uid: _uid, email: ADMIN_EMAIL, exp: Date.now() + 3500000 }));
     await postAuthSuccess();
-  }catch(e){
-    setLoading('btn-login',false,'🔐 Connexion Admin');
-    showAuthError(formatError(e.code));
+  } catch(e) {
+    setLoading('btn-login', false, '🔐 Accéder au panel');
+    showAuthError('PIN administrateur incorrect.');
   }
 }
 
 async function handleUserLogin(){
-  const email=document.getElementById('user-login-email').value.trim();
-  const pwd=document.getElementById('user-login-password').value;
-  if(!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
-  setLoading('btn-user-login',true,'Connexion…');
-  try{
-    const u=await restSignIn(email,pwd);
-    currentUser=u;
+  const email = document.getElementById('user-login-email').value.trim();
+  const pin = document.getElementById('user-login-pin').value.trim();
+  
+  if(!email || !pin) return showAuthError('Veuillez remplir tous les champs.');
+  if(pin.length !== 4) return showAuthError('Le PIN doit contenir 4 chiffres.');
+  
+  setLoading('btn-user-login', true, 'Connexion…');
+  try {
+    const u = await checkUserPIN(email, pin);
+    currentUser = u;
     await loadUserProfile(u.uid);
+    localStorage.setItem('gsc_session', JSON.stringify({ idToken: 'user_' + Date.now(), uid: u.uid, email, exp: Date.now() + 3500000 }));
     await postAuthSuccess();
-  }catch(e){
-    setLoading('btn-user-login',false,'🏃 Se connecter');
-    showAuthError(formatError(e.code));
+  } catch(e) {
+    setLoading('btn-user-login', false, '🏃 Se connecter');
+    const errorMsg = e.message.includes('non trouvé') ? 'Email non trouvé. Veuillez vous inscrire.' 
+                    : e.message.includes('incorrect') ? 'PIN incorrect.'
+                    : 'Erreur de connexion.';
+    showAuthError(errorMsg);
   }
 }
 
@@ -2846,7 +2820,7 @@ async function handleRegister(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const name=document.getElementById('reg-name').value.trim();
   const email=document.getElementById('reg-email').value.trim();
-  const pwd=document.getElementById('reg-password').value;
+  const pin=document.getElementById('reg-pin').value.trim();
   let role=document.getElementById('reg-role').value;
   const sport=document.getElementById('reg-sport')?.value||'Multi-sports';
   const niveau=document.getElementById('reg-niveau')?.value||'Amateur';
@@ -2855,17 +2829,15 @@ async function handleRegister(){
   const titrePersonnalise=titreSel==='__autre__'
     ? (document.getElementById('reg-titre-autre')?.value.trim()||'')
     : titreSel;
-  if(!name||!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
-  if(pwd.length<6) return showAuthError('Mot de passe trop court (min 6 caractères).');
+  if(!name||!email||!pin) return showAuthError('Veuillez remplir tous les champs.');
+  if(pin.length!==4) return showAuthError('Le PIN doit contenir exactement 4 chiffres.');
   if(email===ADMIN_EMAIL) role='admin';
   else if(role==='admin') role='joueur';
   setLoading('btn-register',true,'Création…');
   try{
-    const cred=await restSignUp(email,pwd);
-    const uid=cred.uid;
     const parts=name.split(' ');
     const baseProfile={
-      uid,email,
+      email,pin,
       prenom:parts[0]||name,nom:parts.slice(1).join(' ')||'',
       role,sport,niveau,ville:'',telephone:'',bio:'',
       titrePersonnalise,
@@ -2925,14 +2897,21 @@ async function handleRegister(){
         }
       });
     }
-    await setDoc(doc(db,'users',uid),baseProfile);
-    currentUser=cred;
-    userProfile=baseProfile;
+    // Créer l'utilisateur avec PIN dans Firestore
+    const cred = await createUserWithPIN(email, pin, baseProfile);
+    const uid = cred.uid;
+    userProfile = { uid, ...baseProfile };
+    currentUser = cred;
+    // Stocker la session
+    localStorage.setItem('gsc_session', JSON.stringify({ idToken: 'user_' + Date.now(), uid, email, exp: Date.now() + 3500000 }));
     toast(role==='admin'?'✅ Bienvenue ! Votre compte a été créé.':'✅ Compte créé ! Votre fiche sera visible dans l\'annuaire après validation par l\'administrateur.','success');
     await postAuthSuccess();
   }catch(e){
     setLoading('btn-register',false,'✅ Créer mon compte');
-    showAuthError(formatError(e.code));
+    const errorMsg = e.message.includes('Email déjà utilisé') ? 'Cet email est déjà utilisé. Veuillez vous connecter.' 
+                   : e.message.includes('PIN') ? 'Erreur PIN : doit contenir 4 chiffres.'
+                   : 'Erreur lors de la création du compte.';
+    showAuthError(errorMsg);
   }
 }
 
@@ -4847,6 +4826,24 @@ document.addEventListener('firebase-ready', async function(){
     enterAsVisitor(true);
     toast('⚠️ Mode hors-ligne : données non disponibles. Ouvrez via un serveur web.','info');
     return;
+  }
+
+  // ── INITIALISER PIN ADMIN ──
+  // Vérifier et créer la config admin si elle n'existe pas
+  try {
+    const adminConfigRef = doc(db, 'config', 'admin');
+    const adminConfigSnap = await getDoc(adminConfigRef);
+    if(!adminConfigSnap.exists()) {
+      // Créer la config avec PIN par défaut 1234
+      await setDoc(adminConfigRef, {
+        pin: '1234',
+        createdAt: serverTimestamp(),
+        description: 'Configuration administrateur Gabon Sport Connect'
+      });
+      console.log('ℹ️ Config admin créée avec PIN par défaut: 1234');
+    }
+  } catch(e) {
+    console.warn('Erreur lors de l\'initialisation admin:', e);
   }
 
   const session = getStoredSession();
