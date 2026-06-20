@@ -2951,9 +2951,12 @@ async function postAuthSuccess(){
 
 async function handleLogout(){
   restSignOut();
-  currentUser=null;userProfile=null;
+  currentUser = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL };
+  userProfile = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL, role: 'admin', prenom: 'Admin', nom: 'GSC' };
   toast('Déconnecté.','info');
-  enterAsVisitor(true);
+  enterApp();
+  loadAdminUsers();loadAdminSites();loadAdminStats();
+  showView('dashboard');
 }
 
 // ── PROFILE LOAD ──
@@ -4844,52 +4847,22 @@ document.addEventListener('firebase-ready', async function(){
   // If Firebase failed (e.g. file:// protocol), show a warning but keep the UI functional
   if(!window._firebaseReady || !db){
     console.warn('Firebase non disponible — mode hors-ligne.');
-    // Still show the app in visitor mode without Firestore data
+    // Accès libre direct même hors-ligne
+    currentUser = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL };
+    userProfile = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL, role: 'admin', prenom: 'Admin', nom: 'GSC' };
     showApp();
-    enterAsVisitor(true);
+    enterApp();
     toast('⚠️ Mode hors-ligne : données non disponibles. Ouvrez via un serveur web.','info');
     return;
   }
 
-  // ── INITIALISER PIN ADMIN ──
-  // Vérifier et créer la config admin si elle n'existe pas
-  try {
-    const adminConfigRef = doc(db, 'config', 'admin');
-    const adminConfigSnap = await getDoc(adminConfigRef);
-    if(!adminConfigSnap.exists()) {
-      // Créer la config avec PIN par défaut 1234
-      await setDoc(adminConfigRef, {
-        pin: '1234',
-        createdAt: serverTimestamp(),
-        description: 'Configuration administrateur Gabon Sport Connect'
-      });
-      console.log('ℹ️ Config admin créée avec PIN par défaut: 1234');
-    }
-  } catch(e) {
-    console.warn('Erreur lors de l\'initialisation admin:', e);
-  }
-
-  const session = getStoredSession();
-  if(session){
-    currentUser = session;
-    await loadUserProfile(session.uid);
-    enterApp();
-    // If restored session is admin AND special link was used → jump to admin panel directly
-    if(userProfile?.role==='admin' && isAdminLinkRequested()){
-      loadAdminUsers();loadAdminSites();loadAdminStats();
-      showView('admin');
-    }
-  } else {
-    loadGlobalStats();
-    await loadNewsFromDb();
-    renderNews();
-    showApp();
-    enterAsVisitor(true);
-    // If no session but ?admin=1 in URL → open auth on Admin tab with email pre-filled
-    if(isAdminLinkRequested()){
-      goToAuth('admin');
-    }
-  }
+  // ── AUTHENTIFICATION DÉSACTIVÉE (accès libre direct) ──
+  // L'app s'ouvre toujours directement avec accès complet (rôle admin),
+  // sans écran de connexion, d'inscription, ni PIN.
+  currentUser = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL };
+  userProfile = { uid: ADMIN_EMAIL, email: ADMIN_EMAIL, role: 'admin', prenom: 'Admin', nom: 'GSC' };
+  enterApp();
+  loadAdminUsers();loadAdminSites();loadAdminStats();
   loadActors();
 });
 
