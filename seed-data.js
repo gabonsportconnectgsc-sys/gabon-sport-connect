@@ -1,12 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    SEED-DATA.JS — Acteurs sportifs de démonstration (DEMO)
    Source UNIQUE partagée par index.html (public) et admin.html.
-   Chaque acteur porte isDemo:true pour être identifiable et
-   exclu/inclus volontairement des comptages selon le contexte.
-   ⚠️ Ces fiches ne sont PAS de vrais comptes Firestore — elles
-   servent à présenter l'application tant que peu d'inscriptions
-   réelles existent. Retirez ce fichier (ou videz le tableau)
-   quand la base de vrais acteurs sera suffisante.
    ═══════════════════════════════════════════════════════════════ */
 const GSC_SEED_ACTORS = [
   {isDemo:true,uid:'seed-a01',prenom:'Pierre Alain',nom:'Mounguengui',role:'federation',sport:'Football',ville:'Libreville',nomOrganisation:'FEGAFOOT',typeOrganisation:'Fédération',president:'Pierre Alain Mounguengui',anneeCreation:'1962',niveau:'National',status:'active',photoURL:''},
@@ -59,6 +53,17 @@ const GSC_SEED_ACTORS = [
   {isDemo:true,uid:'seed-a48',prenom:'Armand',nom:'Asenga',role:'entraineur',sport:'Athlétisme',ville:'Libreville',poste:'Coach',club:'Federale',niveau:'National',status:'active',photoURL:''},
   {isDemo:true,uid:'seed-a49',prenom:'',nom:'',role:'association',sport:'Athlétisme',ville:'Libreville',nomOrganisation:'Fédération Gabonaise d\'Athlétisme',typeOrganisation:'Fédération',president:'Marcelle Ndong',anneeCreation:'1970',effectif:300,status:'active',photoURL:''},
   {isDemo:true,uid:'seed-a50',prenom:'Fabio',nom:'Mahele',role:'joueur',sport:'Football',ville:'Port-Gentil',poste:'Ailier gauche',club:'AS Stade Mandji',niveau:'Regional',matchsJoues:50,buts:11,status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-a51',prenom:'Aïcha',nom:'Mbadinga',role:'eleve_etudiant',sport:'Athlétisme',ville:'Libreville',niveau:'National',niveauScolaire:'Lycée',etablissement:'Lycée National Léon Mba',etablissementVille:'Libreville',filiere:'Série Scientifique',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-a52',prenom:'Yannick',nom:'Ogandaga',role:'eleve_etudiant',sport:'Basketball',ville:'Franceville',niveau:'Regional',niveauScolaire:'Licence',etablissement:'Université des Sciences et Techniques de Masuku (USTM)',etablissementVille:'Franceville',filiere:'STAPS',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-a53',prenom:'Moussa',nom:'Diabaté',role:'sportif_etranger',sport:'Football',ville:'Libreville',poste:'Attaquant',niveau:'National',nationalite:'Cote d Ivoire',statutPro:'Sous contrat',employeur:'CF Mounana',club:'CF Mounana',documentType:'Carte de séjour',documentNumero:'CS-2025-0142',documentVerifie:true,status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-a54',prenom:'',nom:'',role:'organisateur',sport:'Football',ville:'Libreville',nomOrganisation:'Ligue Gabonaise de Football Amateur',typeOrganisation:'Organisateur',president:'Stéphane Engonda',anneeCreation:'2010',effectif:50,status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-a55',prenom:'Marcelle',nom:'Ngouma',role:'supporter',sport:'Football',ville:'Libreville',club:'CF Mounana',niveau:'Amateur',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-01',prenom:'',nom:'',role:'ecole_universite',type:'Université',nomEtablissement:'Université Omar Bongo (UOB)',ville:'Libreville',effectif:8000,typeEtablissement:'Université',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-02',prenom:'',nom:'',role:'ecole_universite',type:'Université',nomEtablissement:'Université des Sciences et Techniques de Masuku (USTM)',ville:'Franceville',effectif:3500,typeEtablissement:'Université',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-03',prenom:'',nom:'',role:'ecole_universite',type:'Université',nomEtablissement:'Université des Sciences de la Santé (USS)',ville:'Libreville',effectif:2000,typeEtablissement:'Université',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-04',prenom:'',nom:'',role:'ecole_universite',type:'École',nomEtablissement:'École Nationale d\'Éducation Physique et Sportive (ENEPS)',ville:'Libreville',effectif:800,typeEtablissement:'École Spécialisée',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-05',prenom:'',nom:'',role:'ecole_universite',type:'Lycée',nomEtablissement:'Lycée National Léon Mba',ville:'Libreville',effectif:1200,typeEtablissement:'Lycée',status:'active',photoURL:''},
+  {isDemo:true,uid:'seed-edu-06',prenom:'',nom:'',role:'ecole_universite',type:'École',nomEtablissement:'École Normale Supérieure de l\'Enseignement Technique (ENSET)',ville:'Libreville',effectif:600,typeEtablissement:'École Spécialisée',status:'active',photoURL:''},
 ];
 
 window.GSC_SEED_ACTORS = GSC_SEED_ACTORS;

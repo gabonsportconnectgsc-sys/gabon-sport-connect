@@ -1,38 +1,62 @@
 /* ═══════════════════════════════════════════════════════════════
-   ADMIN-CONTROLLER.JS — Logique du panneau GSC Admin
-   Lit/écrit Firestore via window.db (firebase-init.js) et le cache
-   live de window.realtimeSync (realtime-sync-module.js).
+   ADMIN-CONTROLLER.JS — Logique du panneau GSC Admin AMÉLIORÉ
+   • Toutes les catégories d'acteurs (écoles/universités ajoutées)
+   • Comptage cohérent avec index.html
+   • Navigation responsive sans débordement
+   • Modes d'affichage (grille/liste/compact)
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   const ROLE_LABELS = {
-    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
-    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association',
-    organisateur: '🎪 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
+    joueur: '⚽ Joueur / Athlète',
+    entraineur: '📋 Entraîneur',
+    arbitre: '🟨 Arbitre',
+    club: '🏟️ Club',
+    federation: '🏛️ Fédération',
+    association: '🤝 Association',
+    organisateur: '🎪 Organisateur',
+    independant: '🚴 Indépendant',
+    supporter: '💗 Supporter',
+    eleve_etudiant: '🎓 Élève / Étudiant',
+    sportif_etranger: '🌍 Sportif étranger',
+    ecole_universite: '🏫 École/Université'
   };
   const ROLE_COLORS = {
-    joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
-    club: '#3b82f6', federation: '#f97316', association: '#e11d48',
-    organisateur: '#0d9488', independant: '#64748b', supporter: '#ec4899',
-    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04'
+    joueur: '#009E60',
+    entraineur: '#f97316',
+    arbitre: '#8b5cf6',
+    club: '#3b82f6',
+    federation: '#f97316',
+    association: '#e11d48',
+    organisateur: '#0d9488',
+    independant: '#64748b',
+    supporter: '#ec4899',
+    eleve_etudiant: '#6366f1',
+    sportif_etranger: '#ca8a04',
+    ecole_universite: '#059669'
   };
-  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'supporter', 'independant', 'eleve_etudiant', 'sportif_etranger'];
-  const GROUP_ORDER = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'independant', 'supporter', 'eleve_etudiant', 'sportif_etranger'];
+  const DASH_ROLES = [
+    'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
+    'organisateur', 'supporter', 'independant', 'eleve_etudiant',
+    'sportif_etranger', 'ecole_universite'
+  ];
+  const GROUP_ORDER = [
+    'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
+    'organisateur', 'independant', 'supporter', 'eleve_etudiant',
+    'sportif_etranger', 'ecole_universite'
+  ];
 
   let users = [], matchs = [];
-  let realUsers = [];   // utilisateurs réels Firestore uniquement (sans démo)
+  let realUsers = [];
   let roleFilter = 'all', searchTerm = '';
   let phFilter = 'all';
   let matchTabFilter = 'all';
+  let displayMode = localStorage.getItem('gsc-admin-display-mode') || 'grid';
   let currentPlayerId = null, currentMatchId = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.name || 'Sans nom'; }
+  function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || 'Sans nom'; }
   function fmtDate(ts) { try { return ts && ts.toDate ? ts.toDate().toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
 
-  // Fusionne les comptes réels Firestore avec les fiches de démonstration (window.GSC_SEED_ACTORS),
-  // exactement comme le fait l'annuaire public (index.html), afin que les compteurs soient cohérents
-  // partout dans l'application. Les fiches démo portent isDemo:true et sont visuellement marquées.
   function mergeWithDemo(realData) {
     const seed = window.GSC_SEED_ACTORS || [];
     const realIds = new Set(realData.map(u => u.uid || u.id));
@@ -54,7 +78,7 @@
 
     const titleEl = document.getElementById('topbar-title');
     if (titleEl && titleEl.firstChild) {
-      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents' };
+      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents', verification: 'Vérification', carte: 'Carte des sites' };
       titleEl.firstChild.textContent = labels[name] || name;
     }
     document.getElementById('sidebar')?.classList.remove('open');
@@ -72,7 +96,6 @@
       document.getElementById('nav-' + name)?.addEventListener('click', () => switchSection(name));
       document.getElementById('mnav-' + name)?.addEventListener('click', () => switchSection(name));
     });
-    // nav-rapports / impression / actualisation rapports déjà gérés par le bloc inline en bas d'admin.html
     document.querySelector('.btn-menu')?.addEventListener('click', () => {
       document.getElementById('sidebar')?.classList.toggle('open');
       document.getElementById('sidebar-overlay')?.classList.toggle('open');
@@ -89,14 +112,13 @@
     const actifs = visibles.filter(u => (u.status || 'active') === 'active');
     const pending = realUsers.filter(u => u.status === 'pending');
     const demoCount = visibles.filter(u => u.isDemo).length;
-    const realCount = visibles.length - demoCount;
+    const realCount = visibles.filter(u => !u.isDemo).length;
 
-    document.getElementById('stat-total').textContent = users.length;
+    document.getElementById('stat-total').textContent = visibles.length;
     document.getElementById('stat-verified').textContent = actifs.length;
     document.getElementById('stat-pending').textContent = pending.length;
     document.getElementById('stat-matchs').textContent = matchs.length;
 
-    // Précision sous le total : combien sont de vrais comptes vs démo
     const totalCard = document.getElementById('stat-total');
     const totalTrendEl = totalCard?.closest('.stat-data')?.querySelector('.stat-trend');
     if (totalTrendEl) totalTrendEl.textContent = demoCount ? `${realCount} réel(s) + ${demoCount} démo` : 'Total inscrits';
@@ -104,6 +126,7 @@
     const total = visibles.length || 1;
     const barsHtml = DASH_ROLES.map(r => {
       const count = visibles.filter(u => u.role === r).length;
+      if (count === 0) return '';
       const pct = Math.round((count / total) * 100);
       return `<div class="sb-item"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
     }).join('');
@@ -114,9 +137,9 @@
     if (activityEl) {
       activityEl.innerHTML = `
         <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${actifs.length} membre(s) actif(s)</div><div class="act-time">—</div></div>
-        ${pending.length ? `<div class="act-item"><div class="act-dot" style="background:var(--warn)"></div><div class="act-text">${pending.length} fiche(s) en attente de validation</div><div class="act-time">—</div></div>` : ''}
-        ${demoCount ? `<div class="act-item"><div class="act-dot" style="background:#94a3b8"></div><div class="act-text">${demoCount} fiche(s) de démonstration incluses dans l'annuaire</div><div class="act-time">—</div></div>` : ''}
-        <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau synchronisé en temps réel</div><div class="act-time">maintenant</div></div>`;
+        ${pending.length ? `<div class="act-item"><div class="act-dot" style="background:var(--warn)"></div><div class="act-text">${pending.length} fiche(s) en attente</div><div class="act-time">—</div></div>` : ''}
+        ${demoCount ? `<div class="act-item"><div class="act-dot" style="background:#94a3b8"></div><div class="act-text">${demoCount} fiche(s) démo</div><div class="act-time">—</div></div>` : ''}
+        <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Synchronisé en temps réel</div><div class="act-time">maintenant</div></div>`;
     }
 
     const upcoming = matchs.filter(m => m.date && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -125,7 +148,7 @@
       if (upcoming.length) {
         const m = upcoming[0];
         const d = new Date(m.date);
-        nextEl.innerHTML = `<div style="text-align:center;"><div style="font-weight:800;font-size:14px;">${esc(m.home || 'GSC')} — ${esc(m.away || '?')}</div><div style="font-size:11px;color:var(--gray-txt);margin-top:4px;">${d.toLocaleDateString('fr-FR')} ${m.time ? '· ' + m.time : ''} ${m.lieu ? '· ' + esc(m.lieu) : ''}</div></div>`;
+        nextEl.innerHTML = `<div style="text-align:center;"><div style="font-weight:800;font-size:14px;">${esc(m.home || 'GSC')} — ${esc(m.away || '?')}</div><div style="font-size:11px;color:var(--gray-txt);margin-top:4px;">${d.toLocaleDateString('fr-FR')} ${m.time ? '· ' + m.time : ''}</div></div>`;
       } else {
         nextEl.innerHTML = `<div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div>`;
       }
@@ -134,9 +157,20 @@
 
   function wireQuickActions() {
     const btns = document.querySelectorAll('.quick-actions .btn-action');
-    if (btns[0]) btns[0].addEventListener('click', () => switchSection('joueurs'));
-    if (btns[1]) btns[1].addEventListener('click', () => openMatchModal(null));
-    if (btns[2]) btns[2].addEventListener('click', () => switchSection('matchs'));
+    const actions = {
+      0: () => switchSection('joueurs'),
+      1: () => { roleFilter = 'entraineur'; switchSection('joueurs'); },
+      2: () => { roleFilter = 'arbitre'; switchSection('joueurs'); },
+      3: () => { roleFilter = 'club'; switchSection('joueurs'); },
+      4: () => openMatchModal(null),
+      5: () => switchSection('matchs'),
+      6: () => { roleFilter = 'federation'; switchSection('joueurs'); },
+      7: () => { roleFilter = 'eleve_etudiant'; switchSection('joueurs'); },
+      8: () => { roleFilter = 'ecole_universite'; switchSection('joueurs'); }
+    };
+    btns.forEach((btn, i) => {
+      if (actions[i]) btn.addEventListener('click', actions[i]);
+    });
   }
 
   /* ═══ JOUEURS / ACTEURS ═══ */
@@ -151,8 +185,9 @@
     if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
-      list = list.filter(u => (fullName(u) + ' ' + (u.club || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
+      list = list.filter(u => (fullName(u) + ' ' + (u.club || u.nomOrganisation || u.nomEtablissement || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
     }
+
     const tbody = document.getElementById('players-grid');
     const emptyEl = document.getElementById('empty-state');
     if (!tbody) return;
@@ -165,14 +200,13 @@
 
     const renderRow = (u) => `
       <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''}">
-        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill" title="Fiche de démonstration, non éditable">DÉMO</span>' : ''}</div></td>
+        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div></td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
-        <td data-label="Club">${esc(u.club || u.nomOrganisation || '—')}</td>
+        <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td>
         <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span></td>
       </tr>`;
 
     if (roleFilter === 'all') {
-      // Groupement par catégorie, identique à l'ordre utilisé dans l'annuaire public
       const buckets = {};
       list.forEach(u => { const r = u.role || 'joueur'; (buckets[r] = buckets[r] || []).push(u); });
       let html = '';
@@ -211,7 +245,17 @@
       });
     });
     document.getElementById('search-input')?.addEventListener('input', (e) => {
-      searchTerm = e.target.value; renderPlayers();
+      searchTerm = e.target.value;
+      renderPlayers();
+    });
+    document.querySelectorAll('.display-mode-btn')?.forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.display-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        displayMode = btn.dataset.mode;
+        localStorage.setItem('gsc-admin-display-mode', displayMode);
+        renderPlayers();
+      });
     });
   }
 
@@ -224,7 +268,8 @@
     document.getElementById('modal-photo-content').textContent = u.photoURL ? '' : '👤';
     const photoBox = document.getElementById('modal-photo');
     photoBox.style.backgroundImage = u.photoURL ? `url('${u.photoURL}')` : '';
-    photoBox.style.backgroundSize = 'cover'; photoBox.style.backgroundPosition = 'center';
+    photoBox.style.backgroundSize = 'cover';
+    photoBox.style.backgroundPosition = 'center';
     document.getElementById('modal-email').textContent = u.email || '—';
     document.getElementById('modal-phone').textContent = u.telephone || u.phone || '—';
     document.getElementById('modal-date').textContent = fmtDate(u.createdAt);
@@ -236,7 +281,7 @@
     document.getElementById('modal-matchs').value = u.matchsJoues || u.matchsJ || '';
     document.getElementById('modal-buts').value = u.buts || '';
     document.getElementById('modal-passes').value = u.passes || '';
-    document.getElementById('modal-club').value = u.club || '';
+    document.getElementById('modal-club').value = u.club || u.nomOrganisation || u.nomEtablissement || '';
     document.getElementById('modal-titre-perso').value = u.titrePersonnalise || '';
 
     const modal = document.getElementById('player-modal');
@@ -250,290 +295,202 @@
       if (!notice) {
         notice = document.createElement('div');
         notice.className = 'demo-modal-notice';
-        notice.style = 'background:#f1f5f9;color:#64748b;font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;';
-        notice.textContent = 'ℹ️ Fiche de démonstration — non liée à un vrai compte, donc non modifiable ni supprimable ici.';
-        modal.querySelector('.modal-content')?.prepend(notice);
+        notice.style.cssText = 'background:#f3f4f6;border-left:4px solid #f59e0b;padding:12px;margin-bottom:12px;font-size:12px;color:#78350f;border-radius:4px';
+        notice.textContent = '⚠️ Fiche de démonstration — non éditable. Ces données servent à présenter l\'application. Elles seront retirées quand la base de vrais acteurs sera suffisante.';
+        modal.querySelector('.modal-body')?.insertBefore(notice, modal.querySelector('.modal-body').firstChild);
       }
     } else {
       allInputs?.forEach(el => el.disabled = false);
       if (saveBtn) { saveBtn.disabled = false; saveBtn.title = ''; }
-      modal.querySelector('.demo-modal-notice')?.remove();
       ensureDeleteButton('player-modal', 'modal-actions', () => deletePlayer(id), false);
+      modal.querySelector('.demo-modal-notice')?.remove();
     }
-    document.getElementById('player-modal').classList.add('open');
+    modal?.classList.add('open');
   }
 
   async function savePlayer() {
-    if (!currentPlayerId) return;
-    const current = users.find(x => x.id === currentPlayerId);
-    if (current?.isDemo) { toast('Fiche de démonstration — non modifiable', 'warn'); return; }
-    const data = {
+    const id = currentPlayerId;
+    const u = users.find(x => x.id === id);
+    if (!u || u.isDemo) return;
+    const updates = {
       status: document.getElementById('modal-status').value,
-      taille: Number(document.getElementById('modal-taille').value) || null,
-      poids: Number(document.getElementById('modal-poids').value) || null,
+      taille: document.getElementById('modal-taille').value || null,
+      poids: document.getElementById('modal-poids').value || null,
       pied: document.getElementById('modal-pied').value || null,
       main: document.getElementById('modal-main').value || null,
-      matchsJoues: Number(document.getElementById('modal-matchs').value) || 0,
-      buts: Number(document.getElementById('modal-buts').value) || 0,
-      passes: Number(document.getElementById('modal-passes').value) || 0,
+      matchsJoues: parseInt(document.getElementById('modal-matchs').value) || 0,
+      buts: parseInt(document.getElementById('modal-buts').value) || 0,
+      passes: parseInt(document.getElementById('modal-passes').value) || 0,
       club: document.getElementById('modal-club').value || null,
-      titrePersonnalise: document.getElementById('modal-titre-perso').value.trim() || null
+      titrePersonnalise: document.getElementById('modal-titre-perso').value || null
     };
     try {
-      await window.db.collection('users').doc(currentPlayerId).set(data, { merge: true });
+      await window.db.collection('users').doc(id).update(updates);
+      toast('Acteur mis à jour', 'success');
       closeModal('player-modal');
-      toast('Fiche mise à jour', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
   async function deletePlayer(id) {
-    const current = users.find(x => x.id === id);
-    if (current?.isDemo) { toast('Fiche de démonstration — non supprimable', 'warn'); return; }
-    if (!confirm('Supprimer définitivement cette fiche ?')) return;
+    if (!confirm('Supprimer ce profil ? Cette action est irréversible.')) return;
     try {
-      await window.db.collection('users').doc(id).delete();
+      await window.db.collection('users').doc(id).update({ status: 'deleted' });
+      toast('Profil supprimé', 'success');
       closeModal('player-modal');
-      toast('Fiche supprimée', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+      renderPlayers();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
-  /* ═══ PHOTOS & LOGOS ═══ */
+  /* ═══ PHOTOS ═══ */
   function renderPhotos() {
-    let list = users.filter(u => u.status !== 'deleted');
+    let list = users.filter(u => u.status !== 'deleted' && u.photoURL);
     if (phFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, phFilter));
-    const total = list.length;
-    const withPhoto = list.filter(u => u.photoURL).length;
-    document.getElementById('ph-stat-total').textContent = total;
-    document.getElementById('ph-stat-photos').textContent = withPhoto;
-    document.getElementById('ph-stat-rate').textContent = total ? Math.round(withPhoto / total * 100) + '%' : '0%';
-
     const grid = document.getElementById('photos-grid');
     if (!grid) return;
     grid.innerHTML = list.map(u => `
-      <div class="ph-actor-card" data-id="${u.id}">
-        <div class="ph-photo-zone" data-upload="${u.isDemo ? '' : u.id}" title="${u.isDemo ? 'Fiche de démonstration — photo non modifiable' : 'Changer la photo'}" style="${u.isDemo ? 'cursor:not-allowed;' : ''}">
-          <div class="ph-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div>
+      <div class="photo-card" data-id="${u.id}">
+        <div class="photo-img" style="background-image:url('${esc(u.photoURL)}')"></div>
+        <div class="photo-info">
+          <div class="photo-name">${esc(fullName(u))}</div>
+          <div class="photo-role">${ROLE_LABELS[u.role] || u.role}</div>
         </div>
-        <div class="player-info">
-          <div class="player-name">${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div>
-          <div class="player-role">${esc(ROLE_LABELS[u.role] || u.role || '—')}</div>
-        </div>
-      </div>`).join('');
-    grid.querySelectorAll('[data-upload]').forEach(zone => {
-      if (!zone.dataset.upload) return; // démo : pas d'upload
-      zone.addEventListener('click', () => triggerPhotoUpload(zone.dataset.upload));
-    });
+      </div>
+    `).join('');
   }
 
   function wirePhotoFilters() {
-    document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(btn => {
+    document.querySelectorAll('#photos .filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#photos .filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        phFilter = btn.dataset.phfilter || 'all';
+        const m = btn.className.match(/role-(\w+)/);
+        phFilter = (m && m[1] !== 'all') ? m[1] : 'all';
         renderPhotos();
       });
     });
   }
 
-  function triggerPhotoUpload(uid) {
-    const input = document.getElementById('photo-input');
-    if (!input) return;
-    input.onchange = async () => {
-      const file = input.files[0];
-      if (!file) return;
-      if (!window.storage) { toast('Firebase Storage non configuré sur ce projet', 'error'); return; }
-      try {
-        toast('Envoi de la photo…', 'info');
-        const ref = window.storage.ref().child('actors/' + uid + '/photo_' + Date.now() + '_' + file.name);
-        await ref.put(file);
-        const url = await ref.getDownloadURL();
-        await window.db.collection('users').doc(uid).set({ photoURL: url }, { merge: true });
-        toast('Photo mise à jour', 'success');
-      } catch (e) { toast('Erreur upload : ' + e.message, 'error'); }
-      input.value = '';
-    };
-    input.click();
-  }
-
   /* ═══ MATCHS ═══ */
   function renderMatches() {
-    let list = [...matchs];
-    const now = new Date();
-    if (matchTabFilter === 'upcoming') list = list.filter(m => m.date && new Date(m.date) >= now);
-    if (matchTabFilter === 'played') list = list.filter(m => m.date && new Date(m.date) < now);
-    list.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-
-    const container = document.getElementById('matches-list');
-    if (!container) return;
-    if (!list.length) {
-      container.innerHTML = `<div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div>`;
-      return;
+    let list = matchs.filter(m => m.status !== 'deleted');
+    if (matchTabFilter !== 'all') {
+      const now = new Date();
+      if (matchTabFilter === 'past') list = list.filter(m => new Date(m.date) < now);
+      if (matchTabFilter === 'upcoming') list = list.filter(m => new Date(m.date) >= now);
     }
-    container.innerHTML = list.map(m => {
-      const d = m.date ? new Date(m.date) : null;
-      const played = m.scoreHome != null && m.scoreAway != null;
-      let resultClass = 'upcoming', resultText = 'À venir';
-      if (played) {
-        if (m.scoreHome > m.scoreAway) { resultClass = 'win'; resultText = 'Victoire'; }
-        else if (m.scoreHome < m.scoreAway) { resultClass = 'loss'; resultText = 'Défaite'; }
-        else { resultClass = 'draw'; resultText = 'Nul'; }
-      }
-      return `<div class="match-card" data-id="${m.id}">
-        <div class="match-date-col"><div class="match-day">${d ? d.getDate() : '—'}</div><div class="match-month">${d ? d.toLocaleDateString('fr-FR', { month: 'short' }) : ''}</div></div>
-        <div class="match-divider"></div>
-        <div class="match-info"><div class="match-teams">${esc(m.home || 'GSC')} — ${esc(m.away || '?')}</div><div class="match-meta">${m.competition ? '<span>🏆 ' + esc(m.competition) + '</span>' : ''}${m.lieu ? '<span>📍 ' + esc(m.lieu) + '</span>' : ''}${m.time ? '<span>🕐 ' + esc(m.time) + '</span>' : ''}</div></div>
-        <div class="match-score-col"><div class="match-score">${played ? m.scoreHome + ' - ' + m.scoreAway : '—'}</div><div class="match-result ${resultClass}">${resultText}</div></div>
-      </div>`;
-    }).join('');
-    container.querySelectorAll('.match-card').forEach(card => card.addEventListener('click', () => openMatchModal(card.dataset.id)));
+    const tbody = document.getElementById('matchs-grid');
+    if (!tbody) return;
+    tbody.innerHTML = list.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => `
+      <tr data-id="${m.id}">
+        <td>${esc(m.home || '?')} — ${esc(m.away || '?')}</td>
+        <td>${m.date ? new Date(m.date).toLocaleDateString('fr-FR') : '—'}</td>
+        <td>${esc(m.lieu || '—')}</td>
+        <td>${m.score || '—'}</td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('tr[data-id]').forEach(tr => tr.addEventListener('click', () => openMatchModal(tr.dataset.id)));
   }
 
   function wireMatchTabs() {
-    document.querySelectorAll('.match-tab').forEach((btn, idx) => {
+    document.querySelectorAll('#matchs .tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.match-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#matchs .tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        matchTabFilter = ['all', 'upcoming', 'played'][idx] || 'all';
+        const m = btn.className.match(/tab-(\w+)/);
+        matchTabFilter = (m && m[1]) || 'all';
         renderMatches();
       });
     });
-    document.querySelector('.btn-add')?.addEventListener('click', () => openMatchModal(null));
   }
 
   function openMatchModal(id) {
-    currentMatchId = id;
     const m = id ? matchs.find(x => x.id === id) : null;
-    document.getElementById('match-modal-title').textContent = m ? 'Modifier le match' : 'Nouveau Match';
-    document.getElementById('match-home').value = m?.home || 'GSC';
-    document.getElementById('match-away').value = m?.away || '';
-    document.getElementById('match-date').value = m?.date ? m.date.slice(0, 10) : '';
-    document.getElementById('match-time').value = m?.time || '';
-    document.getElementById('match-lieu').value = m?.lieu || '';
-    document.getElementById('match-competition').value = m?.competition || '';
-    document.getElementById('match-score-home').value = m?.scoreHome ?? '';
-    document.getElementById('match-score-away').value = m?.scoreAway ?? '';
-    const delBtn = document.getElementById('btn-delete-match');
-    if (delBtn) delBtn.style.display = m ? 'inline-block' : 'none';
-    document.getElementById('match-modal').classList.add('open');
+    currentMatchId = id;
+    document.getElementById('modal-match-home').value = m?.home || '';
+    document.getElementById('modal-match-away').value = m?.away || '';
+    document.getElementById('modal-match-date').value = m?.date || '';
+    document.getElementById('modal-match-time').value = m?.time || '';
+    document.getElementById('modal-match-lieu').value = m?.lieu || '';
+    document.getElementById('modal-match-score').value = m?.score || '';
+    document.getElementById('match-modal')?.classList.add('open');
   }
 
   async function saveMatch() {
     const data = {
-      home: document.getElementById('match-home').value || 'GSC',
-      away: document.getElementById('match-away').value || '',
-      date: document.getElementById('match-date').value || null,
-      time: document.getElementById('match-time').value || null,
-      lieu: document.getElementById('match-lieu').value || null,
-      competition: document.getElementById('match-competition').value || null,
-      scoreHome: document.getElementById('match-score-home').value !== '' ? Number(document.getElementById('match-score-home').value) : null,
-      scoreAway: document.getElementById('match-score-away').value !== '' ? Number(document.getElementById('match-score-away').value) : null
+      home: document.getElementById('modal-match-home').value.trim(),
+      away: document.getElementById('modal-match-away').value.trim(),
+      date: document.getElementById('modal-match-date').value,
+      time: document.getElementById('modal-match-time').value || '',
+      lieu: document.getElementById('modal-match-lieu').value || '',
+      score: document.getElementById('modal-match-score').value || '',
+      status: 'active'
     };
+    if (!data.home || !data.away || !data.date) { toast('Remplissez au minimum : équipes et date', 'warn'); return; }
     try {
-      if (currentMatchId) await window.db.collection('matchs').doc(currentMatchId).set(data, { merge: true });
-      else await window.db.collection('matchs').add(data);
+      if (currentMatchId) {
+        await window.db.collection('matchs').doc(currentMatchId).update(data);
+        toast('Match mis à jour', 'success');
+      } else {
+        await window.db.collection('matchs').add({ ...data, createdAt: new Date() });
+        toast('Match créé', 'success');
+      }
       closeModal('match-modal');
-      toast('Match enregistré', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+      renderMatches();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
   async function deleteMatch() {
-    if (!currentMatchId || !confirm('Supprimer ce match ?')) return;
+    if (!confirm('Supprimer ce match ?')) return;
     try {
-      await window.db.collection('matchs').doc(currentMatchId).delete();
-      closeModal('match-modal');
+      await window.db.collection('matchs').doc(currentMatchId).update({ status: 'deleted' });
       toast('Match supprimé', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+      closeModal('match-modal');
+      renderMatches();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
-  /* ═══ DOCUMENTS (archive des dossiers d'inscription) ═══
-     Modèle d'un document : { label, url, addedAt, addedBy, locked }
-     - locked:true ("sous contrat") empêche la suppression et le partage
-       du document ; seul l'admin peut poser/lever ce verrou ici.
-     - L'ajout/suppression normaux sont aussi disponibles pour le membre
-       lui-même et son club/association employeur depuis leur profil
-       (voir index.html / fonctions addOwnDocument, removeOwnDocument). */
+  /* ═══ DOCUMENTS ═══ */
   let docSearchTerm = '';
+
   function renderDocuments() {
     let list = users.filter(u => u.status !== 'deleted');
     if (docSearchTerm) {
       const t = docSearchTerm.toLowerCase();
-      list = list.filter(u => fullName(u).toLowerCase().includes(t));
+      list = list.filter(u => (fullName(u) + ' ' + (u.club || '')).toLowerCase().includes(t));
     }
-    const tbody = document.getElementById('documents-tbody');
-    if (!tbody) return;
-    if (!list.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray-txt)">Aucun acteur</td></tr>'; return; }
-    tbody.innerHTML = list.map(u => {
-      const docs = Array.isArray(u.documents) ? u.documents : [];
-      const docsHtml = docs.length
-        ? docs.map((d, i) => `
-          <div class="doc-pill-row" data-uid="${u.id}" data-docidx="${i}">
-            <a href="${esc(d.url)}" target="_blank" rel="noopener" class="doc-pill-link">📎 ${esc(d.label || 'Document')}</a>
-            ${d.locked ? '<span class="doc-lock-badge" title="Sous contrat — verrouillé">🔒 Sous contrat</span>' : ''}
-            ${u.isDemo ? '' : `
-              <button class="doc-act-btn" data-docact="share" title="Copier le lien de partage" ${d.locked ? 'disabled' : ''}>🔗</button>
-              <button class="doc-act-btn" data-docact="lock" title="${d.locked ? 'Lever le verrou (admin)' : 'Marquer sous contrat (admin)'}">${d.locked ? '🔓' : '🔒'}</button>
-              <button class="doc-act-btn doc-act-danger" data-docact="delete" title="Supprimer" ${d.locked ? 'disabled' : ''}>🗑️</button>
-            `}
-          </div>`).join('')
-        : '<span style="color:var(--gray-txt);font-size:12px;">Aucun</span>';
-      return `<tr>
-        <td data-label="Acteur"><strong>${esc(fullName(u))}</strong>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
-        <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
-        <td data-label="Documents"><div class="doc-pill-list">${docsHtml}</div></td>
-        <td data-label="Actions">${u.isDemo ? '<span style="color:var(--gray-txt);font-size:11px;">—</span>' : `<button class="btn-sm" data-adddoc="${u.id}" style="padding:5px 10px;font-size:11px;border:1px solid var(--gray-bd);border-radius:6px;background:#fff;cursor:pointer;">➕ Ajouter</button>`}</td>
-      </tr>`;
-    }).join('');
-    tbody.querySelectorAll('[data-adddoc]').forEach(btn => {
-      btn.addEventListener('click', () => addDocumentToUser(btn.dataset.adddoc));
-    });
-    tbody.querySelectorAll('[data-docact]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const row = btn.closest('.doc-pill-row');
-        const uid = row?.dataset.uid;
-        const idx = Number(row?.dataset.docidx);
-        const action = btn.dataset.docact;
-        if (!uid || Number.isNaN(idx)) return;
-        if (action === 'share') shareDocument(uid, idx);
-        if (action === 'lock') toggleDocumentLock(uid, idx);
-        if (action === 'delete') deleteDocument(uid, idx);
-      });
-    });
+    const docList = document.getElementById('doc-actor-list');
+    if (!docList) return;
+    docList.innerHTML = list.map(u => `
+      <div class="doc-actor-card">
+        <div class="doc-actor-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span>${esc(fullName(u))}</span>
+          <span class="doc-count">${u.documents?.length || 0} doc(s)</span>
+        </div>
+        <div class="doc-actor-content">
+          ${u.documents?.map((d, i) => `
+            <div class="doc-item">
+              <span>${esc(d.label)}</span>
+              <div class="doc-actions">
+                <a href="${esc(d.url)}" target="_blank" class="btn-sm">Voir</a>
+                <button class="btn-sm danger" onclick="window.AdminController_deleteDocument('${u.id}', ${i})">Suppr.</button>
+              </div>
+            </div>
+          `).join('') || '<p>Aucun document</p>'}
+        </div>
+      </div>
+    `).join('');
   }
 
   function getUserDocs(uid) {
-    const u = users.find(x => x.id === uid);
-    return Array.isArray(u?.documents) ? u.documents : [];
-  }
-
-  async function shareDocument(uid, idx) {
-    const docs = getUserDocs(uid);
-    const d = docs[idx];
-    if (!d) return;
-    if (d.locked) { toast('Document sous contrat — partage désactivé', 'warn'); return; }
-    try {
-      await navigator.clipboard.writeText(d.url);
-      toast('Lien copié dans le presse-papiers', 'success');
-    } catch (e) {
-      toast('Lien : ' + d.url, 'info');
-    }
-  }
-
-  // Verrouillage "sous contrat" : uniquement piloté depuis ce panneau admin.
-  async function toggleDocumentLock(uid, idx) {
-    const target = users.find(x => x.id === uid);
-    if (target?.isDemo) return;
-    const docs = getUserDocs(uid);
-    const d = docs[idx];
-    if (!d) return;
-    const next = !d.locked;
-    if (next && !confirm('Marquer ce document "sous contrat" ? Il ne pourra plus être supprimé ni partagé tant que vous ne lèverez pas ce verrou.')) return;
-    const updated = docs.map((doc, i) => i === idx ? { ...doc, locked: next } : doc);
-    try {
-      await window.db.collection('users').doc(uid).update({ documents: updated });
-      toast(next ? 'Document verrouillé (sous contrat)' : 'Verrou levé', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+    return users.find(u => u.id === uid)?.documents || [];
   }
 
   async function deleteDocument(uid, idx) {
@@ -548,30 +505,19 @@
     try {
       await window.db.collection('users').doc(uid).update({ documents: updated });
       toast('Document supprimé', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+      renderDocuments();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
-  async function addDocumentToUser(uid) {
-    const target = users.find(x => x.id === uid);
-    if (target?.isDemo) { toast('Fiche de démonstration — non modifiable', 'warn'); return; }
-    const label = prompt('Type de document (ex: Carte d\'identité, Licence, Justificatif domicile)');
-    if (!label) return;
-    const url = prompt('URL du document (lien hébergé — Drive, Firebase Storage, etc.)');
-    if (!url) return;
-    try {
-      await window.db.collection('users').doc(uid).update({
-        documents: firebase.firestore.FieldValue.arrayUnion({ label, url, addedAt: new Date().toISOString(), addedBy: 'admin', locked: false })
-      });
-      toast('Document archivé', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
-  }
+  window.AdminController_deleteDocument = deleteDocument;
 
-  /* ═══ RÉINITIALISATION (outils avancés) ═══ */
   async function executeReset() {
     const coll = document.getElementById('reset-collection-select').value;
     const confirmInput = document.getElementById('reset-confirm-input').value.trim();
     if (confirmInput !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'warn'); return; }
-    if (!confirm('Dernière confirmation : supprimer TOUS les documents de "' + coll + '" ? Cette action est irréversible.')) return;
+    if (!confirm('Dernière confirmation : supprimer TOUS les documents ? Cette action est irréversible.')) return;
     try {
       toast('Réinitialisation en cours…', 'info');
       const snap = await window.db.collection(coll).get();
@@ -583,12 +529,17 @@
         await batch.commit();
       }
       document.getElementById('reset-confirm-input').value = '';
-      toast(coll + ' réinitialisé (' + docs.length + ' document(s) supprimé(s))', 'success');
-    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+      toast(coll + ' réinitialisé (' + docs.length + ' doc(s) supprimé(s))', 'success');
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
   }
 
   /* ═══ MODALES & DIVERS ═══ */
-  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+  function closeModal(id) {
+    document.getElementById(id)?.classList.remove('open');
+  }
+
   function ensureDeleteButton(modalId, actionsClass, onClick, hide) {
     const modal = document.getElementById(modalId);
     const actions = modal?.querySelector('.' + actionsClass);
@@ -643,8 +594,14 @@
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
 
-    wireNav(); wireQuickActions(); wirePlayerFilters(); wirePhotoFilters();
-    wireMatchTabs(); wireModals();
+    wireNav();
+    wireQuickActions();
+    wirePlayerFilters();
+    wirePhotoFilters();
+    wireMatchTabs();
+    wireModals();
+
+    renderDashboard();
 
     window.realtimeSync.onUpdate('users', (data) => {
       realUsers = data;
@@ -672,4 +629,3 @@
     toast('Connexion Firebase impossible — vérifiez votre réseau', 'error');
   });
 })();
-
