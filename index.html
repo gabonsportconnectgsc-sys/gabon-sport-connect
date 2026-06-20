@@ -2292,6 +2292,9 @@
 
 <!-- GLOBAL FUNCTIONS (non-module) -->
 <script>
+// ── CLÉ API Firebase (partagée avec le bloc module bootstrap) ──
+const FIREBASE_API_KEY = ['AIza','SyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi','14VM'].join('');
+
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
   association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
@@ -2412,7 +2415,6 @@ function selectRole(role){
 }
 
 async function sendResetEmail(){
-  var FIREBASE_API_KEY=['AIza','SyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi','14VM'].join('');
   var emailToSend=document.getElementById('forgot-email').value.trim();
   var btn=document.getElementById('btn-forgot');
   if(!emailToSend){showAuthError('Entrez votre email.');return;}
@@ -2542,10 +2544,12 @@ function formatError(code){
 }
 
 async function restSignIn(email,password){
+  if(!FIREBASE_API_KEY) throw {code:'auth/network-request-failed',message:'Clé API Firebase manquante.'};
   try{
     const res=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
       {method:'POST',headers:{'Content-Type':'application/json'},
        body:JSON.stringify({email,password,returnSecureToken:true})});
+    if(!res.ok && res.status!==400) throw {code:'auth/network-request-failed',message:'Erreur réseau (HTTP '+res.status+').'};
     const data=await res.json();
     if(data.error) throw {code:mapFirebaseRestError(data.error.message),message:data.error.message,raw:data.error};
     _idToken=data.idToken;_uid=data.localId;
@@ -2557,6 +2561,7 @@ async function restSignIn(email,password){
   }
 }
 async function restSignUp(email,password){
+  if(!FIREBASE_API_KEY) throw {code:'auth/network-request-failed',message:'Clé API Firebase manquante.'};
   const res=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
     {method:'POST',headers:{'Content-Type':'application/json'},
      body:JSON.stringify({email,password,returnSecureToken:true})});
