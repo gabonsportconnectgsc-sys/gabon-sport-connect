@@ -1,747 +1,509 @@
 /* ═══════════════════════════════════════════════════════════════
-   GSC ADMIN — Contrôleur (s'appuie sur realtime-sync-module.js)
-   ═══════════════════════════════════════════════════════════════
-   Hypothèses de schéma Firestore (déduites de gsc-sync-config.js
-   et realtime-sync-module.js — à ajuster si vos documents réels
-   utilisent d'autres noms de champs) :
-
-   Collection "users" (joueurs/membres) :
-     nom, email, telephone, role, club, status,
-     photo, taille, poids, piedFort, mainDominante,
-     matchsJoues, buts, passes
-
-   Collection "matchs" :
-     home, away, date, time, lieu, competition,
-     scoreHome, scoreAway
-
-   Toutes les écritures utilisent saveDocument(..., {merge:true}),
-   donc aucune perte de données si vos champs réels diffèrent.
+   ADMIN-CONTROLLER.JS — Logique du panneau GSC Admin
+   Lit/écrit Firestore via window.db (firebase-init.js) et le cache
+   live de window.realtimeSync (realtime-sync-module.js).
    ═══════════════════════════════════════════════════════════════ */
-
 (function () {
-  'use strict';
-
-  /* ── État global ── */
-  let allUsers = [];
-  let allMatches = [];
-  let currentRoleFilter = 'all';
-  let currentPhFilter = 'all';
-  let currentMatchTab = 'all';
-  let editingUserId = null;
-  let editingMatchId = null;
-  let pendingPhotoBase64 = undefined; // undefined = inchangé, null = supprimée
-  let usingFallback = false;
-  let activityLog = [];
-
   const ROLE_LABELS = {
-    joueur: '⚽ Joueur / Athlète',
-    entraineur: '📋 Entraîneur',
-    arbitre: '🟨 Arbitre',
-    club: '🏟️ Club',
-    federation: '🏛️ Fédération',
-    association: '🤝 Association',
-    admin: '⚙️ Administrateur'
+    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association',
+    organisateur: '🎯 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
-    club: '#3b82f6', federation: '#f97316', association: '#e11d48'
+    club: '#3b82f6', federation: '#f97316', association: '#e11d48',
+    organisateur: '#0d9488', independant: '#64748b', supporter: '#ec4899'
   };
-  const ROLE_BAR_ORDER = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association'];
-  const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association'];
 
-  /* ── Données de secours (utilisées seulement si Firebase est injoignable) ── */
-  const FALLBACK_USERS = [
-    { id: 'fallback-1', nom: 'Patrick', role: 'joueur', club: '', status: 'active' },
-    { id: 'fallback-2', nom: 'Paradis okomo2', role: 'joueur', club: '', status: 'active' },
-    { id: 'fallback-3', nom: 'Administrateur', role: 'admin', club: '', status: 'active' },
-    { id: 'fallback-4', nom: 'ESSONO', role: 'joueur', club: '', status: 'active' },
-    { id: 'fallback-5', nom: 'gabonsportconnectgsc', role: 'joueur', club: '', status: 'active' },
-    { id: 'fallback-6', nom: 'Paradis okomo', role: 'joueur', club: '', status: 'active' }
-  ];
+  let users = [], matchs = [];
+  let roleFilter = 'all', searchTerm = '';
+  let phFilter = 'all';
+  let matchTabFilter = 'all';
+  let currentPlayerId = null, currentMatchId = null;
 
-  /* ═══════════════════════════════════════════════════════════
-     UTILITAIRES
-     ═══════════════════════════════════════════════════════════ */
-  function esc(str) {
-    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.name || 'Sans nom'; }
+  function fmtDate(ts) { try { return ts && ts.toDate ? ts.toDate().toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
 
-  function showToast(message, type = 'info') {
-    const el = document.createElement('div');
-    el.className = `toast ${type}`;
-    el.textContent = message;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
-  }
-
-  function logActivity(text) {
-    activityLog.unshift({ text, time: 'à l\'instant' });
-    if (activityLog.length > 6) activityLog.pop();
-    renderActivity();
-  }
-
-  function initials(name) {
-    return (name || '?').trim().charAt(0).toUpperCase() || '?';
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     CONNEXION FIREBASE (via realtime-sync-module.js)
-     ═══════════════════════════════════════════════════════════ */
-  function boot() {
-    if (window.gscDb) {
-      startSync(window.gscDb);
-    } else {
-      window.addEventListener('firebase-ready', e => startSync(e.detail.db), { once: true });
-      window.addEventListener('firebase-init-error', () => {
-        console.warn('[GSC-Admin] firebase-init-error reçu, passage en mode local');
-        useFallback();
-      }, { once: true });
-      // Filet de sécurité si aucun événement n'arrive
-      setTimeout(() => { if (!allUsers.length) useFallback(); }, 5000);
-    }
-  }
-
-  function startSync(db) {
-    if (!window.realtimeSync) {
-      console.error('[GSC-Admin] realtime-sync-module.js non chargé — mode local');
-      useFallback();
-      return;
-    }
-    try {
-      window.realtimeSync.initialize(db);
-      window.realtimeSync.watchPlayers(users => {
-        allUsers = users;
-        usingFallback = false;
-        setRealtimeBadge(true);
-        renderAll();
-      });
-      window.realtimeSync.watchMatches(matches => {
-        allMatches = matches;
-        renderAll();
-      });
-      logActivity('Connexion temps réel établie');
-    } catch (err) {
-      console.error('[GSC-Admin] Erreur de connexion sync:', err);
-      useFallback();
-    }
-  }
-
-  function useFallback() {
-    if (usingFallback) return;
-    usingFallback = true;
-    allUsers = FALLBACK_USERS.slice();
-    allMatches = [];
-    setRealtimeBadge(false);
-    logActivity('Mode local (Firebase injoignable)');
-    renderAll();
-  }
-
-  function setRealtimeBadge(live) {
-    const badge = document.getElementById('realtime-status');
-    if (!badge) return;
-    if (live) {
-      badge.innerHTML = '<div class="realtime-dot"></div><span>Temps réel</span>';
-      badge.style.background = '';
-      badge.style.borderColor = '';
-      badge.style.color = '';
-    } else {
-      badge.innerHTML = '<div class="realtime-dot" style="background:var(--warn);animation:none"></div><span>Mode local</span>';
-      badge.style.background = 'rgba(245,158,11,.12)';
-      badge.style.borderColor = 'rgba(245,158,11,.3)';
-      badge.style.color = 'var(--warn)';
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     NAVIGATION
-     ═══════════════════════════════════════════════════════════ */
-  const SECTION_TITLES = {
-    dashboard: 'Dashboard',
-    joueurs: 'Joueurs',
-    photos: 'Photos & Logos',
-    matchs: 'Matchs'
-  };
-
-  function showSection(name) {
+  /* ═══ NAVIGATION ═══ */
+  function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(name);
     if (target) target.classList.add('active');
 
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .mn-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-' + name);
-    const mnavBtn = document.getElementById('mnav-' + name);
+    const mnBtn = document.getElementById('mnav-' + name);
     if (navBtn) navBtn.classList.add('active');
-    if (mnavBtn) mnavBtn.classList.add('active');
+    if (mnBtn) mnBtn.classList.add('active');
 
-    document.getElementById('topbar-title').firstChild.textContent = SECTION_TITLES[name] || '';
+    const titleEl = document.getElementById('topbar-title');
+    if (titleEl && titleEl.firstChild) {
+      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents' };
+      titleEl.firstChild.textContent = labels[name] || name;
+    }
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-overlay')?.classList.remove('open');
 
-    closeMobileSidebar();
-    if (name === 'joueurs') renderUsersTable();
-    if (name === 'photos') renderPhotosGrid();
+    if (name === 'joueurs') renderPlayers();
+    if (name === 'photos') renderPhotos();
     if (name === 'matchs') renderMatches();
+    if (name === 'documents') renderDocuments();
+    if (name === 'dashboard') renderDashboard();
   }
 
-  function setupNav() {
-    ['dashboard', 'joueurs', 'photos', 'matchs'].forEach(name => {
-      const navBtn = document.getElementById('nav-' + name);
-      const mnavBtn = document.getElementById('mnav-' + name);
-      if (navBtn) navBtn.addEventListener('click', () => showSection(name));
-      if (mnavBtn) mnavBtn.addEventListener('click', () => showSection(name));
+  function wireNav() {
+    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents'].forEach(name => {
+      document.getElementById('nav-' + name)?.addEventListener('click', () => switchSection(name));
+      document.getElementById('mnav-' + name)?.addEventListener('click', () => switchSection(name));
+    });
+    // nav-rapports / impression / actualisation rapports déjà gérés par le bloc inline en bas d'admin.html
+    document.querySelector('.btn-menu')?.addEventListener('click', () => {
+      document.getElementById('sidebar')?.classList.toggle('open');
+      document.getElementById('sidebar-overlay')?.classList.toggle('open');
+    });
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar-overlay')?.classList.remove('open');
     });
   }
 
-  function setupMobileMenu() {
-    const btnMenu = document.querySelector('.btn-menu');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (btnMenu) btnMenu.addEventListener('click', () => {
-      sidebar.classList.add('open');
-      overlay.classList.add('open');
-    });
-    if (overlay) overlay.addEventListener('click', closeMobileSidebar);
-  }
-  function closeMobileSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-  }
-
-  function setupLogout() {
-    const btn = document.getElementById('logout-btn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-        if (window.firebase && firebase.auth) {
-          try { firebase.auth().signOut(); } catch (e) {}
-        }
-        showToast('Déconnexion...', 'info');
-        setTimeout(() => { window.location.href = 'index.html'; }, 800);
-      }
-    });
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     RENDU GLOBAL
-     ═══════════════════════════════════════════════════════════ */
-  function renderAll() {
-    renderDashboard();
-    if (document.getElementById('joueurs').classList.contains('active')) renderUsersTable();
-    if (document.getElementById('photos').classList.contains('active')) renderPhotosGrid();
-    if (document.getElementById('matchs').classList.contains('active')) renderMatches();
-  }
-
-  /* ── DASHBOARD ── */
+  /* ═══ DASHBOARD ═══ */
   function renderDashboard() {
-    const total = allUsers.length;
-    const verified = allUsers.filter(u => (u.status || 'active') === 'active').length;
-    const pending = allUsers.filter(u => u.status === 'pending').length;
+    const visibles = users.filter(u => u.status !== 'deleted');
+    const actifs = visibles.filter(u => (u.status || 'active') === 'active');
+    const pending = users.filter(u => u.status === 'pending');
 
-    setText('stat-total', total);
-    setText('stat-verified', verified);
-    setText('stat-pending', pending);
-    setText('stat-matchs', allMatches.length);
+    document.getElementById('stat-total').textContent = users.length;
+    document.getElementById('stat-verified').textContent = actifs.length;
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-matchs').textContent = matchs.length;
 
-    const bars = ROLE_BAR_ORDER.map(role => {
-      const count = allUsers.filter(u => u.role === role).length;
-      const pct = total ? Math.round((count / total) * 100) : 0;
-      const color = ROLE_COLORS[role];
-      return `<div class="sb-item">
-        <div class="sb-label"><span>${ROLE_LABELS[role]}</span><span style="color:${color}">${count}</span></div>
-        <div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${color}"></div></div>
-      </div>`;
+    const total = visibles.length || 1;
+    const barsHtml = DASH_ROLES.map(r => {
+      const count = visibles.filter(u => u.role === r).length;
+      const pct = Math.round((count / total) * 100);
+      return `<div class="sb-item"><div class="sb-label"><span>${ROLE_LABELS[r]}</span><span style="color:${ROLE_COLORS[r]}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r]}"></div></div></div>`;
     }).join('');
-    const roleBars = document.getElementById('role-bars');
-    if (roleBars) roleBars.innerHTML = bars;
+    const barsEl = document.getElementById('role-bars');
+    if (barsEl) barsEl.innerHTML = barsHtml;
 
-    renderActivity();
-    renderNextMatchPreview();
-  }
-
-  function renderActivity() {
-    const el = document.getElementById('activity-list');
-    if (!el) return;
-    if (!activityLog.length) {
-      el.innerHTML = `<div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div>`;
-      return;
+    const activityEl = document.getElementById('activity-list');
+    if (activityEl) {
+      activityEl.innerHTML = `
+        <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${actifs.length} membre(s) actif(s)</div><div class="act-time">—</div></div>
+        ${pending.length ? `<div class="act-item"><div class="act-dot" style="background:var(--warn)"></div><div class="act-text">${pending.length} fiche(s) en attente de validation</div><div class="act-time">—</div></div>` : ''}
+        <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau synchronisé en temps réel</div><div class="act-time">maintenant</div></div>`;
     }
-    el.innerHTML = activityLog.map(a =>
-      `<div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${esc(a.text)}</div><div class="act-time">${esc(a.time)}</div></div>`
-    ).join('');
-  }
 
-  function renderNextMatchPreview() {
-    const el = document.getElementById('next-match-preview');
-    if (!el) return;
-    const today = new Date().toISOString().slice(0, 10);
-    const upcoming = allMatches
-      .filter(m => m.date && m.date >= today)
-      .sort((a, b) => (a.date || '').localeCompare(b.date || ''))[0];
-    if (!upcoming) {
-      el.innerHTML = `<div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div>`;
-      return;
+    const upcoming = matchs.filter(m => m.date && new Date(m.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const nextEl = document.getElementById('next-match-preview');
+    if (nextEl) {
+      if (upcoming.length) {
+        const m = upcoming[0];
+        const d = new Date(m.date);
+        nextEl.innerHTML = `<div style="text-align:center;"><div style="font-weight:800;font-size:14px;">${esc(m.home || 'GSC')} — ${esc(m.away || '?')}</div><div style="font-size:11px;color:var(--gray-txt);margin-top:4px;">${d.toLocaleDateString('fr-FR')} ${m.time ? '· ' + m.time : ''} ${m.lieu ? '· ' + esc(m.lieu) : ''}</div></div>`;
+      } else {
+        nextEl.innerHTML = `<div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div>`;
+      }
     }
-    el.innerHTML = `<div style="text-align:center;padding:6px 0">
-      <div style="font-weight:700;color:var(--navy);font-size:14px">${esc(upcoming.home || 'GSC')} vs ${esc(upcoming.away || '?')}</div>
-      <div style="font-size:11px;color:var(--gray-txt);margin-top:4px">📅 ${esc(upcoming.date || '')} ${upcoming.time ? '· ' + esc(upcoming.time) : ''}</div>
-    </div>`;
   }
 
-  function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
+  function wireQuickActions() {
+    const btns = document.querySelectorAll('.quick-actions .btn-action');
+    if (btns[0]) btns[0].addEventListener('click', () => switchSection('joueurs'));
+    if (btns[1]) btns[1].addEventListener('click', () => openMatchModal(null));
+    if (btns[2]) btns[2].addEventListener('click', () => switchSection('matchs'));
   }
 
-  /* ── JOUEURS ── */
-  function visibleUsers() {
-    const search = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-    return allUsers.filter(u => {
-      const matchRole = currentRoleFilter === 'all' || u.role === currentRoleFilter;
-      const matchSearch = !search ||
-        (u.nom || '').toLowerCase().includes(search) ||
-        (u.club || '').toLowerCase().includes(search) ||
-        (u.email || '').toLowerCase().includes(search);
-      return matchRole && matchSearch;
-    });
-  }
-
-  function statusBadge(status) {
-    const map = {
-      active: ['status-active', '✓ Actif'],
-      pending: ['status-pending', '⏳ En attente'],
-      hidden: ['status-hidden', '👁️ Masqué'],
-      deleted: ['status-deleted', '🗑️ Supprimé']
-    };
-    const [cls, label] = map[status] || map.active;
-    return `<span class="status-badge ${cls}">${label}</span>`;
-  }
-
-  function renderUsersTable() {
-    const list = visibleUsers();
+  /* ═══ JOUEURS ═══ */
+  function renderPlayers() {
+    let list = users.filter(u => u.status !== 'deleted');
+    if (roleFilter !== 'all') list = list.filter(u => u.role === roleFilter);
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      list = list.filter(u => (fullName(u) + ' ' + (u.club || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
+    }
     const tbody = document.getElementById('players-grid');
-    const wrap = document.querySelector('.users-table-wrap');
-    const empty = document.getElementById('empty-state');
-
+    const emptyEl = document.getElementById('empty-state');
+    if (!tbody) return;
     if (!list.length) {
-      if (wrap) wrap.style.display = 'none';
-      if (empty) empty.style.display = 'block';
-      if (tbody) tbody.innerHTML = '';
+      tbody.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
       return;
     }
-    if (wrap) wrap.style.display = '';
-    if (empty) empty.style.display = 'none';
-
-    tbody.innerHTML = list.map(u => {
-      const avatar = u.photo
-        ? `<img src="${u.photo}" alt="${esc(u.nom)}">`
-        : initials(u.nom);
-      return `<tr data-id="${esc(u.id)}">
-        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${avatar}</div><span class="user-name-txt">${esc(u.nom || 'Sans nom')}</span></div></td>
-        <td data-label="Rôle">${ROLE_LABELS[u.role] || 'Membre'}</td>
-        <td data-label="Club">${esc(u.club) || '—'}</td>
-        <td data-label="Statut">${statusBadge(u.status || 'active')}</td>
-      </tr>`;
-    }).join('');
-
-    tbody.querySelectorAll('tr').forEach(tr => {
-      tr.addEventListener('click', () => openPlayerModal(tr.dataset.id));
-    });
+    if (emptyEl) emptyEl.style.display = 'none';
+    tbody.innerHTML = list.map(u => `
+      <tr data-id="${u.id}">
+        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span></div></td>
+        <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
+        <td data-label="Club">${esc(u.club || '—')}</td>
+        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active']}</span></td>
+      </tr>`).join('');
+    tbody.querySelectorAll('tr').forEach(tr => tr.addEventListener('click', () => openPlayerModal(tr.dataset.id)));
   }
 
-  function setupUserFilters() {
-    document.querySelectorAll('.filters-bar .filter-btn').forEach(btn => {
-      const roleClass = [...btn.classList].find(c => c.startsWith('role-'));
-      const role = roleClass ? roleClass.replace('role-', '') : 'all';
+  function wirePlayerFilters() {
+    document.querySelectorAll('#joueurs .filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filters-bar .filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#joueurs .filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentRoleFilter = role;
-        renderUsersTable();
+        const m = btn.className.match(/role-(\w+)/);
+        roleFilter = (m && m[1] !== 'all') ? m[1] : 'all';
+        renderPlayers();
       });
     });
-    const search = document.getElementById('search-input');
-    if (search) search.addEventListener('input', renderUsersTable);
+    document.getElementById('search-input')?.addEventListener('input', (e) => {
+      searchTerm = e.target.value; renderPlayers();
+    });
   }
 
-  /* ── PLAYER MODAL ── */
   function openPlayerModal(id) {
-    const user = allUsers.find(u => u.id === id);
-    if (!user) return;
-    editingUserId = id;
-    pendingPhotoBase64 = undefined;
-
-    setText('modal-player-name', user.nom || 'Sans nom');
-    setText('modal-player-role', ROLE_LABELS[user.role] || 'Membre');
-    setText('modal-email', user.email || '—');
-    setText('modal-phone', user.telephone || '—');
-    setText('modal-date', user.createdAt ? String(user.createdAt).slice(0, 10) : '—');
-    document.getElementById('modal-status').value = user.status || 'active';
-    document.getElementById('modal-taille').value = user.taille || '';
-    document.getElementById('modal-poids').value = user.poids || '';
-    document.getElementById('modal-pied').value = user.piedFort || '';
-    document.getElementById('modal-main').value = user.mainDominante || '';
-    document.getElementById('modal-matchs').value = user.matchsJoues || 0;
-    document.getElementById('modal-buts').value = user.buts || 0;
-    document.getElementById('modal-passes').value = user.passes || 0;
-    document.getElementById('modal-club').value = user.club || '';
-
-    setModalPhotoPreview(user.photo);
-
+    const u = users.find(x => x.id === id);
+    if (!u) return;
+    currentPlayerId = id;
+    document.getElementById('modal-player-name').textContent = fullName(u);
+    document.getElementById('modal-player-role').textContent = ROLE_LABELS[u.role] || u.role || '';
+    document.getElementById('modal-photo-content').textContent = u.photoURL ? '' : '👤';
+    const photoBox = document.getElementById('modal-photo');
+    photoBox.style.backgroundImage = u.photoURL ? `url('${u.photoURL}')` : '';
+    photoBox.style.backgroundSize = 'cover'; photoBox.style.backgroundPosition = 'center';
+    document.getElementById('modal-email').textContent = u.email || '—';
+    document.getElementById('modal-phone').textContent = u.telephone || u.phone || '—';
+    document.getElementById('modal-date').textContent = fmtDate(u.createdAt);
+    document.getElementById('modal-status').value = u.status || 'active';
+    document.getElementById('modal-taille').value = u.taille || '';
+    document.getElementById('modal-poids').value = u.poids || '';
+    document.getElementById('modal-pied').value = u.pied || '';
+    document.getElementById('modal-main').value = u.main || '';
+    document.getElementById('modal-matchs').value = u.matchsJoues || u.matchsJ || '';
+    document.getElementById('modal-buts').value = u.buts || '';
+    document.getElementById('modal-passes').value = u.passes || '';
+    document.getElementById('modal-club').value = u.club || '';
+    ensureDeleteButton('player-modal', 'modal-actions', () => deletePlayer(id));
     document.getElementById('player-modal').classList.add('open');
   }
 
-  function setModalPhotoPreview(photo) {
-    const content = document.getElementById('modal-photo-content');
-    if (!content) return;
-    if (photo) {
-      content.outerHTML = `<img src="${photo}" id="modal-photo-content" style="width:100%;height:100%;object-fit:cover">`;
-    } else {
-      content.outerHTML = `<span id="modal-photo-content">👤</span>`;
-    }
-  }
-
-  function setupPlayerModal() {
-    const modal = document.getElementById('player-modal');
-    const trigger = document.getElementById('modal-photo-trigger');
-    const input = document.getElementById('photo-input');
-
-    if (trigger) trigger.addEventListener('click', () => input.click());
-    if (input) input.addEventListener('change', () => {
-      const file = input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        pendingPhotoBase64 = reader.result;
-        setModalPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('open'));
-    modal.querySelectorAll('.btn-secondary').forEach(b => b.addEventListener('click', () => modal.classList.remove('open')));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-
-    modal.querySelector('.btn-primary').addEventListener('click', savePlayer);
-  }
-
   async function savePlayer() {
-    if (!editingUserId) return;
+    if (!currentPlayerId) return;
     const data = {
       status: document.getElementById('modal-status').value,
-      taille: document.getElementById('modal-taille').value,
-      poids: document.getElementById('modal-poids').value,
-      piedFort: document.getElementById('modal-pied').value,
-      mainDominante: document.getElementById('modal-main').value,
+      taille: Number(document.getElementById('modal-taille').value) || null,
+      poids: Number(document.getElementById('modal-poids').value) || null,
+      pied: document.getElementById('modal-pied').value || null,
+      main: document.getElementById('modal-main').value || null,
       matchsJoues: Number(document.getElementById('modal-matchs').value) || 0,
       buts: Number(document.getElementById('modal-buts').value) || 0,
       passes: Number(document.getElementById('modal-passes').value) || 0,
-      club: document.getElementById('modal-club').value
+      club: document.getElementById('modal-club').value || null
     };
-    if (pendingPhotoBase64 !== undefined) data.photo = pendingPhotoBase64;
-
     try {
-      if (usingFallback) {
-        const u = allUsers.find(x => x.id === editingUserId);
-        if (u) Object.assign(u, data);
-      } else {
-        await window.realtimeSync.saveDocument('users', editingUserId, data);
-      }
-      showToast('Fiche mise à jour ✓', 'success');
-      logActivity(`Joueur modifié`);
-      document.getElementById('player-modal').classList.remove('open');
-      if (usingFallback) renderAll();
-    } catch (err) {
-      console.error(err);
-      showToast('Erreur lors de l\'enregistrement', 'error');
-    }
+      await window.db.collection('users').doc(currentPlayerId).set(data, { merge: true });
+      closeModal('player-modal');
+      toast('Fiche mise à jour', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
-  /* ── PHOTOS & LOGOS ── */
-  const PH_FILTER_ROLES = { all: null, joueur: 'joueur', club: 'club', federation: 'federation', association: 'association' };
-
-  function setupPhotoFilters() {
-    document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentPhFilter = btn.dataset.phfilter;
-        renderPhotosGrid();
-      });
-    });
+  async function deletePlayer(id) {
+    if (!confirm('Supprimer définitivement cette fiche ?')) return;
+    try {
+      await window.db.collection('users').doc(id).delete();
+      closeModal('player-modal');
+      toast('Fiche supprimée', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
-  function renderPhotosGrid() {
-    const roleFilter = PH_FILTER_ROLES[currentPhFilter];
-    const list = roleFilter ? allUsers.filter(u => u.role === roleFilter) : allUsers;
-
-    const totalActors = list.length;
-    const withPhoto = list.filter(u => u.photo).length;
-    setText('ph-stat-total', totalActors);
-    setText('ph-stat-photos', withPhoto);
-    setText('ph-stat-rate', totalActors ? Math.round((withPhoto / totalActors) * 100) + '%' : '0%');
+  /* ═══ PHOTOS & LOGOS ═══ */
+  function renderPhotos() {
+    let list = users.filter(u => u.status !== 'deleted');
+    if (phFilter !== 'all') list = list.filter(u => u.role === phFilter);
+    const total = list.length;
+    const withPhoto = list.filter(u => u.photoURL).length;
+    document.getElementById('ph-stat-total').textContent = total;
+    document.getElementById('ph-stat-photos').textContent = withPhoto;
+    document.getElementById('ph-stat-rate').textContent = total ? Math.round(withPhoto / total * 100) + '%' : '0%';
 
     const grid = document.getElementById('photos-grid');
     if (!grid) return;
     grid.innerHTML = list.map(u => `
-      <div class="ph-actor-card ${u.photo ? 'ph-has-photo' : ''}" data-id="${esc(u.id)}">
-        <div class="ph-photo-zone">
-          ${u.photo
-            ? `<div class="ph-avatar"><img src="${u.photo}" alt="${esc(u.nom)}"></div>`
-            : `<div class="ph-avatar">${initials(u.nom)}</div>`}
-          <div class="ph-hover-overlay">📷</div>
+      <div class="ph-actor-card" data-id="${u.id}">
+        <div class="ph-photo-zone" data-upload="${u.id}">
+          <div class="ph-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div>
         </div>
-        <div class="ph-info">
-          <div class="ph-name">${esc(u.nom || 'Sans nom')}</div>
-          <div class="ph-role">${(ROLE_LABELS[u.role] || 'Membre').replace(/^\S+\s/, '')}</div>
+        <div class="player-info">
+          <div class="player-name">${esc(fullName(u))}</div>
+          <div class="player-role">${esc(ROLE_LABELS[u.role] || u.role || '—')}</div>
         </div>
-        <div class="ph-actions">
-          <button class="ph-btn upload" data-act="upload" data-id="${esc(u.id)}">📷 ${u.photo ? 'Changer' : 'Ajouter'}</button>
-          ${u.photo ? `<button class="ph-btn remove" data-act="remove" data-id="${esc(u.id)}">🗑️</button>` : ''}
-        </div>
-      </div>
-    `).join('') || `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📸</div><h3>Aucun acteur</h3><p>Aucun résultat pour ce filtre</p></div>`;
-
-    grid.querySelectorAll('[data-act="upload"]').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); uploadPhotoFor(btn.dataset.id); });
-    });
-    grid.querySelectorAll('[data-act="remove"]').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); removePhotoFor(btn.dataset.id); });
-    });
-    grid.querySelectorAll('.ph-photo-zone').forEach((zone, i) => {
-      zone.addEventListener('click', () => uploadPhotoFor(list[i].id));
+      </div>`).join('');
+    grid.querySelectorAll('[data-upload]').forEach(zone => {
+      zone.addEventListener('click', () => triggerPhotoUpload(zone.dataset.upload));
     });
   }
 
-  function uploadPhotoFor(id) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.addEventListener('change', () => {
+  function wirePhotoFilters() {
+    document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#ph-filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        phFilter = btn.dataset.phfilter || 'all';
+        renderPhotos();
+      });
+    });
+  }
+
+  function triggerPhotoUpload(uid) {
+    const input = document.getElementById('photo-input');
+    if (!input) return;
+    input.onchange = async () => {
       const file = input.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          if (usingFallback) {
-            const u = allUsers.find(x => x.id === id);
-            if (u) u.photo = reader.result;
-            renderAll();
-          } else {
-            await window.realtimeSync.saveDocument('users', id, { photo: reader.result });
-          }
-          showToast('Photo mise à jour ✓', 'success');
-          logActivity('Photo modifiée');
-        } catch (err) {
-          console.error(err);
-          showToast('Erreur upload photo', 'error');
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      if (!window.storage) { toast('Firebase Storage non configuré sur ce projet', 'error'); return; }
+      try {
+        toast('Envoi de la photo…', 'info');
+        const ref = window.storage.ref().child('actors/' + uid + '/photo_' + Date.now() + '_' + file.name);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        await window.db.collection('users').doc(uid).set({ photoURL: url }, { merge: true });
+        toast('Photo mise à jour', 'success');
+      } catch (e) { toast('Erreur upload : ' + e.message, 'error'); }
+      input.value = '';
+    };
     input.click();
   }
 
-  async function removePhotoFor(id) {
-    if (!confirm('Retirer cette photo ?')) return;
-    try {
-      if (usingFallback) {
-        const u = allUsers.find(x => x.id === id);
-        if (u) u.photo = null;
-        renderAll();
-      } else {
-        await window.realtimeSync.saveDocument('users', id, { photo: null });
-      }
-      showToast('Photo retirée', 'success');
-    } catch (err) {
-      console.error(err);
-      showToast('Erreur', 'error');
-    }
-  }
-
-  /* ── MATCHS ── */
-  function visibleMatches() {
-    const today = new Date().toISOString().slice(0, 10);
-    let list = allMatches.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    if (currentMatchTab === 'upcoming') list = list.filter(m => m.date >= today);
-    if (currentMatchTab === 'played') list = list.filter(m => m.date < today || (m.scoreHome != null && m.scoreAway != null));
-    return list;
-  }
-
+  /* ═══ MATCHS ═══ */
   function renderMatches() {
-    const list = visibleMatches();
-    const el = document.getElementById('matches-list');
-    if (!el) return;
+    let list = [...matchs];
+    const now = new Date();
+    if (matchTabFilter === 'upcoming') list = list.filter(m => m.date && new Date(m.date) >= now);
+    if (matchTabFilter === 'played') list = list.filter(m => m.date && new Date(m.date) < now);
+    list.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+    const container = document.getElementById('matches-list');
+    if (!container) return;
     if (!list.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div>`;
+      container.innerHTML = `<div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div>`;
       return;
     }
-    el.innerHTML = list.map(m => {
-      const d = m.date ? new Date(m.date + 'T00:00:00') : null;
-      const day = d ? d.getDate() : '--';
-      const month = d ? MONTHS_FR[d.getMonth()] : '';
-      const played = m.scoreHome != null && m.scoreAway != null && m.scoreHome !== '' && m.scoreAway !== '';
-      let resultHtml;
+    container.innerHTML = list.map(m => {
+      const d = m.date ? new Date(m.date) : null;
+      const played = m.scoreHome != null && m.scoreAway != null;
+      let resultClass = 'upcoming', resultText = 'À venir';
       if (played) {
-        const sh = Number(m.scoreHome), sa = Number(m.scoreAway);
-        const cls = sh > sa ? 'win' : (sh < sa ? 'loss' : 'draw');
-        const label = sh > sa ? 'Victoire' : (sh < sa ? 'Défaite' : 'Nul');
-        resultHtml = `<div class="match-score">${sh}–${sa}</div><div class="match-result ${cls}">${label}</div>`;
-      } else {
-        resultHtml = `<div class="match-result upcoming">À venir</div>`;
+        if (m.scoreHome > m.scoreAway) { resultClass = 'win'; resultText = 'Victoire'; }
+        else if (m.scoreHome < m.scoreAway) { resultClass = 'loss'; resultText = 'Défaite'; }
+        else { resultClass = 'draw'; resultText = 'Nul'; }
       }
-      return `<div class="match-card" data-id="${esc(m.id)}">
-        <div class="match-date-col"><div class="match-day">${day}</div><div class="match-month">${esc(month)}</div></div>
+      return `<div class="match-card" data-id="${m.id}">
+        <div class="match-date-col"><div class="match-day">${d ? d.getDate() : '—'}</div><div class="match-month">${d ? d.toLocaleDateString('fr-FR', { month: 'short' }) : ''}</div></div>
         <div class="match-divider"></div>
-        <div class="match-info">
-          <div class="match-teams">${esc(m.home || 'GSC')} vs ${esc(m.away || '?')}</div>
-          <div class="match-meta"><span>📍 ${esc(m.lieu) || '—'}</span><span>🏆 ${esc(m.competition) || '—'}</span>${m.time ? `<span>🕐 ${esc(m.time)}</span>` : ''}</div>
-        </div>
-        <div class="match-score-col">${resultHtml}</div>
+        <div class="match-info"><div class="match-teams">${esc(m.home || 'GSC')} — ${esc(m.away || '?')}</div><div class="match-meta">${m.competition ? '<span>🏆 ' + esc(m.competition) + '</span>' : ''}${m.lieu ? '<span>📍 ' + esc(m.lieu) + '</span>' : ''}${m.time ? '<span>🕐 ' + esc(m.time) + '</span>' : ''}</div></div>
+        <div class="match-score-col"><div class="match-score">${played ? m.scoreHome + ' - ' + m.scoreAway : '—'}</div><div class="match-result ${resultClass}">${resultText}</div></div>
       </div>`;
     }).join('');
-
-    el.querySelectorAll('.match-card').forEach(card => {
-      card.addEventListener('click', () => openMatchModal(card.dataset.id));
-    });
+    container.querySelectorAll('.match-card').forEach(card => card.addEventListener('click', () => openMatchModal(card.dataset.id)));
   }
 
-  function setupMatchTabs() {
-    const tabs = document.querySelectorAll('.match-tab');
-    const keys = ['all', 'upcoming', 'played'];
-    tabs.forEach((tab, i) => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentMatchTab = keys[i];
+  function wireMatchTabs() {
+    document.querySelectorAll('.match-tab').forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.match-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        matchTabFilter = ['all', 'upcoming', 'played'][idx] || 'all';
         renderMatches();
       });
     });
-    const addBtn = document.querySelector('.btn-add');
-    if (addBtn) addBtn.addEventListener('click', () => openMatchModal(null));
+    document.querySelector('.btn-add')?.addEventListener('click', () => openMatchModal(null));
   }
 
-  /* ── MATCH MODAL ── */
   function openMatchModal(id) {
-    editingMatchId = id;
-    const modal = document.getElementById('match-modal');
-    const deleteBtn = document.getElementById('btn-delete-match');
-
-    if (id) {
-      const m = allMatches.find(x => x.id === id);
-      if (!m) return;
-      setText('match-modal-title', 'Modifier le Match');
-      document.getElementById('match-home').value = m.home || 'GSC';
-      document.getElementById('match-away').value = m.away || '';
-      document.getElementById('match-date').value = m.date || '';
-      document.getElementById('match-time').value = m.time || '';
-      document.getElementById('match-lieu').value = m.lieu || '';
-      document.getElementById('match-competition').value = m.competition || '';
-      document.getElementById('match-score-home').value = m.scoreHome ?? '';
-      document.getElementById('match-score-away').value = m.scoreAway ?? '';
-      deleteBtn.style.display = '';
-    } else {
-      setText('match-modal-title', 'Nouveau Match');
-      document.getElementById('match-home').value = 'GSC';
-      document.getElementById('match-away').value = '';
-      document.getElementById('match-date').value = '';
-      document.getElementById('match-time').value = '';
-      document.getElementById('match-lieu').value = '';
-      document.getElementById('match-competition').value = '';
-      document.getElementById('match-score-home').value = '';
-      document.getElementById('match-score-away').value = '';
-      deleteBtn.style.display = 'none';
-    }
-    modal.classList.add('open');
-  }
-
-  function setupMatchModal() {
-    const modal = document.getElementById('match-modal');
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('open'));
-    modal.querySelectorAll('.btn-secondary').forEach(b => b.addEventListener('click', () => modal.classList.remove('open')));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-    modal.querySelector('.btn-primary').addEventListener('click', saveMatch);
-    document.getElementById('btn-delete-match').addEventListener('click', deleteMatch);
+    currentMatchId = id;
+    const m = id ? matchs.find(x => x.id === id) : null;
+    document.getElementById('match-modal-title').textContent = m ? 'Modifier le match' : 'Nouveau Match';
+    document.getElementById('match-home').value = m?.home || 'GSC';
+    document.getElementById('match-away').value = m?.away || '';
+    document.getElementById('match-date').value = m?.date ? m.date.slice(0, 10) : '';
+    document.getElementById('match-time').value = m?.time || '';
+    document.getElementById('match-lieu').value = m?.lieu || '';
+    document.getElementById('match-competition').value = m?.competition || '';
+    document.getElementById('match-score-home').value = m?.scoreHome ?? '';
+    document.getElementById('match-score-away').value = m?.scoreAway ?? '';
+    const delBtn = document.getElementById('btn-delete-match');
+    if (delBtn) delBtn.style.display = m ? 'inline-block' : 'none';
+    document.getElementById('match-modal').classList.add('open');
   }
 
   async function saveMatch() {
     const data = {
       home: document.getElementById('match-home').value || 'GSC',
-      away: document.getElementById('match-away').value,
-      date: document.getElementById('match-date').value,
-      time: document.getElementById('match-time').value,
-      lieu: document.getElementById('match-lieu').value,
-      competition: document.getElementById('match-competition').value,
-      scoreHome: document.getElementById('match-score-home').value === '' ? null : Number(document.getElementById('match-score-home').value),
-      scoreAway: document.getElementById('match-score-away').value === '' ? null : Number(document.getElementById('match-score-away').value)
+      away: document.getElementById('match-away').value || '',
+      date: document.getElementById('match-date').value || null,
+      time: document.getElementById('match-time').value || null,
+      lieu: document.getElementById('match-lieu').value || null,
+      competition: document.getElementById('match-competition').value || null,
+      scoreHome: document.getElementById('match-score-home').value !== '' ? Number(document.getElementById('match-score-home').value) : null,
+      scoreAway: document.getElementById('match-score-away').value !== '' ? Number(document.getElementById('match-score-away').value) : null
     };
-    if (!data.away) { showToast('Indiquez l\'équipe visiteuse', 'warn'); return; }
-
     try {
-      if (usingFallback) {
-        if (editingMatchId) {
-          const m = allMatches.find(x => x.id === editingMatchId);
-          if (m) Object.assign(m, data);
-        } else {
-          allMatches.push({ id: 'local-' + Date.now(), ...data });
-        }
-        renderAll();
-      } else {
-        const id = editingMatchId || ('m' + Date.now());
-        await window.realtimeSync.saveDocument('matchs', id, data);
-      }
-      showToast('Match enregistré ✓', 'success');
-      logActivity(`Match ${data.home} vs ${data.away} enregistré`);
-      document.getElementById('match-modal').classList.remove('open');
-    } catch (err) {
-      console.error(err);
-      showToast('Erreur lors de l\'enregistrement', 'error');
-    }
+      if (currentMatchId) await window.db.collection('matchs').doc(currentMatchId).set(data, { merge: true });
+      else await window.db.collection('matchs').add(data);
+      closeModal('match-modal');
+      toast('Match enregistré', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
   async function deleteMatch() {
-    if (!editingMatchId || !confirm('Supprimer ce match ?')) return;
+    if (!currentMatchId || !confirm('Supprimer ce match ?')) return;
     try {
-      if (usingFallback) {
-        allMatches = allMatches.filter(m => m.id !== editingMatchId);
-        renderAll();
-      } else {
-        await window.realtimeSync.deleteDocument('matchs', editingMatchId);
-      }
-      showToast('Match supprimé', 'success');
-      logActivity('Match supprimé');
-      document.getElementById('match-modal').classList.remove('open');
-    } catch (err) {
-      console.error(err);
-      showToast('Erreur lors de la suppression', 'error');
+      await window.db.collection('matchs').doc(currentMatchId).delete();
+      closeModal('match-modal');
+      toast('Match supprimé', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+  }
+
+  /* ═══ DOCUMENTS (archive des dossiers d'inscription) ═══ */
+  let docSearchTerm = '';
+  function renderDocuments() {
+    let list = users.filter(u => u.status !== 'deleted');
+    if (docSearchTerm) {
+      const t = docSearchTerm.toLowerCase();
+      list = list.filter(u => fullName(u).toLowerCase().includes(t));
     }
+    const tbody = document.getElementById('documents-tbody');
+    if (!tbody) return;
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray-txt)">Aucun acteur</td></tr>'; return; }
+    tbody.innerHTML = list.map(u => {
+      const docs = Array.isArray(u.documents) ? u.documents : [];
+      const docsHtml = docs.length
+        ? docs.map(d => `<a href="${esc(d.url)}" target="_blank" style="display:inline-block;margin:2px 6px 2px 0;font-size:11px;">📎 ${esc(d.label || 'Document')}</a>`).join('')
+        : '<span style="color:var(--gray-txt);font-size:12px;">Aucun</span>';
+      return `<tr>
+        <td data-label="Acteur"><strong>${esc(fullName(u))}</strong></td>
+        <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
+        <td data-label="Documents">${docsHtml}</td>
+        <td data-label="Actions"><button class="btn-sm" data-adddoc="${u.id}" style="padding:5px 10px;font-size:11px;border:1px solid var(--gray-bd);border-radius:6px;background:#fff;cursor:pointer;">➕ Ajouter</button></td>
+      </tr>`;
+    }).join('');
+    tbody.querySelectorAll('[data-adddoc]').forEach(btn => {
+      btn.addEventListener('click', () => addDocumentToUser(btn.dataset.adddoc));
+    });
   }
 
-  /* ── QUICK ACTIONS (dashboard) ── */
-  function setupQuickActions() {
-    const btns = document.querySelectorAll('.quick-actions .btn-action');
-    if (btns[0]) btns[0].addEventListener('click', () => showSection('joueurs'));
-    if (btns[1]) btns[1].addEventListener('click', () => openMatchModal(null));
-    if (btns[2]) btns[2].addEventListener('click', () => showSection('matchs'));
+  async function addDocumentToUser(uid) {
+    const label = prompt('Type de document (ex: Carte d\'identité, Licence, Justificatif domicile)');
+    if (!label) return;
+    const url = prompt('URL du document (lien hébergé — Drive, Firebase Storage, etc.)');
+    if (!url) return;
+    try {
+      await window.db.collection('users').doc(uid).update({
+        documents: firebase.firestore.FieldValue.arrayUnion({ label, url, addedAt: new Date().toISOString() })
+      });
+      toast('Document archivé', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     INIT
-     ═══════════════════════════════════════════════════════════ */
-  window.addEventListener('DOMContentLoaded', () => {
-    setupNav();
-    setupMobileMenu();
-    setupLogout();
-    setupUserFilters();
-    setupPlayerModal();
-    setupPhotoFilters();
-    setupMatchTabs();
-    setupMatchModal();
-    setupQuickActions();
-    renderDashboard();
-    boot();
+  /* ═══ RÉINITIALISATION (outils avancés) ═══ */
+  async function executeReset() {
+    const coll = document.getElementById('reset-collection-select').value;
+    const confirmInput = document.getElementById('reset-confirm-input').value.trim();
+    if (confirmInput !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'warn'); return; }
+    if (!confirm('Dernière confirmation : supprimer TOUS les documents de "' + coll + '" ? Cette action est irréversible.')) return;
+    try {
+      toast('Réinitialisation en cours…', 'info');
+      const snap = await window.db.collection(coll).get();
+      const docs = snap.docs;
+      const BATCH_SIZE = 450;
+      for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = window.db.batch();
+        docs.slice(i, i + BATCH_SIZE).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      document.getElementById('reset-confirm-input').value = '';
+      toast(coll + ' réinitialisé (' + docs.length + ' document(s) supprimé(s))', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+  }
+
+  /* ═══ MODALES & DIVERS ═══ */
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+  function ensureDeleteButton(modalId, actionsClass, onClick) {
+    const modal = document.getElementById(modalId);
+    const actions = modal?.querySelector('.' + actionsClass);
+    if (!actions) return;
+    let btn = actions.querySelector('.btn-dynamic-delete');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.className = 'btn btn-danger btn-dynamic-delete';
+      btn.textContent = '🗑️ Supprimer';
+      actions.appendChild(btn);
+    }
+    btn.onclick = onClick;
+  }
+
+  function toast(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type || 'info');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function wireModals() {
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+      overlay.querySelector('.modal-close')?.addEventListener('click', () => overlay.classList.remove('open'));
+    });
+    const playerModal = document.getElementById('player-modal');
+    playerModal?.querySelector('.btn-primary')?.addEventListener('click', savePlayer);
+    playerModal?.querySelector('.btn-secondary')?.addEventListener('click', () => closeModal('player-modal'));
+
+    const matchModal = document.getElementById('match-modal');
+    matchModal?.querySelector('.btn-primary')?.addEventListener('click', saveMatch);
+    matchModal?.querySelector('.btn-secondary')?.addEventListener('click', () => closeModal('match-modal'));
+    document.getElementById('btn-delete-match')?.addEventListener('click', deleteMatch);
+
+    document.getElementById('doc-search-input')?.addEventListener('input', (e) => { docSearchTerm = e.target.value; renderDocuments(); });
+    document.getElementById('btn-print-documents')?.addEventListener('click', () => window.print());
+    document.getElementById('btn-execute-reset')?.addEventListener('click', executeReset);
+
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      if (!confirm('Se déconnecter ?')) return;
+      window.realtimeSync?.stopAll();
+      localStorage.removeItem('gsc_admin_session');
+      window.location.href = 'index.html';
+    });
+  }
+
+  /* ═══ INITIALISATION ═══ */
+  function init() {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    wireNav(); wireQuickActions(); wirePlayerFilters(); wirePhotoFilters();
+    wireMatchTabs(); wireModals();
+
+    window.realtimeSync.onUpdate('users', (data) => {
+      users = data;
+      renderDashboard();
+      const active = document.querySelector('.section.active');
+      if (active) {
+        if (active.id === 'joueurs') renderPlayers();
+        if (active.id === 'photos') renderPhotos();
+        if (active.id === 'documents') renderDocuments();
+      }
+    });
+    window.realtimeSync.onUpdate('matchs', (data) => {
+      matchs = data;
+      renderDashboard();
+      if (document.getElementById('matchs')?.classList.contains('active')) renderMatches();
+    });
+  }
+
+  if (window._firebaseReady) init();
+  else document.addEventListener('firebase-ready', init);
+  window.addEventListener('firebase-init-error', () => {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    toast('Connexion Firebase impossible — vérifiez votre réseau', 'error');
   });
-
 })();

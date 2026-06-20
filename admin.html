@@ -10,6 +10,7 @@
 <!-- Firebase (SDK compat — requis par realtime-sync-module.js) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
 
 <!-- Chart.js (requis par l'onglet Rapports) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -542,6 +543,9 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
         <button class="nav-item" id="nav-rapports">
           <span class="nav-icon">📈</span><span>Rapports</span>
         </button>
+        <button class="nav-item" id="nav-documents">
+          <span class="nav-icon">📁</span><span>Documents</span>
+        </button>
       </div>
       <div class="sidebar-footer">
         <div class="admin-profile">
@@ -683,6 +687,52 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
         </div>
       </div>
 
+      <!-- DOCUMENTS (archive des dossiers d'inscription) -->
+      <div id="documents" class="section">
+        <div class="page-header">
+          <div class="page-title">📁 Bibliothèque des documents</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-report outline" id="btn-print-documents">🖨️ Imprimer la liste</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:640px;">
+          Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur. Le formulaire d'inscription public ne collecte pas encore ces fichiers automatiquement — utilisez "Ajouter un document" sur une fiche pour les archiver manuellement.
+        </p>
+        <div class="filters-bar">
+          <div class="search-box"><span>🔍</span><input type="text" id="doc-search-input" placeholder="Nom de l'acteur…"></div>
+        </div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Acteur</th><th>Rôle</th><th>Documents archivés</th><th>Actions</th></tr></thead>
+            <tbody id="documents-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- OUTILS AVANCÉS (sous Rapports) -->
+      <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
+        <div class="dash-card-title" style="color:var(--danger);">⚠️ Outils avancés — Réinitialisation</div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+          Supprime <strong>définitivement</strong> tous les documents d'une collection Firestore. Action irréversible — à utiliser uniquement pour repartir d'une base propre.
+        </p>
+        <div class="grid2" style="margin-bottom:12px;">
+          <div class="field">
+            <label>Collection à réinitialiser</label>
+            <select id="reset-collection-select">
+              <option value="users">users (membres)</option>
+              <option value="matchs">matchs</option>
+              <option value="sitesSportifs">sitesSportifs</option>
+              <option value="actualites">actualites</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Confirmation (taper SUPPRIMER)</label>
+            <input type="text" id="reset-confirm-input" placeholder="SUPPRIMER">
+          </div>
+        </div>
+        <button class="btn btn-danger" id="btn-execute-reset">🗑️ Réinitialiser cette collection</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -781,6 +831,7 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
   <button class="mn-btn" id="mnav-joueurs"><span class="mn-icon">👥</span><span>Joueurs</span></button>
   <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
   <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
+  <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
 </div>
 
 <!-- Module de synchronisation temps réel -->
