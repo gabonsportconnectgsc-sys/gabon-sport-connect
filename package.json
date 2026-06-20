@@ -1,26 +1,13 @@
 {
-  "name": "gsc-admin-reports",
-  "version": "2.0.0",
-  "description": "Système de rapports, statistiques et intégrations API pour GSC Admin Panel",
-  "main": "js/reports-stats-module.js",
+  "name": "gsc-seed-import",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Import des profils fictifs de démonstration dans Firestore pour Gabon Sport Connect",
+  "main": "import-seed.js",
   "scripts": {
-    "dev": "python -m http.server 8000",
-    "test": "echo \"Run tests with your test framework\""
+    "import-seed": "node import-seed.js"
   },
-  "keywords": [
-    "reports",
-    "statistics",
-    "charts",
-    "dashboard",
-    "gsc",
-    "sports",
-    "admin",
-    "api-integration",
-    "fifa",
-    "caf"
-  ],
-  "author": "GSC Team",
-  "license": "MIT",
-  "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "firebase": "^10.12.0"
+  }
 }
