@@ -111,6 +111,8 @@
     .role-badge.association{background:var(--rose);color:white;}
     .role-badge.independant{background:#0ea5e9;color:white;}
     .role-badge.visiteur{background:#94a3b8;color:white;}
+    .role-badge.eleve_etudiant{background:#6366f1;color:white;}
+    .role-badge.sportif_etranger{background:#ca8a04;color:white;}
     .btn-icon{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
     .btn-icon:hover{background:rgba(255,255,255,.16);}
     /* ── HAMBURGER (bord droit du header) ── */
@@ -222,6 +224,8 @@
     .actor-type-dot.joueur,.actor-type-dot.athlete,.actor-type-dot.entraineur,.actor-type-dot.arbitre,.actor-type-dot.independant{background:linear-gradient(135deg,var(--green),var(--green-dk));}
     .actor-type-dot.club,.actor-type-dot.association{background:linear-gradient(135deg,#3b82f6,#2563eb);}
     .actor-type-dot.federation,.actor-type-dot.organisateur{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .actor-type-dot.eleve_etudiant{background:linear-gradient(135deg,#6366f1,#4338ca);}
+    .actor-type-dot.sportif_etranger{background:linear-gradient(135deg,#ca8a04,#92660a);}
     .actor-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--white);text-align:center;line-height:1.2;}
     .actor-card-body{padding:12px 14px;}
     .actor-meta-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-txt);margin-bottom:4px;}
@@ -233,6 +237,8 @@
     .badge-federation{background:#fff7ed;color:#9a3412;}
     .badge-association{background:#fce7f3;color:#9d174d;}
     .badge-independant{background:#e0f2fe;color:#075985;}
+    .badge-eleve_etudiant{background:#e0e7ff;color:#3730a3;}
+    .badge-sportif_etranger{background:#fef9c3;color:#854d0e;}
 
     /* Actor detail modal */
     .actor-detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
@@ -507,6 +513,8 @@
     .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
+    .actor-filter-btn[data-type="eleve_etudiant"].active{background:linear-gradient(135deg,#6366f1,#4338ca);}
+    .actor-filter-btn[data-type="sportif_etranger"].active{background:linear-gradient(135deg,#ca8a04,#92660a);}
 
     /* ── CARTE / SITES FILTER BUTTONS ── */
     .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;}
@@ -674,6 +682,7 @@
     .maps-tab.active{color:var(--green);border-bottom-color:var(--green);}
     .maps-panel{display:none;}.maps-panel.active{display:block;}
     #osm-map{width:100%;height:360px;border-radius:var(--radius-sm);margin-bottom:12px;border:1px solid var(--gray-bd);}
+.gsc-school-marker{font-size:20px;text-align:center;line-height:22px;}
     .maps-search{display:flex;gap:8px;margin-bottom:12px;}
     .maps-search input{flex:1;padding:11px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;}
     .maps-search input:focus{border-color:var(--green);outline:none;}
@@ -777,6 +786,8 @@
 .acr-badge.independant{background:#e0f2fe;color:#075985;}
 .acr-badge.federation{background:#fef3c7;color:#92400e;}
 .acr-badge.supporter{background:#fce7f3;color:#9d174d;}
+.acr-badge.eleve_etudiant{background:#e0e7ff;color:#3730a3;}
+.acr-badge.sportif_etranger{background:#fef9c3;color:#854d0e;}
 .acr-badge.admin{background:#fef9c3;color:#78350f;}
 
 /* ═══ MOBILE RESPONSIVE ═══ */
@@ -904,10 +915,20 @@
             <div class="rc-label">Organisateur</div>
             <div class="rc-sub">Évènements, tournois</div>
           </div>
-          <div class="role-card" onclick="selectRole('independant')" style="grid-column:1/-1;">
+          <div class="role-card" onclick="selectRole('independant')">
             <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Sportif indépendant</div>
             <div class="rc-sub">Pratiquant isolé, hors club</div>
+          </div>
+          <div class="role-card" onclick="selectRole('eleve_etudiant')">
+            <span style="font-size:26px;display:block;margin-bottom:4px;">🎓</span>
+            <div class="rc-label">Élève / Étudiant</div>
+            <div class="rc-sub">Sport scolaire / universitaire</div>
+          </div>
+          <div class="role-card" onclick="selectRole('sportif_etranger')" style="grid-column:1/-1;">
+            <span style="font-size:26px;display:block;margin-bottom:4px;">🌍</span>
+            <div class="rc-label">Sportif étranger</div>
+            <div class="rc-sub">Joueur / athlète non gabonais évoluant au Gabon</div>
           </div>
         </div>
         <input type="hidden" id="reg-role" value="joueur" />
@@ -945,6 +966,57 @@
           <option value="National">National</option>
           <option value="International">International</option>
         </select>
+      </div>
+
+      <!-- ── ÉLÈVE / ÉTUDIANT : champs scolaires & universitaires ── -->
+      <div class="field-group" id="reg-niveauscolaire-group" style="display:none;">
+        <label>Niveau scolaire / universitaire</label>
+        <select id="reg-niveauscolaire">
+          <option value="Primaire">Primaire</option>
+          <option value="Collège">Collège</option>
+          <option value="Lycée">Lycée</option>
+          <option value="Licence">Licence (Bac+1 à Bac+3)</option>
+          <option value="Master">Master (Bac+4/5)</option>
+          <option value="Doctorat">Doctorat</option>
+        </select>
+      </div>
+      <div class="field-group" id="reg-etablissement-group" style="display:none;">
+        <label>Établissement scolaire / universitaire</label>
+        <input type="text" id="reg-etablissement" list="gsc-etablissements-list" placeholder="Rechercher un établissement (Gabon ou international)…" />
+        <datalist id="gsc-etablissements-list"></datalist>
+        <input type="text" id="reg-etablissement-autre" placeholder="Établissement non listé ? Précisez nom + ville/pays" style="display:none;margin-top:8px;">
+        <label style="margin-top:6px;font-size:11px;color:var(--gray-txt);"><input type="checkbox" id="reg-etablissement-toggle-autre" onchange="document.getElementById('reg-etablissement-autre').style.display=this.checked?'':'none'" style="vertical-align:middle;margin-right:4px;">Mon établissement n'est pas dans la liste</label>
+      </div>
+      <div class="field-group" id="reg-filiere-group" style="display:none;">
+        <label>Filière / spécialité</label>
+        <input type="text" id="reg-filiere" placeholder="Ex : Sciences, STAPS, Droit, Économie…" />
+      </div>
+
+      <!-- ── SPORTIF ÉTRANGER : statut & documents ── -->
+      <div class="field-group" id="reg-nationalite-group" style="display:none;">
+        <label>Nationalité</label>
+        <select id="reg-nationalite"></select>
+      </div>
+      <div class="field-group" id="reg-statutpro-group" style="display:none;">
+        <label>Statut contractuel</label>
+        <select id="reg-statutpro">
+          <option value="Libre">Joueur libre (sans contrat)</option>
+          <option value="Sous contrat">Sous contrat avec un club/employeur</option>
+        </select>
+        <input type="text" id="reg-employeur" placeholder="Nom du club / employeur (si sous contrat)" style="margin-top:8px;">
+      </div>
+      <div class="field-group" id="reg-document-group" style="display:none;">
+        <label>Document d'identité / titre de séjour</label>
+        <select id="reg-document-type">
+          <option value="Passeport">Passeport</option>
+          <option value="Carte de séjour">Carte de séjour</option>
+          <option value="Visa de travail">Visa de travail</option>
+          <option value="Licence FIFA/fédération">Licence FIFA / fédération internationale</option>
+        </select>
+        <input type="text" id="reg-document-numero" placeholder="Numéro du document" style="margin-top:8px;">
+        <div style="font-size:11px;color:var(--gray-txt);margin-top:8px;line-height:1.5;">
+          ℹ️ La validité de votre document et de votre contrat sera vérifiée par l'administrateur via les registres internationaux (FIFA Clearing House / TMS, fédérations internationales, Transfermarkt).
+        </div>
       </div>
       <button id="btn-register" onclick="handleRegister()" class="btn-primary">✅ Créer mon compte</button>
     </div>
@@ -1148,6 +1220,22 @@
           <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏃</span>'">
           <div class="stat-val" id="stat-total-independants">—</div>
           <div class="stat-lbl">Sportifs indépendants</div>
+        </button>
+
+        <!-- Élèves / Étudiants -->
+        <button class="stat-card" onclick="showView('annuaire');filterActors('eleve_etudiant')"
+          style="background:linear-gradient(135deg,#6366f1,#4338ca);padding:16px 12px;">
+          <span style="font-size:28px;margin-bottom:6px;display:inline-block;">🎓</span>
+          <div class="stat-val" id="stat-total-etudiants">—</div>
+          <div class="stat-lbl">Élèves / Étudiants</div>
+        </button>
+
+        <!-- Sportifs étrangers -->
+        <button class="stat-card" onclick="showView('annuaire');filterActors('sportif_etranger')"
+          style="background:linear-gradient(135deg,#ca8a04,#92660a);padding:16px 12px;">
+          <span style="font-size:28px;margin-bottom:6px;display:inline-block;">🌍</span>
+          <div class="stat-val" id="stat-total-etrangers">—</div>
+          <div class="stat-lbl">Sportifs étrangers</div>
         </button>
 
         <!-- Mon niveau -->
@@ -1441,6 +1529,12 @@
             </button>
             <button class="actor-filter-btn" data-type="independant" onclick="filterActors('independant')" style="--abtn-color:#0ea5e9;">
               <span style="font-size:18px;line-height:1;">🚴</span>Indépendants
+            </button>
+            <button class="actor-filter-btn" data-type="eleve_etudiant" onclick="filterActors('eleve_etudiant')" style="--abtn-color:#6366f1;">
+              <span style="font-size:18px;line-height:1;">🎓</span>Élèves/Étudiants
+            </button>
+            <button class="actor-filter-btn" data-type="sportif_etranger" onclick="filterActors('sportif_etranger')" style="--abtn-color:#ca8a04;">
+              <span style="font-size:18px;line-height:1;">🌍</span>Sportifs étrangers
             </button>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
@@ -2202,12 +2296,13 @@ const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
   association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
-  organisateur:'🎪 Organisateur', supporter:'💗 Supporter'
+  organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
+  eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
   joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
-  organisateur:'🎪', supporter:'💗'
+  organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍'
 };
 
 function showAuthError(msg){
@@ -2258,17 +2353,61 @@ function onRegTitreChange(){
 }
 window.onRegTitreChange=onRegTitreChange;
 
+// Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
+// lat/lng utilisés pour la géolocalisation sur la carte sportive.
+const ETABLISSEMENTS_GA=[
+  {nom:'Université Omar Bongo (UOB)',ville:'Libreville',type:'Université',lat:0.3936,lng:9.4673},
+  {nom:'Université des Sciences et Techniques de Masuku (USTM)',ville:'Franceville',type:'Université',lat:-1.6333,lng:13.5833},
+  {nom:'Université des Sciences de la Santé (USS)',ville:'Libreville (Owendo)',type:'Université',lat:0.2833,lng:9.5},
+  {nom:'École Normale Supérieure (ENS) Libreville',ville:'Libreville',type:'Université',lat:0.4162,lng:9.4673},
+  {nom:'École Normale Supérieure de l\'Enseignement Technique (ENSET)',ville:'Libreville',type:'Université',lat:0.4162,lng:9.4673},
+  {nom:'Institut National des Sciences de Gestion (INSG)',ville:'Libreville',type:'Université',lat:0.3901,lng:9.4544},
+  {nom:'Institut Supérieur de Technologie (IST)',ville:'Libreville',type:'Université',lat:0.3901,lng:9.4544},
+  {nom:'Université Internationale de Libreville (UIL)',ville:'Libreville',type:'Université',lat:0.3963,lng:9.4476},
+  {nom:'Lycée National Léon Mba',ville:'Libreville',type:'Lycée',lat:0.3947,lng:9.4399},
+  {nom:'Lycée Quaben',ville:'Libreville',type:'Lycée',lat:0.4036,lng:9.4356},
+  {nom:'Collège Bessieux',ville:'Libreville',type:'Collège',lat:0.3833,lng:9.45},
+  {nom:'Lycée Technique National Omar Bongo',ville:'Libreville',type:'Lycée',lat:0.39,lng:9.46},
+  {nom:'Lycée d\'État de Port-Gentil',ville:'Port-Gentil',type:'Lycée',lat:-0.7193,lng:8.7815},
+  {nom:'Lycée Provincial de Franceville',ville:'Franceville',type:'Lycée',lat:-1.6333,lng:13.5833},
+  {nom:'Établissement international (hors Gabon)',ville:'International',type:'International',lat:null,lng:null}
+];
+function populateEtablissements(){
+  const dl=document.getElementById('gsc-etablissements-list');
+  if(!dl) return;
+  dl.innerHTML=ETABLISSEMENTS_GA.map(e=>`<option value="${e.nom}">${e.ville}</option>`).join('');
+}
+
+// Liste de pays pour le statut "Sportif étranger"
+const PAYS_LIST=['Cameroun','Congo','République Démocratique du Congo','Guinée Équatoriale','Tchad',
+  'Sénégal','Côte d\'Ivoire','Mali','Burkina Faso','Bénin','Togo','Nigeria','Ghana','Maroc','Algérie',
+  'Tunisie','Égypte','Afrique du Sud','France','Belgique','Brésil','Argentine','Portugal','Espagne','Autre'];
+function populateNationalites(){
+  const sel=document.getElementById('reg-nationalite');
+  if(!sel) return;
+  sel.innerHTML=PAYS_LIST.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+document.addEventListener('DOMContentLoaded',()=>{populateEtablissements();populateNationalites();});
+
 function selectRole(role){
   document.getElementById('reg-role').value=role;
   document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
   event.currentTarget.classList.add('selected');
   // Show/hide extra fields
-  var showSport=['joueur','arbitre','entraineur','independant'].includes(role);
-  var showNiveau=['joueur','arbitre','independant'].includes(role);
+  var showSport=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(role);
+  var showNiveau=['joueur','arbitre','independant','eleve_etudiant','sportif_etranger'].includes(role);
   var showTitre=['club','association','federation','organisateur','arbitre'].includes(role);
+  var showScolaire=role==='eleve_etudiant';
+  var showEtranger=role==='sportif_etranger';
   document.getElementById('reg-sport-group').style.display=showSport?'':'none';
   document.getElementById('reg-niveau-group').style.display=showNiveau?'':'none';
   document.getElementById('reg-titre-group').style.display=showTitre?'':'none';
+  document.getElementById('reg-niveauscolaire-group').style.display=showScolaire?'':'none';
+  document.getElementById('reg-etablissement-group').style.display=showScolaire?'':'none';
+  document.getElementById('reg-filiere-group').style.display=showScolaire?'':'none';
+  document.getElementById('reg-nationalite-group').style.display=showEtranger?'':'none';
+  document.getElementById('reg-statutpro-group').style.display=showEtranger?'':'none';
+  document.getElementById('reg-document-group').style.display=showEtranger?'':'none';
   if(showTitre) populateTitreOptions(role);
 }
 
@@ -2746,6 +2885,40 @@ async function handleRegister(){
         anneeCreation:'',president:'',adresse:'',siteWeb:'',
         sports:[sport],effectif:0,palmares:''
       });
+    } else if(role==='eleve_etudiant'){
+      const etabToggle=document.getElementById('reg-etablissement-toggle-autre')?.checked;
+      const etablissement=etabToggle
+        ? (document.getElementById('reg-etablissement-autre')?.value.trim()||'')
+        : (document.getElementById('reg-etablissement')?.value.trim()||'');
+      const niveauScolaire=document.getElementById('reg-niveauscolaire')?.value||'';
+      const filiere=document.getElementById('reg-filiere')?.value.trim()||'';
+      const etabRef=ETABLISSEMENTS_GA.find(e=>e.nom===etablissement);
+      Object.assign(baseProfile,{
+        club:'',poste:'',taille:0,poids:0,
+        mandats:[],licenceNumero:'',licenceExpire:'',
+        niveauScolaire,etablissement,filiere,
+        etablissementVille:etabRef?.ville||'',
+        etablissementLat:etabRef?.lat||null,
+        etablissementLng:etabRef?.lng||null,
+        statutSportifScolaire:true
+      });
+    } else if(role==='sportif_etranger'){
+      const nationalite=document.getElementById('reg-nationalite')?.value||'';
+      const statutPro=document.getElementById('reg-statutpro')?.value||'Libre';
+      const employeur=document.getElementById('reg-employeur')?.value.trim()||'';
+      const documentType=document.getElementById('reg-document-type')?.value||'';
+      const documentNumero=document.getElementById('reg-document-numero')?.value.trim()||'';
+      Object.assign(baseProfile,{
+        club:employeur,poste:'',taille:0,poids:0,
+        mandats:[],licenceNumero:'',licenceExpire:'',
+        nationalite,statutPro,employeur,documentType,documentNumero,
+        documentVerifie:false,
+        liensVerification:{
+          fifaTms:'https://tms.fifa.com',
+          transfermarkt:'https://www.transfermarkt.com',
+          caf:'https://www.cafonline.com'
+        }
+      });
     }
     await setDoc(doc(db,'users',uid),baseProfile);
     currentUser=cred;
@@ -2873,6 +3046,10 @@ async function loadActors(){
   if(orgEl) orgEl.textContent=activeAll.filter(u=>u.role==='organisateur').length;
   const indEl=document.getElementById('stat-total-independants');
   if(indEl) indEl.textContent=activeAll.filter(u=>u.role==='independant').length;
+  const eduEl=document.getElementById('stat-total-etudiants');
+  if(eduEl) eduEl.textContent=activeAll.filter(u=>u.role==='eleve_etudiant').length;
+  const etrEl=document.getElementById('stat-total-etrangers');
+  if(etrEl) etrEl.textContent=activeAll.filter(u=>u.role==='sportif_etranger').length;
 }
 
 function filterActors(type){
@@ -2914,8 +3091,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗'};
-    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin'};
+    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍'};
+    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -2951,8 +3128,8 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','entraineur','arbitre','club','federation','association','organisateur','independant','supporter','admin'];
-      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs'};
+      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','club','federation','association','organisateur','independant','supporter','admin'];
+      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
       orderedActors=[];
@@ -3017,9 +3194,9 @@ function renderActors(actors){
       const id=a.uid||a.id;
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur'}[a.role]||a.role;
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger'}[a.role]||a.role;
       const badgeClass='badge-'+(a.role||'joueur');
-      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪'};
+      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍'};
       const typeDotIcon=typeIcons[a.role]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -3038,6 +3215,8 @@ function renderActors(actors){
             <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
             ${a.club?`<div class="actor-meta-row">🏟️ ${a.club}</div>`:''}
             ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
+            ${a.etablissement?`<div class="actor-meta-row">🎓 ${a.etablissement}</div>`:''}
+            ${a.nationalite?`<div class="actor-meta-row">🌍 ${a.nationalite}${a.statutPro?' · '+a.statutPro:''}</div>`:''}
           </div>
         </div>`;
     }).join('');
@@ -3058,7 +3237,7 @@ function openActorDetail(uid){
   else el.textContent=ROLE_ICONS[a.role]||initial;
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
-  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(a.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(a.role);
   const isOrg=['club','association','federation','organisateur'].includes(a.role);
   let html='';
   // Infos générales
@@ -3112,6 +3291,31 @@ function openActorDetail(uid){
     if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
     if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${a.effectif} membres</span></div>`;
   }
+  // Élève / Étudiant — infos académiques
+  if(a.role==='eleve_etudiant'){
+    html+=`<div class="adm-section"><div class="adm-section-title">🎓 Profil académique</div>`;
+    if(a.niveauScolaire) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${a.niveauScolaire}</span></div>`;
+    if(a.etablissement) html+=`<div class="adm-info-row"><span class="adm-info-label">Établissement</span><span class="adm-info-val">${a.etablissement}</span></div>`;
+    if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${a.filiere}</span></div>`;
+    html+=`</div>`;
+  }
+  // Sportif étranger — statut & vérification documentaire
+  if(a.role==='sportif_etranger'){
+    html+=`<div class="adm-section"><div class="adm-section-title">🌍 Statut sportif étranger</div>`;
+    if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${a.statutPro}</span></div>`;
+    if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${a.employeur}</span></div>`;
+    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${a.documentNumero?' n° '+a.documentNumero:''}</span></div>`;
+    html+=`<div class="adm-info-row"><span class="adm-info-label">Vérification</span><span class="adm-info-val">${a.documentVerifie?'✅ Vérifié':'⏳ Non vérifié'}</span></div>`;
+    html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 FIFA TMS</a>
+      <a href="https://www.transfermarkt.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 Transfermarkt</a>
+      <a href="https://www.cafonline.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 CAF</a>
+    </div>`;
+    if(userProfile?.role==='admin'){
+      html+=`<button class="btn-sm" onclick="event.stopPropagation();toggleDocumentVerifie('${a.uid||a.id}',${!a.documentVerifie})" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--green);border-radius:8px;background:${a.documentVerifie?'#fff':'var(--green)'};color:${a.documentVerifie?'var(--green-dk)':'#fff'};cursor:pointer;font-weight:700;">${a.documentVerifie?'Marquer non vérifié':'✅ Marquer comme vérifié'}</button>`;
+    }
+    html+=`</div>`;
+  }
   if(a.bio){
     html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.bio}</p></div>`;
   }
@@ -3164,7 +3368,7 @@ function renderProfile(){
   if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
-  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
@@ -3262,7 +3466,7 @@ function renderSportStats(p){
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
-  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   let h='';
@@ -3469,7 +3673,7 @@ async function saveProfile(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!currentUser||!userProfile) return;
   const p=userProfile;
-  const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
 
@@ -4380,6 +4584,17 @@ async function removeOwnDocument(uid,idx){
 }
 window.removeOwnDocument=removeOwnDocument;
 
+async function toggleDocumentVerifie(uid,value){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
+  try{
+    await updateDoc(doc(db,'users',uid),{documentVerifie:value,updatedAt:serverTimestamp()});
+    await loadActors();
+    toast(value?'✅ Document marqué comme vérifié.':'Document marqué comme non vérifié.','success');
+    if(document.getElementById('actor-detail-modal')?.classList.contains('open')) openActorDetail(uid);
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.toggleDocumentVerifie=toggleDocumentVerifie;
+
 async function shareOwnDocument(uid,idx){
   const targetProfile = (currentUser&&uid===currentUser.uid) ? userProfile : (allActors.find(a=>(a.uid||a.id)===uid)||{});
   const docs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
@@ -4447,6 +4662,11 @@ function initOsmMap(){
   librevilleSportsData.stadiums.forEach(s=>{
     L.marker([s.lat,s.lng]).addTo(osmMap).bindPopup(`<strong>${s.nom}</strong><br>${s.type}${s.capacite?' · '+s.capacite+' places':''}`);
   });
+  // Établissements scolaires & universitaires (sport scolaire / universitaire)
+  const schoolIcon=L.divIcon({html:'🎓',className:'gsc-school-marker',iconSize:[22,22]});
+  ETABLISSEMENTS_GA.filter(e=>e.lat&&e.lng).forEach(e=>{
+    L.marker([e.lat,e.lng],{icon:schoolIcon}).addTo(osmMap).bindPopup(`<strong>${e.nom}</strong><br>${e.type} · ${e.ville}`);
+  });
 }
 window.initOsmMap=initOsmMap;
 
@@ -4474,7 +4694,8 @@ function updateOsmResults(q=''){
   const filterType=document.getElementById('osm-type')?.value||'';
   const allResults=[
     ...librevilleSportsData.stadiums.map(s=>({name:s.nom,type:s.type,lat:s.lat,lng:s.lng,desc:(s.capacite||'')+(s.capacite?' places':'')})),
-    ...librevilleSportsData.clubs.map(c=>({name:c.nom,type:'Club',lat:c.lat,lng:c.lng,desc:'Fondé en '+c.founded}))
+    ...librevilleSportsData.clubs.map(c=>({name:c.nom,type:'Club',lat:c.lat,lng:c.lng,desc:'Fondé en '+c.founded})),
+    ...ETABLISSEMENTS_GA.filter(e=>e.lat&&e.lng).map(e=>({name:e.nom,type:'Établissement scolaire',lat:e.lat,lng:e.lng,desc:e.ville}))
   ];
   let results=q?allResults.filter(r=>r.name.toLowerCase().includes(q.toLowerCase())):allResults;
   if(filterType) results=results.filter(r=>(r.type||'').toLowerCase().includes(filterType.toLowerCase()));
@@ -5684,7 +5905,7 @@ function applyScoutFilters(){
       const fullname = ([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')).toLowerCase();
       if(!fullname.includes(nom)) return false;
     }
-    const isPersonnel = ['joueur','arbitre','entraineur','independant'].includes(a.role);
+    const isPersonnel = ['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(a.role);
     if(isPersonnel){
       if(a.taille && (a.taille < tailleMin || a.taille > tailleMax)) return false;
       if(a.poids && (a.poids < poidsMin || a.poids > poidsMax)) return false;

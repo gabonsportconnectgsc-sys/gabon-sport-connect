@@ -567,6 +567,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-documents">
           <span class="nav-icon">📁</span><span>Documents</span>
         </button>
+        <button class="nav-item" id="nav-verification">
+          <span class="nav-icon">🌍</span><span>Vérification internationale</span>
+        </button>
       </div>
       <div class="sidebar-footer">
         <div class="admin-profile">
@@ -627,6 +630,8 @@ tr.is-demo-row td { opacity: .82; }
           <button class="filter-btn role-organisateur">🎪 Organisateurs</button>
           <button class="filter-btn role-supporter">💗 Supporters</button>
           <button class="filter-btn role-independant">🚴 Indépendants</button>
+          <button class="filter-btn role-eleve_etudiant">🎓 Élèves/Étudiants</button>
+          <button class="filter-btn role-sportif_etranger">🌍 Sportifs étrangers</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
         </div>
         <div class="users-table-wrap">
@@ -661,6 +666,8 @@ tr.is-demo-row td { opacity: .82; }
           <button class="filter-btn role-organisateur" data-phfilter="organisateur">🎪 Organisateurs</button>
           <button class="filter-btn role-supporter" data-phfilter="supporter">💗 Supporters</button>
           <button class="filter-btn role-independant" data-phfilter="independant">🚴 Indépendants</button>
+          <button class="filter-btn role-eleve_etudiant" data-phfilter="eleve_etudiant">🎓 Élèves/Étudiants</button>
+          <button class="filter-btn role-sportif_etranger" data-phfilter="sportif_etranger">🌍 Sportifs étrangers</button>
         </div>
         <!-- Grid -->
         <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
@@ -739,6 +746,48 @@ tr.is-demo-row td { opacity: .82; }
           </table>
         </div>
       </div>
+
+      <!-- VÉRIFICATION INTERNATIONALE — Élèves/Étudiants & Sportifs étrangers -->
+      <div id="verification" class="section">
+        <div class="page-header">
+          <div class="page-title">🌍 Vérification internationale</div>
+        </div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+          Centralise la vérification des sportifs étrangers (document d'identité, statut contractuel) via les registres
+          internationaux de référence, et liste les établissements scolaires/universitaires reconnus pour les profils Élève/Étudiant.
+        </p>
+
+        <div class="dash-card" style="margin-bottom:16px;">
+          <div class="dash-card-title">🔗 Sites de référencement international</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">FIFA TMS / Clearing House</a>
+            <a href="https://www.transfermarkt.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">Transfermarkt</a>
+            <a href="https://www.cafonline.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">CAF</a>
+            <a href="https://www.fiba.basketball" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">FIBA</a>
+          </div>
+        </div>
+
+        <div class="page-header" style="margin-top:8px;">
+          <div class="page-title" style="font-size:15px;">🌍 Sportifs étrangers — statut documentaire</div>
+        </div>
+        <div class="users-table-wrap" style="margin-bottom:20px;">
+          <table class="users-table">
+            <thead><tr><th>Nom</th><th>Nationalité</th><th>Statut</th><th>Document</th><th>Vérification</th><th>Actions</th></tr></thead>
+            <tbody id="verif-etrangers-tbody"><tr><td colspan="6" style="text-align:center;color:var(--gray-txt);padding:16px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="page-header">
+          <div class="page-title" style="font-size:15px;">🎓 Établissements scolaires & universitaires reconnus</div>
+        </div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Établissement</th><th>Ville</th><th>Type</th></tr></thead>
+            <tbody id="verif-etablissements-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
 
       <!-- OUTILS AVANCÉS (sous Rapports) -->
       <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
@@ -884,11 +933,15 @@ tr.is-demo-row td { opacity: .82; }
 
   const ROLE_LABELS = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
-    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur'
+    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
+    organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
-    club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628'
+    club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
+    organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
+    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04'
   };
   const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
 
@@ -1029,6 +1082,111 @@ tr.is-demo-row td { opacity: .82; }
 
     const refreshBtn = document.getElementById('btn-refresh-rapports');
     if (refreshBtn) refreshBtn.addEventListener('click', renderReports);
+  });
+})();
+</script>
+
+<!-- Module Vérification internationale — autonome, lit Firestore via le SDK compat déjà initialisé -->
+<script>
+(function () {
+  'use strict';
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  const ETABLISSEMENTS_GA = [
+    {nom:'Université Omar Bongo (UOB)', ville:'Libreville', type:'Université'},
+    {nom:'Université des Sciences et Techniques de Masuku (USTM)', ville:'Franceville', type:'Université'},
+    {nom:'Université des Sciences de la Santé (USS)', ville:'Libreville (Owendo)', type:'Université'},
+    {nom:'École Normale Supérieure (ENS) Libreville', ville:'Libreville', type:'Université'},
+    {nom:"École Normale Supérieure de l'Enseignement Technique (ENSET)", ville:'Libreville', type:'Université'},
+    {nom:'Institut National des Sciences de Gestion (INSG)', ville:'Libreville', type:'Université'},
+    {nom:'Institut Supérieur de Technologie (IST)', ville:'Libreville', type:'Université'},
+    {nom:'Université Internationale de Libreville (UIL)', ville:'Libreville', type:'Université'},
+    {nom:'Lycée National Léon Mba', ville:'Libreville', type:'Lycée'},
+    {nom:'Lycée Quaben', ville:'Libreville', type:'Lycée'},
+    {nom:'Collège Bessieux', ville:'Libreville', type:'Collège'},
+    {nom:'Lycée Technique National Omar Bongo', ville:'Libreville', type:'Lycée'},
+    {nom:"Lycée d'État de Port-Gentil", ville:'Port-Gentil', type:'Lycée'},
+    {nom:'Lycée Provincial de Franceville', ville:'Franceville', type:'Lycée'},
+    {nom:'Établissement international (hors Gabon)', ville:'International', type:'International'}
+  ];
+
+  function renderEtablissements() {
+    const tbody = document.getElementById('verif-etablissements-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = ETABLISSEMENTS_GA.map(e =>
+      `<tr><td>${esc(e.nom)}</td><td>${esc(e.ville)}</td><td>${esc(e.type)}</td></tr>`
+    ).join('');
+  }
+
+  async function toggleVerifie(uid, value) {
+    try {
+      if (window.firebase && firebase.firestore) {
+        await firebase.firestore().collection('users').doc(uid).update({ documentVerifie: value });
+      }
+    } catch (e) { console.warn('toggleVerifie:', e); }
+    renderEtrangers();
+  }
+  window.gscToggleVerifie = toggleVerifie;
+
+  async function renderEtrangers() {
+    const tbody = document.getElementById('verif-etrangers-tbody');
+    if (!tbody) return;
+    let users = [];
+    try {
+      if (window.firebase && firebase.firestore) {
+        const snap = await firebase.firestore().collection('users').where('role', '==', 'sportif_etranger').get();
+        users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+    } catch (e) { console.warn('renderEtrangers:', e); }
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-txt);padding:16px;">Aucun sportif étranger enregistré pour le moment.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const name = [u.prenom, u.nom].filter(Boolean).join(' ') || u.email || '—';
+      const verified = !!u.documentVerifie;
+      return `<tr>
+        <td>${esc(name)}</td>
+        <td>${esc(u.nationalite || '—')}</td>
+        <td>${esc(u.statutPro || '—')}${u.employeur ? ' · ' + esc(u.employeur) : ''}</td>
+        <td>${esc(u.documentType || '—')}${u.documentNumero ? ' n° ' + esc(u.documentNumero) : ''}</td>
+        <td>${verified ? '✅ Vérifié' : '⏳ Non vérifié'}</td>
+        <td><button class="filter-btn" onclick="gscToggleVerifie('${u.id}',${!verified})">${verified ? 'Marquer non vérifié' : 'Marquer vérifié'}</button></td>
+      </tr>`;
+    }).join('');
+  }
+  window.gscRenderEtrangers = renderEtrangers;
+
+  function showVerificationSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('verification');
+    if (target) target.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-verification');
+    if (navBtn) navBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Vérification internationale';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    renderEtablissements();
+    renderEtrangers();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const navBtn = document.getElementById('nav-verification');
+    if (navBtn) navBtn.addEventListener('click', showVerificationSection);
+    renderEtablissements();
   });
 })();
 </script>
