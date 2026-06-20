@@ -7,16 +7,18 @@
   const ROLE_LABELS = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association',
-    organisateur: '🎯 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter'
+    organisateur: '🎪 Organisateur', independant: '🚴 Indépendant', supporter: '💗 Supporter'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48',
     organisateur: '#0d9488', independant: '#64748b', supporter: '#ec4899'
   };
-  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association'];
+  const DASH_ROLES = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'supporter', 'independant'];
+  const GROUP_ORDER = ['joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association', 'organisateur', 'independant', 'supporter'];
 
   let users = [], matchs = [];
+  let realUsers = [];   // utilisateurs réels Firestore uniquement (sans démo)
   let roleFilter = 'all', searchTerm = '';
   let phFilter = 'all';
   let matchTabFilter = 'all';
@@ -25,6 +27,16 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.name || 'Sans nom'; }
   function fmtDate(ts) { try { return ts && ts.toDate ? ts.toDate().toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
+
+  // Fusionne les comptes réels Firestore avec les fiches de démonstration (window.GSC_SEED_ACTORS),
+  // exactement comme le fait l'annuaire public (index.html), afin que les compteurs soient cohérents
+  // partout dans l'application. Les fiches démo portent isDemo:true et sont visuellement marquées.
+  function mergeWithDemo(realData) {
+    const seed = window.GSC_SEED_ACTORS || [];
+    const realIds = new Set(realData.map(u => u.uid || u.id));
+    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    return [...realData, ...demoOnly];
+  }
 
   /* ═══ NAVIGATION ═══ */
   function switchSection(name) {
@@ -73,18 +85,25 @@
   function renderDashboard() {
     const visibles = users.filter(u => u.status !== 'deleted');
     const actifs = visibles.filter(u => (u.status || 'active') === 'active');
-    const pending = users.filter(u => u.status === 'pending');
+    const pending = realUsers.filter(u => u.status === 'pending');
+    const demoCount = visibles.filter(u => u.isDemo).length;
+    const realCount = visibles.length - demoCount;
 
     document.getElementById('stat-total').textContent = users.length;
     document.getElementById('stat-verified').textContent = actifs.length;
     document.getElementById('stat-pending').textContent = pending.length;
     document.getElementById('stat-matchs').textContent = matchs.length;
 
+    // Précision sous le total : combien sont de vrais comptes vs démo
+    const totalCard = document.getElementById('stat-total');
+    const totalTrendEl = totalCard?.closest('.stat-data')?.querySelector('.stat-trend');
+    if (totalTrendEl) totalTrendEl.textContent = demoCount ? `${realCount} réel(s) + ${demoCount} démo` : 'Total inscrits';
+
     const total = visibles.length || 1;
     const barsHtml = DASH_ROLES.map(r => {
       const count = visibles.filter(u => u.role === r).length;
       const pct = Math.round((count / total) * 100);
-      return `<div class="sb-item"><div class="sb-label"><span>${ROLE_LABELS[r]}</span><span style="color:${ROLE_COLORS[r]}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r]}"></div></div></div>`;
+      return `<div class="sb-item"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
     }).join('');
     const barsEl = document.getElementById('role-bars');
     if (barsEl) barsEl.innerHTML = barsHtml;
@@ -94,6 +113,7 @@
       activityEl.innerHTML = `
         <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${actifs.length} membre(s) actif(s)</div><div class="act-time">—</div></div>
         ${pending.length ? `<div class="act-item"><div class="act-dot" style="background:var(--warn)"></div><div class="act-text">${pending.length} fiche(s) en attente de validation</div><div class="act-time">—</div></div>` : ''}
+        ${demoCount ? `<div class="act-item"><div class="act-dot" style="background:#94a3b8"></div><div class="act-text">${demoCount} fiche(s) de démonstration incluses dans l'annuaire</div><div class="act-time">—</div></div>` : ''}
         <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau synchronisé en temps réel</div><div class="act-time">maintenant</div></div>`;
     }
 
@@ -117,10 +137,16 @@
     if (btns[2]) btns[2].addEventListener('click', () => switchSection('matchs'));
   }
 
-  /* ═══ JOUEURS ═══ */
+  /* ═══ JOUEURS / ACTEURS ═══ */
+  function matchesRoleFilter(u, filter) {
+    if (filter === 'all') return true;
+    if (filter === 'supporter') return u.role === 'supporter' || u.isSupporter === true;
+    return u.role === filter;
+  }
+
   function renderPlayers() {
     let list = users.filter(u => u.status !== 'deleted');
-    if (roleFilter !== 'all') list = list.filter(u => u.role === roleFilter);
+    if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
       list = list.filter(u => (fullName(u) + ' ' + (u.club || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
@@ -134,14 +160,42 @@
       return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
-    tbody.innerHTML = list.map(u => `
-      <tr data-id="${u.id}">
-        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span></div></td>
-        <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
-        <td data-label="Club">${esc(u.club || '—')}</td>
-        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active']}</span></td>
-      </tr>`).join('');
-    tbody.querySelectorAll('tr').forEach(tr => tr.addEventListener('click', () => openPlayerModal(tr.dataset.id)));
+
+    const renderRow = (u) => `
+      <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''}">
+        <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill" title="Fiche de démonstration, non éditable">DÉMO</span>' : ''}</div></td>
+        <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
+        <td data-label="Club">${esc(u.club || u.nomOrganisation || '—')}</td>
+        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span></td>
+      </tr>`;
+
+    if (roleFilter === 'all') {
+      // Groupement par catégorie, identique à l'ordre utilisé dans l'annuaire public
+      const buckets = {};
+      list.forEach(u => { const r = u.role || 'joueur'; (buckets[r] = buckets[r] || []).push(u); });
+      let html = '';
+      const seen = new Set();
+      GROUP_ORDER.forEach(role => {
+        const groupList = buckets[role];
+        if (!groupList || !groupList.length) return;
+        seen.add(role);
+        groupList.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+        html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += groupList.map(renderRow).join('');
+      });
+      Object.keys(buckets).forEach(role => {
+        if (seen.has(role)) return;
+        const groupList = buckets[role];
+        html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += groupList.map(renderRow).join('');
+      });
+      tbody.innerHTML = html;
+    } else {
+      list.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+      tbody.innerHTML = list.map(renderRow).join('');
+    }
+
+    tbody.querySelectorAll('tr[data-id]').forEach(tr => tr.addEventListener('click', () => openPlayerModal(tr.dataset.id)));
   }
 
   function wirePlayerFilters() {
@@ -163,8 +217,8 @@
     const u = users.find(x => x.id === id);
     if (!u) return;
     currentPlayerId = id;
-    document.getElementById('modal-player-name').textContent = fullName(u);
-    document.getElementById('modal-player-role').textContent = ROLE_LABELS[u.role] || u.role || '';
+    document.getElementById('modal-player-name').textContent = fullName(u) + (u.isDemo ? ' (démo)' : '');
+    document.getElementById('modal-player-role').textContent = ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '';
     document.getElementById('modal-photo-content').textContent = u.photoURL ? '' : '👤';
     const photoBox = document.getElementById('modal-photo');
     photoBox.style.backgroundImage = u.photoURL ? `url('${u.photoURL}')` : '';
@@ -181,12 +235,36 @@
     document.getElementById('modal-buts').value = u.buts || '';
     document.getElementById('modal-passes').value = u.passes || '';
     document.getElementById('modal-club').value = u.club || '';
-    ensureDeleteButton('player-modal', 'modal-actions', () => deletePlayer(id));
+    document.getElementById('modal-titre-perso').value = u.titrePersonnalise || '';
+
+    const modal = document.getElementById('player-modal');
+    const saveBtn = modal?.querySelector('.btn-primary');
+    const allInputs = modal?.querySelectorAll('input, select, textarea');
+    if (u.isDemo) {
+      allInputs?.forEach(el => el.disabled = true);
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.title = 'Fiche de démonstration — non modifiable'; }
+      ensureDeleteButton('player-modal', 'modal-actions', null, true);
+      let notice = modal.querySelector('.demo-modal-notice');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.className = 'demo-modal-notice';
+        notice.style = 'background:#f1f5f9;color:#64748b;font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;';
+        notice.textContent = 'ℹ️ Fiche de démonstration — non liée à un vrai compte, donc non modifiable ni supprimable ici.';
+        modal.querySelector('.modal-content')?.prepend(notice);
+      }
+    } else {
+      allInputs?.forEach(el => el.disabled = false);
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.title = ''; }
+      modal.querySelector('.demo-modal-notice')?.remove();
+      ensureDeleteButton('player-modal', 'modal-actions', () => deletePlayer(id), false);
+    }
     document.getElementById('player-modal').classList.add('open');
   }
 
   async function savePlayer() {
     if (!currentPlayerId) return;
+    const current = users.find(x => x.id === currentPlayerId);
+    if (current?.isDemo) { toast('Fiche de démonstration — non modifiable', 'warn'); return; }
     const data = {
       status: document.getElementById('modal-status').value,
       taille: Number(document.getElementById('modal-taille').value) || null,
@@ -196,7 +274,8 @@
       matchsJoues: Number(document.getElementById('modal-matchs').value) || 0,
       buts: Number(document.getElementById('modal-buts').value) || 0,
       passes: Number(document.getElementById('modal-passes').value) || 0,
-      club: document.getElementById('modal-club').value || null
+      club: document.getElementById('modal-club').value || null,
+      titrePersonnalise: document.getElementById('modal-titre-perso').value.trim() || null
     };
     try {
       await window.db.collection('users').doc(currentPlayerId).set(data, { merge: true });
@@ -206,6 +285,8 @@
   }
 
   async function deletePlayer(id) {
+    const current = users.find(x => x.id === id);
+    if (current?.isDemo) { toast('Fiche de démonstration — non supprimable', 'warn'); return; }
     if (!confirm('Supprimer définitivement cette fiche ?')) return;
     try {
       await window.db.collection('users').doc(id).delete();
@@ -217,7 +298,7 @@
   /* ═══ PHOTOS & LOGOS ═══ */
   function renderPhotos() {
     let list = users.filter(u => u.status !== 'deleted');
-    if (phFilter !== 'all') list = list.filter(u => u.role === phFilter);
+    if (phFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, phFilter));
     const total = list.length;
     const withPhoto = list.filter(u => u.photoURL).length;
     document.getElementById('ph-stat-total').textContent = total;
@@ -228,15 +309,16 @@
     if (!grid) return;
     grid.innerHTML = list.map(u => `
       <div class="ph-actor-card" data-id="${u.id}">
-        <div class="ph-photo-zone" data-upload="${u.id}">
+        <div class="ph-photo-zone" data-upload="${u.isDemo ? '' : u.id}" title="${u.isDemo ? 'Fiche de démonstration — photo non modifiable' : 'Changer la photo'}" style="${u.isDemo ? 'cursor:not-allowed;' : ''}">
           <div class="ph-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div>
         </div>
         <div class="player-info">
-          <div class="player-name">${esc(fullName(u))}</div>
+          <div class="player-name">${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div>
           <div class="player-role">${esc(ROLE_LABELS[u.role] || u.role || '—')}</div>
         </div>
       </div>`).join('');
     grid.querySelectorAll('[data-upload]').forEach(zone => {
+      if (!zone.dataset.upload) return; // démo : pas d'upload
       zone.addEventListener('click', () => triggerPhotoUpload(zone.dataset.upload));
     });
   }
@@ -362,7 +444,13 @@
     } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
-  /* ═══ DOCUMENTS (archive des dossiers d'inscription) ═══ */
+  /* ═══ DOCUMENTS (archive des dossiers d'inscription) ═══
+     Modèle d'un document : { label, url, addedAt, addedBy, locked }
+     - locked:true ("sous contrat") empêche la suppression et le partage
+       du document ; seul l'admin peut poser/lever ce verrou ici.
+     - L'ajout/suppression normaux sont aussi disponibles pour le membre
+       lui-même et son club/association employeur depuis leur profil
+       (voir index.html / fonctions addOwnDocument, removeOwnDocument). */
   let docSearchTerm = '';
   function renderDocuments() {
     let list = users.filter(u => u.status !== 'deleted');
@@ -376,28 +464,101 @@
     tbody.innerHTML = list.map(u => {
       const docs = Array.isArray(u.documents) ? u.documents : [];
       const docsHtml = docs.length
-        ? docs.map(d => `<a href="${esc(d.url)}" target="_blank" style="display:inline-block;margin:2px 6px 2px 0;font-size:11px;">📎 ${esc(d.label || 'Document')}</a>`).join('')
+        ? docs.map((d, i) => `
+          <div class="doc-pill-row" data-uid="${u.id}" data-docidx="${i}">
+            <a href="${esc(d.url)}" target="_blank" rel="noopener" class="doc-pill-link">📎 ${esc(d.label || 'Document')}</a>
+            ${d.locked ? '<span class="doc-lock-badge" title="Sous contrat — verrouillé">🔒 Sous contrat</span>' : ''}
+            ${u.isDemo ? '' : `
+              <button class="doc-act-btn" data-docact="share" title="Copier le lien de partage" ${d.locked ? 'disabled' : ''}>🔗</button>
+              <button class="doc-act-btn" data-docact="lock" title="${d.locked ? 'Lever le verrou (admin)' : 'Marquer sous contrat (admin)'}">${d.locked ? '🔓' : '🔒'}</button>
+              <button class="doc-act-btn doc-act-danger" data-docact="delete" title="Supprimer" ${d.locked ? 'disabled' : ''}>🗑️</button>
+            `}
+          </div>`).join('')
         : '<span style="color:var(--gray-txt);font-size:12px;">Aucun</span>';
       return `<tr>
-        <td data-label="Acteur"><strong>${esc(fullName(u))}</strong></td>
+        <td data-label="Acteur"><strong>${esc(fullName(u))}</strong>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
-        <td data-label="Documents">${docsHtml}</td>
-        <td data-label="Actions"><button class="btn-sm" data-adddoc="${u.id}" style="padding:5px 10px;font-size:11px;border:1px solid var(--gray-bd);border-radius:6px;background:#fff;cursor:pointer;">➕ Ajouter</button></td>
+        <td data-label="Documents"><div class="doc-pill-list">${docsHtml}</div></td>
+        <td data-label="Actions">${u.isDemo ? '<span style="color:var(--gray-txt);font-size:11px;">—</span>' : `<button class="btn-sm" data-adddoc="${u.id}" style="padding:5px 10px;font-size:11px;border:1px solid var(--gray-bd);border-radius:6px;background:#fff;cursor:pointer;">➕ Ajouter</button>`}</td>
       </tr>`;
     }).join('');
     tbody.querySelectorAll('[data-adddoc]').forEach(btn => {
       btn.addEventListener('click', () => addDocumentToUser(btn.dataset.adddoc));
     });
+    tbody.querySelectorAll('[data-docact]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const row = btn.closest('.doc-pill-row');
+        const uid = row?.dataset.uid;
+        const idx = Number(row?.dataset.docidx);
+        const action = btn.dataset.docact;
+        if (!uid || Number.isNaN(idx)) return;
+        if (action === 'share') shareDocument(uid, idx);
+        if (action === 'lock') toggleDocumentLock(uid, idx);
+        if (action === 'delete') deleteDocument(uid, idx);
+      });
+    });
+  }
+
+  function getUserDocs(uid) {
+    const u = users.find(x => x.id === uid);
+    return Array.isArray(u?.documents) ? u.documents : [];
+  }
+
+  async function shareDocument(uid, idx) {
+    const docs = getUserDocs(uid);
+    const d = docs[idx];
+    if (!d) return;
+    if (d.locked) { toast('Document sous contrat — partage désactivé', 'warn'); return; }
+    try {
+      await navigator.clipboard.writeText(d.url);
+      toast('Lien copié dans le presse-papiers', 'success');
+    } catch (e) {
+      toast('Lien : ' + d.url, 'info');
+    }
+  }
+
+  // Verrouillage "sous contrat" : uniquement piloté depuis ce panneau admin.
+  async function toggleDocumentLock(uid, idx) {
+    const target = users.find(x => x.id === uid);
+    if (target?.isDemo) return;
+    const docs = getUserDocs(uid);
+    const d = docs[idx];
+    if (!d) return;
+    const next = !d.locked;
+    if (next && !confirm('Marquer ce document "sous contrat" ? Il ne pourra plus être supprimé ni partagé tant que vous ne lèverez pas ce verrou.')) return;
+    const updated = docs.map((doc, i) => i === idx ? { ...doc, locked: next } : doc);
+    try {
+      await window.db.collection('users').doc(uid).update({ documents: updated });
+      toast(next ? 'Document verrouillé (sous contrat)' : 'Verrou levé', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+  }
+
+  async function deleteDocument(uid, idx) {
+    const target = users.find(x => x.id === uid);
+    if (target?.isDemo) return;
+    const docs = getUserDocs(uid);
+    const d = docs[idx];
+    if (!d) return;
+    if (d.locked) { toast('Document sous contrat — suppression bloquée', 'warn'); return; }
+    if (!confirm('Supprimer ce document ?')) return;
+    const updated = docs.filter((_, i) => i !== idx);
+    try {
+      await window.db.collection('users').doc(uid).update({ documents: updated });
+      toast('Document supprimé', 'success');
+    } catch (e) { toast('Erreur : ' + e.message, 'error'); }
   }
 
   async function addDocumentToUser(uid) {
+    const target = users.find(x => x.id === uid);
+    if (target?.isDemo) { toast('Fiche de démonstration — non modifiable', 'warn'); return; }
     const label = prompt('Type de document (ex: Carte d\'identité, Licence, Justificatif domicile)');
     if (!label) return;
     const url = prompt('URL du document (lien hébergé — Drive, Firebase Storage, etc.)');
     if (!url) return;
     try {
       await window.db.collection('users').doc(uid).update({
-        documents: firebase.firestore.FieldValue.arrayUnion({ label, url, addedAt: new Date().toISOString() })
+        documents: firebase.firestore.FieldValue.arrayUnion({ label, url, addedAt: new Date().toISOString(), addedBy: 'admin', locked: false })
       });
       toast('Document archivé', 'success');
     } catch (e) { toast('Erreur : ' + e.message, 'error'); }
@@ -426,7 +587,7 @@
 
   /* ═══ MODALES & DIVERS ═══ */
   function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
-  function ensureDeleteButton(modalId, actionsClass, onClick) {
+  function ensureDeleteButton(modalId, actionsClass, onClick, hide) {
     const modal = document.getElementById(modalId);
     const actions = modal?.querySelector('.' + actionsClass);
     if (!actions) return;
@@ -438,6 +599,7 @@
       actions.appendChild(btn);
     }
     btn.onclick = onClick;
+    btn.style.display = hide ? 'none' : '';
   }
 
   function toast(msg, type) {
@@ -483,7 +645,8 @@
     wireMatchTabs(); wireModals();
 
     window.realtimeSync.onUpdate('users', (data) => {
-      users = data;
+      realUsers = data;
+      users = mergeWithDemo(data);
       renderDashboard();
       const active = document.querySelector('.section.active');
       if (active) {

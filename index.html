@@ -503,6 +503,8 @@
     .actor-filter-btn[data-type="entraineur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
     .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
     .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .actor-filter-btn[data-type="federation"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
 
@@ -654,6 +656,15 @@
     .gallery-modal.open{display:flex;}
     .gallery-modal img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:var(--radius-sm);}
     .gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* Documents personnels (carte d'identité, licence, justificatifs…) */
+    .doc-detail-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;}
+    .doc-detail-link{font-size:12px;font-weight:700;color:var(--navy);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .doc-detail-link:hover{text-decoration:underline;}
+    .doc-detail-lock{font-size:9px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:8px;padding:2px 7px;white-space:nowrap;}
+    .doc-detail-btn{border:none;background:rgba(0,0,0,.06);width:26px;height:26px;border-radius:7px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .doc-detail-btn:disabled{opacity:.35;cursor:not-allowed;}
+    .doc-detail-btn.doc-detail-danger:hover{background:#ef4444;color:#fff;}
 
     /* ── IMPORT MAPS STYLES (Admin) ── */
     .import-maps-section{background:linear-gradient(135deg,#f0faf5,#e6f7ef);border:2px solid var(--green);border-radius:var(--radius-md);padding:20px;margin-bottom:20px;}
@@ -883,6 +894,16 @@
             <div class="rc-label">Club / Association</div>
             <div class="rc-sub">Orga. de tournois</div>
           </div>
+          <div class="role-card" onclick="selectRole('federation')">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
+            <div class="rc-label">Fédération / Ligue</div>
+            <div class="rc-sub">Instance dirigeante</div>
+          </div>
+          <div class="role-card" onclick="selectRole('organisateur')">
+            <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
+            <div class="rc-label">Organisateur</div>
+            <div class="rc-sub">Évènements, tournois</div>
+          </div>
           <div class="role-card" onclick="selectRole('independant')" style="grid-column:1/-1;">
             <img src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?w=80&h=80&fit=crop&auto=format" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'">
             <div class="rc-label">Sportif indépendant</div>
@@ -890,6 +911,13 @@
           </div>
         </div>
         <input type="hidden" id="reg-role" value="joueur" />
+      </div>
+      <div class="field-group" id="reg-titre-group" style="display:none;">
+        <label>Titre / rôle au sein de l'organisation</label>
+        <select id="reg-titre-select" onchange="onRegTitreChange()">
+          <option value="">Choisir un titre…</option>
+        </select>
+        <input type="text" id="reg-titre-autre" placeholder="Précisez votre titre…" style="display:none;margin-top:8px;">
       </div>
       <div class="field-group" id="reg-sport-group">
         <label>Sport principal</label>
@@ -1402,6 +1430,12 @@
             <button class="actor-filter-btn" data-type="association" onclick="filterActors('association')" style="--abtn-color:#e11d48;">
               <span style="font-size:18px;line-height:1;">🤝</span>Associations
             </button>
+            <button class="actor-filter-btn" data-type="federation" onclick="filterActors('federation')" style="--abtn-color:#f97316;">
+              <span style="font-size:18px;line-height:1;">🏛️</span>Fédérations
+            </button>
+            <button class="actor-filter-btn" data-type="organisateur" onclick="filterActors('organisateur')" style="--abtn-color:#0d9488;">
+              <span style="font-size:18px;line-height:1;">🎪</span>Organisateurs
+            </button>
             <button class="actor-filter-btn" data-type="supporter" onclick="filterActors('supporter')" style="--abtn-color:#ec4899;">
               <span style="font-size:18px;line-height:1;">💗</span>Supporters
             </button>
@@ -1523,6 +1557,23 @@
         <div class="card-body">
           <div class="photo-gallery" id="photo-gallery"></div>
           <input type="file" id="gallery-photo-input" accept="image/*" multiple style="display:none" onchange="uploadGalleryPhotos(this)">
+        </div>
+      </div>
+
+      <!-- Documents personnels : carte d'identité, licence, justificatifs… -->
+      <div class="card mb-16 fade-up" id="prof-documents-card" style="display:none;">
+        <div class="card-header">
+          <div class="card-title">📁 Mes documents</div>
+          <span style="font-size:12px;color:var(--gray-txt);" id="documents-count-label">0 document(s)</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--gray-txt);margin-bottom:10px;">
+            Ajoutez vos documents (carte d'identité, licence, justificatif…) depuis le stockage de votre téléphone.
+            Un document marqué <strong>🔒 sous contrat</strong> par l'administrateur ne peut plus être supprimé ni partagé.
+          </p>
+          <div id="documents-own-list"></div>
+          <button class="btn-sm" onclick="document.getElementById('own-document-input').click()" style="margin-top:8px;padding:8px 14px;font-size:12px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;">📎 Ajouter un document</button>
+          <input type="file" id="own-document-input" accept="image/*,application/pdf" style="display:none" onchange="uploadOwnDocument(this)">
         </div>
       </div>
 
@@ -2150,11 +2201,13 @@
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
   association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
-  entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant'
+  entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
+  organisateur:'🎪 Organisateur', supporter:'💗 Supporter'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
-  joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍'
+  joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
+  organisateur:'🎪', supporter:'💗'
 };
 
 function showAuthError(msg){
@@ -2175,6 +2228,36 @@ function showForgotPassword(){
 }
 function closeForgotPanel(){ document.getElementById('forgot-panel').style.display='none'; }
 
+// Suggestions de titres par rôle — l'utilisateur peut toujours choisir "Autre" pour
+// saisir librement un titre qui n'existe pas encore dans la liste.
+const TITRE_SUGGESTIONS={
+  club:['Président','Secrétaire général','Trésorier','Directeur sportif','Manager général','Responsable communication'],
+  association:['Président','Secrétaire général','Trésorier','Chargé de projets','Responsable communication'],
+  federation:['Président','Secrétaire général','Trésorier','Directeur technique national','Responsable des compétitions','Chargé de communication'],
+  organisateur:['Organisateur principal','Coordinateur d\'évènement','Responsable logistique','Responsable billetterie','Chargé de partenariats'],
+  arbitre:['Arbitre central','Arbitre assistant','Arbitre de touche','Commissaire de match','Arbitre vidéo (VAR)']
+};
+
+function populateTitreOptions(role){
+  const sel=document.getElementById('reg-titre-select');
+  if(!sel) return;
+  const opts=TITRE_SUGGESTIONS[role]||[];
+  sel.innerHTML='<option value="">Choisir un titre…</option>'
+    +opts.map(o=>`<option value="${o}">${o}</option>`).join('')
+    +'<option value="__autre__">✏️ Autre (préciser)</option>';
+  document.getElementById('reg-titre-autre').style.display='none';
+  document.getElementById('reg-titre-autre').value='';
+}
+
+function onRegTitreChange(){
+  const sel=document.getElementById('reg-titre-select');
+  const autre=document.getElementById('reg-titre-autre');
+  if(!sel||!autre) return;
+  autre.style.display=sel.value==='__autre__'?'':'none';
+  if(sel.value==='__autre__') autre.focus();
+}
+window.onRegTitreChange=onRegTitreChange;
+
 function selectRole(role){
   document.getElementById('reg-role').value=role;
   document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
@@ -2182,8 +2265,11 @@ function selectRole(role){
   // Show/hide extra fields
   var showSport=['joueur','arbitre','entraineur','independant'].includes(role);
   var showNiveau=['joueur','arbitre','independant'].includes(role);
+  var showTitre=['club','association','federation','organisateur','arbitre'].includes(role);
   document.getElementById('reg-sport-group').style.display=showSport?'':'none';
   document.getElementById('reg-niveau-group').style.display=showNiveau?'':'none';
+  document.getElementById('reg-titre-group').style.display=showTitre?'':'none';
+  if(showTitre) populateTitreOptions(role);
 }
 
 async function sendResetEmail(){
@@ -2249,6 +2335,9 @@ async function sendResetEmail(){
   document.dispatchEvent(new Event('firebase-ready'));
 })();
 </script>
+
+<!-- Acteurs de démonstration (isDemo:true) — fichier partagé avec admin.html -->
+<script src="seed-data.js"></script>
 
 <script>
 // ── GSC: Gabon Sport Connect ──
@@ -2617,12 +2706,15 @@ async function handleRegister(){
   let role=document.getElementById('reg-role').value;
   const sport=document.getElementById('reg-sport')?.value||'Multi-sports';
   const niveau=document.getElementById('reg-niveau')?.value||'Amateur';
+  // Titre / rôle personnalisé : choisi dans la liste suggérée, ou saisi librement via "Autre"
+  const titreSel=document.getElementById('reg-titre-select')?.value||'';
+  const titrePersonnalise=titreSel==='__autre__'
+    ? (document.getElementById('reg-titre-autre')?.value.trim()||'')
+    : titreSel;
   if(!name||!email||!pwd) return showAuthError('Veuillez remplir tous les champs.');
   if(pwd.length<6) return showAuthError('Mot de passe trop court (min 6 caractères).');
   if(email===ADMIN_EMAIL) role='admin';
   else if(role==='admin') role='joueur';
-  // Fédération cannot self-register — admin only
-  if(role==='federation') role='club';
   setLoading('btn-register',true,'Création…');
   try{
     const cred=await restSignUp(email,pwd);
@@ -2632,6 +2724,7 @@ async function handleRegister(){
       uid,email,
       prenom:parts[0]||name,nom:parts.slice(1).join(' ')||'',
       role,sport,niveau,ville:'',telephone:'',bio:'',
+      titrePersonnalise,
       photoURL:'',status:role==='admin'?'active':'pending',
       createdAt:serverTimestamp(),updatedAt:serverTimestamp()
     };
@@ -2646,9 +2739,10 @@ async function handleRegister(){
         licenceNumero:'',licenceExpire:'',
         gereParFederation:false
       });
-    } else if(['club','association'].includes(role)){
+    } else if(['club','association','federation','organisateur'].includes(role)){
+      const typeMap={club:'Club sportif',association:'Association',federation:'Fédération',organisateur:'Organisation d\'évènements'};
       Object.assign(baseProfile,{
-        nomOrganisation:name,typeOrganisation:role==='club'?'Club sportif':'Association',
+        nomOrganisation:name,typeOrganisation:typeMap[role]||'Organisation',
         anneeCreation:'',president:'',adresse:'',siteWeb:'',
         sports:[sport],effectif:0,palmares:''
       });
@@ -2747,60 +2841,6 @@ async function loadGlobalStats(){
   if(el1) el1.textContent=total;
 }
 
-// ── SEED ACTORS — Acteurs recensés (données de démonstration réalistes) ──
-const GSC_SEED_ACTORS = [
-  {uid:'seed-a01',prenom:'Pierre Alain',nom:'Mounguengui',role:'federation',sport:'Football',ville:'Libreville',nomOrganisation:'FEGAFOOT',typeOrganisation:'Fédération',president:'Pierre Alain Mounguengui',anneeCreation:'1962',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a02',prenom:'Bruno',nom:'Mounguélé',role:'joueur',sport:'Football',ville:'Libreville',poste:'Milieu central',club:'CF Mounana',niveau:'National',matchsJoues:45,buts:8,passes:12,status:'active',photoURL:''},
-  {uid:'seed-a03',prenom:'Denis',nom:'Bouanga',role:'joueur',sport:'Football',ville:'Libreville',poste:'Ailier droit',club:'LA FC',niveau:'International',matchsJoues:120,buts:55,passes:30,status:'active',photoURL:''},
-  {uid:'seed-a04',prenom:'Mario',nom:'Lémina',role:'joueur',sport:'Football',ville:'Libreville',poste:'Milieu défensif',club:'Wolverhampton',niveau:'International',matchsJoues:200,buts:15,passes:40,status:'active',photoURL:''},
-  {uid:'seed-a05',prenom:'Alain',nom:'Obiang',role:'entraineur',sport:'Football',ville:'Libreville',poste:'Coach principal',club:'AS Stade Mandji',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a06',prenom:'Jean-Claude',nom:'Mvoa',role:'arbitre',sport:'Football',ville:'Libreville',poste:'Arbitre central',niveau:'National',licenceNumero:'GAB-ARB-001',status:'active',photoURL:''},
-  {uid:'seed-a07',prenom:'',nom:'',role:'club',sport:'Football',ville:'Libreville',nomOrganisation:'CF Mounana',typeOrganisation:'Club sportif',president:'Roger Ondo',anneeCreation:'1968',effectif:35,status:'active',photoURL:''},
-  {uid:'seed-a08',prenom:'',nom:'',role:'club',sport:'Football',ville:'Port-Gentil',nomOrganisation:'AS Stade Mandji',typeOrganisation:'Club sportif',president:'Paul Essone',anneeCreation:'1980',effectif:28,status:'active',photoURL:''},
-  {uid:'seed-a09',prenom:'',nom:'',role:'club',sport:'Football',ville:'Libreville',nomOrganisation:'FC 105 Libreville',typeOrganisation:'Club sportif',president:'Marie-Christine Nzamba',anneeCreation:'1990',effectif:40,status:'active',photoURL:''},
-  {uid:'seed-a10',prenom:'',nom:'',role:'club',sport:'Basketball',ville:'Libreville',nomOrganisation:'GBC Basketball Club',typeOrganisation:'Club sportif',president:'Samuel Ondo',anneeCreation:'1995',effectif:22,status:'active',photoURL:''},
-  {uid:'seed-a11',prenom:'Patience',nom:'Ayo',role:'joueur',sport:'Basketball',ville:'Libreville',poste:'Meneur',club:'GBC Basketball Club',niveau:'National',matchsJoues:80,buts:320,passes:95,status:'active',photoURL:''},
-  {uid:'seed-a12',prenom:'Ibrahim',nom:'Diallo',role:'joueur',sport:'Handball',ville:'Franceville',poste:'Pivot',club:'ARC Handball',niveau:'Regional',matchsJoues:55,buts:120,status:'active',photoURL:''},
-  {uid:'seed-a13',prenom:'Christelle',nom:'Ndong',role:'joueur',sport:'Athlétisme',ville:'Libreville',poste:'Sprint',niveau:'National',matchsJoues:30,trophees:3,status:'active',photoURL:''},
-  {uid:'seed-a14',prenom:'',nom:'',role:'association',sport:'Multi-sports',ville:'Oyem',nomOrganisation:'Association Sport Woleu-Ntem',typeOrganisation:'Association',president:'Théodore Minko',anneeCreation:'2005',effectif:150,status:'active',photoURL:''},
-  {uid:'seed-a15',prenom:'Rodrigue',nom:'Ekomi',role:'entraineur',sport:'Basketball',ville:'Libreville',poste:'Coach principal',club:'GBC Basketball Club',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a16',prenom:'Sylvain',nom:'Mbong',role:'joueur',sport:'Football',ville:'Oyem',poste:'Défenseur central',club:'Mangasport',niveau:'National',matchsJoues:95,buts:5,status:'active',photoURL:''},
-  {uid:'seed-a17',prenom:'',nom:'',role:'club',sport:'Football',ville:'Oyem',nomOrganisation:'Mangasport FC',typeOrganisation:'Club sportif',president:'Jules Obame',anneeCreation:'1975',effectif:32,status:'active',photoURL:''},
-  {uid:'seed-a18',prenom:'Gaëlle',nom:'Oluma',role:'joueur',sport:'Volleyball',ville:'Libreville',poste:'Passeuse',club:'Libreville Volleyball Club',niveau:'National',matchsJoues:60,status:'active',photoURL:''},
-  {uid:'seed-a19',prenom:'Patrice',nom:'Nguema',role:'arbitre',sport:'Basketball',ville:'Libreville',poste:'Arbitre central',niveau:'National',licenceNumero:'GAB-ARB-002',status:'active',photoURL:''},
-  {uid:'seed-a20',prenom:'',nom:'',role:'federation',sport:'Basketball',ville:'Libreville',nomOrganisation:'Fédération Gabonaise de Basketball',typeOrganisation:'Fédération',president:'Roger Essono',anneeCreation:'1960',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a21',prenom:'Etienne',nom:'Akomo',role:'joueur',sport:'Football',ville:'Port-Gentil',poste:'Gardien de but',club:'AS Stade Mandji',niveau:'National',matchsJoues:60,status:'active',photoURL:''},
-  {uid:'seed-a22',prenom:'Josée',nom:'Obono',role:'joueur',sport:'Athlétisme',ville:'Franceville',poste:'Saut en longueur',niveau:'Regional',matchsJoues:20,trophees:2,status:'active',photoURL:''},
-  {uid:'seed-a23',prenom:'Fabrice',nom:'Ebang',role:'entraineur',sport:'Football',ville:'Port-Gentil',poste:'Adjoint',club:'AS Stade Mandji',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a24',prenom:'Ange',nom:'Minkono',role:'joueur',sport:'Football',ville:'Oyem',poste:'Attaquant',club:'Mangasport FC',niveau:'National',matchsJoues:72,buts:18,status:'active',photoURL:''},
-  {uid:'seed-a25',prenom:'Marcel',nom:'Makinda',role:'arbitre',sport:'Football',ville:'Franceville',poste:'Arbitre de touche',niveau:'National',licenceNumero:'GAB-ARB-003',status:'active',photoURL:''},
-  {uid:'seed-a26',prenom:'Carine',nom:'Edja',role:'joueur',sport:'Volleyball',ville:'Port-Gentil',poste:'Opposante',club:'Libreville Volleyball Club',niveau:'Regional',matchsJoues:35,status:'active',photoURL:''},
-  {uid:'seed-a27',prenom:'',nom:'',role:'club',sport:'Handball',ville:'Franceville',nomOrganisation:'ARC Handball',typeOrganisation:'Club sportif',president:'François Ondonda',anneeCreation:'1985',effectif:20,status:'active',photoURL:''},
-  {uid:'seed-a28',prenom:'Charles',nom:'Obambi',role:'joueur',sport:'Basketball',ville:'Port-Gentil',poste:'Ailier',club:'GBC Basketball Club',niveau:'National',matchsJoues:65,buts:280,status:'active',photoURL:''},
-  {uid:'seed-a29',prenom:'Sophie',nom:'Mboui',role:'joueur',sport:'Athlétisme',ville:'Libreville',poste:'100m',niveau:'National',matchsJoues:15,trophees:1,status:'active',photoURL:''},
-  {uid:'seed-a30',prenom:'Antoine',nom:'Ndiaye',role:'entraineur',sport:'Handball',ville:'Franceville',poste:'Coach principal',club:'ARC Handball',niveau:'Regional',status:'active',photoURL:''},
-  {uid:'seed-a31',prenom:'',nom:'',role:'association',sport:'Football',ville:'Libreville',nomOrganisation:'Fédération Gabonaise de Football',typeOrganisation:'Fédération',president:'Patrice Akossi',anneeCreation:'1962',effectif:500,status:'active',photoURL:''},
-  {uid:'seed-a32',prenom:'Serge',nom:'Essamba',role:'joueur',sport:'Football',ville:'Libreville',poste:'Défenseur latéral',club:'FC 105 Libreville',niveau:'National',matchsJoues:88,buts:2,status:'active',photoURL:''},
-  {uid:'seed-a33',prenom:'Henriette',nom:'Mengue',role:'joueur',sport:'Basketball',ville:'Franceville',poste:'Pivot',club:'GBC Basketball Club',niveau:'Regional',matchsJoues:45,buts:180,status:'active',photoURL:''},
-  {uid:'seed-a34',prenom:'Victor',nom:'Minko',role:'arbitre',sport:'Handball',ville:'Libreville',poste:'Arbitre central',niveau:'Regional',licenceNumero:'GAB-ARB-004',status:'active',photoURL:''},
-  {uid:'seed-a35',prenom:'Julienne',nom:'Awouala',role:'joueur',sport:'Athlétisme',ville:'Port-Gentil',poste:'Heptathlon',niveau:'Regional',matchsJoues:12,trophees:0,status:'active',photoURL:''},
-  {uid:'seed-a36',prenom:'Léandre',nom:'Ngoyi',role:'entraineur',sport:'Basketball',ville:'Port-Gentil',poste:'Coach adjoint',club:'GBC Basketball Club',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a37',prenom:'',nom:'',role:'club',sport:'Football',ville:'Franceville',nomOrganisation:'FC Franceville United',typeOrganisation:'Club sportif',president:'Alain Bayart',anneeCreation:'1992',effectif:30,status:'active',photoURL:''},
-  {uid:'seed-a38',prenom:'Benjamin',nom:'Eyuafon',role:'joueur',sport:'Football',ville:'Franceville',poste:'Milieu offensif',club:'FC Franceville United',niveau:'Regional',matchsJoues:55,buts:9,status:'active',photoURL:''},
-  {uid:'seed-a39',prenom:'Thérèse',nom:'Makaya',role:'joueur',sport:'Volleyball',ville:'Franceville',poste:'Centrale',club:'Libreville Volleyball Club',niveau:'Regional',matchsJoues:28,status:'active',photoURL:''},
-  {uid:'seed-a40',prenom:'Michel',nom:'Nguila',role:'arbitre',sport:'Basketball',ville:'Port-Gentil',poste:'Arbitre',niveau:'Regional',licenceNumero:'GAB-ARB-005',status:'active',photoURL:''},
-  {uid:'seed-a41',prenom:'Francine',nom:'Kouma',role:'joueur',sport:'Athlétisme',ville:'Oyem',poste:'Marche athlétique',niveau:'Regional',matchsJoues:18,trophees:1,status:'active',photoURL:''},
-  {uid:'seed-a42',prenom:'Gérard',nom:'Ebouela',role:'entraineur',sport:'Football',ville:'Franceville',poste:'Coach principal',club:'FC Franceville United',niveau:'Regional',status:'active',photoURL:''},
-  {uid:'seed-a43',prenom:'',nom:'',role:'club',sport:'Basketball',ville:'Port-Gentil',nomOrganisation:'Port-Gentil Basketball Club',typeOrganisation:'Club sportif',president:'Modeste Okalla',anneeCreation:'2000',effectif:25,status:'active',photoURL:''},
-  {uid:'seed-a44',prenom:'Ronald',nom:'Ekoto',role:'joueur',sport:'Football',ville:'Oyem',poste:'Avant-centre',club:'Mangasport FC',niveau:'Regional',matchsJoues:42,buts:8,status:'active',photoURL:''},
-  {uid:'seed-a45',prenom:'Laurence',nom:'Yondo',role:'joueur',sport:'Handball',ville:'Libreville',poste:'Arrière',club:'ARC Handball',niveau:'Regional',matchsJoues:30,buts:65,status:'active',photoURL:''},
-  {uid:'seed-a46',prenom:'Philippe',nom:'Akandji',role:'arbitre',sport:'Volleyball',ville:'Libreville',poste:'Arbitre',niveau:'Regional',licenceNumero:'GAB-ARB-006',status:'active',photoURL:''},
-  {uid:'seed-a47',prenom:'Roseline',nom:'Lembi',role:'joueur',sport:'Basketball',ville:'Oyem',poste:'Meneur de jeu',club:'Port-Gentil Basketball Club',niveau:'Regional',matchsJoues:38,buts:150,status:'active',photoURL:''},
-  {uid:'seed-a48',prenom:'Armand',nom:'Asenga',role:'entraineur',sport:'Athlétisme',ville:'Libreville',poste:'Coach',club:'Federale',niveau:'National',status:'active',photoURL:''},
-  {uid:'seed-a49',prenom:'',nom:'',role:'association',sport:'Athlétisme',ville:'Libreville',nomOrganisation:'Fédération Gabonaise d\'Athlétisme',typeOrganisation:'Fédération',president:'Marcelle Ndong',anneeCreation:'1970',effectif:300,status:'active',photoURL:''},
-  {uid:'seed-a50',prenom:'Fabio',nom:'Mahele',role:'joueur',sport:'Football',ville:'Port-Gentil',poste:'Ailier gauche',club:'AS Stade Mandji',niveau:'Regional',matchsJoues:50,buts:11,status:'active',photoURL:''},
-];
-
 // ── ANNUAIRE ──
 async function loadActors(){
   let dbActors = [];
@@ -2889,10 +2929,11 @@ function renderActors(actors){
       const gscId=a.gscId||('GSC-'+id?.slice(0,6)?.toUpperCase());
       const meta=[discipline,poste,a.ville].filter(Boolean).join(' · ');
       const avatarHtml=photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
+      const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;">DÉMO</span>`:'';
       return `<div class="actor-compact-row" onclick="openActorDetail('${id}')">
         <div class="acr-avatar">${avatarHtml}</div>
         <div class="acr-info">
-          <div class="acr-name">${name}</div>
+          <div class="acr-name">${name}${demoTag}</div>
           <div class="acr-meta">${gscId}${meta?' · '+meta:''}</div>
         </div>
         <span class="acr-badge ${roleKey}">${roleShort}</span>
@@ -2981,6 +3022,7 @@ function renderActors(actors){
       const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪'};
       const typeDotIcon=typeIcons[a.role]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
+      const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
       return `
         <div class="actor-card" onclick="openActorDetail('${id}')">
           <div class="actor-card-header">
@@ -2988,7 +3030,7 @@ function renderActors(actors){
               <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[a.role]||initial)}</div>
               <div class="actor-type-dot ${a.role||'joueur'}" title="${roleName}">${typeDotIcon}</div>
             </div>
-            <div class="actor-name">${name}</div>
+            <div class="actor-name">${name}${demoTag}</div>
           </div>
           <div class="actor-card-body">
             <div style="margin-bottom:6px;"><span class="actor-type-badge ${badgeClass}">${roleName}</span></div>
@@ -3017,7 +3059,7 @@ function openActorDetail(uid){
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
   const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(a.role);
-  const isOrg=['club','association','federation'].includes(a.role);
+  const isOrg=['club','association','federation','organisateur'].includes(a.role);
   let html='';
   // Infos générales
   html+=`<div class="adm-section"><div class="adm-section-title">📋 Informations générales</div>`;
@@ -3076,6 +3118,30 @@ function openActorDetail(uid){
   if(a.palmares){
     html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
   }
+  // Documents personnels : visibles avec actions si on est le propriétaire,
+  // son club/association employeur, ou l'admin. Sinon lecture seule masquée.
+  const docs=Array.isArray(a.documents)?a.documents:[];
+  const isOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
+  const isEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
+  const canManageDocs=isOwner||isEmployerOrg;
+  if(docs.length||canManageDocs){
+    html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?'':' (visibles par l\'intéressé et son club)'}</div>`;
+    if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
+    else docs.forEach((d,i)=>{
+      html+=`<div class="doc-detail-row">
+        <a href="${d.url}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${d.label||'Document'}</a>
+        ${d.locked?'<span class="doc-detail-lock">🔒 Sous contrat</span>':''}
+        ${canManageDocs?`
+          <button class="doc-detail-btn" onclick="event.stopPropagation();shareOwnDocument('${a.uid||a.id}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
+          <button class="doc-detail-btn doc-detail-danger" onclick="event.stopPropagation();removeOwnDocument('${a.uid||a.id}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
+        `:''}
+      </div>`;
+    });
+    if(canManageDocs){
+      html+=`<button class="btn-sm" onclick="event.stopPropagation();openOwnDocumentUploadFor('${a.uid||a.id}')" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;">📎 Ajouter un document</button>`;
+    }
+    html+=`</div>`;
+  }
   document.getElementById('adm-body').innerHTML=html;
   document.getElementById('actor-detail-modal').classList.add('open');
 }
@@ -3092,14 +3158,14 @@ function renderProfile(){
   document.getElementById('prof-chip-role').textContent=ROLE_LABELS[p.role]||p.role;
   document.getElementById('prof-chip-sport').textContent=p.sport||p.sports?.join(', ')||'—';
   document.getElementById('prof-chip-ville').textContent=p.ville?`📍 ${p.ville}`:'📍 Ville ?';
-  document.getElementById('prof-chip-poste').textContent=p.poste?`🎯 ${p.poste}`:'';
+  document.getElementById('prof-chip-poste').textContent=p.poste?`🎯 ${p.poste}`:(p.titrePersonnalise?`🎖️ ${p.titrePersonnalise}`:'');
   const av=document.getElementById('prof-avatar-lg');
   const profPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})();
   if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
   const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
-  const isOrg=['club','association','federation'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
 
@@ -3126,6 +3192,8 @@ function renderProfile(){
     gallCard.style.display=!isVisitor?'':'none';
     renderGallery(p.photos||[]);
   }
+
+  renderOwnDocuments();
 
   if(isPersonnel){
     document.getElementById('prof-taille').textContent=p.taille||'—';
@@ -3195,7 +3263,7 @@ function renderSportStats(p){
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
   const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
-  const isOrg=['club','association','federation'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
   let h='';
 
@@ -3315,8 +3383,10 @@ function buildEditForm(p){
           <option${p.typeOrganisation==='Club sportif'?' selected':''}>Club sportif</option>
           <option${p.typeOrganisation==='Association'?' selected':''}>Association</option>
           <option${p.typeOrganisation==='Comité sportif'?' selected':''}>Comité sportif</option>
-          <option${p.typeOrganisation==='Organisation de tournois'?' selected':''}>Organisation de tournois</option>
+          <option${p.typeOrganisation==="Organisation de tournois"?' selected':''}>Organisation de tournois</option>
+          <option${p.typeOrganisation==="Organisation d'évènements"?' selected':''}>Organisation d'évènements</option>
           <option${p.typeOrganisation==='Fédération'?' selected':''}>Fédération</option>
+          <option${p.typeOrganisation==='Ligue'?' selected':''}>Ligue</option>
         </select>
       </div>
       <div class="form-group"><label>Sport(s)</label>
@@ -3333,9 +3403,14 @@ function buildEditForm(p){
       <div class="form-group"><label>Effectif (membres)</label><input type="number" id="edit-effectif" value="${p.effectif||0}" min="0"></div>
       <div class="form-group"><label>Site web</label><input type="url" id="edit-siteweb" value="${p.siteWeb||''}" placeholder="https://…"></div>
     </div>
-    <div class="form-group"><label>Adresse / Siège</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>`;
+    <div class="form-group"><label>Adresse / Siège</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>
+    <div class="form-group"><label>Mon titre / rôle au sein de l'organisation</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Président, Secrétaire général, Organisateur principal…"></div>`;
     h+=`<div class="section-divider green">🏆 Palmarès / Historique</div>`;
     h+=`<div class="form-group"><label>Palmarès</label><textarea id="edit-palmares" placeholder="Champion national 2023…">${p.palmares||''}</textarea></div>`;
+  }
+
+  if(p.role==='arbitre'){
+    h+=`<div class="form-group"><label>Mon titre / spécialité d'arbitrage</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Arbitre central, Arbitre vidéo (VAR), Commissaire de match…"></div>`;
   }
 
   // Bio (tous)
@@ -3395,7 +3470,7 @@ async function saveProfile(){
   if(!currentUser||!userProfile) return;
   const p=userProfile;
   const isPersonnel=['joueur','arbitre','entraineur','independant'].includes(p.role);
-  const isOrg=['club','association','federation'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
 
   const updates={
@@ -3447,7 +3522,11 @@ async function saveProfile(){
       siteWeb:document.getElementById('edit-siteweb')?.value.trim()||'',
       adresse:document.getElementById('edit-adresse')?.value.trim()||'',
       palmares:document.getElementById('edit-palmares')?.value.trim()||'',
+      titrePersonnalise:document.getElementById('edit-titre-perso')?.value.trim()||'',
     });
+  }
+  if(p.role==='arbitre'){
+    updates.titrePersonnalise=document.getElementById('edit-titre-perso')?.value.trim()||'';
   }
   try{
     await updateDoc(doc(db,'users',currentUser.uid),updates);
@@ -4220,6 +4299,101 @@ async function uploadGalleryPhotos(input){
   input.value='';
 }
 window.uploadGalleryPhotos=uploadGalleryPhotos;
+
+// ── DOCUMENTS PERSONNELS ──
+// Gestionnaire d'accès : le propriétaire de la fiche, son club/association
+// employeur (si userProfile.nomOrganisation correspond au champ a.club du
+// membre), ou l'admin (côté admin.html) peuvent ajouter/supprimer/partager.
+// Un document {locked:true} est "sous contrat" : seul l'admin peut lever ce
+// verrou (voir admin-controller.js → toggleDocumentLock). Ici, côté public,
+// la suppression/partage sont simplement désactivés sur un document verrouillé.
+let _ownDocUploadTargetUid=null;
+
+function openOwnDocumentUploadFor(uid){
+  _ownDocUploadTargetUid=uid;
+  document.getElementById('own-document-input')?.click();
+}
+window.openOwnDocumentUploadFor=openOwnDocumentUploadFor;
+
+function renderOwnDocuments(){
+  const container=document.getElementById('documents-own-list');
+  const card=document.getElementById('prof-documents-card');
+  if(!container||!card||!userProfile) return;
+  card.style.display=isVisitor?'none':'';
+  const docs=Array.isArray(userProfile.documents)?userProfile.documents:[];
+  const label=document.getElementById('documents-count-label');
+  if(label) label.textContent=docs.length+' document'+(docs.length!==1?'s':'');
+  if(!docs.length){ container.innerHTML='<p style="font-size:12px;color:var(--gray-txt);">Aucun document pour le moment.</p>'; return; }
+  container.innerHTML=docs.map((d,i)=>`
+    <div class="doc-detail-row">
+      <a href="${d.url}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${d.label||'Document'}</a>
+      ${d.locked?'<span class="doc-detail-lock">🔒 Sous contrat</span>':''}
+      <button class="doc-detail-btn" onclick="shareOwnDocument('${userProfile.uid}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
+      <button class="doc-detail-btn doc-detail-danger" onclick="removeOwnDocument('${userProfile.uid}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
+    </div>`).join('');
+}
+
+async function uploadOwnDocument(input){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
+  const file=input.files[0];
+  const targetUid=_ownDocUploadTargetUid||currentUser?.uid;
+  if(!file||!targetUid) return;
+  if(!storage){toast('Service de stockage indisponible.','error');return;}
+  if(file.size>10*1024*1024){toast('Fichier trop lourd (max 10 Mo).','error');input.value='';return;}
+  const label=prompt('Type de document (ex : Carte d\'identité, Licence, Justificatif de domicile)','Document');
+  if(label===null){input.value='';return;}
+  try{
+    toast('📤 Envoi du document…','info');
+    const r=sRef(storage,`documents/${targetUid}/${Date.now()}_${file.name}`);
+    await uploadBytes(r,file);
+    const url=await getDownloadURL(r);
+    const targetProfile = targetUid===currentUser?.uid ? userProfile : (allActors.find(a=>(a.uid||a.id)===targetUid)||{});
+    const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
+    const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
+    const updatedDocs=[...existingDocs,newDoc];
+    await updateDoc(doc(db,'users',targetUid),{documents:updatedDocs,updatedAt:serverTimestamp()});
+    if(targetUid===currentUser?.uid){ userProfile.documents=updatedDocs; renderOwnDocuments(); }
+    await loadActors();
+    toast('✅ Document ajouté !','success');
+  }catch(e){ toast('Erreur upload : '+e.message,'error'); }
+  input.value='';
+  _ownDocUploadTargetUid=null;
+}
+window.uploadOwnDocument=uploadOwnDocument;
+
+async function removeOwnDocument(uid,idx){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
+  const targetProfile = (currentUser&&uid===currentUser.uid) ? userProfile : (allActors.find(a=>(a.uid||a.id)===uid)||{});
+  const docs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
+  const d=docs[idx];
+  if(!d) return;
+  if(d.locked){ toast('🔒 Document sous contrat — suppression bloquée par l\'administrateur.','warn'); return; }
+  if(!confirm('Supprimer ce document ?')) return;
+  const updated=docs.filter((_,i)=>i!==idx);
+  try{
+    await updateDoc(doc(db,'users',uid),{documents:updated,updatedAt:serverTimestamp()});
+    if(currentUser&&uid===currentUser.uid){ userProfile.documents=updated; renderOwnDocuments(); }
+    await loadActors();
+    toast('Document supprimé','success');
+    if(document.getElementById('actor-detail-modal')?.classList.contains('open')) openActorDetail(uid);
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.removeOwnDocument=removeOwnDocument;
+
+async function shareOwnDocument(uid,idx){
+  const targetProfile = (currentUser&&uid===currentUser.uid) ? userProfile : (allActors.find(a=>(a.uid||a.id)===uid)||{});
+  const docs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
+  const d=docs[idx];
+  if(!d) return;
+  if(d.locked){ toast('🔒 Document sous contrat — partage désactivé.','warn'); return; }
+  try{
+    await navigator.clipboard.writeText(d.url);
+    toast('🔗 Lien copié !','success');
+  }catch(e){
+    toast('Lien : '+d.url,'info');
+  }
+}
+window.shareOwnDocument=shareOwnDocument;
 
 // ── OSM / IMPORT MAPS ──
 let osmMap=null, osmSearchDebounceTimer=null, selectedOsmPlaces=new Set(), importedCount=0;
@@ -5816,6 +5990,24 @@ window.generateGscId = generateGscId;
     if (typeof window.loadGlobalStats === 'function') window.loadGlobalStats();
   }
 
+  function _refreshAdminViews(rawUsers){
+    // Ne touche au panneau admin que s'il est chargé pour cette session (évite tout calcul inutile côté visiteur)
+    if (typeof window.allAdminUsers === 'undefined') return;
+    window.allAdminUsers = rawUsers;
+    const totalEl = document.getElementById('admin-total-users');
+    if (totalEl){
+      totalEl.textContent = rawUsers.length;
+      const joueursEl = document.getElementById('admin-total-joueurs');
+      const clubsEl = document.getElementById('admin-total-clubs');
+      if(joueursEl) joueursEl.textContent = rawUsers.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+      if(clubsEl) clubsEl.textContent = rawUsers.filter(u=>['club','association','federation'].includes(u.role)).length;
+    }
+    if (typeof window.renderAdminUsersTable === 'function' && document.getElementById('admin-users-tbody')){
+      window.renderAdminUsersTable(rawUsers);
+    }
+    if (typeof window.updatePendingBanner === 'function') window.updatePendingBanner();
+  }
+
   function startUsersSync(){
     if (!window.db || typeof window.collection !== 'function' || typeof window.onSnapshot !== 'function') {
       console.warn('GSC sync: Firestore non disponible, écoute temps réel désactivée.');
@@ -5824,11 +6016,13 @@ window.generateGscId = generateGscId;
     if (_unsubUsers) return; // déjà actif
     try{
       _unsubUsers = window.onSnapshot(window.collection(window.db,'users'), function(snap){
-        const dbActors = snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+        const rawUsers = snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
+        const dbActors = rawUsers.filter(u=>u.status==='active'||u.status===undefined);
         const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
         const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
         window.allActors = [...dbActors, ...seedActors];
         _refreshViews();
+        _refreshAdminViews(rawUsers);
         console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
         window.dispatchEvent(new Event('gsc-data-synced'));
       }, function(err){

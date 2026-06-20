@@ -259,6 +259,27 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 .status-pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
 
+/* Groupement par catégorie (Tous) et marquage des fiches démo */
+tr.group-header-row { cursor: default; background: var(--gray-bg); }
+tr.group-header-row:hover td { background: var(--gray-bg) !important; }
+tr.group-header-row td { padding: 9px 12px; border-bottom: 1.5px solid var(--gray-bd); }
+.group-header-label { font-size: 12px; font-weight: 800; color: var(--navy); letter-spacing: .3px; }
+.group-header-count { float: right; font-size: 11px; font-weight: 700; color: #94a3b8; background: #fff; border-radius: 12px; padding: 2px 9px; }
+tr.is-demo-row td { opacity: .82; }
+.demo-pill { font-size: 9px; font-weight: 800; color: #94a3b8; background: #f1f5f9; border-radius: 8px; padding: 1px 6px; margin-left: 8px; letter-spacing: .3px; white-space: nowrap; }
+.demo-modal-notice { border: 1px solid #e2e8f0; }
+
+/* Bibliothèque de documents : pastilles avec actions (partage, verrou, suppression) */
+.doc-pill-list { display: flex; flex-direction: column; gap: 6px; }
+.doc-pill-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--gray-bg); border-radius: 8px; padding: 5px 8px; }
+.doc-pill-link { font-size: 11px; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.doc-pill-link:hover { text-decoration: underline; }
+.doc-lock-badge { font-size: 9px; font-weight: 800; color: #92400e; background: #fef3c7; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
+.doc-act-btn { border: none; background: rgba(0,0,0,.05); width: 22px; height: 22px; border-radius: 6px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+.doc-act-btn:hover { background: rgba(0,0,0,.1); }
+.doc-act-btn:disabled { opacity: .35; cursor: not-allowed; }
+.doc-act-btn.doc-act-danger:hover { background: var(--danger); color: #fff; }
+
 @media (max-width: 640px) {
   table.users-table thead { display: none; }
   table.users-table, table.users-table tbody, table.users-table tr, table.users-table td { display: block; width: 100%; }
@@ -594,15 +615,18 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
       <!-- JOUEURS -->
       <div id="joueurs" class="section">
-        <div class="page-header"><div class="page-title">Gestion des Joueurs</div></div>
+        <div class="page-header"><div class="page-title">Gestion des Acteurs</div></div>
         <div class="filters-bar">
-          <button class="filter-btn role-all active">Tous</button>
-          <button class="filter-btn role-joueur">Joueurs</button>
-          <button class="filter-btn role-entraineur">Entraîneurs</button>
-          <button class="filter-btn role-arbitre">Arbitres</button>
-          <button class="filter-btn role-club">Clubs</button>
-          <button class="filter-btn role-federation">Fédérations</button>
-          <button class="filter-btn role-association">Associations</button>
+          <button class="filter-btn role-all active">👥 Tous</button>
+          <button class="filter-btn role-joueur">⚽ Joueurs</button>
+          <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
+          <button class="filter-btn role-arbitre">🟨 Arbitres</button>
+          <button class="filter-btn role-club">🏟️ Clubs</button>
+          <button class="filter-btn role-federation">🏛️ Fédérations</button>
+          <button class="filter-btn role-association">🤝 Associations</button>
+          <button class="filter-btn role-organisateur">🎪 Organisateurs</button>
+          <button class="filter-btn role-supporter">💗 Supporters</button>
+          <button class="filter-btn role-independant">🚴 Indépendants</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
         </div>
         <div class="users-table-wrap">
@@ -629,9 +653,14 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ph-filter-bar">
           <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
           <button class="filter-btn role-joueur" data-phfilter="joueur">🏃 Joueurs</button>
+          <button class="filter-btn role-arbitre" data-phfilter="arbitre">🟨 Arbitres</button>
+          <button class="filter-btn role-entraineur" data-phfilter="entraineur">📋 Entraîneurs</button>
           <button class="filter-btn role-club" data-phfilter="club">⚽ Clubs</button>
           <button class="filter-btn role-federation" data-phfilter="federation">🏆 Fédérations</button>
           <button class="filter-btn role-association" data-phfilter="association">🏢 Associations</button>
+          <button class="filter-btn role-organisateur" data-phfilter="organisateur">🎪 Organisateurs</button>
+          <button class="filter-btn role-supporter" data-phfilter="supporter">💗 Supporters</button>
+          <button class="filter-btn role-independant" data-phfilter="independant">🚴 Indépendants</button>
         </div>
         <!-- Grid -->
         <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
@@ -695,8 +724,10 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
             <button class="btn-report outline" id="btn-print-documents">🖨️ Imprimer la liste</button>
           </div>
         </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:640px;">
-          Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur. Le formulaire d'inscription public ne collecte pas encore ces fichiers automatiquement — utilisez "Ajouter un document" sur une fiche pour les archiver manuellement.
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+          Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur.
+          Le membre lui-même, le club/l'association qui l'emploie, et l'administrateur peuvent ajouter ou supprimer un document.
+          Un document marqué <strong>🔒 sous contrat</strong> ne peut plus être supprimé ni partagé tant que l'administrateur n'a pas levé le verrou.
         </p>
         <div class="filters-bar">
           <div class="search-box"><span>🔍</span><input type="text" id="doc-search-input" placeholder="Nom de l'acteur…"></div>
@@ -756,6 +787,10 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
           <div class="field"><label>Téléphone</label><div class="val" id="modal-phone">—</div></div>
           <div class="field"><label>Inscription</label><div class="val" id="modal-date">—</div></div>
           <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="pending">⏳ En attente</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Titre / rôle personnalisé</label>
+          <input type="text" id="modal-titre-perso" placeholder="Ex : Président, Arbitre vidéo (VAR), Organisateur principal…">
         </div>
       </div>
       <div class="msection">
@@ -836,6 +871,7 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 <!-- Module de synchronisation temps réel -->
 <script src="firebase-init.js"></script>
+<script src="seed-data.js"></script>
 <script src="realtime-sync-module.js"></script>
 <script src="admin-controller.js"></script>
 
