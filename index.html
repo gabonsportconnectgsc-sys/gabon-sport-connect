@@ -18,6 +18,28 @@
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    // ── GSC QR LIB RESILIENCE ──
+    // Si le CDN principal échoue (réseau lent, bloqué, etc.), on retente avec un
+    // miroir CDN différent avant d'abandonner. Émet 'qrlib-ready' une fois prêt.
+    (function(){
+      function fireReady(){ document.dispatchEvent(new Event('qrlib-ready')); }
+      if (typeof window.QRCode !== 'undefined'){ fireReady(); return; }
+      var fallback = document.createElement('script');
+      fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      fallback.onload = fireReady;
+      fallback.onerror = function(){ console.warn('GSC: librairie QR indisponible (CDN principal + secours)'); };
+      window.addEventListener('DOMContentLoaded', function(){
+        if (typeof window.QRCode === 'undefined'){
+          document.head.appendChild(fallback);
+        } else {
+          fireReady();
+        }
+      });
+    })();
+  </script>
+  <!-- jsQR — décodage de QR code via la caméra pour l'outil de scan -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
@@ -378,6 +400,25 @@
     .actor-qr-mini{width:56px;height:56px;border-radius:8px;border:1.5px solid var(--gray-bd);overflow:hidden;flex-shrink:0;cursor:pointer;transition:box-shadow .2s;}
     .actor-qr-mini:hover{box-shadow:0 4px 16px rgba(0,0,0,.15);}
     .actor-qr-mini canvas{width:100%!important;height:100%!important;}
+    /* ── QR SCANNER MODAL (caméra) ── */
+    .qr-scanner-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;align-items:center;justify-content:center;}
+    .qr-scanner-modal.open{display:flex;}
+    .qr-scanner-box{background:#0A1628;border-radius:var(--radius-lg);padding:20px;width:92%;max-width:420px;text-align:center;box-shadow:var(--shadow-lg);position:relative;}
+    .qr-scanner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .qr-scanner-title{font-family:var(--font-display);font-size:15px;font-weight:800;color:#fff;}
+    .qr-scanner-close{background:rgba(255,255,255,.12);border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;color:#fff;}
+    .qr-scanner-viewport{position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#000;margin-bottom:14px;}
+    .qr-scanner-viewport video{width:100%;height:100%;object-fit:cover;}
+    .qr-scanner-frame{position:absolute;inset:14%;border:3px solid var(--green);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.35);pointer-events:none;}
+    .qr-scanner-status{font-size:12px;color:rgba(255,255,255,.7);min-height:18px;margin-bottom:10px;}
+    .qr-scanner-result{display:none;background:#fff;border-radius:12px;padding:14px;margin-top:6px;text-align:left;}
+    .qr-scanner-result.show{display:block;}
+    .qr-scanner-result-name{font-weight:800;color:var(--navy);font-size:15px;margin-bottom:2px;}
+    .qr-scanner-result-role{font-size:12px;color:var(--gray-txt);margin-bottom:8px;}
+    .qr-scanner-result-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+    .qr-scanner-manual{display:flex;gap:8px;margin-top:6px;}
+    .qr-scanner-manual input{flex:1;padding:9px 12px;border-radius:8px;border:none;font-size:12px;}
+    .qr-scanner-manual button{padding:9px 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-weight:700;font-size:12px;cursor:pointer;}
     .actor-gsc-id-small{font-family:monospace;font-size:11px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:4px 10px;border-radius:20px;letter-spacing:.5px;}
     @media print{
       body *{visibility:hidden!important;}
@@ -1039,6 +1080,7 @@
       <div class="user-avatar" id="nav-avatar">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
+    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
     <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" style="display:none;padding:0;overflow:hidden;"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=80&h=80&fit=crop&auto=format" style="width:34px;height:34px;object-fit:cover;border-radius:50%;" alt="" onerror="this.outerHTML='🔑'"></button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
@@ -1559,6 +1601,7 @@
         <div class="profile-gsc-id-block" id="prof-gsc-id-block" style="display:none;">
           <span class="gsc-id-pill"><span class="id-icon">🔖</span><span id="prof-gsc-id-text">—</span></span>
           <button class="btn-show-qr" onclick="openProfileQrModal()">📱 Mon QR Code</button>
+          <button class="btn-show-qr" onclick="openQrScanner()">📷 Scanner un QR</button>
         </div>
       </div>
 
@@ -3180,20 +3223,33 @@ function renderActors(actors){
       // idx ici n'est pas utilisé pour les groupes (ids déjà posés via 'g'+role+i) — on régénère par sélecteur data
     });
     // QR codes : reciblage via les canvases réellement présents dans le DOM
-    document.querySelectorAll('#actors-grid canvas[id^="qr-canvas-mini-"]').forEach(canvas=>{
-      const rowEl=canvas.closest('.actor-compact-row');
-      const onclickAttr=rowEl?.getAttribute('onclick')||'';
-      const m=onclickAttr.match(/openActorDetail\('([^']+)'\)/);
-      const id=m?m[1]:null;
-      if(!id) return;
-      const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
-      if(typeof QRCode!=='undefined'){
-        try{QRCode.toCanvas(canvas,url,{width:28,margin:0,color:{dark:'#0A1628',light:'#ffffff'}});}catch(e){}
-      } else {
-        const ctx=canvas.getContext('2d');
-        if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
+    (function renderMiniQrCodes(retryCount){
+      retryCount = retryCount || 0;
+      const canvases = document.querySelectorAll('#actors-grid canvas[id^="qr-canvas-mini-"]');
+      if(!canvases.length) return;
+      if(typeof QRCode === 'undefined' && retryCount < 15){
+        // Librairie pas encore chargée : on retente pendant ~3s avant d'afficher un repli
+        setTimeout(()=>renderMiniQrCodes(retryCount+1), 200);
+        return;
       }
-    });
+      canvases.forEach(canvas=>{
+        const rowEl=canvas.closest('.actor-compact-row');
+        const onclickAttr=rowEl?.getAttribute('onclick')||'';
+        const m=onclickAttr.match(/openActorDetail\('([^']+)'\)/);
+        const id=m?m[1]:null;
+        if(!id) return;
+        const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
+        if(typeof QRCode!=='undefined'){
+          try{QRCode.toCanvas(canvas,url,{width:28,margin:0,color:{dark:'#0A1628',light:'#ffffff'}});}catch(e){
+            const ctx=canvas.getContext('2d');
+            if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
+          }
+        } else {
+          const ctx=canvas.getContext('2d');
+          if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
+        }
+      });
+    })();
   } else {
     // ── MODE GRILLE (défaut) ──
     grid.style.display='';
@@ -6024,12 +6080,38 @@ window.resetScoutFilters = resetScoutFilters;
   </div>
 </div>
 
+<!-- ── QR SCANNER MODAL (caméra) ── -->
+<div class="qr-scanner-modal" id="qr-scanner-modal" onclick="if(event.target===this)closeQrScanner()">
+  <div class="qr-scanner-box">
+    <div class="qr-scanner-header">
+      <div class="qr-scanner-title">📷 Scanner un QR Code</div>
+      <button class="qr-scanner-close" onclick="closeQrScanner()">✕</button>
+    </div>
+    <div class="qr-scanner-viewport">
+      <video id="qr-scanner-video" playsinline muted autoplay></video>
+      <div class="qr-scanner-frame"></div>
+    </div>
+    <canvas id="qr-scanner-canvas" style="display:none;"></canvas>
+    <div class="qr-scanner-status" id="qr-scanner-status">Pointez la caméra vers un QR Code GSC…</div>
+    <div class="qr-scanner-result" id="qr-scanner-result">
+      <div class="qr-scanner-result-name" id="qr-scanner-result-name">—</div>
+      <div class="qr-scanner-result-role" id="qr-scanner-result-role">—</div>
+      <button class="qr-scanner-result-btn" id="qr-scanner-result-btn" onclick="goToScannedActor()">👤 Voir la fiche complète</button>
+    </div>
+    <div class="qr-scanner-manual">
+      <input type="text" id="qr-scanner-manual-input" placeholder="Ou saisir un code GSC-ID (ex: GSC-JOU-A1B2C3)">
+      <button onclick="lookupManualGscId()">🔎</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── GSC QR SYSTEM (public) ──
 const ROLE_CODES_QR = {
   joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
-  admin:'ADM', supporter:'SUP', organisateur:'ORG'
+  admin:'ADM', supporter:'SUP', organisateur:'ORG',
+  eleve_etudiant:'ELE', sportif_etranger:'ETR'
 };
 // Rôles autorisés à avoir un QR imprimable
 const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin'];
@@ -6051,23 +6133,40 @@ function buildQrUrl(uid){
   return `${base}?actor=${uid}`;
 }
 
-function drawQrOnCanvas(canvas, text, size){
+function drawQrOnCanvas(canvas, text, size, _attempt){
+  if(!canvas) return;
   canvas.width = size; canvas.height = size;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,size,size);
-    ctx.drawImage(img,0,0,size,size);
-  };
-  img.onerror = () => {
+  _attempt = _attempt || 0;
+  if(typeof QRCode === 'undefined'){
+    // Librairie pas encore chargée : on patiente (jusqu'à ~3s) avant d'afficher un repli visuel
+    if(_attempt < 15){
+      setTimeout(()=>drawQrOnCanvas(canvas, text, size, _attempt+1), 200);
+      return;
+    }
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
     ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
     ctx.textAlign = 'center';
     ctx.fillText('QR GSC', size/2, size/2 - 6);
-  };
-  img.src = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}&choe=UTF-8&chld=M|2`;
+    return;
+  }
+  try{
+    QRCode.toCanvas(canvas, text, { width:size, margin:1, color:{ dark:'#0A1628', light:'#ffffff' } }, (err)=>{
+      if(err){
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
+        ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('QR GSC', size/2, size/2 - 6);
+      }
+    });
+  }catch(e){
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
+    ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('QR GSC', size/2, size/2 - 6);
+  }
 }
 
 // ─── Show GSC ID + QR button in own profile ───
@@ -6209,6 +6308,155 @@ window.printProfileQr = printProfileQr;
 window.downloadProfileQr = downloadProfileQr;
 window.openActorQrZoom = openActorQrZoom;
 window.generateGscId = generateGscId;
+
+// ══════════════════════════════════════════════════════════
+// GSC QR SCANNER — lecture caméra + identification d'un acteur
+// ══════════════════════════════════════════════════════════
+let _qrScannerStream = null;
+let _qrScannerRAF = null;
+let _qrScannerLastResult = null;
+let _qrScannerScanning = false;
+
+function findActorByScan(payload){
+  if(!payload) return null;
+  const list = (window.allActors && window.allActors.length) ? window.allActors : (allActors||[]);
+  // 1) Payload = URL avec ?actor=UID (format émis par nos propres QR)
+  try{
+    const url = new URL(payload, window.location.origin);
+    const uidParam = url.searchParams.get('actor');
+    if(uidParam){
+      const found = list.find(a=>(a.uid||a.id)===uidParam);
+      if(found) return found;
+    }
+  }catch(e){ /* pas une URL valide, on continue */ }
+  // 2) Payload = GSC-ID direct (ex: GSC-JOU-A1B2C3), ou contenu dans le texte scanné
+  const gscMatch = String(payload).toUpperCase().match(/GSC-[A-Z]{3}-[A-Z0-9]{6}/);
+  if(gscMatch){
+    const code = gscMatch[0];
+    const found = list.find(a=>{
+      const uid = a.uid||a.id;
+      const gscId = a.gscId || (uid && generateGscId(uid, a.role||'joueur'));
+      return gscId === code;
+    });
+    if(found) return found;
+  }
+  // 3) Payload = UID brut
+  const direct = list.find(a=>(a.uid||a.id)===payload);
+  if(direct) return direct;
+  return null;
+}
+
+function showScanResult(actor){
+  _qrScannerLastResult = actor;
+  const name = [actor.prenom, actor.nom, actor.nomOrganisation].filter(Boolean).join(' ') || actor.email?.split('@')[0] || '—';
+  const roleLabel = (typeof ROLE_LABELS!=='undefined' ? ROLE_LABELS[actor.role] : null) || actor.role || '—';
+  document.getElementById('qr-scanner-result-name').textContent = name;
+  document.getElementById('qr-scanner-result-role').textContent = roleLabel;
+  document.getElementById('qr-scanner-result').classList.add('show');
+  document.getElementById('qr-scanner-status').textContent = '✅ Acteur identifié';
+  stopQrScannerLoop();
+}
+
+function goToScannedActor(){
+  if(!_qrScannerLastResult) return;
+  const uid = _qrScannerLastResult.uid || _qrScannerLastResult.id;
+  closeQrScanner();
+  if(typeof showView === 'function') showView('annuaire');
+  setTimeout(()=>{ if(typeof openActorDetail === 'function') openActorDetail(uid); }, 250);
+}
+
+function lookupManualGscId(){
+  const input = document.getElementById('qr-scanner-manual-input');
+  const val = (input?.value || '').trim();
+  if(!val) return;
+  const found = findActorByScan(val);
+  if(found){
+    showScanResult(found);
+  } else {
+    document.getElementById('qr-scanner-status').textContent = '❌ Aucun acteur trouvé pour ce code';
+    document.getElementById('qr-scanner-result').classList.remove('show');
+  }
+}
+
+function qrScannerTick(){
+  if(!_qrScannerScanning) return;
+  const video = document.getElementById('qr-scanner-video');
+  const canvas = document.getElementById('qr-scanner-canvas');
+  if(video && video.readyState === video.HAVE_ENOUGH_DATA && typeof jsQR !== 'undefined'){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    let imageData;
+    try{ imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); }catch(e){ imageData = null; }
+    if(imageData){
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+      if(code && code.data){
+        const found = findActorByScan(code.data);
+        if(found){
+          showScanResult(found);
+          return; // on arrête la boucle, résultat trouvé
+        } else {
+          document.getElementById('qr-scanner-status').textContent = '⚠️ QR Code détecté mais non reconnu par GSC';
+        }
+      }
+    }
+  }
+  _qrScannerRAF = requestAnimationFrame(qrScannerTick);
+}
+
+function stopQrScannerLoop(){
+  _qrScannerScanning = false;
+  if(_qrScannerRAF){ cancelAnimationFrame(_qrScannerRAF); _qrScannerRAF = null; }
+}
+
+async function openQrScanner(){
+  const modal = document.getElementById('qr-scanner-modal');
+  const statusEl = document.getElementById('qr-scanner-status');
+  document.getElementById('qr-scanner-result').classList.remove('show');
+  const manualInput = document.getElementById('qr-scanner-manual-input');
+  if(manualInput) manualInput.value = '';
+  modal.classList.add('open');
+  statusEl.textContent = 'Activation de la caméra…';
+
+  if(typeof jsQR === 'undefined'){
+    statusEl.textContent = '⚠️ Module de scan en cours de chargement, patientez…';
+  }
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    statusEl.textContent = '❌ Caméra non disponible sur cet appareil/navigateur. Utilisez la saisie manuelle ci-dessous.';
+    return;
+  }
+
+  try{
+    _qrScannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }, audio: false
+    });
+    const video = document.getElementById('qr-scanner-video');
+    video.srcObject = _qrScannerStream;
+    await video.play();
+    statusEl.textContent = 'Pointez la caméra vers un QR Code GSC…';
+    _qrScannerScanning = true;
+    _qrScannerRAF = requestAnimationFrame(qrScannerTick);
+  }catch(e){
+    console.warn('Caméra inaccessible:', e);
+    statusEl.textContent = '❌ Accès à la caméra refusé ou indisponible. Utilisez la saisie manuelle ci-dessous.';
+  }
+}
+
+function closeQrScanner(){
+  stopQrScannerLoop();
+  if(_qrScannerStream){
+    _qrScannerStream.getTracks().forEach(t=>t.stop());
+    _qrScannerStream = null;
+  }
+  document.getElementById('qr-scanner-modal').classList.remove('open');
+}
+
+window.openQrScanner = openQrScanner;
+window.closeQrScanner = closeQrScanner;
+window.goToScannedActor = goToScannedActor;
+window.lookupManualGscId = lookupManualGscId;
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->

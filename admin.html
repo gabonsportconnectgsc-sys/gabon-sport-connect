@@ -15,6 +15,23 @@
 <!-- Chart.js (requis par l'onglet Rapports) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
+<!-- QR Code — génération (identification des membres) + jsQR (scan caméra) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+  // ── GSC QR LIB RESILIENCE (admin) ──
+  (function(){
+    if (typeof window.QRCode !== 'undefined') return;
+    window.addEventListener('DOMContentLoaded', function(){
+      if (typeof window.QRCode === 'undefined'){
+        var fb = document.createElement('script');
+        fb.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        document.head.appendChild(fb);
+      }
+    });
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -573,6 +590,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-verification">
           <span class="nav-icon">🌍</span><span>Vérification internationale</span>
         </button>
+        <button class="nav-item" id="nav-qrscan">
+          <span class="nav-icon">📷</span><span>Scanner QR</span>
+        </button>
       </div>
       <div class="sidebar-footer">
         <div class="admin-profile">
@@ -843,6 +863,54 @@ tr.is-demo-row td { opacity: .82; }
         </div>
       </div>
 
+      <!-- SCANNER QR — identification rapide de tout membre inscrit -->
+      <div id="qrscan" class="section">
+        <div class="page-header">
+          <div class="page-title">📷 Scanner QR — Identification des membres</div>
+        </div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+          Scannez le QR Code imprimé ou affiché par un membre (joueur, club, fédération, indépendant…) pour
+          ouvrir directement sa fiche. Fonctionne avec tous les acteurs réels et les fiches de démonstration.
+        </p>
+        <div class="dash-grid" style="grid-template-columns:1fr 1fr;align-items:start;">
+          <div class="dash-card">
+            <div class="dash-card-title">📷 Caméra</div>
+            <div id="qrscan-viewport" style="position:relative;width:100%;max-width:340px;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#000;margin:0 auto 14px;">
+              <video id="qrscan-video" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;"></video>
+              <div style="position:absolute;inset:14%;border:3px solid var(--green);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.35);pointer-events:none;"></div>
+            </div>
+            <canvas id="qrscan-canvas" style="display:none;"></canvas>
+            <div style="text-align:center;">
+              <button class="btn-action green" id="qrscan-start-btn" style="max-width:240px;margin:0 auto 8px;">▶️ Démarrer le scan</button>
+              <button class="btn-action outline" id="qrscan-stop-btn" style="max-width:240px;margin:0 auto;display:none;">⏹️ Arrêter</button>
+            </div>
+            <div id="qrscan-status" style="text-align:center;font-size:12px;color:var(--gray-txt);margin-top:10px;">Caméra inactive — cliquez sur « Démarrer le scan ».</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">🔎 Recherche manuelle</div>
+            <div class="field" style="margin-bottom:12px;">
+              <label>Code GSC-ID ou UID</label>
+              <input type="text" id="qrscan-manual-input" placeholder="Ex : GSC-JOU-A1B2C3">
+            </div>
+            <button class="btn-action blue" id="qrscan-manual-btn" style="margin-bottom:18px;">Rechercher</button>
+            <div id="qrscan-result" style="display:none;">
+              <div class="player-photo-section" style="margin-bottom:10px;">
+                <div class="player-photo-container" id="qrscan-result-photo" style="width:84px;height:110px;font-size:36px;"><span>👤</span></div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-weight:800;font-size:15px;color:var(--navy);" id="qrscan-result-name">—</div>
+                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:4px;" id="qrscan-result-role">—</div>
+                <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:12px;" id="qrscan-result-gscid">—</div>
+                <div>
+                  <button class="btn-action green" id="qrscan-open-btn" style="max-width:220px;margin:0 auto;">👤 Ouvrir la fiche complète</button>
+                </div>
+              </div>
+            </div>
+            <div id="qrscan-empty" style="text-align:center;color:var(--gray-txt);font-size:12px;padding:20px 0;">Aucun résultat pour le moment.</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -870,6 +938,21 @@ tr.is-demo-row td { opacity: .82; }
         <div class="field" style="margin-top:10px;">
           <label>Titre / rôle personnalisé</label>
           <input type="text" id="modal-titre-perso" placeholder="Ex : Président, Arbitre vidéo (VAR), Organisateur principal…">
+        </div>
+      </div>
+      <div class="msection" id="modal-qr-section">
+        <div class="msection-title">🔖 Identification GSC (QR Code)</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="width:84px;height:84px;border-radius:10px;border:1.5px solid var(--gray-bd);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;">
+            <canvas id="modal-qr-canvas" width="84" height="84"></canvas>
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:6px;" id="modal-qr-gscid">—</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="filter-btn" id="modal-qr-print-btn" type="button">🖨️ Imprimer</button>
+              <button class="filter-btn" id="modal-qr-download-btn" type="button">⬇️ Télécharger</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="msection">
@@ -1221,6 +1304,319 @@ tr.is-demo-row td { opacity: .82; }
     const navBtn = document.getElementById('nav-verification');
     if (navBtn) navBtn.addEventListener('click', showVerificationSection);
     renderEtablissements();
+  });
+})();
+</script>
+
+<!-- Module QR — identification (modal joueur) + Scanner caméra. Autonome :
+     lit le cache déjà synchronisé par realtime-sync-module.js (même pattern
+     que le module Rapports), aucun listener Firestore dupliqué. -->
+<script>
+(function () {
+  'use strict';
+
+  // ── Génération du GSC-ID : ALGORITHME IDENTIQUE à celui d'index.html ──
+  // (même hash déterministe sur l'UID) afin qu'un même membre ait toujours
+  // le même GSC-ID et le même QR Code, qu'on le consulte depuis le site
+  // public ou depuis l'admin.
+  const ROLE_CODES_QR = {
+    joueur: 'JOU', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
+    association: 'ASS', federation: 'FED', independant: 'IND',
+    admin: 'ADM', supporter: 'SUP', organisateur: 'ORG',
+    eleve_etudiant: 'ELE', sportif_etranger: 'ETR'
+  };
+  const ROLE_LABELS_QR = {
+    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
+    organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
+  };
+
+  function generateGscId(uid, role) {
+    if (!uid) return null;
+    const roleCode = ROLE_CODES_QR[role] || 'ACT';
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+      hash = ((hash << 5) - hash) + uid.charCodeAt(i);
+      hash |= 0;
+    }
+    const abs = Math.abs(hash).toString(36).toUpperCase().padStart(6, '0').slice(-6);
+    return `GSC-${roleCode}-${abs}`;
+  }
+  window.gscGenerateId = generateGscId;
+
+  function buildQrUrl(uid) {
+    // Pointe vers index.html (annuaire public) avec le paramètre ?actor=
+    const base = window.location.origin + window.location.pathname.replace(/admin\.html$/, 'index.html');
+    return `${base}?actor=${uid}`;
+  }
+
+  function drawQrOnCanvas(canvas, text, size, attempt) {
+    if (!canvas) return;
+    attempt = attempt || 0;
+    canvas.width = size; canvas.height = size;
+    if (typeof QRCode === 'undefined') {
+      if (attempt < 15) { setTimeout(() => drawQrOnCanvas(canvas, text, size, attempt + 1), 200); return; }
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size * .14)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('QR', size / 2, size / 2 + 4);
+      return;
+    }
+    try {
+      QRCode.toCanvas(canvas, text, { width: size, margin: 1, color: { dark: '#0A1628', light: '#ffffff' } }, () => {});
+    } catch (e) { /* repli silencieux */ }
+  }
+
+  /* Lit le même cache que le module Rapports — fusion réel + démo (seed-data.js) */
+  function getUsers() {
+    const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+    const seed = window.GSC_SEED_ACTORS || [];
+    const realIds = new Set(real.map(u => u.uid || u.id));
+    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    return [...real, ...demoOnly];
+  }
+
+  function findUserByCode(payload) {
+    if (!payload) return null;
+    const list = getUsers();
+    // 1) URL avec ?actor=UID
+    try {
+      const url = new URL(payload, window.location.origin);
+      const uidParam = url.searchParams.get('actor');
+      if (uidParam) {
+        const found = list.find(u => (u.uid || u.id) === uidParam);
+        if (found) return found;
+      }
+    } catch (e) { /* pas une URL, on continue */ }
+    // 2) GSC-ID direct contenu dans le texte
+    const m = String(payload).toUpperCase().match(/GSC-[A-Z]{3}-[A-Z0-9]{6}/);
+    if (m) {
+      const code = m[0];
+      const found = list.find(u => {
+        const uid = u.uid || u.id;
+        const gscId = u.gscId || (uid && generateGscId(uid, u.role || 'joueur'));
+        return gscId === code;
+      });
+      if (found) return found;
+    }
+    // 3) UID brut
+    return list.find(u => (u.uid || u.id) === payload) || null;
+  }
+  window.gscFindUserByCode = findUserByCode;
+
+  // ─── Injection QR dans le modal Joueur (déclenché à l'ouverture de la fiche) ───
+  function injectModalQr(user) {
+    const canvas = document.getElementById('modal-qr-canvas');
+    const gscIdEl = document.getElementById('modal-qr-gscid');
+    if (!canvas || !gscIdEl || !user) return;
+    const uid = user.uid || user.id;
+    const role = user.role || 'joueur';
+    const gscId = user.gscId || generateGscId(uid, role);
+    gscIdEl.textContent = gscId;
+    const url = buildQrUrl(uid);
+    drawQrOnCanvas(canvas, url, 84);
+
+    const printBtn = document.getElementById('modal-qr-print-btn');
+    const dlBtn = document.getElementById('modal-qr-download-btn');
+    if (printBtn) printBtn.onclick = () => {
+      const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ') || uid.slice(0, 8);
+      const w = window.open('', '_blank');
+      w.document.write(`<html><head><title>QR GSC — ${name}</title></head><body style="text-align:center;font-family:sans-serif;padding:40px;">
+        <div style="font-size:13px;font-weight:800;letter-spacing:1px;margin-bottom:6px;">GABON SPORT CONNECT</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${name}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:16px;">${ROLE_LABELS_QR[role] || role}</div>
+        <img src="${canvas.toDataURL('image/png')}" style="width:220px;height:220px;">
+        <div style="font-family:monospace;font-weight:700;color:#009E60;margin-top:14px;letter-spacing:.8px;">${gscId}</div>
+      </body></html>`);
+      w.document.close();
+      setTimeout(() => w.print(), 300);
+    };
+    if (dlBtn) dlBtn.onclick = () => {
+      const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ').replace(/\s+/g, '_') || uid.slice(0, 8);
+      const link = document.createElement('a');
+      link.download = `QR_GSC_${name}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+  }
+  window.gscInjectModalQr = injectModalQr;
+
+  // Patch léger : si admin-controller.js expose openPlayerModal(uid) ou équivalent,
+  // on observe l'ouverture du modal pour y injecter automatiquement le QR, sans
+  // dépendre du contenu exact de ce fichier externe (non fourni ici).
+  function tryAutoInjectFromModal() {
+    const nameEl = document.getElementById('modal-player-name');
+    if (!nameEl) return;
+    const observer = new MutationObserver(() => {
+      const overlay = document.getElementById('player-modal');
+      if (!overlay || !overlay.classList.contains('open')) return;
+      const email = (document.getElementById('modal-email') || {}).textContent || '';
+      if (!email || email === '—') return;
+      const list = getUsers();
+      const match = list.find(u => u.email === email);
+      if (match) injectModalQr(match);
+    });
+    observer.observe(document.getElementById('player-modal'), { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // ── SCANNER CAMÉRA (section dédiée) ──
+  let qrScanStream = null, qrScanRAF = null, qrScanActive = false, qrScanLastUser = null;
+
+  function setStatus(msg) {
+    const el = document.getElementById('qrscan-status');
+    if (el) el.textContent = msg;
+  }
+
+  function showResult(user) {
+    qrScanLastUser = user;
+    const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ') || user.email || '—';
+    const role = user.role || 'joueur';
+    document.getElementById('qrscan-result-name').textContent = name;
+    document.getElementById('qrscan-result-role').textContent = ROLE_LABELS_QR[role] || role;
+    document.getElementById('qrscan-result-gscid').textContent = user.gscId || generateGscId(user.uid || user.id, role);
+    const photoBox = document.getElementById('qrscan-result-photo');
+    if (photoBox) {
+      photoBox.innerHTML = user.photoURL || user.photo
+        ? `<img src="${user.photoURL || user.photo}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<span>👤</span>`;
+    }
+    document.getElementById('qrscan-result').style.display = 'block';
+    document.getElementById('qrscan-empty').style.display = 'none';
+    setStatus('✅ Membre identifié — ' + name);
+    stopScanLoop();
+  }
+
+  function showNotFound() {
+    document.getElementById('qrscan-result').style.display = 'none';
+    document.getElementById('qrscan-empty').style.display = 'block';
+    document.getElementById('qrscan-empty').textContent = '❌ Aucun membre trouvé pour ce code.';
+  }
+
+  function scanTick() {
+    if (!qrScanActive) return;
+    const video = document.getElementById('qrscan-video');
+    const canvas = document.getElementById('qrscan-canvas');
+    if (video && video.readyState === video.HAVE_ENOUGH_DATA && typeof jsQR !== 'undefined') {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      let imageData;
+      try { imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch (e) { imageData = null; }
+      if (imageData) {
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data) {
+          const user = findUserByCode(code.data);
+          if (user) { showResult(user); return; }
+          setStatus('⚠️ QR Code détecté mais non reconnu par GSC');
+        }
+      }
+    }
+    qrScanRAF = requestAnimationFrame(scanTick);
+  }
+
+  function stopScanLoop() {
+    qrScanActive = false;
+    if (qrScanRAF) { cancelAnimationFrame(qrScanRAF); qrScanRAF = null; }
+  }
+
+  async function startScan() {
+    setStatus('Activation de la caméra…');
+    document.getElementById('qrscan-start-btn').style.display = 'none';
+    document.getElementById('qrscan-stop-btn').style.display = '';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setStatus('❌ Caméra non disponible sur cet appareil/navigateur. Utilisez la recherche manuelle.');
+      document.getElementById('qrscan-start-btn').style.display = '';
+      document.getElementById('qrscan-stop-btn').style.display = 'none';
+      return;
+    }
+    try {
+      qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      const video = document.getElementById('qrscan-video');
+      video.srcObject = qrScanStream;
+      await video.play();
+      setStatus('Pointez la caméra vers un QR Code GSC…');
+      qrScanActive = true;
+      qrScanRAF = requestAnimationFrame(scanTick);
+    } catch (e) {
+      console.warn('Caméra inaccessible:', e);
+      setStatus('❌ Accès à la caméra refusé ou indisponible. Utilisez la recherche manuelle.');
+      document.getElementById('qrscan-start-btn').style.display = '';
+      document.getElementById('qrscan-stop-btn').style.display = 'none';
+    }
+  }
+
+  function stopScan() {
+    stopScanLoop();
+    if (qrScanStream) { qrScanStream.getTracks().forEach(t => t.stop()); qrScanStream = null; }
+    document.getElementById('qrscan-start-btn').style.display = '';
+    document.getElementById('qrscan-stop-btn').style.display = 'none';
+    setStatus('Caméra inactive — cliquez sur « Démarrer le scan ».');
+  }
+
+  function manualLookup() {
+    const input = document.getElementById('qrscan-manual-input');
+    const val = (input?.value || '').trim();
+    if (!val) return;
+    const user = findUserByCode(val);
+    if (user) showResult(user); else showNotFound();
+  }
+
+  function showQrScanSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('qrscan');
+    if (target) target.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-qrscan');
+    if (navBtn) navBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Scanner QR';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const navBtn = document.getElementById('nav-qrscan');
+    if (navBtn) navBtn.addEventListener('click', showQrScanSection);
+
+    const startBtn = document.getElementById('qrscan-start-btn');
+    if (startBtn) startBtn.addEventListener('click', startScan);
+    const stopBtn = document.getElementById('qrscan-stop-btn');
+    if (stopBtn) stopBtn.addEventListener('click', stopScan);
+    const manualBtn = document.getElementById('qrscan-manual-btn');
+    if (manualBtn) manualBtn.addEventListener('click', manualLookup);
+    const openBtn = document.getElementById('qrscan-open-btn');
+    if (openBtn) openBtn.addEventListener('click', () => {
+      if (!qrScanLastUser) return;
+      const uid = qrScanLastUser.uid || qrScanLastUser.id;
+      // Ouvre la fiche complète dans le module Joueurs si la fonction existe déjà
+      // dans admin-controller.js (ex: openPlayerModal). Repli : section Joueurs + recherche.
+      if (typeof window.openPlayerModal === 'function') {
+        window.openPlayerModal(uid);
+      } else {
+        const navJoueurs = document.getElementById('nav-joueurs');
+        if (navJoueurs) navJoueurs.click();
+        const search = document.getElementById('search-input');
+        if (search) {
+          const name = [qrScanLastUser.prenom, qrScanLastUser.nom, qrScanLastUser.nomOrganisation].filter(Boolean).join(' ');
+          search.value = name;
+          search.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    });
+
+    // Stoppe la caméra si on quitte la section (clic sur un autre item du menu)
+    document.querySelectorAll('.nav-item:not(#nav-qrscan)').forEach(btn => {
+      btn.addEventListener('click', stopScan);
+    });
+
+    tryAutoInjectFromModal();
   });
 })();
 </script>
