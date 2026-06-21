@@ -92,6 +92,8 @@
   let sites = [], actualites = [];
   let currentSiteId = null;
   let roleFilter = 'all', searchTerm = '';
+  let statusFilter = null; // null = tous statuts, 'active' = filtre ACTIFS depuis les tuiles
+  let docRoleFilter = 'all';
   let phFilter = 'all';
   let matchTabFilter = 'all';
   let displayMode = localStorage.getItem('gsc-admin-display-mode') || 'grid';
@@ -235,12 +237,14 @@
   /* ═══ JOUEURS / ACTEURS ═══ */
   function matchesRoleFilter(u, filter) {
     if (filter === 'all') return true;
+    if (Array.isArray(filter)) return filter.includes(u.role);
     if (filter === 'supporter') return u.role === 'supporter' || u.isSupporter === true;
     return u.role === filter;
   }
 
   function renderPlayers() {
     let list = users.filter(u => u.status !== 'deleted');
+    if (statusFilter) list = list.filter(u => (u.status || 'active') === statusFilter);
     if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
@@ -330,6 +334,7 @@
         btn.classList.add('active');
         const m = btn.className.match(/role-(\w+)/);
         roleFilter = (m && m[1] !== 'all') ? m[1] : 'all';
+        statusFilter = null;
         renderPlayers();
       });
     });
@@ -575,6 +580,7 @@
 
   function renderDocuments() {
     let list = users.filter(u => u.status !== 'deleted');
+    if (docRoleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, docRoleFilter));
     if (docSearchTerm) {
       const t = docSearchTerm.toLowerCase();
       list = list.filter(u => (fullName(u) + ' ' + (u.club || u.nomOrganisation || '')).toLowerCase().includes(t));
@@ -628,7 +634,39 @@
     }
   }
 
+  // Alias global de sécurité — certains éléments du DOM (tuiles, cartes) appellent
+  // showSection(...) directement ; on l'expose ici pour éviter toute erreur silencieuse.
+  window.showSection = switchSection;
+
   window.AdminController_deleteDocument = deleteDocument;
+
+  // Helper global utilisé par les tuiles/cartes cliquables du Dashboard et des Rapports
+  // pour naviguer vers la section Joueurs avec un filtre de rôle (simple ou multiple) et/ou de statut.
+  window.gscGoToFiltered = function (opts) {
+    opts = opts || {};
+    roleFilter = opts.roles || 'all';
+    statusFilter = opts.status || null;
+    searchTerm = '';
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    if (typeof switchSection === 'function') switchSection('joueurs');
+    document.querySelectorAll('#joueurs .filter-btn').forEach(b => b.classList.remove('active'));
+    if (typeof roleFilter === 'string') {
+      const sel = roleFilter === 'all' ? '.role-all' : '.role-' + roleFilter;
+      const btn = document.querySelector('#joueurs .filter-btn' + sel);
+      if (btn) btn.classList.add('active');
+    }
+    renderPlayers();
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = opts.title || 'Gestion des Acteurs';
+  };
+
+  // Helper global utilisé par la tuile MATCHS / cartes Rapports pour aller à la section Matchs.
+  window.gscGoToMatches = function () {
+    if (typeof switchSection === 'function') switchSection('matchs');
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Gestion des Matchs';
+  };
 
   async function executeReset() {
     const coll = document.getElementById('reset-collection-select').value;
@@ -800,6 +838,15 @@
     document.getElementById('btn-delete-match')?.addEventListener('click', deleteMatch);
 
     document.getElementById('doc-search-input')?.addEventListener('input', (e) => { docSearchTerm = e.target.value; renderDocuments(); });
+    document.querySelectorAll('#documents .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#documents .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const m = btn.className.match(/role-(\w+)/);
+        docRoleFilter = (m && m[1] !== 'all') ? m[1] : 'all';
+        renderDocuments();
+      });
+    });
     document.getElementById('btn-print-documents')?.addEventListener('click', () => window.print());
     document.getElementById('btn-execute-reset')?.addEventListener('click', executeReset);
 

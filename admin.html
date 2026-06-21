@@ -26,6 +26,14 @@
 
 body { font-family: var(--font); background: var(--gray-bg); color: var(--navy); min-height: 100vh; overflow-x: hidden; }
 
+html { overflow-x: hidden; }
+
+img, svg, canvas { max-width: 100%; }
+
+.main-content, .app-tiles-grid, .role-items-grid, .filters-bar, .dash-grid { max-width: 100%; min-width: 0; }
+
+.app-tile, .role-item, .stat-card, .dash-card { min-width: 0; }
+
 @keyframes fadeUp { 
   0% { opacity: 0; transform: translateY(14px); }
   100% { opacity: 1; transform: translateY(0px); }
@@ -676,10 +684,10 @@ tr.is-demo-row td { opacity: .82; }
           <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
         </div>
         <div class="stats-grid">
-          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
-          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
-          <div class="stat-card c3"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
-          <div class="stat-card c4"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
+          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
+          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
+          <div class="stat-card c3 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'pending', title:'Fiches en attente'})" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
+          <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
         <div class="dash-grid">
           <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur / Athlète</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
@@ -701,28 +709,28 @@ tr.is-demo-row td { opacity: .82; }
           
           <!-- Stats principales -->
           <div class="app-tiles-grid">
-            <div class="app-tile app-tile-green clickable" onclick="showSection('joueurs'); topbarTitle.firstChild.textContent='Gestion des Acteurs';">
+            <div class="app-tile app-tile-green clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})">
               <div class="tile-icon">👥</div>
               <div class="tile-value" id="app-total-membres">96</div>
               <div class="tile-label">MEMBRES</div>
               <div class="tile-sublabel">Total enregistrés</div>
             </div>
             
-            <div class="app-tile app-tile-navy clickable" onclick="showSection('joueurs'); topbarTitle.firstChild.textContent='Gestion des Acteurs';">
+            <div class="app-tile app-tile-navy clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})">
               <div class="tile-icon">✅</div>
               <div class="tile-value" id="app-actifs">92</div>
               <div class="tile-label">ACTIFS (= APP)</div>
               <div class="tile-sublabel">Fiches actives</div>
             </div>
             
-            <div class="app-tile app-tile-purple clickable" onclick="alert('Section organisations (à implémenter)')">
+            <div class="app-tile app-tile-purple clickable" onclick="window.gscGoToFiltered({roles:['club','federation','association'], title:'Organisations (Clubs / Féd. / Assoc.)'})">
               <div class="tile-icon">🏟️</div>
               <div class="tile-value" id="app-organisations">13</div>
               <div class="tile-label">ORGANISATIONS</div>
               <div class="tile-sublabel">Clubs / Fédé. / Assoc.</div>
             </div>
             
-            <div class="app-tile app-tile-orange clickable" onclick="showSection('matches'); topbarTitle.firstChild.textContent='Gestion des Matchs';">
+            <div class="app-tile app-tile-orange clickable" onclick="window.gscGoToMatches()">
               <div class="tile-icon">📅</div>
               <div class="tile-value" id="app-matchs">17</div>
               <div class="tile-label">MATCHS</div>
@@ -734,77 +742,77 @@ tr.is-demo-row td { opacity: .82; }
           <div class="app-tile-roles">
             <h4 style="margin-bottom: 14px; font-size: 14px; color: var(--navy); display: flex; align-items: center; gap: 6px;"><span>⚽</span> Répartition par rôle</h4>
             <div class="role-items-grid">
-              <div class="role-item clickable" onclick="document.querySelector('.role-joueur').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'joueur', title:'Gestion des Acteurs'})">
                 <div class="role-icon">⚽</div>
                 <div class="role-info">
                   <div class="role-name">Joueur / Athlète</div>
                   <div class="role-count">34</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-entraineur').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'entraineur', title:'Gestion des Acteurs'})">
                 <div class="role-icon">📋</div>
                 <div class="role-info">
                   <div class="role-name">Entraîneur</div>
                   <div class="role-count">12</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-arbitre').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'arbitre', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🟨</div>
                 <div class="role-info">
                   <div class="role-name">Arbitre</div>
                   <div class="role-count">8</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-club').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'club', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🏟️</div>
                 <div class="role-info">
                   <div class="role-name">Club</div>
                   <div class="role-count">5</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-federation').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'federation', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🏛️</div>
                 <div class="role-info">
                   <div class="role-name">Fédération</div>
                   <div class="role-count">3</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-association').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'association', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🤝</div>
                 <div class="role-info">
                   <div class="role-name">Association</div>
                   <div class="role-count">5</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-organisateur').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'organisateur', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🎪</div>
                 <div class="role-info">
                   <div class="role-name">Organisateur</div>
                   <div class="role-count">2</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-supporter').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'supporter', title:'Gestion des Acteurs'})">
                 <div class="role-icon">💗</div>
                 <div class="role-info">
                   <div class="role-name">Supporter</div>
                   <div class="role-count">14</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-independant').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'independant', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🚴</div>
                 <div class="role-info">
                   <div class="role-name">Indépendant</div>
                   <div class="role-count">3</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-eleve_etudiant').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'eleve_etudiant', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🎓</div>
                 <div class="role-info">
                   <div class="role-name">Élève/Étudiant</div>
                   <div class="role-count">4</div>
                 </div>
               </div>
-              <div class="role-item clickable" onclick="document.querySelector('.role-sportif_etranger').click(); showSection('joueurs');">
+              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'sportif_etranger', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🌍</div>
                 <div class="role-info">
                   <div class="role-name">Sportif étranger</div>
@@ -899,10 +907,10 @@ tr.is-demo-row td { opacity: .82; }
         <div class="report-meta-line" id="report-generated-line">Généré le —</div>
 
         <div class="stats-grid">
-          <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="report-stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total enregistrés</div></div></div>
-          <div class="stat-card c2"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="report-stat-actifs">0</div><div class="stat-label">Actifs</div><div class="stat-trend">Fiches actives</div></div></div>
-          <div class="stat-card c4"><div class="stat-icon">🏟️</div><div class="stat-data"><div class="stat-value" id="report-stat-clubs">0</div><div class="stat-label">Organisations</div><div class="stat-trend">Clubs / Féd. / Assoc.</div></div></div>
-          <div class="stat-card c3"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="report-stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
+          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="report-stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total enregistrés</div></div></div>
+          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="report-stat-actifs">0</div><div class="stat-label">Actifs</div><div class="stat-trend">Fiches actives</div></div></div>
+          <div class="stat-card c4 clickable" onclick="window.gscGoToFiltered({roles:['club','federation','association'], title:'Organisations (Clubs / Féd. / Assoc.)'})" style="cursor:pointer;"><div class="stat-icon">🏟️</div><div class="stat-data"><div class="stat-value" id="report-stat-clubs">0</div><div class="stat-label">Organisations</div><div class="stat-trend">Clubs / Féd. / Assoc.</div></div></div>
+          <div class="stat-card c3 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="report-stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
 
         <div class="dash-grid">
@@ -989,6 +997,18 @@ tr.is-demo-row td { opacity: .82; }
         </p>
         <div id="documents-archive-summary" style="font-size:13px;margin-bottom:16px;"></div>
         <div class="filters-bar">
+          <button class="filter-btn role-all active">👥 Tous</button>
+          <button class="filter-btn role-joueur">⚽ Joueurs</button>
+          <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
+          <button class="filter-btn role-arbitre">🟨 Arbitres</button>
+          <button class="filter-btn role-club">🏟️ Clubs</button>
+          <button class="filter-btn role-federation">🏛️ Fédérations</button>
+          <button class="filter-btn role-association">🤝 Associations</button>
+          <button class="filter-btn role-organisateur">🎪 Organisateurs</button>
+          <button class="filter-btn role-supporter">💗 Supporters</button>
+          <button class="filter-btn role-independant">🚴 Indépendants</button>
+          <button class="filter-btn role-eleve_etudiant">🎓 Élèves/Étudiants</button>
+          <button class="filter-btn role-sportif_etranger">🌍 Sportifs étrangers</button>
           <div class="search-box"><span>🔍</span><input type="text" id="doc-search-input" placeholder="Nom de l'acteur…"></div>
         </div>
         <div class="users-table-wrap">
