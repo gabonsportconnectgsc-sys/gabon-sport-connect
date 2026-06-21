@@ -257,13 +257,22 @@
     }
     if (emptyEl) emptyEl.style.display = 'none';
 
-    const renderRow = (u) => `
+    let qrRowIdx = 0;
+    const renderRow = (u) => {
+      const uid = u.uid || u.id;
+      const role = u.role || 'joueur';
+      const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, role) : ('GSC-' + (uid || '').slice(0, 6).toUpperCase()));
+      const qrIdx = qrRowIdx++;
+      return `
       <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''}">
+        <td data-label="ID"><span class="user-gscid-cell">${esc(gscId)}</span></td>
         <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div></td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
         <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td>
+        <td data-label="QR"><div class="user-qr-cell" title="QR Code d'identification" data-uid="${esc(uid)}" id="row-qr-${qrIdx}"><canvas id="row-qr-canvas-${qrIdx}" width="26" height="26"></canvas></div></td>
         <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span></td>
       </tr>`;
+    };
 
     if (roleFilter === 'all') {
       const buckets = {};
@@ -275,13 +284,13 @@
         if (!groupList || !groupList.length) return;
         seen.add(role);
         groupList.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
-        html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
       Object.keys(buckets).forEach(role => {
         if (seen.has(role)) return;
         const groupList = buckets[role];
-        html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
       tbody.innerHTML = html;
@@ -290,7 +299,7 @@
       if (sGroups) {
         let html = '';
         sGroups.forEach(g => {
-          html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">${g.label}</span><span class="group-header-count">${g.items.length}</span></td></tr>`;
+          html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">${g.label}</span><span class="group-header-count">${g.items.length}</span></td></tr>`;
           html += g.items.map(renderRow).join('');
         });
         tbody.innerHTML = html;
@@ -298,6 +307,17 @@
         list.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
         tbody.innerHTML = list.map(renderRow).join('');
       }
+    }
+
+    // Rendu des mini QR codes par ciblage DOM (cohérent avec index.html)
+    if (window.gscDrawQrOnCanvas) {
+      tbody.querySelectorAll('.user-qr-cell').forEach(cell => {
+        const canvas = cell.querySelector('canvas');
+        const targetUid = cell.dataset.uid;
+        if (!canvas || !targetUid) return;
+        const url = window.gscBuildQrUrl ? window.gscBuildQrUrl(targetUid) : (location.origin + location.pathname.replace(/admin\.html$/, 'index.html') + '?actor=' + encodeURIComponent(targetUid));
+        window.gscDrawQrOnCanvas(canvas, url, 26);
+      });
     }
 
     tbody.querySelectorAll('tr[data-id]').forEach(tr => tr.addEventListener('click', () => openPlayerModal(tr.dataset.id)));
@@ -420,15 +440,19 @@
     if (phFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, phFilter));
     const grid = document.getElementById('photos-grid');
     if (!grid) return;
-    grid.innerHTML = list.map(u => `
+    grid.innerHTML = list.map(u => {
+      const uid = u.uid || u.id;
+      const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, u.role || 'joueur') : '');
+      return `
       <div class="photo-card" data-id="${u.id}">
         <div class="photo-img" style="background-image:url('${esc(u.photoURL)}')"></div>
         <div class="photo-info">
           <div class="photo-name">${esc(fullName(u))}</div>
-          <div class="photo-role">${ROLE_LABELS[u.role] || u.role}</div>
+          <div class="photo-role">${ROLE_LABELS[u.role] || u.role}${gscId ? ' · ' + esc(gscId) : ''}</div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function wirePhotoFilters() {
@@ -573,7 +597,7 @@
         : `<span style="color:var(--danger);font-weight:700;">⚠️ aucun document</span>`;
       return `
         <tr class="${u.isDemo ? 'is-demo-row' : ''}">
-          <td data-label="Acteur">${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
+          <td data-label="Acteur"><span class="user-gscid-cell" style="margin-right:8px;">${esc(u.gscId || (window.gscGenerateId ? window.gscGenerateId(u.uid || u.id, u.role || 'joueur') : ''))}</span>${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
           <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
           <td data-label="Documents archivés">${docsHtml}</td>
           <td data-label="Actions">${docs.length} doc(s)</td>

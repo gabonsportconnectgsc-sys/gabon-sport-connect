@@ -175,6 +175,33 @@
     #side-menu-notif.notif-active{color:var(--green-dk);}
     #side-menu-notif.notif-active .smi-ico{filter:none;}
     @media (min-width:760px){.side-menu{width:320px;}}
+
+    /* ── HISTORIQUE DE CONNEXION (side-menu compact + modal complète) ── */
+    .login-history-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px 8px;}
+    .login-history-header span{font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;}
+    .login-history-seeall{background:none;border:none;color:var(--green-dk);font-size:11px;font-weight:700;cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .2s;}
+    .login-history-seeall:hover{background:var(--green-lt);}
+    .login-history-list{display:flex;flex-direction:column;gap:2px;padding:0 4px;}
+    .login-history-empty{font-size:12px;color:var(--gray-txt);font-style:italic;padding:10px 12px;text-align:center;}
+    .login-history-row{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:var(--radius-sm);transition:background .15s;}
+    .login-history-row:hover{background:var(--gray-bg);}
+    .login-history-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+    .login-history-info{flex:1;min-width:0;}
+    .login-history-name{font-size:12.5px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .login-history-meta{font-size:10.5px;color:var(--gray-txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;}
+    .login-history-meta .lh-dot{opacity:.5;}
+    .login-history-time{font-size:10px;color:var(--gray-txt);flex-shrink:0;text-align:right;line-height:1.3;}
+    .login-history-time .lh-date{display:block;font-weight:600;color:var(--navy);}
+    /* Liste complète (modal) — table compacte façon console pro */
+    .login-history-full-list{display:flex;flex-direction:column;gap:0;}
+    .login-history-full-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--gray-bd);}
+    .login-history-full-row:last-child{border-bottom:none;}
+    .login-history-full-row .login-history-avatar{width:36px;height:36px;font-size:13px;}
+    .login-history-full-row .login-history-name{font-size:13.5px;}
+    .login-history-full-row .login-history-meta{font-size:11.5px;}
+    .login-history-full-row .login-history-time{font-size:11px;}
+    .login-history-day-sep{font-size:10.5px;font-weight:700;color:var(--green-dk);text-transform:uppercase;letter-spacing:.6px;padding:14px 4px 6px;border-bottom:2px solid var(--green-lt);}
+    .login-history-day-sep:first-child{padding-top:0;}
     .btn-icon:hover{background:rgba(255,255,255,.18);}
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--white);border-top:1px solid var(--gray-bd);display:flex;height:64px;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
     .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--gray-txt);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;}
@@ -202,8 +229,8 @@
     /* ── DASHBOARD ── */
     .dashboard-hero{border-radius:var(--radius-lg);padding:28px 24px;background:linear-gradient(130deg,var(--navy) 0%,var(--navy-md) 55%,#104d30 100%);color:var(--white);margin-bottom:20px;position:relative;overflow:hidden;}
     .dashboard-hero::after{content:'🇬🇦';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:70px;opacity:.12;}
-    .hero-greeting{font-size:13px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
-    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;}
+    .hero-greeting{font-size:13px;opacity:.85;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700;background:linear-gradient(90deg,#FFD700,#fff7cc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));}
     .hero-sub{font-size:13px;opacity:.75;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
     .profile-completion{background:var(--green-lt);border:1px solid rgba(0,158,96,.2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer;transition:background .2s;}
     .profile-completion:hover{background:#d4f0e4;}
@@ -236,8 +263,8 @@
     .stat-card-3{background:linear-gradient(135deg,#f97316 0%,#c2410c 100%);}
     .stat-card-4{background:linear-gradient(135deg,#FFD700 0%,#b8960c 100%);}
     .stat-icon{font-size:28px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
-    .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.2);}
-    .stat-lbl{font-size:11px;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-top:2px;}
+    .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35);letter-spacing:.3px;}
+    .stat-lbl{font-size:11px;color:rgba(255,255,255,.92);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.25);}
     .stat-card-4 .stat-val,.stat-card-4 .stat-lbl{color:var(--navy);}
     .stat-card-4 .stat-lbl{color:rgba(10,22,40,.7);}
     .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
@@ -261,6 +288,9 @@
     .actor-type-dot.eleve_etudiant{background:linear-gradient(135deg,#6366f1,#4338ca);}
     .actor-type-dot.sportif_etranger{background:linear-gradient(135deg,#ca8a04,#92660a);}
     .actor-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--white);text-align:center;line-height:1.2;}
+    .actor-gscid-pill{margin-top:4px;font-family:monospace;font-size:9.5px;font-weight:700;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:2px 9px;letter-spacing:.4px;}
+    .actor-card-qr{width:30px;height:30px;border-radius:7px;border:1px solid var(--gray-bd);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s;}
+    .actor-card-qr:hover{transform:scale(1.08);box-shadow:var(--shadow-sm);}
     .actor-card-body{padding:12px 14px;}
     .actor-meta-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-txt);margin-bottom:4px;}
     .actor-type-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
@@ -284,6 +314,10 @@
     .adm-avatar img{width:100%;height:100%;object-fit:cover;}
     .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);}
     .adm-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:4px;}
+    .adm-gscid-block{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
+    .adm-gscid-pill{font-family:monospace;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 14px;letter-spacing:.6px;}
+    .adm-qr-mini{width:44px;height:44px;border-radius:8px;background:#fff;border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s;}
+    .adm-qr-mini:hover{transform:scale(1.08);}
     .adm-body{padding:20px;}
     .adm-section{margin-bottom:20px;}
     .adm-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--green);margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--green-lt);}
@@ -632,7 +666,9 @@
     .clock-time{
       font-family:'Syne',monospace;font-size:28px;font-weight:800;
       letter-spacing:-1px;margin-bottom:2px;line-height:1;
-      text-shadow:0 2px 8px rgba(0,0,0,.3);
+      background:linear-gradient(90deg,#FFD700 0%,#34d399 50%,#38bdf8 100%);
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+      filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
     }
     .clock-date{
       font-size:11px;font-weight:600;color:rgba(255,255,255,.8);
@@ -918,9 +954,13 @@
     </nav>
     <div class="side-menu-divider"></div>
     <div class="side-menu-section">
-      <div style="font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;padding:6px 12px 4px;">Accès direct</div>
-      <button class="side-menu-item" onclick="window.location.href='index.html'"><span class="smi-ico">🏠</span>Application (index.html)</button>
-      <button class="side-menu-item" onclick="window.location.href='admin.html'"><span class="smi-ico">⚙️</span>Console Admin (admin.html)</button>
+      <div class="login-history-header">
+        <span>🕓 Historique de connexion</span>
+        <button class="login-history-seeall" onclick="openLoginHistoryModal()">Tout voir</button>
+      </div>
+      <div class="login-history-list" id="side-menu-login-history">
+        <div class="login-history-empty">Aucune connexion enregistrée.</div>
+      </div>
     </div>
     <div class="side-menu-divider"></div>
     <div class="side-menu-section">
@@ -932,6 +972,17 @@
       <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth()"><span class="smi-ico">🔑</span><span id="side-menu-account-label">Se connecter</span></button>
     </div>
   </aside>
+
+  <!-- ══ MODAL: HISTORIQUE DE CONNEXION COMPLET ══ -->
+  <div class="modal" id="modal-login-history" onclick="if(event.target===this)closeModal('modal-login-history')">
+    <div class="modal-card">
+      <button class="modal-close-x" onclick="closeModal('modal-login-history')" aria-label="Fermer">✕</button>
+      <div class="modal-title">🕓 Historique de connexion</div>
+      <div class="login-history-full-list" id="login-history-full-list">
+        <div class="login-history-empty">Aucune connexion enregistrée.</div>
+      </div>
+    </div>
+  </div>
 
   <!-- MAIN -->
   <main class="main-content">
@@ -2123,6 +2174,12 @@
       <div class="adm-avatar" id="adm-avatar">?</div>
       <div class="adm-name" id="adm-name">—</div>
       <div class="adm-sub" id="adm-sub">—</div>
+      <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
+        <div class="adm-gscid-pill" id="adm-gscid-pill">—</div>
+        <div class="adm-qr-mini" title="QR Code d'identification" id="adm-qr-mini">
+          <canvas id="adm-qr-canvas" width="40" height="40"></canvas>
+        </div>
+      </div>
     </div>
     <div class="adm-body" id="adm-body"></div>
   </div>
@@ -2343,6 +2400,7 @@ function openMenu(){
   document.getElementById('side-menu-overlay').classList.add('open');
   document.getElementById('nav-menu-btn').classList.add('open');
   refreshNotifMenuState();
+  renderLoginHistoryCompact();
 }
 function closeMenu(){
   document.getElementById('side-menu').classList.remove('open');
@@ -2378,6 +2436,162 @@ function toggleNavMenu(){
   }
 }
 window.toggleNavMenu=toggleNavMenu;
+
+// ══════════════════════════════════════════════════════
+// ── HISTORIQUE DE CONNEXION (réel, Firestore) ──
+// Collection 'loginHistory' : { uid, nom, ville, pays, ip, createdAt }
+// La géolocalisation se fait par IP (reverse-lookup), sans permission
+// navigateur requise — approche standard des consoles de sécurité pro.
+// ══════════════════════════════════════════════════════
+const LOGIN_HISTORY_COLLECTION = 'loginHistory';
+let _loginHistoryCache = null;
+
+// Récupère ville/pays approximatifs via l'adresse IP publique (service gratuit ipapi.co)
+async function getApproxLocationByIP(){
+  try{
+    const res = await fetch('https://ipapi.co/json/');
+    if(!res.ok) throw new Error('lookup failed');
+    const data = await res.json();
+    return {
+      ville: data.city || '',
+      pays: data.country_name || '',
+      ip: data.ip || ''
+    };
+  }catch(e){
+    return { ville:'', pays:'', ip:'' };
+  }
+}
+
+// À appeler après une connexion réussie (à brancher sur le futur flux d'auth réel,
+// ex: onAuthStateChanged → enregistrerConnexion(user)).
+async function enregistrerConnexion(user){
+  if(!db || !user) return;
+  try{
+    const loc = await getApproxLocationByIP();
+    const nom = user.displayName || user.email || 'Utilisateur';
+    await window.addDoc(window.collection(db, LOGIN_HISTORY_COLLECTION), {
+      uid: user.uid || '',
+      nom: nom,
+      ville: loc.ville,
+      pays: loc.pays,
+      ip: loc.ip,
+      createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+    });
+    _loginHistoryCache = null; // invalider le cache local
+  }catch(e){
+    console.warn('Historique de connexion : enregistrement impossible.', e);
+  }
+}
+window.enregistrerConnexion = enregistrerConnexion;
+
+// Charge l'historique depuis Firestore (triste du plus récent au plus ancien)
+async function loadLoginHistory(max){
+  if(!db || typeof window.collection !== 'function') return [];
+  try{
+    const q = window.query(
+      window.collection(db, LOGIN_HISTORY_COLLECTION),
+      window.orderBy('createdAt','desc'),
+      window.limit(max||100)
+    );
+    const snap = await window.getDocs(q);
+    const rows = [];
+    snap.forEach(d=>{
+      const v = d.data();
+      let dt = null;
+      if(v.createdAt && v.createdAt.toDate) dt = v.createdAt.toDate();
+      else if(v.createdAt) dt = new Date(v.createdAt);
+      rows.push({
+        id: d.id,
+        nom: v.nom || 'Utilisateur',
+        ville: v.ville || '',
+        pays: v.pays || '',
+        date: dt
+      });
+    });
+    return rows;
+  }catch(e){
+    console.warn('Historique de connexion : lecture impossible.', e);
+    return [];
+  }
+}
+
+function lhInitials(nom){
+  const parts = (nom||'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '?';
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function lhLieu(row){
+  if(row.ville && row.pays) return row.ville+', '+row.pays;
+  return row.ville || row.pays || 'Lieu inconnu';
+}
+function lhDateLabel(dt){
+  if(!dt) return { date:'—', heure:'—' };
+  const date = dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
+  const heure = dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  return { date, heure };
+}
+function lhId(row){
+  return row.id ? row.id.slice(0,6).toUpperCase() : '------';
+}
+
+// Rendu compact (5 dernières) dans le menu latéral
+async function renderLoginHistoryCompact(){
+  const el = document.getElementById('side-menu-login-history');
+  if(!el) return;
+  if(_loginHistoryCache===null) _loginHistoryCache = await loadLoginHistory(50);
+  const rows = _loginHistoryCache.slice(0,5);
+  if(!rows.length){
+    el.innerHTML = '<div class="login-history-empty">Aucune connexion enregistrée.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(r=>{
+    const {date,heure} = lhDateLabel(r.date);
+    return `<div class="login-history-row">
+      <div class="login-history-avatar">${lhInitials(r.nom)}</div>
+      <div class="login-history-info">
+        <div class="login-history-name">${r.nom}</div>
+        <div class="login-history-meta"><span>#${lhId(r)}</span><span class="lh-dot">·</span><span>${lhLieu(r)}</span></div>
+      </div>
+      <div class="login-history-time"><span class="lh-date">${date}</span>${heure}</div>
+    </div>`;
+  }).join('');
+}
+window.renderLoginHistoryCompact = renderLoginHistoryCompact;
+
+// Modal "Tout voir" — liste complète groupée par jour, la plus récente en premier
+async function openLoginHistoryModal(){
+  const modal = document.getElementById('modal-login-history');
+  const el = document.getElementById('login-history-full-list');
+  if(!modal || !el) return;
+  modal.classList.add('open');
+  el.innerHTML = '<div class="login-history-empty">Chargement…</div>';
+  const rows = await loadLoginHistory(300);
+  if(!rows.length){
+    el.innerHTML = '<div class="login-history-empty">Aucune connexion enregistrée.</div>';
+    return;
+  }
+  let lastDay = null, html = '';
+  rows.forEach(r=>{
+    const {date,heure} = lhDateLabel(r.date);
+    const dayKey = r.date ? r.date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : 'Date inconnue';
+    if(dayKey!==lastDay){
+      html += `<div class="login-history-day-sep">${dayKey}</div>`;
+      lastDay = dayKey;
+    }
+    html += `<div class="login-history-full-row">
+      <div class="login-history-avatar">${lhInitials(r.nom)}</div>
+      <div class="login-history-info">
+        <div class="login-history-name">${r.nom}</div>
+        <div class="login-history-meta"><span>ID #${lhId(r)}</span><span class="lh-dot">·</span><span>${lhLieu(r)}</span></div>
+      </div>
+      <div class="login-history-time"><span class="lh-date">${date}</span>${heure}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+window.openLoginHistoryModal = openLoginHistoryModal;
+
 
 // ── NOTIFICATIONS PUSH ──
 function refreshNotifMenuState(){
@@ -2682,20 +2896,20 @@ function renderActors(actors){
       const roleKey=a.role||'joueur';
       const roleShort=ROLE_SHORT[roleKey]||roleKey;
       const roleIcon=ROLE_ICONS_MAP[roleKey]||'👤';
-      const discipline=a.sport||a.sports?.join(',')||'';
-      const poste=a.poste||'';
-      const gscId=a.gscId||('GSC-'+id?.slice(0,6)?.toUpperCase());
-      const meta=[discipline,poste,a.ville].filter(Boolean).join(' · ');
+      const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
+      const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
+      // Ordre professionnel : ID · Rôle · Club/Association — affiché sous le nom
+      const meta=[gscId,roleShort,clubOrg].filter(Boolean).join(' · ');
       const avatarHtml=photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;">DÉMO</span>`:'';
       return `<div class="actor-compact-row" onclick="openActorDetail('${id}')">
         <div class="acr-avatar">${avatarHtml}</div>
         <div class="acr-info">
           <div class="acr-name">${name}${demoTag}</div>
-          <div class="acr-meta">${gscId}${meta?' · '+meta:''}</div>
+          <div class="acr-meta">${meta}</div>
         </div>
         <span class="acr-badge ${roleKey}">${roleShort}</span>
-        <div class="acr-qr" title="QR Code" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-mini-${idx}">
+        <div class="acr-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-mini-${idx}">
           <canvas id="qr-canvas-mini-${idx}" width="28" height="28"></canvas>
         </div>
       </div>`;
@@ -2786,30 +3000,41 @@ function renderActors(actors){
   } else {
     // ── MODE GRILLE (défaut) ──
     grid.style.display='';
+    let qrIndexCounter=0;
     const cardHtml=a=>{
       const id=a.uid||a.id;
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger'}[a.role]||a.role;
-      const badgeClass='badge-'+(a.role||'joueur');
+      const roleKey=a.role||'joueur';
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger'}[roleKey]||roleKey;
+      const badgeClass='badge-'+roleKey;
       const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍'};
-      const typeDotIcon=typeIcons[a.role]||'👤';
+      const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
+      const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
+      const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
+      const qrIdx=qrIndexCounter++;
       return `
         <div class="actor-card" onclick="openActorDetail('${id}')">
           <div class="actor-card-header">
             <div class="actor-avatar-wrap">
-              <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[a.role]||initial)}</div>
-              <div class="actor-type-dot ${a.role||'joueur'}" title="${roleName}">${typeDotIcon}</div>
+              <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[roleKey]||initial)}</div>
+              <div class="actor-type-dot ${roleKey}" title="${roleName}">${typeDotIcon}</div>
             </div>
             <div class="actor-name">${name}${demoTag}</div>
+            <div class="actor-gscid-pill" title="Identifiant GSC">${gscId}</div>
           </div>
           <div class="actor-card-body">
-            <div style="margin-bottom:6px;"><span class="actor-type-badge ${badgeClass}">${roleName}</span></div>
+            <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <span class="actor-type-badge ${badgeClass}">${roleName}</span>
+              <div class="actor-card-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-card-${qrIdx}">
+                <canvas id="qr-canvas-card-${qrIdx}" width="26" height="26"></canvas>
+              </div>
+            </div>
+            ${clubOrg?`<div class="actor-meta-row">🏟️ ${clubOrg}</div>`:''}
             <div class="actor-meta-row">🏅 ${a.sport||a.sports?.join(', ')||'—'}</div>
             <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
-            ${a.club?`<div class="actor-meta-row">🏟️ ${a.club}</div>`:''}
             ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
             ${a.etablissement?`<div class="actor-meta-row">🎓 ${a.etablissement}</div>`:''}
             ${a.nationalite?`<div class="actor-meta-row">🌍 ${a.nationalite}${a.statutPro?' · '+a.statutPro:''}</div>`:''}
@@ -2826,6 +3051,20 @@ function renderActors(actors){
     } else {
       grid.innerHTML=actors.map(cardHtml).join('');
     }
+    // QR codes : reciblage via les canvases réellement présents dans le DOM
+    (function renderCardQrCodes(){
+      const canvases = document.querySelectorAll('#actors-grid canvas[id^="qr-canvas-card-"]');
+      if(!canvases.length) return;
+      canvases.forEach(canvas=>{
+        const wrapEl=canvas.closest('.actor-card');
+        const onclickAttr=wrapEl?.getAttribute('onclick')||'';
+        const m=onclickAttr.match(/openActorDetail\('([^']+)'\)/);
+        const id=m?m[1]:null;
+        if(!id) return;
+        const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
+        drawQrOnCanvas(canvas, url, 26);
+      });
+    })();
   }
 }
 
@@ -2843,6 +3082,24 @@ function openActorDetail(uid){
   else el.textContent=ROLE_ICONS[a.role]||initial;
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
+  // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables
+  (function(){
+    const roleKey=a.role||'joueur';
+    const block=document.getElementById('adm-gscid-block');
+    const pill=document.getElementById('adm-gscid-pill');
+    const canvas=document.getElementById('adm-qr-canvas');
+    if(!block||!pill||!canvas) return;
+    const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(uid,roleKey):null);
+    if(!gscId){ block.style.display='none'; return; }
+    block.style.display='flex';
+    pill.textContent=gscId;
+    const url=location.origin+location.pathname+'?actor='+encodeURIComponent(uid);
+    drawQrOnCanvas(canvas,url,40);
+    document.getElementById('adm-qr-mini').onclick=function(e){
+      e.stopPropagation();
+      if(typeof openActorQrZoom==='function') openActorQrZoom(uid,roleKey);
+    };
+  })();
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(a.role);
   const isOrg=['club','association','federation','organisateur'].includes(a.role);
   let html='';

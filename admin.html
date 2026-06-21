@@ -263,6 +263,10 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 .user-name-txt { font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+.user-gscid-cell { font-family: monospace; font-size: 11px; font-weight: 700; color: var(--green-dk); background: var(--green-lt); border-radius: 14px; padding: 3px 9px; letter-spacing: .4px; white-space: nowrap; }
+
+.user-qr-cell { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--gray-bd); background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
 .status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: inline-block; white-space: nowrap; }
 
 .status-active { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
@@ -832,7 +836,7 @@ tr.is-demo-row td { opacity: .82; }
         </div>
         <div class="users-table-wrap">
           <table class="users-table">
-            <thead><tr><th>Membre</th><th>Rôle</th><th>Club</th><th>Statut</th></tr></thead>
+            <thead><tr><th>ID</th><th>Membre</th><th>Rôle</th><th>Club</th><th>QR</th><th>Statut</th></tr></thead>
             <tbody id="players-grid"></tbody>
           </table>
         </div>
@@ -1447,8 +1451,10 @@ tr.is-demo-row td { opacity: .82; }
     tbody.innerHTML = users.map(u => {
       const name = [u.prenom, u.nom].filter(Boolean).join(' ') || u.email || '—';
       const verified = !!u.documentVerifie;
+      const uid = u.uid || u.id;
+      const gscId = u.gscId || (typeof generateGscId === 'function' ? generateGscId(uid, 'sportif_etranger') : '');
       return `<tr>
-        <td>${esc(name)}</td>
+        <td>${gscId ? `<span class="user-gscid-cell" style="margin-right:6px;">${esc(gscId)}</span>` : ''}${esc(name)}</td>
         <td>${esc(u.nationalite || '—')}</td>
         <td>${esc(u.statutPro || '—')}${u.employeur ? ' · ' + esc(u.employeur) : ''}</td>
         <td>${esc(u.documentType || '—')}${u.documentNumero ? ' n° ' + esc(u.documentNumero) : ''}</td>
@@ -1557,6 +1563,9 @@ tr.is-demo-row td { opacity: .82; }
     qrImg.onerror = fallback;
     qrImg.src = qrUrl;
   }
+  window.gscDrawQrOnCanvas = drawQrOnCanvas;
+  window.gscBuildQrUrl = buildQrUrl;
+  window.gscRoleLabelsQr = ROLE_LABELS_QR;
 
   /* Lit le même cache que le module Rapports — fusion réel + démo (seed-data.js) */
   function getUsers() {
