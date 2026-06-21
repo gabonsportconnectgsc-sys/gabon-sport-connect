@@ -1,7 +1,7 @@
 const CACHE_NAME = 'gsc-v2';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
@@ -69,7 +69,7 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html')))
     );
     return;
   }
@@ -94,7 +94,7 @@ self.addEventListener('fetch', event => {
         return response;
       }).catch(() => {
         if (request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match('./index.html');
         }
         return new Response('Offline - Resource not available', {
           status: 503,

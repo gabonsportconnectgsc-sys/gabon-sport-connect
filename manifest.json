@@ -3,7 +3,7 @@
   "short_name": "GSC",
   "description": "Plateforme nationale de gestion du sport au Gabon",
   "start_url": "index.html",
-  "scope": "/",
+  "scope": "./",
   "display": "standalone",
   "theme_color": "#009E60",
   "background_color": "#ffffff",
