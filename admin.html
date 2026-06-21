@@ -109,13 +109,40 @@ body { font-family: var(--font); background: var(--gray-bg); color: var(--navy);
 
 .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
 
-.topbar { position: fixed; top: 0px; left: var(--sidebar-w); right: 0px; height: var(--topbar-h); background: rgb(255, 255, 255); border-bottom: 1px solid var(--gray-bd); display: flex; align-items: center; gap: 12px; padding: 0px 20px; z-index: 100; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px; }
+.topbar { position: fixed; top: 0px; left: var(--sidebar-w); right: 0px; height: var(--topbar-h); background: rgb(255, 255, 255); border-bottom: 1px solid var(--gray-bd); display: flex; align-items: center; gap: 12px; padding: 0px 20px; z-index: 100; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px; overflow: hidden; }
 
 .btn-menu { display: none; width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; }
 
-.topbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--navy); flex: 1 1 0%; }
+.topbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--navy); flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.topbar-sub { font-size: 12px; font-weight: 500; color: var(--gray-txt); margin-left: 6px; }
+.topbar-sub { font-size: 12px; font-weight: 500; color: var(--gray-txt); margin-left: 6px; white-space: nowrap; }
+
+.sync-indicator { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 5px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+.sync-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: 1.5s ease 0s infinite normal none running pulse; }
+
+#realtime-status { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 158, 96, 0.12); border: 1px solid rgba(0, 158, 96, 0.25); color: var(--green); font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+#gsc-sync-badge { position: fixed; top: 14px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: none; align-items: center; gap: 7px; z-index: 9999; box-shadow: rgba(0, 158, 96, 0.3) 0px 4px 14px; white-space: nowrap; }
+
+#gsc-sync-badge .gsc-sync-dot { width: 7px; height: 7px; background: rgb(255, 255, 255); border-radius: 50%; animation: 1.4s ease 0s infinite normal none running pulse; }
+
+@media (max-width: 900px) {
+  .topbar { padding: 0px 16px; gap: 10px; }
+  .topbar-title { font-size: 16px; }
+  .sync-indicator { font-size: 10px; padding: 4px 8px; }
+  #realtime-status { font-size: 10px; padding: 4px 10px; }
+}
+
+@media (max-width: 640px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .topbar { left: 0; padding: 0px 14px; gap: 8px; }
+  .btn-menu { display: flex; }
+  .topbar-title { font-size: 15px; }
+  .topbar-sub { display: none; }
+  #realtime-status { font-size: 9px; padding: 3px 8px; }
+}
 
 .sync-indicator { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 5px 10px; border-radius: 20px; }
 
