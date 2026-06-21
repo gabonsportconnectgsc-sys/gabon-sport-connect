@@ -529,7 +529,7 @@
     renderPhotos();
   }
 
-  /* ─── Upload amélioré : tous formats acceptés + barre de progression ─── */
+  /* ─── Upload amélioré : tous formats acceptés + barre de progression + diagnostic d'erreur ─── */
   function pickAndUpload(input, onFile) {
     input.accept = ''; // tous formats acceptés
     input.value = '';
@@ -559,6 +559,7 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
       z-index: 10000;
       min-width: 300px;
+      max-width: 90vw;
     `;
 
     const title = document.createElement('div');
@@ -568,6 +569,7 @@
       color: #0A1628;
       font-size: 14px;
     `;
+    title.className = 'progress-title';
     title.textContent = '⏳ Envoi en cours...';
 
     const barContainer = document.createElement('div');
@@ -599,10 +601,26 @@
     percent.className = 'progress-percent';
     percent.textContent = '0%';
 
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Annuler';
+    cancelBtn.className = 'progress-cancel-btn';
+    cancelBtn.style.cssText = `
+      display: block;
+      margin: 14px auto 0;
+      background: #f1f5f9;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #475569;
+      cursor: pointer;
+    `;
+
     barContainer.appendChild(bar);
     container.appendChild(title);
     container.appendChild(barContainer);
     container.appendChild(percent);
+    container.appendChild(cancelBtn);
 
     return container;
   }
@@ -620,29 +638,68 @@
     }
   }
 
+  function explainUploadError(error) {
+    const code = error && error.code ? error.code : '';
+    const map = {
+      'storage/unauthorized': 'Accès refusé par les règles Firebase Storage (storage/unauthorized).',
+      'storage/unauthenticated': 'Utilisateur non authentifié — aucune session Firebase Auth active (storage/unauthenticated).',
+      'storage/canceled': 'Upload annulé.',
+      'storage/unknown': 'Erreur inconnue côté serveur Firebase (storage/unknown) — vérifiez la configuration CORS du bucket.',
+      'storage/object-not-found': 'Objet introuvable après upload (storage/object-not-found).',
+      'storage/quota-exceeded': 'Quota de stockage dépassé (storage/quota-exceeded).',
+      'storage/retry-limit-exceeded': 'Délai dépassé après plusieurs tentatives — connexion trop lente ou bucket injoignable (storage/retry-limit-exceeded).'
+    };
+    return (code && map[code]) ? map[code] : `Erreur upload${code ? ' (' + code + ')' : ''} : ${error && error.message ? error.message : 'cause inconnue'}`;
+  }
+
   async function doUpload(file, storagePath) {
-    if (!window.firebase || !window.firebase.storage) {
-      toast('❌ Service de stockage indisponible.', 'error');
+    if (!window.firebase || typeof window.firebase.storage !== 'function') {
+      toast('❌ SDK Firebase Storage non chargé (firebase-storage-compat.js manquant ?).', 'error');
       return null;
     }
 
     const progressBar = createProgressBar();
     document.body.appendChild(progressBar);
+    const titleEl = progressBar.querySelector('.progress-title');
+    let settled = false;
+
+    // Filet de sécurité : si rien ne se passe en 20s, on arrête d'attendre indéfiniment
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      if (titleEl) titleEl.textContent = '⚠️ Aucune réponse du serveur après 20s';
+      toast('❌ Upload bloqué : aucune réponse de Firebase Storage après 20s. Vérifiez la configuration CORS du bucket ou votre connexion réseau.', 'error');
+    }, 20000);
+
+    const cancelBtn = progressBar.querySelector('.progress-cancel-btn');
+    let uploadTaskRef = null;
+    if (cancelBtn) cancelBtn.onclick = () => {
+      if (uploadTaskRef) uploadTaskRef.cancel();
+      clearTimeout(timeoutId);
+      settled = true;
+      removeProgressBar(progressBar);
+    };
 
     try {
       const ref = window.firebase.storage().ref(storagePath);
       const uploadTask = ref.put(file);
+      uploadTaskRef = uploadTask;
 
       await new Promise((resolve, reject) => {
         uploadTask.on('state_changed',
           (snapshot) => {
+            if (settled) return;
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             updateProgressBar(progressBar, progress);
           },
-          (error) => reject(error),
-          () => resolve()
+          (error) => { if (!settled) reject(error); },
+          () => { if (!settled) resolve(); }
         );
       });
+
+      clearTimeout(timeoutId);
+      if (settled) return null; // le timeout ou l'annulation a déjà tranché
+      settled = true;
 
       const url = await ref.getDownloadURL();
       removeProgressBar(progressBar);
@@ -650,9 +707,11 @@
       return url;
 
     } catch (error) {
+      clearTimeout(timeoutId);
+      settled = true;
       removeProgressBar(progressBar);
       console.error('Upload error:', error);
-      toast('❌ Erreur upload : ' + error.message, 'error');
+      toast('❌ ' + explainUploadError(error), 'error');
       return null;
     }
   }
