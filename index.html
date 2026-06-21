@@ -2902,7 +2902,7 @@ function renderActors(actors){
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
-      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
+      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
       const roleKey=a.role||'joueur';
       const roleShort=ROLE_SHORT[roleKey]||roleKey;
       const roleIcon=ROLE_ICONS_MAP[roleKey]||'👤';
@@ -3020,7 +3020,7 @@ function renderActors(actors){
       const badgeClass='badge-'+roleKey;
       const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
-      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null);
+      const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
       const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
       const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
@@ -3086,7 +3086,7 @@ function openActorDetail(uid){
   // Photo : Firebase > admin localStorage > icône
   let localPhoto=null;
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhoto=d.photos?.[uid]||null;}}catch(e){}
-  const detailPhotoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||localPhoto;
+  const detailPhotoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||localPhoto||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
   const el=document.getElementById('adm-avatar');
   if(detailPhotoSrc) el.innerHTML=`<img src="${detailPhotoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   else el.textContent=ROLE_ICONS[a.role]||initial;
@@ -3237,7 +3237,7 @@ function renderProfile(){
   document.getElementById('prof-chip-ville').textContent=p.ville?`📍 ${p.ville}`:'📍 Ville ?';
   document.getElementById('prof-chip-poste').textContent=p.poste?`🎯 ${p.poste}`:(p.titrePersonnalise?`🎖️ ${p.titrePersonnalise}`:'');
   const av=document.getElementById('prof-avatar-lg');
-  const profPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})();
+  const profPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})()||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[p.role])||null;
   if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
@@ -6277,6 +6277,20 @@ window.lookupManualGscId = lookupManualGscId;
     if (typeof window.updatePendingBanner === 'function') window.updatePendingBanner();
   }
 
+  // ── Photos/logos par défaut par catégorie (uploadés depuis l'admin) ──
+  window.GSC_DEFAULT_AVATARS = window.GSC_DEFAULT_AVATARS || {};
+  let _unsubDefaultAvatars = null;
+  function startDefaultAvatarsSync(){
+    if (!window.db || typeof window.doc !== 'function' || typeof window.onSnapshot !== 'function') return;
+    if (_unsubDefaultAvatars) return;
+    try{
+      _unsubDefaultAvatars = window.onSnapshot(window.doc(window.db,'settings','defaultAvatars'), function(snap){
+        window.GSC_DEFAULT_AVATARS = (snap.exists() && snap.data()) || {};
+        _refreshViews();
+      }, function(){ /* silencieux */ });
+    }catch(e){ /* silencieux */ }
+  }
+
   function startUsersSync(){
     if (!window.db || typeof window.collection !== 'function' || typeof window.onSnapshot !== 'function') {
       return;
@@ -6306,11 +6320,13 @@ window.lookupManualGscId = lookupManualGscId;
   document.addEventListener('firebase-ready', function(){
     if (window._firebaseReady && typeof window.onSnapshot === 'function') {
       startUsersSync();
+      startDefaultAvatarsSync();
     } else if (window._firebaseReady) {
       // onSnapshot n'a pas été exposé par le bootstrap principal — l'importer.
       import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js").then(function(fs){
         window.onSnapshot = fs.onSnapshot;
         startUsersSync();
+        startDefaultAvatarsSync();
       }).catch(function(e){ /* silencieux */ });
     } else {
       // Firebase indisponible — l'app fonctionne avec les données locales/seed
