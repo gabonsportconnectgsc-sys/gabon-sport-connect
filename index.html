@@ -111,23 +111,24 @@
       .btn-icon{width:34px;height:34px;font-size:16px;}
     }
     @media (max-width:480px){
-      .topnav{padding:0 10px;gap:5px;}
+      .topnav{padding:0 8px;gap:4px;}
       .topnav-logo{font-size:14px;}
       .topnav-logo img{width:36px;height:36px;}
-      .visitor-banner{display:none;}
-      #nav-rolebadge{display:none;}
-      .user-chip{max-width:100px;}
-      .user-name{max-width:55px;font-size:12px;}
-      .btn-icon{width:32px;height:32px;font-size:15px;}
+      .visitor-banner{padding:4px 6px;font-size:9px;letter-spacing:0;}
+      #nav-rolebadge{font-size:10px;}
+      .user-chip{max-width:90px;padding:4px 8px 4px 4px;}
+      .user-name{max-width:45px;font-size:11px;}
+      .btn-icon{width:30px;height:30px;font-size:14px;}
       .btn-hamburger{display:flex;}
     }
     @media (max-width:360px){
-      .topnav{padding:0 8px;gap:4px;}
+      .topnav{padding:0 6px;gap:3px;}
       .topnav-logo{font-size:13px;}
-      .topnav-logo img{width:32px;height:32px;}
-      #nav-qr-scan-btn{display:none !important;}
-      .user-chip{display:none;}
-      .btn-icon{width:30px;height:30px;font-size:14px;}
+      .topnav-logo img{width:30px;height:30px;}
+      .visitor-banner{padding:3px 5px;font-size:8px;}
+      .user-chip{max-width:34px;padding:0;}
+      .user-chip .user-name{display:none;}
+      .btn-icon{width:28px;height:28px;font-size:13px;}
     }
     .visitor-banner{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.5px;}
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px 12px 5px 5px;cursor:pointer;transition:background .2s;}
@@ -2256,10 +2257,9 @@ const ETABLISSEMENTS_GA=[
       window.uploadBytes = sm.uploadBytes;
       window.getDownloadURL = sm.getDownloadURL;
       window.storage = sm.getStorage(app);
-    }catch(e){ console.warn("Firebase Storage non disponible:",e); }
+    }catch(e){ /* Firebase Storage non disponible — silencieux */ }
     window._firebaseReady = true;
   }catch(e){
-    console.error("GSC bootstrap error:",e);
     window._firebaseReady = false;
     window.db = null;
   }
@@ -4699,8 +4699,7 @@ document.addEventListener('firebase-ready', async function(){
 
   // If Firebase failed (e.g. file:// protocol), show a warning but keep the UI functional
   if(!window._firebaseReady || !db){
-    console.warn('Firebase non disponible — mode hors-ligne.');
-    // Still show the app in visitor mode without Firestore data
+    // mode hors-ligne — silencieux
     showApp();
     enterAsVisitor(true);
     toast('⚠️ Mode hors-ligne : données non disponibles. Ouvrez via un serveur web.','info');
@@ -5581,7 +5580,6 @@ function initDashboardClock(){
         weatherDesc.textContent = weather.desc;
       }
     } catch(e){
-      console.log('Weather data error:', e);
       weatherTemp.textContent = 'Données indisponibles';
       weatherDesc.textContent = 'Rechargement en cours...';
     }
@@ -6271,7 +6269,6 @@ window.lookupManualGscId = lookupManualGscId;
 
   function startUsersSync(){
     if (!window.db || typeof window.collection !== 'function' || typeof window.onSnapshot !== 'function') {
-      console.warn('GSC sync: Firestore non disponible, écoute temps réel désactivée.');
       return;
     }
     if (_unsubUsers) return; // déjà actif
@@ -6287,12 +6284,12 @@ window.lookupManualGscId = lookupManualGscId;
         console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
         window.dispatchEvent(new Event('gsc-data-synced'));
       }, function(err){
-        console.warn('GSC sync users error:', err);
+        // sync error — silencieux
       });
       _showSyncIndicator();
       window.dispatchEvent(new Event('gsc-sync-ready'));
     }catch(e){
-      console.warn('GSC sync: impossible de démarrer l\'écoute temps réel —', e);
+      // sync indisponible — silencieux
     }
   }
 
@@ -6304,14 +6301,14 @@ window.lookupManualGscId = lookupManualGscId;
       import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js").then(function(fs){
         window.onSnapshot = fs.onSnapshot;
         startUsersSync();
-      }).catch(function(e){ console.warn('GSC sync: import onSnapshot échoué —', e); });
+      }).catch(function(e){ /* silencieux */ });
     } else {
-      console.warn('GSC sync: Firebase indisponible, l\'app fonctionne avec les données locales/seed uniquement.');
+      // Firebase indisponible — l'app fonctionne avec les données locales/seed
     }
   });
 
   window.addEventListener('firebase-init-error', function(event) {
-    console.error('❌ Firebase Error:', event.detail && event.detail.error);
+    // erreur d'init Firebase — silencieuse
   });
 })();
 
