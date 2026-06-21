@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gsc-v1';
+const CACHE_NAME = 'gsc-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -52,6 +52,29 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // HTML / navigation requests: network-first.
+  // This is what was stuck before — index.html was cached once at install
+  // and served forever from cache even after the file was fixed on GitHub.
+  // Network-first means every reload checks the live file first, and only
+  // falls back to the cache when offline.
+  const isHTML = request.mode === 'navigate' || request.destination === 'document';
+
+  if (isHTML) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  // Everything else (CSS, JS, fonts, images, libs): cache-first, as before.
   event.respondWith(
     caches.match(request).then(cachedResponse => {
       if (cachedResponse) {
