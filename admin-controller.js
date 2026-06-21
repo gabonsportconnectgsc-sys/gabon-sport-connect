@@ -189,7 +189,7 @@
       const count = visibles.filter(u => u.role === r).length;
       if (count === 0) return '';
       const pct = Math.round((count / total) * 100);
-      return `<div class="sb-item"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
+      return `<div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'${r}', title:'Gestion des Acteurs'})"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
     }).join('');
     const barsEl = document.getElementById('role-bars');
     if (barsEl) barsEl.innerHTML = barsHtml;
@@ -439,18 +439,52 @@
     }
   }
 
-  /* ═══ PHOTOS ═══ */
+  /* ═══ PHOTOS & LOGOS — cadres d'import ═══ */
+  let defaultAvatars = {}; // { role: url } — photo/logo par défaut par catégorie (admin)
+  let actorPhotoUploadTargetUid = null;
+  let defaultAvatarUploadTargetRole = null;
+  let photoUploadBusyId = null; // uid ou role en cours d'upload (pour afficher le spinner)
+
+  function photoFrameContent(url, fallbackIcon) {
+    if (url) return `style="background-image:url('${esc(url)}')"`;
+    return '';
+  }
+
   function renderPhotos() {
-    let list = users.filter(u => u.status !== 'deleted' && u.photoURL);
+    const allReal = users.filter(u => u.status !== 'deleted');
+    let list = allReal;
     if (phFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, phFilter));
+
+    // Statistiques globales (indépendantes du filtre actif, comme l'indique le libellé "Acteurs")
+    const withPhoto = allReal.filter(u => u.photoURL).length;
+    const total = allReal.length;
+    const rate = total ? Math.round((withPhoto / total) * 100) : 0;
+    const elTotal = document.getElementById('ph-stat-total');
+    const elPhotos = document.getElementById('ph-stat-photos');
+    const elRate = document.getElementById('ph-stat-rate');
+    if (elTotal) elTotal.textContent = total;
+    if (elPhotos) elPhotos.textContent = withPhoto;
+    if (elRate) elRate.textContent = rate + '%';
+
     const grid = document.getElementById('photos-grid');
     if (!grid) return;
+    if (!list.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--gray-txt);">Aucun acteur dans cette catégorie.</div>`;
+      return;
+    }
     grid.innerHTML = list.map(u => {
       const uid = u.uid || u.id;
       const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, u.role || 'joueur') : '');
+      const photoUrl = u.photoURL || defaultAvatars[u.role] || '';
+      const isUploading = photoUploadBusyId === uid;
+      const disabledAttr = u.isDemo ? 'style="cursor:not-allowed;opacity:.6" title="Fiche de démonstration — import désactivé"' : `onclick="window.AdminController_triggerActorPhotoUpload('${uid}')"`;
       return `
       <div class="photo-card" data-id="${u.id}">
-        <div class="photo-img" style="background-image:url('${esc(u.photoURL)}')"></div>
+        <div class="photo-frame ${photoUrl ? 'has-photo' : ''}" ${photoUrl ? `style="background-image:url('${esc(photoUrl)}')"` : ''} ${disabledAttr}>
+          ${!photoUrl ? `<span class="photo-placeholder">${(ROLE_LABELS[u.role] || '👤').split(' ')[0]}</span>` : ''}
+          ${!u.isDemo ? `<div class="photo-overlay"><span class="photo-overlay-btn">📤 ${photoUrl ? 'Changer' : 'Importer'}</span></div>` : ''}
+          ${isUploading ? `<div class="photo-uploading">⏳ Envoi…</div>` : ''}
+        </div>
         <div class="photo-info">
           <div class="photo-name">${esc(fullName(u))}</div>
           <div class="photo-role">${ROLE_LABELS[u.role] || u.role}${gscId ? ' · ' + esc(gscId) : ''}</div>
@@ -459,6 +493,107 @@
     `;
     }).join('');
   }
+
+  function renderDefaultAvatars() {
+    const grid = document.getElementById('default-avatars-grid');
+    if (!grid) return;
+    grid.innerHTML = DASH_ROLES.map(role => {
+      const url = defaultAvatars[role] || '';
+      const isUploading = photoUploadBusyId === ('default:' + role);
+      const label = ROLE_LABELS[role] || role;
+      return `
+      <div class="photo-card default-avatar-card" data-role="${role}">
+        <div class="photo-frame ${url ? 'has-photo' : ''}" ${url ? `style="background-image:url('${esc(url)}')"` : ''} onclick="window.AdminController_triggerDefaultAvatarUpload('${role}')">
+          ${!url ? `<span class="photo-placeholder">${label.split(' ')[0]}</span>` : ''}
+          <div class="photo-overlay"><span class="photo-overlay-btn">📤 ${url ? 'Changer' : 'Importer'}</span></div>
+          ${isUploading ? `<div class="photo-uploading">⏳ Envoi…</div>` : ''}
+        </div>
+        <div class="photo-info">
+          <div class="photo-role">${esc(label)}</div>
+          <div class="admin-only-badge">🔒 ADMIN</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadDefaultAvatars() {
+    try {
+      if (!window.db) return;
+      const snap = await window.db.collection('settings').doc('defaultAvatars').get();
+      defaultAvatars = (snap.exists && snap.data()) || {};
+    } catch (e) {
+      console.warn('Chargement photos par défaut impossible :', e);
+      defaultAvatars = defaultAvatars || {};
+    }
+    renderDefaultAvatars();
+    renderPhotos();
+  }
+
+  function pickAndUpload(input, onFile) {
+    input.value = '';
+    input.onchange = () => {
+      const file = input.files && input.files[0];
+      if (file) onFile(file);
+    };
+    input.click();
+  }
+
+  async function doUpload(file, storagePath) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) { toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.', 'error'); return null; }
+    if (file.size > 5 * 1024 * 1024) { toast('Image trop lourde (max 5 Mo).', 'error'); return null; }
+    if (!window.firebase || !window.firebase.storage) { toast('Service de stockage indisponible.', 'error'); return null; }
+    const ref = window.firebase.storage().ref(storagePath);
+    await ref.put(file);
+    return await ref.getDownloadURL();
+  }
+
+  function triggerActorPhotoUpload(uid) {
+    const u = users.find(x => (x.uid || x.id) === uid);
+    if (!u || u.isDemo) return;
+    const input = document.getElementById('actor-photo-input');
+    if (!input) return;
+    pickAndUpload(input, async (file) => {
+      photoUploadBusyId = uid;
+      renderPhotos();
+      try {
+        const url = await doUpload(file, `profiles/photos/${uid}`);
+        if (!url) { photoUploadBusyId = null; renderPhotos(); return; }
+        await window.db.collection('users').doc(u.id).update({ photoURL: url });
+        toast('Photo mise à jour', 'success');
+      } catch (e) {
+        toast('Erreur upload : ' + e.message, 'error');
+      } finally {
+        photoUploadBusyId = null;
+        renderPhotos();
+      }
+    });
+  }
+
+  function triggerDefaultAvatarUpload(role) {
+    const input = document.getElementById('default-avatar-input');
+    if (!input) return;
+    pickAndUpload(input, async (file) => {
+      photoUploadBusyId = 'default:' + role;
+      renderDefaultAvatars();
+      try {
+        const url = await doUpload(file, `defaults/avatars/${role}`);
+        if (!url) { photoUploadBusyId = null; renderDefaultAvatars(); return; }
+        defaultAvatars[role] = url;
+        await window.db.collection('settings').doc('defaultAvatars').set(defaultAvatars, { merge: true });
+        toast('Photo/logo par défaut mis à jour pour cette catégorie', 'success');
+        renderPhotos();
+      } catch (e) {
+        toast('Erreur upload : ' + e.message, 'error');
+      } finally {
+        photoUploadBusyId = null;
+        renderDefaultAvatars();
+      }
+    });
+  }
+
+  window.AdminController_triggerActorPhotoUpload = triggerActorPhotoUpload;
+  window.AdminController_triggerDefaultAvatarUpload = triggerDefaultAvatarUpload;
 
   function wirePhotoFilters() {
     document.querySelectorAll('#photos .filter-btn').forEach(btn => {
@@ -1029,6 +1164,7 @@
     wireModals();
     wireResetActorsTools();
     wireSitesActualites();
+    loadDefaultAvatars();
 
     // Affichage immédiat avec le seed (même pattern que index.html) :
     // on ne dépend pas d'un aller-retour Firestore réussi pour montrer des chiffres.

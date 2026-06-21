@@ -101,6 +101,10 @@ img, svg, canvas { max-width: 100%; }
 
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 
+#nav-open-app { color: var(--green); font-weight: 700; background: rgba(0, 158, 96, 0.1); border: 1px solid rgba(0, 158, 96, 0.25); }
+
+#nav-open-app:hover { background: rgba(0, 158, 96, 0.22); color: rgb(255, 255, 255); }
+
 .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 
 .admin-profile { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); margin-bottom: 8px; }
@@ -204,6 +208,47 @@ img, svg, canvas { max-width: 100%; }
 .status-bars { display: flex; flex-direction: column; gap: 12px; }
 
 .sb-item { display: flex; flex-direction: column; gap: 5px; }
+
+.sb-item.clickable { padding: 6px 8px; margin: -6px -8px; border-radius: 8px; transition: background 0.15s; }
+
+.sb-item.clickable:hover { background: var(--gray-bg); }
+
+/* Photos & Logos — cadres d'import */
+.photo-card { background: rgb(255,255,255); border: 1px solid var(--gray-bd); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+
+.photo-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+
+.photo-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; background: linear-gradient(135deg,#f1f5f9,#e2e8f0); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+.photo-frame.has-photo { background-size: cover; background-position: center; }
+
+.photo-frame .photo-placeholder { font-size: 30px; color: #94a3b8; }
+
+.photo-frame .photo-overlay { position: absolute; inset: 0; background: rgba(10,22,40,0.0); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; transition: background 0.2s; }
+
+.photo-frame:hover .photo-overlay { background: rgba(10,22,40,0.45); }
+
+.photo-frame .photo-overlay-btn { opacity: 0; transform: translateY(6px); transition: 0.2s; background: rgba(255,255,255,0.95); color: var(--navy); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+
+.photo-frame:hover .photo-overlay-btn { opacity: 1; transform: translateY(0); }
+
+.photo-frame .photo-uploading { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--green); }
+
+.photo-info { padding: 9px 10px; }
+
+.photo-name { font-size: 12.5px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.photo-role { font-size: 11px; color: var(--gray-txt); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.default-avatar-card { background: linear-gradient(135deg,#fffbeb,#fef3c7); border: 1.5px dashed var(--warn); border-radius: var(--radius); overflow: hidden; }
+
+.default-avatar-card .photo-frame { background: linear-gradient(135deg,#fde68a,#fcd34d); aspect-ratio: 1 / 1; }
+
+.default-avatar-card .photo-info { text-align: center; }
+
+.default-avatar-card .photo-role { color: var(--navy); font-weight: 700; }
+
+.admin-only-badge { display: inline-block; font-size: 9px; font-weight: 800; color: var(--navy); background: var(--yellow); padding: 1px 6px; border-radius: 10px; margin-top: 3px; }
 
 .sb-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
 
@@ -655,6 +700,11 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-qrscan">
           <span class="nav-icon">📷</span><span>Scanner QR</span>
         </button>
+
+        <div class="nav-label">Application</div>
+        <button class="nav-item" id="nav-open-app" onclick="window.open('index.html', '_blank')" title="Ouvre index.html dans un nouvel onglet pour vérifier vos modifications en direct">
+          <span class="nav-icon">🌐</span><span>Ouvrir l'application</span>
+        </button>
       </div>
       <div class="sidebar-footer">
         <div class="admin-profile">
@@ -862,6 +912,16 @@ tr.is-demo-row td { opacity: .82; }
           <div class="stat-card"><div class="stat-val" id="ph-stat-photos">0</div><div class="stat-lbl">Avec photo</div></div>
           <div class="stat-card"><div class="stat-val" id="ph-stat-rate">0%</div><div class="stat-lbl">Taux couverture</div></div>
         </div>
+
+        <!-- PHOTOS PAR DÉFAUT (par catégorie / tuile d'accueil) — admin uniquement -->
+        <div class="app-tile-roles" style="margin-bottom:24px;">
+          <h4 style="margin-bottom:6px; font-size:14px; color: var(--navy); display: flex; align-items: center; gap: 6px;"><span>🖼️</span> Photos / logos par défaut, par catégorie</h4>
+          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:14px;max-width:680px;">
+            Une image par défaut pour chacune des catégories affichées en tuiles sur l'accueil. Utilisée automatiquement pour tout acteur sportif de cette catégorie qui n'a pas encore importé sa propre photo. <strong>Réservé à l'administrateur.</strong>
+          </p>
+          <div id="default-avatars-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;"></div>
+        </div>
+
         <!-- Filters -->
         <div class="filters-bar" id="ph-filter-bar">
           <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
@@ -877,8 +937,15 @@ tr.is-demo-row td { opacity: .82; }
           <button class="filter-btn role-eleve_etudiant" data-phfilter="eleve_etudiant">🎓 Élèves/Étudiants</button>
           <button class="filter-btn role-sportif_etranger" data-phfilter="sportif_etranger">🌍 Sportifs étrangers</button>
         </div>
+        <p style="font-size:12px;color:var(--gray-txt);margin:-6px 0 14px;">
+          Cliquez sur le cadre photo d'un acteur pour importer une image depuis le stockage du téléphone (admin). L'acteur pourra bientôt le faire lui-même depuis son profil.
+        </p>
         <!-- Grid -->
         <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
+
+        <!-- Inputs fichiers cachés (réutilisés dynamiquement) -->
+        <input type="file" id="actor-photo-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        <input type="file" id="default-avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
       </div>
 
       <!-- MATCHS -->

@@ -85,7 +85,10 @@
 
   <!-- EN-TÊTE ─────────────────────────────────────────────── -->
   <div class="admin-header" style="background:linear-gradient(135deg,#0A1628,#1a4a2e);">
-    <div class="admin-header-title">🎨 CMS &amp; Apparence</div>
+    <div class="admin-header-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <span>🎨 CMS &amp; Apparence</span>
+      <button type="button" onclick="window.open('index.html', '_blank')" onmouseover="this.style.background='rgba(0,158,96,.32)'" onmouseout="this.style.background='rgba(0,158,96,.18)'" style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;background:rgba(0,158,96,.18);color:#fff;border:1px solid rgba(0,158,96,.5);cursor:pointer;white-space:nowrap;transition:background .2s;">🌐 Ouvrir l'application — vérifier en direct</button>
+    </div>
     <div class="admin-header-sub" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;">
       <span>Contrôlez index.html en temps réel — aucun code à modifier</span>
       <span id="cms-cloud-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,.15);color:#92400e;border:1px solid rgba(245,158,11,.3);">☁️ Vérification…</span>
