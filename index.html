@@ -76,10 +76,14 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;}
-    .topnav-logo{font-family:var(--font-display);font-size:16px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;white-space:nowrap;}
-    .topnav-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;}
-    .topnav-logo span{color:var(--yellow);}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;}
+    .topnav-logo{font-family:var(--font-display);font-size:16px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:pointer;position:relative;white-space:nowrap;}
+    .topnav-logo img{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1;}
+    .topnav-logo-text span{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
+    .topnav-logo-text .l-gabon{color:var(--green);}
+    .topnav-logo-text .l-sport{color:var(--yellow);}
+    .topnav-logo-text .l-connect{color:var(--blue);}
     .topnav-logo:hover{opacity:.85;}
     .nav-menu-dropdown{position:absolute;top:100%;left:0;background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:240px;z-index:1000;display:none;margin-top:8px;}
     .nav-menu-dropdown.open{display:block;}
@@ -103,8 +107,8 @@
     @media (max-width:640px){
       .topnav{padding:0 12px;gap:6px;}
       .topnav-logo{font-size:15px;}
-      .topnav-logo img{width:40px;height:40px;}
-      .topnav-logo span{display:none;}
+      .topnav-logo img{width:38px;height:38px;}
+      .topnav-logo-text span{font-size:10px;}
       .visitor-banner{padding:5px 10px;font-size:11px;}
       .user-chip{max-width:120px;}
       .user-name{max-width:70px;}
@@ -113,7 +117,8 @@
     @media (max-width:480px){
       .topnav{padding:0 8px;gap:4px;}
       .topnav-logo{font-size:14px;}
-      .topnav-logo img{width:36px;height:36px;}
+      .topnav-logo img{width:32px;height:32px;}
+      .topnav-logo-text span{font-size:9px;letter-spacing:.3px;}
       .visitor-banner{padding:4px 6px;font-size:9px;letter-spacing:0;}
       #nav-rolebadge{font-size:10px;}
       .user-chip{max-width:90px;padding:4px 8px 4px 4px;}
@@ -124,7 +129,8 @@
     @media (max-width:360px){
       .topnav{padding:0 6px;gap:3px;}
       .topnav-logo{font-size:13px;}
-      .topnav-logo img{width:30px;height:30px;}
+      .topnav-logo img{width:28px;height:28px;}
+      .topnav-logo-text span{font-size:8px;letter-spacing:.2px;}
       .visitor-banner{padding:3px 5px;font-size:8px;}
       .user-chip{max-width:34px;padding:0;}
       .user-chip .user-name{display:none;}
@@ -265,7 +271,7 @@
     .stat-card-4{background:linear-gradient(135deg,#FFD700 0%,#b8960c 100%);}
     .stat-icon{font-size:28px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
     .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35);letter-spacing:.3px;}
-    .stat-lbl{font-size:11px;color:rgba(255,255,255,.92);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.25);}
+    .stat-lbl{font-family:var(--font-display);font-size:13px;color:rgba(255,255,255,.92);font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-top:4px;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,.3);overflow-wrap:break-word;}
     .stat-card-4 .stat-val,.stat-card-4 .stat-lbl{color:var(--navy);}
     .stat-card-4 .stat-lbl{color:rgba(10,22,40,.7);}
     .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
@@ -637,7 +643,7 @@
     .actor-filter-btn:hover .real-icon{transform:scale(1.1);}
     .bnav-real-icon{width:22px;height:22px;border-radius:50%;object-fit:cover;filter:grayscale(30%);}
     .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.1);}
-    .stat-real-icon{width:38px;height:38px;border-radius:12px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.25);margin-bottom:6px;}
+    .stat-real-icon{width:60px;height:60px;border-radius:50%;object-fit:cover;box-shadow:0 4px 14px rgba(0,0,0,.35);margin-bottom:14px;border:3px solid rgba(255,255,255,.55);align-self:flex-end;}
 
     /* Quick-btn image icons */
     .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);animation:float 3s ease-in-out infinite;}
@@ -914,7 +920,11 @@
   <nav class="topnav">
     <div class="topnav-logo" onclick="goHome()" title="Retour à l'accueil">
       <img src="icon-topnav.png" alt="GSC" style="border-radius:50%;object-fit:cover;flex-shrink:0;image-rendering:high-quality;"> 
-      <span>GSC</span>
+      <div class="topnav-logo-text">
+        <span class="l-gabon">Gabon</span>
+        <span class="l-sport">Sport</span>
+        <span class="l-connect">Connect</span>
+      </div>
       <div class="nav-menu-dropdown" id="nav-menu-dropdown">
         <a href="index.html" class="nav-menu-item"><span class="icon">🏠</span>Application</a>
         <a href="admin.html" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
@@ -1058,79 +1068,79 @@
         <!-- Joueurs / Athlètes — joueur de football avec ballon -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>⚽</span>'">
+          <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>⚽</span>'">
           <div class="stat-val" id="stat-total-joueurs">—</div>
-          <div class="stat-lbl">Joueurs / Athlètes</div>
+          <div class="stat-lbl" style="color:#FFD700;">Joueurs / Athlètes</div>
         </button>
 
         <!-- Clubs — maillots de football accrochés -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('club')"
           style="background:linear-gradient(135deg,#f97316,#c2410c);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏟️</span>'">
+          <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏟️</span>'">
           <div class="stat-val" id="stat-total-clubs">—</div>
-          <div class="stat-lbl">Clubs sportifs</div>
+          <div class="stat-lbl" style="color:#ffe9c2;">Clubs sportifs</div>
         </button>
 
         <!-- Arbitres — carton jaune / sifflet -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
           style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🟨</span>'">
+          <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🟨</span>'">
           <div class="stat-val" id="stat-total-arbitres">—</div>
-          <div class="stat-lbl">Arbitres</div>
+          <div class="stat-lbl" style="color:#e9d8ff;">Arbitres</div>
         </button>
 
         <!-- Entraîneurs — coach avec tablette tactique -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('entraineur')"
           style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>📋</span>'">
+          <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>📋</span>'">
           <div class="stat-val" id="stat-total-entraineurs">—</div>
-          <div class="stat-lbl">Entraîneurs / Coachs</div>
+          <div class="stat-lbl" style="color:#c9fff0;">Entraîneurs / Coachs</div>
         </button>
 
         <!-- Fédérations — salle de réunion institutionnelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('federation')"
           style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏛️</span>'">
+          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏛️</span>'">
           <div class="stat-val" id="stat-total-federations">—</div>
-          <div class="stat-lbl">Fédérations</div>
+          <div class="stat-lbl" style="color:#7dd3fc;">Fédérations</div>
         </button>
 
         <!-- Organisateurs — événement / cérémonie sportive -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('organisateur')"
           style="background:linear-gradient(135deg,#b45309,#92400e);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🎯</span>'">
+          <img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🎯</span>'">
           <div class="stat-val" id="stat-total-organisateurs">—</div>
-          <div class="stat-lbl">Organisateurs</div>
+          <div class="stat-lbl" style="color:#ffd9a0;">Organisateurs</div>
         </button>
 
         <!-- Indépendants — athlète solo / course individuelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('independant')"
           style="background:linear-gradient(135deg,#0369a1,#075985);padding:16px 12px;">
-          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:28px;margin-bottom:6px;display:inline-block;>🏃</span>'">
+          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏃</span>'">
           <div class="stat-val" id="stat-total-independants">—</div>
-          <div class="stat-lbl">Sportifs indépendants</div>
+          <div class="stat-lbl" style="color:#bae6fd;">Sportifs indépendants</div>
         </button>
 
         <!-- Élèves / Étudiants -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('eleve_etudiant')"
           style="background:linear-gradient(135deg,#6366f1,#4338ca);padding:16px 12px;">
-          <span style="font-size:28px;margin-bottom:6px;display:inline-block;">🎓</span>
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🎓</span>
           <div class="stat-val" id="stat-total-etudiants">—</div>
-          <div class="stat-lbl">Élèves / Étudiants</div>
+          <div class="stat-lbl" style="color:#e0e7ff;">Élèves / Étudiants</div>
         </button>
 
         <!-- Sportifs étrangers -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('sportif_etranger')"
           style="background:linear-gradient(135deg,#ca8a04,#92660a);padding:16px 12px;">
-          <span style="font-size:28px;margin-bottom:6px;display:inline-block;">🌍</span>
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🌍</span>
           <div class="stat-val" id="stat-total-etrangers">—</div>
-          <div class="stat-lbl">Sportifs étrangers</div>
+          <div class="stat-lbl" style="color:#1a2d4a;text-shadow:none;">Sportifs étrangers</div>
         </button>
 
         <!-- Mon niveau -->
         <button class="stat-card" onclick="isVisitor?goToAuth():showView('profil')"
           style="background:linear-gradient(135deg,#FFD700,#b8960c);padding:16px 12px;">
-          <span class="anim-bars" style="font-size:28px;margin-bottom:6px;">📊</span>
+          <span class="anim-bars" style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">📊</span>
           <div class="stat-val" id="stat-niveau" style="color:var(--navy);">—</div>
           <div class="stat-lbl" style="color:rgba(10,22,40,.75);">Mon niveau</div>
         </button>
