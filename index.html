@@ -875,7 +875,7 @@
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="topnav-logo" onclick="toggleNavMenu()" title="Menu de navigation">
+    <div class="topnav-logo" onclick="goHome()" title="Retour à l'accueil">
       <img src="img/hd_image_3.png" alt="GSC" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;image-rendering:high-quality;"> 
       <span>GSC</span>
       <div class="nav-menu-dropdown" id="nav-menu-dropdown">
@@ -2351,6 +2351,19 @@ function closeMenu(){
   document.getElementById('nav-menu-btn').classList.remove('open');
 }
 window.toggleMenu=toggleMenu;window.openMenu=openMenu;window.closeMenu=closeMenu;
+
+function goHome(){
+  // Aller à la vue dashboard (accueil)
+  showView('dashboard');
+  // Fermer tous les menus ouverts
+  closeMenu();
+  // Fermer le dropdown du logo si ouvert
+  const dropdown=document.getElementById('nav-menu-dropdown');
+  if(dropdown) dropdown.classList.remove('open');
+  // Scroll vers le top
+  window.scrollTo(0,0);
+}
+window.goHome=goHome;
 
 function toggleNavMenu(){
   const dropdown=document.getElementById('nav-menu-dropdown');

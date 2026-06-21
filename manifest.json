@@ -5,48 +5,66 @@
   "start_url": "index.html",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#ffffff",
   "theme_color": "#009E60",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  
   "icons": [
     {
-      "src": "img/icon-192.png",
+      "src": "img/hd_image_1.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "img/icon-512.png",
+      "src": "img/hd_image_1.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "img/icon-maskable-192.png",
+      "src": "img/hd_image_1.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "img/icon-maskable-512.png",
-      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "categories": ["sports", "utilities"],
-  "screenshots": [
+  
+  "shortcuts": [
     {
-      "src": "img/screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "Gabon Sport Connect",
+      "short_name": "GSC",
+      "description": "Accueil - Plateforme de gestion du sport",
+      "url": "index.html?source=shortcut",
+      "icons": [
+        {
+          "src": "img/hd_image_1.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "img/screenshot-2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
+      "name": "Console Admin",
+      "short_name": "GSC Admin",
+      "description": "Administration - Gestion centralisée",
+      "url": "admin.html?source=shortcut",
+      "icons": [
+        {
+          "src": "img/hd_image_1.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "categories": ["sports", "productivity"],
+  "screenshots": [
+    {
+      "src": "img/hd_image_1.png",
+      "sizes": "540x720",
+      "type": "image/png"
     }
   ]
 }
