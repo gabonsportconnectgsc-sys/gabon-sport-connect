@@ -1,0 +1,77 @@
+<!-- SECTION HTML À REMPLACER dans admin.html -->
+<!-- Ligne 947-948 : Remplacer les inputs par ceux-ci (sans restriction accept) -->
+
+<!-- Inputs fichiers cachés — ACCEPTENT TOUS LES FORMATS ✅ -->
+<input type="file" id="actor-photo-input" style="display:none;">
+<input type="file" id="default-avatar-input" style="display:none;">
+
+<!-- CSS optionnel pour les barres de progression et les toasts (ajouter au <style> si absent) -->
+<style>
+  /* Barre de progression moderne */
+  .progress-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 10000;
+    min-width: 300px;
+    animation: slideIn 0.3s ease;
+  }
+
+  .progress-title {
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #0A1628;
+    font-size: 14px;
+  }
+
+  .progress-bar-bg {
+    background: #E2E8F0;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-fill {
+    background: linear-gradient(90deg, #009E60, #00C78F);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+  }
+
+  .progress-percent {
+    text-align: center;
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 500;
+  }
+
+  /* Toast notifications */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 14px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .toast.success { border-left: 4px solid #009E60; color: #009E60; }
+  .toast.error { border-left: 4px solid #EF4444; color: #EF4444; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
