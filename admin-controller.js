@@ -529,7 +529,11 @@
     renderPhotos();
   }
 
-  /* ─── Upload amélioré : tous formats acceptés + barre de progression + diagnostic d'erreur ─── */
+  /* ─── Upload via Cloudinary (Firebase Storage indisponible sur plan Spark) ───
+     Cloud name + upload preset (non signé) — voir console.cloudinary.com */
+  const CLOUDINARY_CLOUD_NAME = 'djvzc3vqp';
+  const CLOUDINARY_UPLOAD_PRESET = 'gsc_admin_uploads';
+
   function pickAndUpload(input, onFile) {
     input.accept = ''; // tous formats acceptés
     input.value = '';
@@ -638,82 +642,92 @@
     }
   }
 
-  function explainUploadError(error) {
-    const code = error && error.code ? error.code : '';
-    const map = {
-      'storage/unauthorized': 'Accès refusé par les règles Firebase Storage (storage/unauthorized).',
-      'storage/unauthenticated': 'Utilisateur non authentifié — aucune session Firebase Auth active (storage/unauthenticated).',
-      'storage/canceled': 'Upload annulé.',
-      'storage/unknown': 'Erreur inconnue côté serveur Firebase (storage/unknown) — vérifiez la configuration CORS du bucket.',
-      'storage/object-not-found': 'Objet introuvable après upload (storage/object-not-found).',
-      'storage/quota-exceeded': 'Quota de stockage dépassé (storage/quota-exceeded).',
-      'storage/retry-limit-exceeded': 'Délai dépassé après plusieurs tentatives — connexion trop lente ou bucket injoignable (storage/retry-limit-exceeded).'
-    };
-    return (code && map[code]) ? map[code] : `Erreur upload${code ? ' (' + code + ')' : ''} : ${error && error.message ? error.message : 'cause inconnue'}`;
-  }
+  /**
+   * Upload un fichier vers Cloudinary (preset non signé) avec barre de
+   * progression en temps réel, timeout de sécurité et messages d'erreur clairs.
+   * @param {File} file
+   * @param {string} folderPath - ex: "profiles/photos/UID" ou "defaults/avatars/role"
+   * @returns {Promise<string|null>} URL sécurisée du fichier, ou null en cas d'échec
+   */
+  function doUpload(file, folderPath) {
+    return new Promise((resolve) => {
+      const progressBar = createProgressBar();
+      document.body.appendChild(progressBar);
+      const titleEl = progressBar.querySelector('.progress-title');
+      let settled = false;
 
-  async function doUpload(file, storagePath) {
-    if (!window.firebase || typeof window.firebase.storage !== 'function') {
-      toast('❌ SDK Firebase Storage non chargé (firebase-storage-compat.js manquant ?).', 'error');
-      return null;
-    }
+      const xhr = new XMLHttpRequest();
+      const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
-    const progressBar = createProgressBar();
-    document.body.appendChild(progressBar);
-    const titleEl = progressBar.querySelector('.progress-title');
-    let settled = false;
+      const timeoutId = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        xhr.abort();
+        if (titleEl) titleEl.textContent = '⚠️ Aucune réponse du serveur après 20s';
+        toast('❌ Upload bloqué : aucune réponse de Cloudinary après 20s. Vérifiez votre connexion réseau.', 'error');
+        removeProgressBar(progressBar);
+        resolve(null);
+      }, 20000);
 
-    // Filet de sécurité : si rien ne se passe en 20s, on arrête d'attendre indéfiniment
-    const timeoutId = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      if (titleEl) titleEl.textContent = '⚠️ Aucune réponse du serveur après 20s';
-      toast('❌ Upload bloqué : aucune réponse de Firebase Storage après 20s. Vérifiez la configuration CORS du bucket ou votre connexion réseau.', 'error');
-    }, 20000);
+      const cancelBtn = progressBar.querySelector('.progress-cancel-btn');
+      if (cancelBtn) cancelBtn.onclick = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        xhr.abort();
+        removeProgressBar(progressBar);
+        resolve(null);
+      };
 
-    const cancelBtn = progressBar.querySelector('.progress-cancel-btn');
-    let uploadTaskRef = null;
-    if (cancelBtn) cancelBtn.onclick = () => {
-      if (uploadTaskRef) uploadTaskRef.cancel();
-      clearTimeout(timeoutId);
-      settled = true;
-      removeProgressBar(progressBar);
-    };
-
-    try {
-      const ref = window.firebase.storage().ref(storagePath);
-      const uploadTask = ref.put(file);
-      uploadTaskRef = uploadTask;
-
-      await new Promise((resolve, reject) => {
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            if (settled) return;
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            updateProgressBar(progressBar, progress);
-          },
-          (error) => { if (!settled) reject(error); },
-          () => { if (!settled) resolve(); }
-        );
+      xhr.upload.addEventListener('progress', (e) => {
+        if (settled || !e.lengthComputable) return;
+        updateProgressBar(progressBar, (e.loaded / e.total) * 100);
       });
 
-      clearTimeout(timeoutId);
-      if (settled) return null; // le timeout ou l'annulation a déjà tranché
-      settled = true;
+      xhr.addEventListener('load', () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        removeProgressBar(progressBar);
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
+            toast('✅ Fichier uploadé avec succès !', 'success');
+            resolve(data.secure_url);
+          } else {
+            const msg = (data.error && data.error.message) ? data.error.message : `Code HTTP ${xhr.status}`;
+            console.error('Cloudinary upload error:', data);
+            toast('❌ Erreur upload : ' + msg, 'error');
+            resolve(null);
+          }
+        } catch (e) {
+          console.error('Cloudinary response parse error:', e, xhr.responseText);
+          toast('❌ Réponse Cloudinary invalide.', 'error');
+          resolve(null);
+        }
+      });
 
-      const url = await ref.getDownloadURL();
-      removeProgressBar(progressBar);
-      toast('✅ Fichier uploadé avec succès !', 'success');
-      return url;
+      xhr.addEventListener('error', () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        removeProgressBar(progressBar);
+        toast('❌ Erreur réseau pendant l\'upload. Vérifiez votre connexion.', 'error');
+        resolve(null);
+      });
 
-    } catch (error) {
-      clearTimeout(timeoutId);
-      settled = true;
-      removeProgressBar(progressBar);
-      console.error('Upload error:', error);
-      toast('❌ ' + explainUploadError(error), 'error');
-      return null;
-    }
+      xhr.addEventListener('abort', () => {
+        // déjà géré par le timeout ou le bouton Annuler
+      });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', folderPath);
+
+      xhr.open('POST', url);
+      xhr.send(formData);
+    });
   }
 
   function triggerActorPhotoUpload(uid) {
