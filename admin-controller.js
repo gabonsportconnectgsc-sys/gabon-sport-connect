@@ -44,9 +44,53 @@
     'organisateur', 'independant', 'supporter', 'eleve_etudiant',
     'sportif_etranger', 'ecole_universite'
   ];
+  const NIVEAU_ORDER = ['International', 'National', 'Regional', 'Amateur'];
+  const SECONDARY_GROUP_CONFIG = {
+    joueur: { getKey: a => a.club || a.nomOrganisation, label: v => '🏟️ ' + v, fallback: 'Sans club' },
+    entraineur: { getKey: a => a.niveau, label: v => '🏆 Niveau ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
+    arbitre: { getKey: a => a.niveau, label: v => '🏆 Niveau ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
+    club: { getKey: a => a.division || a.niveau, label: v => '📊 Division ' + v, fallback: 'Division non précisée', order: NIVEAU_ORDER },
+    organisateur: { getKey: a => a.province || a.ville, label: v => '📍 ' + v, fallback: 'Localisation non précisée' },
+    independant: { getKey: a => a.province || a.ville, label: v => '📍 ' + v, fallback: 'Localisation non précisée' },
+    association: { getKey: a => a.province || a.ville, label: v => '📍 ' + v, fallback: 'Localisation non précisée' },
+    federation: { getKey: a => a.niveau || 'National', label: v => '🏛️ ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
+    eleve_etudiant: { getKey: a => a.etablissement, label: v => '🎓 ' + v, fallback: 'Établissement non précisé' },
+    sportif_etranger: { getKey: a => a.nationalite, label: v => '🌍 ' + v, fallback: 'Nationalité non précisée' },
+    supporter: { getKey: a => a.club || a.ville, label: v => '💗 ' + v, fallback: 'Non précisé' }
+  };
+
+  function buildSecondaryGroups(list, role) {
+    const cfg = SECONDARY_GROUP_CONFIG[role];
+    if (!cfg) return null;
+    const buckets = {};
+    list.forEach(a => {
+      const raw = (cfg.getKey(a) || '').toString().trim();
+      const key = raw || cfg.fallback;
+      (buckets[key] = buckets[key] || []).push(a);
+    });
+    const keys = Object.keys(buckets);
+    if (keys.length <= 1) return null;
+    if (cfg.order) {
+      keys.sort((x, y) => {
+        const ix = cfg.order.indexOf(x), iy = cfg.order.indexOf(y);
+        if (ix === -1 && iy === -1) return x.localeCompare(y, 'fr');
+        if (ix === -1) return 1;
+        if (iy === -1) return -1;
+        return ix - iy;
+      });
+    } else {
+      keys.sort((x, y) => x === cfg.fallback ? 1 : (y === cfg.fallback ? -1 : x.localeCompare(y, 'fr')));
+    }
+    return keys.map(k => ({
+      label: cfg.label(k),
+      items: buckets[k].sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'))
+    }));
+  }
 
   let users = [], matchs = [];
   let realUsers = [];
+  let sites = [], actualites = [];
+  let currentSiteId = null;
   let roleFilter = 'all', searchTerm = '';
   let phFilter = 'all';
   let matchTabFilter = 'all';
@@ -78,7 +122,7 @@
 
     const titleEl = document.getElementById('topbar-title');
     if (titleEl && titleEl.firstChild) {
-      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents', verification: 'Vérification', carte: 'Carte des sites' };
+      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents', verification: 'Vérification', sites: 'Sites sportifs', actualites: 'Actualités', carte: 'Carte des sites' };
       titleEl.firstChild.textContent = labels[name] || name;
     }
     document.getElementById('sidebar')?.classList.remove('open');
@@ -89,10 +133,12 @@
     if (name === 'matchs') renderMatches();
     if (name === 'documents') renderDocuments();
     if (name === 'dashboard') renderDashboard();
+    if (name === 'sites') renderSites();
+    if (name === 'actualites') renderActualites();
   }
 
   function wireNav() {
-    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents'].forEach(name => {
+    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents', 'sites', 'actualites'].forEach(name => {
       document.getElementById('nav-' + name)?.addEventListener('click', () => switchSection(name));
       document.getElementById('mnav-' + name)?.addEventListener('click', () => switchSection(name));
     });
@@ -103,6 +149,17 @@
     document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
       document.getElementById('sidebar')?.classList.remove('open');
       document.getElementById('sidebar-overlay')?.classList.remove('open');
+    });
+    document.getElementById('nav-goto-index')?.addEventListener('click', () => { window.location.href = 'index.html'; });
+    document.getElementById('header-menu-toggle')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('header-dropdown')?.classList.toggle('open');
+    });
+    document.getElementById('hdd-goto-index')?.addEventListener('click', () => { window.location.href = 'index.html'; });
+    document.getElementById('hdd-goto-admin')?.addEventListener('click', () => { window.location.href = 'admin.html'; document.getElementById('header-dropdown')?.classList.remove('open'); });
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('header-dropdown');
+      if (dd && dd.classList.contains('open') && !dd.contains(e.target) && e.target.id !== 'header-menu-toggle') dd.classList.remove('open');
     });
   }
 
@@ -229,8 +286,18 @@
       });
       tbody.innerHTML = html;
     } else {
-      list.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
-      tbody.innerHTML = list.map(renderRow).join('');
+      const sGroups = buildSecondaryGroups(list, roleFilter);
+      if (sGroups) {
+        let html = '';
+        sGroups.forEach(g => {
+          html += `<tr class="group-header-row"><td colspan="4"><span class="group-header-label">${g.label}</span><span class="group-header-count">${g.items.length}</span></td></tr>`;
+          html += g.items.map(renderRow).join('');
+        });
+        tbody.innerHTML = html;
+      } else {
+        list.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+        tbody.innerHTML = list.map(renderRow).join('');
+      }
     }
 
     tbody.querySelectorAll('tr[data-id]').forEach(tr => tr.addEventListener('click', () => openPlayerModal(tr.dataset.id)));
@@ -720,6 +787,164 @@
     });
   }
 
+  /* ═══ SITES SPORTIFS ═══ */
+  const SITE_ICONS = { Stade: '🏟️', Gymnase: '🏋️', Piscine: '🏊', Court: '🎾', Dojo: '🥋', Salle: '🏸', Terrain: '⛳', Piste: '🏃' };
+  let sitesSearchTerm = '';
+
+  function renderSites() {
+    const tbody = document.getElementById('sites-tbody');
+    if (!tbody) return;
+    let list = sites.slice();
+    if (sitesSearchTerm) {
+      const t = sitesSearchTerm.toLowerCase();
+      list = list.filter(s => ((s.nom || '') + ' ' + (s.ville || '')).toLowerCase().includes(t));
+    }
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--gray-txt);padding:16px;">Aucun site enregistré.</td></tr>`;
+      return;
+    }
+    list.sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr'));
+    tbody.innerHTML = list.map(s => `
+      <tr data-id="${s.id}">
+        <td data-label="Site">${SITE_ICONS[s.type] || '📍'} ${esc(s.nom || '—')}</td>
+        <td data-label="Type">${esc(s.type || '—')}</td>
+        <td data-label="Ville">${esc(s.ville || '—')}</td>
+        <td data-label="Capacité">${s.capacite ? Number(s.capacite).toLocaleString('fr-FR') : '—'}</td>
+        <td data-label="Actions"><button class="btn-sm btn-edit-site" data-id="${s.id}">✏️ Modifier</button></td>
+      </tr>`).join('');
+    tbody.querySelectorAll('.btn-edit-site').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openSiteModal(btn.dataset.id); }));
+  }
+
+  function openSiteModal(id) {
+    currentSiteId = id || null;
+    const s = id ? sites.find(x => x.id === id) : null;
+    document.getElementById('site-modal-title').textContent = s ? 'Modifier le site' : 'Nouveau site sportif';
+    document.getElementById('site-modal-nom').value = s?.nom || '';
+    document.getElementById('site-modal-type').value = s?.type || 'Stade';
+    document.getElementById('site-modal-ville').value = s?.ville || '';
+    document.getElementById('site-modal-lat').value = s?.lat ?? '';
+    document.getElementById('site-modal-lng').value = s?.lng ?? '';
+    document.getElementById('site-modal-capacite').value = s?.capacite ?? '';
+    document.getElementById('btn-delete-site').style.display = s ? '' : 'none';
+    document.getElementById('site-modal')?.classList.add('open');
+  }
+
+  async function saveSiteModal() {
+    const nom = document.getElementById('site-modal-nom').value.trim();
+    const lat = parseFloat(document.getElementById('site-modal-lat').value);
+    const lng = parseFloat(document.getElementById('site-modal-lng').value);
+    if (!nom) { toast('Le nom du site est requis.', 'error'); return; }
+    if (isNaN(lat) || isNaN(lng)) { toast('Latitude / longitude invalides.', 'error'); return; }
+    const data = {
+      nom, type: document.getElementById('site-modal-type').value,
+      ville: document.getElementById('site-modal-ville').value.trim(),
+      lat, lng,
+      capacite: parseInt(document.getElementById('site-modal-capacite').value, 10) || 0,
+      status: 'active'
+    };
+    try {
+      if (currentSiteId) await window.db.collection('sitesSportifs').doc(currentSiteId).update(data);
+      else await window.db.collection('sitesSportifs').add({ ...data, createdAt: new Date() });
+      toast('✅ Site enregistré.', 'success');
+      closeModal('site-modal');
+    } catch (e) { toast('Erreur lors de l\'enregistrement.', 'error'); }
+  }
+
+  async function deleteSiteModal() {
+    if (!currentSiteId) return;
+    if (!confirm('Supprimer définitivement ce site ?')) return;
+    try {
+      await window.db.collection('sitesSportifs').doc(currentSiteId).delete();
+      toast('🗑️ Site supprimé.', 'success');
+      closeModal('site-modal');
+    } catch (e) { toast('Erreur lors de la suppression.', 'error'); }
+  }
+
+  async function searchOsm() {
+    const q = document.getElementById('osm-import-query')?.value.trim();
+    const resultsEl = document.getElementById('osm-import-results');
+    if (!q) { toast('Entrez un lieu à rechercher.', 'info'); return; }
+    if (resultsEl) resultsEl.innerHTML = `<div style="font-size:12px;color:var(--gray-txt);padding:8px 0;">Recherche en cours…</div>`;
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=ga&q=${encodeURIComponent(q)}`;
+      const r = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
+      const results = await r.json();
+      if (!results.length) { if (resultsEl) resultsEl.innerHTML = `<div style="font-size:12px;color:var(--gray-txt);padding:8px 0;">Aucun résultat OpenStreetMap pour « ${esc(q)} ».</div>`; return; }
+      if (resultsEl) resultsEl.innerHTML = results.map((res, i) => `
+        <div class="dash-card" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div style="font-size:12px;"><strong>${esc(res.display_name.split(',')[0])}</strong><br><span style="color:var(--gray-txt);">${esc(res.display_name)}</span></div>
+          <button class="btn-sm btn-osm-add" data-i="${i}">➕ Ajouter</button>
+        </div>`).join('');
+      resultsEl.querySelectorAll('.btn-osm-add').forEach(btn => btn.addEventListener('click', async () => {
+        const res = results[parseInt(btn.dataset.i, 10)];
+        const type = document.getElementById('osm-import-type')?.value || 'Stade';
+        try {
+          await window.db.collection('sitesSportifs').add({
+            nom: res.display_name.split(',')[0], type,
+            ville: q, lat: parseFloat(res.lat), lng: parseFloat(res.lon),
+            capacite: 0, status: 'active', source: 'osm', createdAt: new Date()
+          });
+          toast('✅ Site importé depuis OpenStreetMap.', 'success');
+        } catch (e) { toast('Erreur import OSM.', 'error'); }
+      }));
+    } catch (e) {
+      if (resultsEl) resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger);padding:8px 0;">Service OpenStreetMap indisponible pour le moment.</div>`;
+    }
+  }
+
+  /* ═══ ACTUALITÉS ═══ */
+  function renderActualites() {
+    const tbody = document.getElementById('news-tbody');
+    if (!tbody) return;
+    if (!actualites.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--gray-txt);padding:16px;">Aucune actualité publiée.</td></tr>`;
+      return;
+    }
+    const list = actualites.slice().sort((a, b) => fmtSortDate(b) - fmtSortDate(a));
+    tbody.innerHTML = list.map(n => `
+      <tr data-id="${n.id}">
+        <td data-label="Titre">${esc(n.titre || '—')}</td>
+        <td data-label="Catégorie">${esc(n.categorie || '—')}</td>
+        <td data-label="Tag">${esc(n.tag || '—')}</td>
+        <td data-label="Date">${fmtDate(n.createdAt)}</td>
+        <td data-label="Actions"><button class="btn-sm btn-danger btn-delete-news" data-id="${n.id}">🗑️ Supprimer</button></td>
+      </tr>`).join('');
+    tbody.querySelectorAll('.btn-delete-news').forEach(btn => btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Supprimer cette actualité ?')) return;
+      try { await window.db.collection('actualites').doc(btn.dataset.id).delete(); toast('🗑️ Actualité supprimée.', 'success'); }
+      catch (err) { toast('Erreur lors de la suppression.', 'error'); }
+    }));
+  }
+  function fmtSortDate(n) { try { return n.createdAt?.toDate ? n.createdAt.toDate().getTime() : 0; } catch (e) { return 0; } }
+
+  async function publishNewsAdmin() {
+    const titre = document.getElementById('news-titre-admin').value.trim();
+    const excerpt = document.getElementById('news-excerpt-admin').value.trim();
+    if (!titre) { toast('Le titre est requis.', 'error'); return; }
+    try {
+      await window.db.collection('actualites').add({
+        titre, excerpt, categorie: document.getElementById('news-cat-admin').value,
+        tag: document.getElementById('news-tag-admin').value.trim(), createdAt: new Date()
+      });
+      toast('📢 Actualité publiée.', 'success');
+      document.getElementById('news-titre-admin').value = '';
+      document.getElementById('news-excerpt-admin').value = '';
+      document.getElementById('news-tag-admin').value = '';
+    } catch (e) { toast('Erreur lors de la publication.', 'error'); }
+  }
+
+  function wireSitesActualites() {
+    document.getElementById('btn-add-site')?.addEventListener('click', () => openSiteModal(null));
+    document.getElementById('btn-save-site')?.addEventListener('click', saveSiteModal);
+    document.getElementById('btn-cancel-site')?.addEventListener('click', () => closeModal('site-modal'));
+    document.getElementById('btn-delete-site')?.addEventListener('click', deleteSiteModal);
+    document.getElementById('site-modal-close')?.addEventListener('click', () => closeModal('site-modal'));
+    document.getElementById('sites-search-input')?.addEventListener('input', (e) => { sitesSearchTerm = e.target.value; renderSites(); });
+    document.getElementById('btn-osm-search')?.addEventListener('click', searchOsm);
+    document.getElementById('btn-publish-news')?.addEventListener('click', publishNewsAdmin);
+  }
+
   /* ═══ INITIALISATION ═══ */
   function init() {
     document.getElementById('loading-screen').style.display = 'none';
@@ -732,6 +957,7 @@
     wireMatchTabs();
     wireModals();
     wireResetActorsTools();
+    wireSitesActualites();
 
     // Affichage immédiat avec le seed (même pattern que index.html) :
     // on ne dépend pas d'un aller-retour Firestore réussi pour montrer des chiffres.
@@ -754,6 +980,14 @@
       matchs = data;
       renderDashboard();
       if (document.getElementById('matchs')?.classList.contains('active')) renderMatches();
+    });
+    window.realtimeSync.onUpdate('sitesSportifs', (data) => {
+      sites = data;
+      if (document.getElementById('sites')?.classList.contains('active')) renderSites();
+    });
+    window.realtimeSync.onUpdate('actualites', (data) => {
+      actualites = data;
+      if (document.getElementById('actualites')?.classList.contains('active')) renderActualites();
     });
   }
 

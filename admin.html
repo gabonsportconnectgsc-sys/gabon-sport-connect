@@ -22,6 +22,35 @@
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
+    /* ── FILIGRANE SPORTIF DISCRET ── */
+    .card,.dash-card,.search-panel,.users-table-wrap,.adm-section,.report-card,.legal-pane,.modal-card,.modal,.import-maps-section{position:relative;}
+    .card::before,.dash-card::before,.search-panel::before,.users-table-wrap::before,.adm-section::before,.report-card::before,.legal-pane::before,.modal-card::before,.modal::before,.import-maps-section::before{
+      content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
+      opacity:.05;background-repeat:no-repeat;background-position:bottom right;background-size:130px 130px;
+    }
+    .card>*,.dash-card>*,.search-panel>*,.users-table-wrap>*,.adm-section>*,.report-card>*,.legal-pane>*,.modal-card>*,.modal>*,.import-maps-section>*{position:relative;z-index:1;}
+    .card:nth-of-type(4n+1)::before,.dash-card:nth-of-type(4n+1)::before,.adm-section:nth-of-type(4n+1)::before,.report-card:nth-of-type(4n+1)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cellipse cx='100' cy='100' rx='90' ry='55' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='100' cy='100' rx='60' ry='35' fill='none' stroke='%230A1628' stroke-width='4'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n+2)::before,.dash-card:nth-of-type(4n+2)::before,.adm-section:nth-of-type(4n+2)::before,.report-card:nth-of-type(4n+2)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cline x1='100' y1='0' x2='100' y2='200' stroke='%230A1628' stroke-width='5'/%3E%3Ccircle cx='100' cy='100' r='40' fill='none' stroke='%230A1628' stroke-width='5'/%3E%3Ccircle cx='100' cy='100' r='4' fill='%230A1628'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n+3)::before,.dash-card:nth-of-type(4n+3)::before,.adm-section:nth-of-type(4n+3)::before,.report-card:nth-of-type(4n+3)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cellipse cx='70' cy='110' rx='38' ry='48' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='40' cy='80' rx='16' ry='20' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='140' cy='110' rx='38' ry='48' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='170' cy='80' rx='16' ry='20' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n)::before,.dash-card:nth-of-type(4n)::before,.adm-section:nth-of-type(4n)::before,.report-card:nth-of-type(4n)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='95' cy='40' r='14' fill='%230A1628'/%3E%3Cpath d='M95 54 L100 110 L60 150 M100 110 L150 95 M100 80 L60 70 M100 80 L140 60 M100 110 L130 165' stroke='%230A1628' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+    .search-panel::before,.modal-card::before,.modal::before{
+      background-size:160px 160px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect x='40' y='40' width='120' height='120' fill='none' stroke='%230A1628' stroke-width='5'/%3E%3Cline x1='40' y1='70' x2='160' y2='70' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='40' y1='100' x2='160' y2='100' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='40' y1='130' x2='160' y2='130' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='70' y1='40' x2='70' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='100' y1='40' x2='100' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='130' y1='40' x2='130' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3C/svg%3E");
+    }
+    .users-table-wrap::before,.legal-pane::before,.import-maps-section::before{
+      background-size:150px 150px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='80' r='28' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cpath d='M40 170 Q100 110 160 170' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3C/svg%3E");
+    }
+
+
 *, ::before, ::after { box-sizing: border-box; margin: 0px; padding: 0px; }
 
 body { font-family: var(--font); background: var(--gray-bg); color: var(--navy); min-height: 100vh; overflow-x: hidden; }
@@ -136,6 +165,13 @@ body { font-family: var(--font); background: var(--gray-bg); color: var(--navy);
 .toast.info { background: var(--blue); }
 
 .realtime-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 158, 96, 0.12); border: 1px solid rgba(0, 158, 96, 0.25); color: var(--green); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-left: 8px; }
+.header-menu-wrap{margin-left:auto;}
+#header-menu-toggle{display:flex !important;}
+.header-dropdown{display:none;position:absolute;top:46px;right:0;background:#fff;border:1px solid var(--gray-bd);border-radius:12px;box-shadow:var(--shadow-lg,0 8px 30px rgba(0,0,0,.16));min-width:220px;padding:8px;z-index:300;}
+.header-dropdown.open{display:block;}
+.header-dropdown-label{font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;padding:6px 10px 4px;}
+.header-dropdown-item{width:100%;text-align:left;background:none;border:none;padding:10px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;display:flex;align-items:center;gap:8px;}
+.header-dropdown-item:hover{background:var(--green-lt);color:var(--green-dk);}
 
 .realtime-dot { width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: 2s ease 0s infinite normal none running pulse; }
 
@@ -578,8 +614,18 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-verification">
           <span class="nav-icon">🌍</span><span>Vérification internationale</span>
         </button>
+        <button class="nav-item" id="nav-sites">
+          <span class="nav-icon">🗺️</span><span>Sites sportifs</span>
+        </button>
+        <button class="nav-item" id="nav-actualites">
+          <span class="nav-icon">📰</span><span>Actualités</span>
+        </button>
         <button class="nav-item" id="nav-qrscan">
           <span class="nav-icon">📷</span><span>Scanner QR</span>
+        </button>
+        <div class="nav-label">Accès direct</div>
+        <button class="nav-item" id="nav-goto-index">
+          <span class="nav-icon">🏠</span><span>Application (index.html)</span>
         </button>
       </div>
       <div class="sidebar-footer">
@@ -596,6 +642,14 @@ tr.is-demo-row td { opacity: .82; }
       <div class="topbar-title" id="topbar-title">Dashboard<span class="topbar-sub" id="topbar-sub"></span></div>
       <div class="sync-indicator" id="sync-indicator" style="display: none;"><div class="sync-dot"></div><span>Sync…</span></div>
       <div id="realtime-status" class="realtime-badge" style="display: inline-flex;"><div class="realtime-dot"></div><span>Temps réel</span></div>
+      <div class="header-menu-wrap" style="position:relative;">
+        <button class="btn-menu" id="header-menu-toggle" title="Menu" style="margin-left:4px;">⋮</button>
+        <div class="header-dropdown" id="header-dropdown">
+          <div class="header-dropdown-label">Accès direct</div>
+          <button class="header-dropdown-item" id="hdd-goto-index">🏠 Application (index.html)</button>
+          <button class="header-dropdown-item" id="hdd-goto-admin">⚙️ Console Admin (admin.html)</button>
+        </div>
+      </div>
     </div>
 
     <!-- Badge sync global (utilisé par realtime-sync-module.js) -->
@@ -851,6 +905,66 @@ tr.is-demo-row td { opacity: .82; }
         </div>
       </div>
 
+      <!-- SITES SPORTIFS -->
+      <div id="sites" class="section">
+        <div class="page-header">
+          <div class="page-title">🗺️ Sites sportifs</div>
+          <button class="btn-add" id="btn-add-site">➕ Ajouter un site</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+          Gère le référentiel des stades, gymnases, piscines et autres infrastructures affichés sur la carte sportive de l'application.
+        </p>
+        <div class="filters-bar">
+          <div class="search-box"><span>🔍</span><input type="text" id="sites-search-input" placeholder="Nom du site, ville…"></div>
+        </div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Site</th><th>Type</th><th>Ville</th><th>Capacité</th><th>Actions</th></tr></thead>
+            <tbody id="sites-tbody"><tr><td colspan="5" style="text-align:center;color:var(--gray-txt);padding:16px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="dash-card import-maps-section" style="margin-top:18px;">
+          <div class="dash-card-title">🌍 Import OSM / Nominatim</div>
+          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">Recherche un lieu (stade, gymnase…) via OpenStreetMap et ajoute-le directement au référentiel.</p>
+          <div class="grid2" style="margin-bottom:12px;">
+            <div class="field"><label>Recherche (ex: Stade d'Angondjé)</label><input type="text" id="osm-import-query" placeholder="Nom du lieu, ville…"></div>
+            <div class="field"><label>Type de site</label>
+              <select id="osm-import-type">
+                <option>Stade</option><option>Gymnase</option><option>Piscine</option><option>Court</option><option>Dojo</option><option>Salle</option><option>Terrain</option><option>Piste</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="btn-osm-search">🔎 Rechercher sur OpenStreetMap</button>
+          <div id="osm-import-results" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ACTUALITÉS -->
+      <div id="actualites" class="section">
+        <div class="page-header"><div class="page-title">📰 Actualités</div></div>
+        <div class="dash-card" style="margin-bottom:16px;">
+          <div class="dash-card-title">📢 Publier une actualité</div>
+          <div class="grid2" style="margin-bottom:12px;">
+            <div class="field"><label>Catégorie</label>
+              <select id="news-cat-admin">
+                <option>Football</option><option>Basketball</option><option>Handball</option>
+                <option>Athlétisme</option><option>Infrastructure</option><option>Sélection nationale</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="field"><label>Tag</label><input type="text" id="news-tag-admin" placeholder="CAN 2025, Championnat…"></div>
+          </div>
+          <div class="field" style="margin-bottom:12px;"><label>Titre</label><input type="text" id="news-titre-admin" placeholder="Titre de l'actualité…"></div>
+          <div class="field" style="margin-bottom:12px;"><label>Résumé</label><textarea id="news-excerpt-admin" placeholder="Résumé en 2-3 lignes…" style="min-height:70px;width:100%;padding:10px;border:1.5px solid var(--gray-bd);border-radius:10px;font-family:var(--font);"></textarea></div>
+          <button class="btn btn-secondary" id="btn-publish-news">📢 Publier</button>
+        </div>
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Titre</th><th>Catégorie</th><th>Tag</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="news-tbody"><tr><td colspan="5" style="text-align:center;color:var(--gray-txt);padding:16px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- SCANNER QR — identification rapide de tout membre inscrit -->
       <div id="qrscan" class="section">
         <div class="page-header">
@@ -1010,6 +1124,39 @@ tr.is-demo-row td { opacity: .82; }
   </div>
 </div>
 
+<div id="site-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="site-modal-title">Nouveau site sportif</div>
+      <button class="modal-close" id="site-modal-close">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="msection">
+        <div class="msection-title">📍 Informations du site</div>
+        <div class="field" style="margin-bottom:10px;"><label>Nom</label><input type="text" id="site-modal-nom" placeholder="Stade d'Angondjé"></div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>Type</label>
+            <select id="site-modal-type">
+              <option>Stade</option><option>Gymnase</option><option>Piscine</option><option>Court</option><option>Dojo</option><option>Salle</option><option>Terrain</option><option>Piste</option>
+            </select>
+          </div>
+          <div class="field"><label>Ville</label><input type="text" id="site-modal-ville" placeholder="Libreville"></div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>Latitude</label><input type="number" step="0.0001" id="site-modal-lat" placeholder="0.4162"></div>
+          <div class="field"><label>Longitude</label><input type="number" step="0.0001" id="site-modal-lng" placeholder="9.4673"></div>
+        </div>
+        <div class="field"><label>Capacité (optionnel)</label><input type="number" id="site-modal-capacite" placeholder="5000"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-save-site">💾 Enregistrer</button>
+        <button class="btn btn-secondary" id="btn-cancel-site">Annuler</button>
+        <button class="btn btn-danger" id="btn-delete-site" style="display:none">🗑️ Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <div class="mobile-nav">
   <button class="mn-btn active" id="mnav-dashboard"><span class="mn-icon">📊</span><span>Dashboard</span></button>
@@ -1019,6 +1166,8 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
   <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
   <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
+  <button class="mn-btn" id="mnav-sites"><span class="mn-icon">🗺️</span><span>Sites</span></button>
+  <button class="mn-btn" id="mnav-actualites"><span class="mn-icon">📰</span><span>Actu</span></button>
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
 </div>
 

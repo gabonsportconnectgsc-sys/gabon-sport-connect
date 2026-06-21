@@ -36,6 +36,34 @@
       --shadow-lg:0 8px 40px rgba(0,0,0,.14);
       --nav-h:64px;
     }
+    /* ── FILIGRANE SPORTIF DISCRET ── */
+    .card,.dash-card,.search-panel,.users-table-wrap,.adm-section,.report-card,.legal-pane,.modal-card,.modal,.import-maps-section{position:relative;}
+    .card::before,.dash-card::before,.search-panel::before,.users-table-wrap::before,.adm-section::before,.report-card::before,.legal-pane::before,.modal-card::before,.modal::before,.import-maps-section::before{
+      content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
+      opacity:.05;background-repeat:no-repeat;background-position:bottom right;background-size:130px 130px;
+    }
+    .card>*,.dash-card>*,.search-panel>*,.users-table-wrap>*,.adm-section>*,.report-card>*,.legal-pane>*,.modal-card>*,.modal>*,.import-maps-section>*{position:relative;z-index:1;}
+    .card:nth-of-type(4n+1)::before,.dash-card:nth-of-type(4n+1)::before,.adm-section:nth-of-type(4n+1)::before,.report-card:nth-of-type(4n+1)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cellipse cx='100' cy='100' rx='90' ry='55' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='100' cy='100' rx='60' ry='35' fill='none' stroke='%230A1628' stroke-width='4'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n+2)::before,.dash-card:nth-of-type(4n+2)::before,.adm-section:nth-of-type(4n+2)::before,.report-card:nth-of-type(4n+2)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cline x1='100' y1='0' x2='100' y2='200' stroke='%230A1628' stroke-width='5'/%3E%3Ccircle cx='100' cy='100' r='40' fill='none' stroke='%230A1628' stroke-width='5'/%3E%3Ccircle cx='100' cy='100' r='4' fill='%230A1628'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n+3)::before,.dash-card:nth-of-type(4n+3)::before,.adm-section:nth-of-type(4n+3)::before,.report-card:nth-of-type(4n+3)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cellipse cx='70' cy='110' rx='38' ry='48' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='40' cy='80' rx='16' ry='20' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='140' cy='110' rx='38' ry='48' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cellipse cx='170' cy='80' rx='16' ry='20' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3C/svg%3E");
+    }
+    .card:nth-of-type(4n)::before,.dash-card:nth-of-type(4n)::before,.adm-section:nth-of-type(4n)::before,.report-card:nth-of-type(4n)::before{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='95' cy='40' r='14' fill='%230A1628'/%3E%3Cpath d='M95 54 L100 110 L60 150 M100 110 L150 95 M100 80 L60 70 M100 80 L140 60 M100 110 L130 165' stroke='%230A1628' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+    .search-panel::before,.modal-card::before,.modal::before{
+      background-size:160px 160px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect x='40' y='40' width='120' height='120' fill='none' stroke='%230A1628' stroke-width='5'/%3E%3Cline x1='40' y1='70' x2='160' y2='70' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='40' y1='100' x2='160' y2='100' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='40' y1='130' x2='160' y2='130' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='70' y1='40' x2='70' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='100' y1='40' x2='100' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3Cline x1='130' y1='40' x2='130' y2='160' stroke='%230A1628' stroke-width='3'/%3E%3C/svg%3E");
+    }
+    .users-table-wrap::before,.legal-pane::before,.import-maps-section::before{
+      background-size:150px 150px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='80' r='28' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3Cpath d='M40 170 Q100 110 160 170' fill='none' stroke='%230A1628' stroke-width='6'/%3E%3C/svg%3E");
+    }
+
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:var(--font-body);background:var(--gray-bg);color:var(--navy);min-height:100vh;}
     ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--gray-bg);}::-webkit-scrollbar-thumb{background:var(--green);border-radius:3px;}
@@ -828,6 +856,12 @@
       <button class="side-menu-item" id="side-menu-admin" onclick="showView('admin');closeMenu()" style="display:none;"><span class="smi-ico">⚙️</span>Administration</button>
       <button class="side-menu-item" onclick="showView('legal');closeMenu()"><span class="smi-ico">📜</span>Mentions légales & CGU</button>
     </nav>
+    <div class="side-menu-divider"></div>
+    <div class="side-menu-section">
+      <div style="font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;padding:6px 12px 4px;">Accès direct</div>
+      <button class="side-menu-item" onclick="window.location.href='index.html'"><span class="smi-ico">🏠</span>Application (index.html)</button>
+      <button class="side-menu-item" onclick="window.location.href='admin.html'"><span class="smi-ico">⚙️</span>Console Admin (admin.html)</button>
+    </div>
     <div class="side-menu-divider"></div>
     <div class="side-menu-section">
       <button class="side-menu-item" id="side-menu-notif" onclick="togglePushNotifications()">
