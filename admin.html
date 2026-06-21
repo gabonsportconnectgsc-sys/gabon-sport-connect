@@ -747,6 +747,12 @@ tr.is-demo-row td { opacity: .82; }
             <button class="btn-action green">👥 Gérer les joueurs</button>
             <button class="btn-action blue">➕ Ajouter un match</button>
             <button class="btn-action outline">📅 Voir les matchs</button>
+            <button class="btn-action outline">📸 Photos &amp; Logos</button>
+            <button class="btn-action outline">📈 Voir les rapports</button>
+            <button class="btn-action outline">📁 Documents</button>
+            <button class="btn-action outline">🌍 Vérification internationale</button>
+            <button class="btn-action outline">📷 Scanner un QR code</button>
+            <button class="btn-action outline">🌐 Ouvrir l'application publique</button>
           </div></div>
         </div>
 
@@ -1440,6 +1446,7 @@ tr.is-demo-row td { opacity: .82; }
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById('rapports');
     if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
@@ -1556,6 +1563,7 @@ tr.is-demo-row td { opacity: .82; }
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById('verification');
     if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
@@ -1866,6 +1874,7 @@ tr.is-demo-row td { opacity: .82; }
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById('qrscan');
     if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));

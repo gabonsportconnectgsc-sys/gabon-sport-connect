@@ -3985,6 +3985,8 @@ function showView(name){
   const be=document.getElementById('bnav-'+name);
   if(ve) ve.classList.add('active');
   if(be) be.classList.add('active');
+  window.scrollTo({top:0,left:0,behavior:'auto'});
+  if(ve) ve.scrollTop=0;
   if(name==='profil') renderProfile();
   if(name==='annuaire'){
     if(!allActors.length) loadActors();
@@ -4020,6 +4022,7 @@ function switchAdminTab(tab){
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('admin-section-'+tab)?.classList.add('active');
   event.target.classList.add('active');
+  window.scrollTo({top:0,left:0,behavior:'auto'});
   if(tab==='sites') loadAdminSites();
   if(tab==='news') renderNews();
   if(tab==='import') setTimeout(()=>initOsmMap(),200);
