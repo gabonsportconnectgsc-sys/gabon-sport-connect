@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gsc-v2';
+const CACHE_NAME = 'gsc-v3';
 const URLS_TO_CACHE = [
   './',
   './index.html',
