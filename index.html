@@ -17,28 +17,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script>
-    // ── GSC QR LIB RESILIENCE ──
-    // Si le CDN principal échoue (réseau lent, bloqué, etc.), on retente avec un
-    // miroir CDN différent avant d'abandonner. Émet 'qrlib-ready' une fois prêt.
-    (function(){
-      function fireReady(){ document.dispatchEvent(new Event('qrlib-ready')); }
-      if (typeof window.QRCode !== 'undefined'){ fireReady(); return; }
-      var fallback = document.createElement('script');
-      fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-      fallback.onload = fireReady;
-      fallback.onerror = function(){ console.warn('GSC: librairie QR indisponible (CDN principal + secours)'); };
-      window.addEventListener('DOMContentLoaded', function(){
-        if (typeof window.QRCode === 'undefined'){
-          document.head.appendChild(fallback);
-        } else {
-          fireReady();
-        }
-      });
-    })();
-  </script>
-  <!-- jsQR — décodage de QR code via la caméra pour l'outil de scan -->
+  <!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
+       jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
@@ -2506,6 +2486,56 @@ function searchAnnuaire(){
   renderActors(filtered);
 }
 
+// ── Regroupement secondaire intelligent selon le filtre actif ──
+// Joueurs → par club | Arbitres/Entraîneurs → par niveau de championnat
+// Clubs → par division | Organisateurs/Indépendants → par province/ville | etc.
+const NIVEAU_ORDER=['International','National','Regional','Amateur'];
+const SECONDARY_GROUP_CONFIG={
+  joueur:{ getKey:a=>a.club||a.nomOrganisation, label:v=>'🏟️ '+v, fallback:'Sans club' },
+  entraineur:{ getKey:a=>a.niveau, label:v=>'🏆 Niveau '+v, fallback:'Niveau non précisé', order:NIVEAU_ORDER },
+  arbitre:{ getKey:a=>a.niveau, label:v=>'🏆 Niveau '+v, fallback:'Niveau non précisé', order:NIVEAU_ORDER },
+  club:{ getKey:a=>a.division||a.niveau, label:v=>'📊 Division '+v, fallback:'Division non précisée', order:NIVEAU_ORDER },
+  organisateur:{ getKey:a=>a.province||a.ville, label:v=>'📍 '+v, fallback:'Localisation non précisée' },
+  independant:{ getKey:a=>a.province||a.ville, label:v=>'📍 '+v, fallback:'Localisation non précisée' },
+  association:{ getKey:a=>a.province||a.ville, label:v=>'📍 '+v, fallback:'Localisation non précisée' },
+  federation:{ getKey:a=>a.niveau||'National', label:v=>'🏛️ '+v, fallback:'Niveau non précisé', order:NIVEAU_ORDER },
+  eleve_etudiant:{ getKey:a=>a.etablissement, label:v=>'🎓 '+v, fallback:'Établissement non précisé' },
+  sportif_etranger:{ getKey:a=>a.nationalite, label:v=>'🌍 '+v, fallback:'Nationalité non précisée' },
+  supporter:{ getKey:a=>a.club||a.ville, label:v=>'💗 '+v, fallback:'Non précisé' }
+};
+
+function buildSecondaryGroups(actorsList, role){
+  const cfg=SECONDARY_GROUP_CONFIG[role];
+  if(!cfg) return null;
+  const buckets={};
+  actorsList.forEach(a=>{
+    const raw=(cfg.getKey(a)||'').toString().trim();
+    const key=raw||cfg.fallback;
+    (buckets[key]=buckets[key]||[]).push(a);
+  });
+  const keys=Object.keys(buckets);
+  if(keys.length<=1) return null; // un seul bloc homogène : pas utile d'afficher un en-tête
+  if(cfg.order){
+    keys.sort((x,y)=>{
+      const ix=cfg.order.indexOf(x), iy=cfg.order.indexOf(y);
+      if(ix===-1&&iy===-1) return x.localeCompare(y,'fr');
+      if(ix===-1) return 1;
+      if(iy===-1) return -1;
+      return ix-iy;
+    });
+  } else {
+    keys.sort((x,y)=> x===cfg.fallback?1:(y===cfg.fallback?-1:x.localeCompare(y,'fr')));
+  }
+  return keys.map(k=>({
+    label:cfg.label(k),
+    items:buckets[k].sort((a,b)=>{
+      const an=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ');
+      const bn=[b.prenom,b.nom,b.nomOrganisation].filter(Boolean).join(' ');
+      return an.localeCompare(bn,'fr');
+    })
+  }));
+}
+
 function renderActors(actors){
   window._lastRenderedActors = actors;
   const grid=document.getElementById('actors-grid');
@@ -2593,7 +2623,23 @@ function renderActors(actors){
       });
       grid.innerHTML=html;
     } else {
-      grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>renderRow(a,idx)).join('')+`</div>`;
+      const sGroups=buildSecondaryGroups(actors, currentActorType);
+      if(sGroups){
+        let gHtml='';
+        orderedActors=[];
+        sGroups.forEach((g,gi)=>{
+          gHtml+=`<div class="actors-group-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;margin-top:10px;">
+            <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">${g.label}</span>
+            <span style="font-size:11px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-radius:12px;padding:2px 9px;">${g.items.length}</span>
+          </div>`;
+          gHtml+=`<div class="actors-compact-list">`+g.items.map((a,i)=>renderRow(a,'sg'+gi+'_'+i)).join('')+`</div>`;
+          orderedActors=orderedActors.concat(g.items);
+        });
+        grid.innerHTML=gHtml;
+      } else {
+        grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>renderRow(a,idx)).join('')+`</div>`;
+        orderedActors=actors;
+      }
     }
 
     // Generate mini QR codes
@@ -2603,15 +2649,9 @@ function renderActors(actors){
       // idx ici n'est pas utilisé pour les groupes (ids déjà posés via 'g'+role+i) — on régénère par sélecteur data
     });
     // QR codes : reciblage via les canvases réellement présents dans le DOM
-    (function renderMiniQrCodes(retryCount){
-      retryCount = retryCount || 0;
+    (function renderMiniQrCodes(){
       const canvases = document.querySelectorAll('#actors-grid canvas[id^="qr-canvas-mini-"]');
       if(!canvases.length) return;
-      if(typeof QRCode === 'undefined' && retryCount < 15){
-        // Librairie pas encore chargée : on retente pendant ~3s avant d'afficher un repli
-        setTimeout(()=>renderMiniQrCodes(retryCount+1), 200);
-        return;
-      }
       canvases.forEach(canvas=>{
         const rowEl=canvas.closest('.actor-compact-row');
         const onclickAttr=rowEl?.getAttribute('onclick')||'';
@@ -2619,21 +2659,13 @@ function renderActors(actors){
         const id=m?m[1]:null;
         if(!id) return;
         const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
-        if(typeof QRCode!=='undefined'){
-          try{QRCode.toCanvas(canvas,url,{width:28,margin:0,color:{dark:'#0A1628',light:'#ffffff'}});}catch(e){
-            const ctx=canvas.getContext('2d');
-            if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
-          }
-        } else {
-          const ctx=canvas.getContext('2d');
-          if(ctx){ctx.fillStyle='#e2e8f0';ctx.fillRect(0,0,28,28);ctx.fillStyle='#64748b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('QR',14,18);}
-        }
+        drawQrOnCanvas(canvas, url, 28);
       });
     })();
   } else {
     // ── MODE GRILLE (défaut) ──
     grid.style.display='';
-    grid.innerHTML=actors.map(a=>{
+    const cardHtml=a=>{
       const id=a.uid||a.id;
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
@@ -2662,7 +2694,17 @@ function renderActors(actors){
             ${a.nationalite?`<div class="actor-meta-row">🌍 ${a.nationalite}${a.statutPro?' · '+a.statutPro:''}</div>`:''}
           </div>
         </div>`;
-    }).join('');
+    };
+    const sGroupsGrid=buildSecondaryGroups(actors, currentActorType);
+    if(sGroupsGrid){
+      grid.innerHTML=sGroupsGrid.map(g=>`<div class="actors-group-header" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:10px 4px 6px;margin-top:6px;">
+          <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">${g.label}</span>
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-radius:12px;padding:2px 9px;">${g.items.length}</span>
+        </div>`+g.items.map(cardHtml).join('')
+      ).join('');
+    } else {
+      grid.innerHTML=actors.map(cardHtml).join('');
+    }
   }
 }
 
@@ -5481,40 +5523,26 @@ function buildQrUrl(uid){
   return `${base}?actor=${uid}`;
 }
 
-function drawQrOnCanvas(canvas, text, size, _attempt){
+function drawQrOnCanvas(canvas, text, size){
   if(!canvas) return;
   canvas.width = size; canvas.height = size;
-  _attempt = _attempt || 0;
-  if(typeof QRCode === 'undefined'){
-    // Librairie pas encore chargée : on patiente (jusqu'à ~3s) avant d'afficher un repli visuel
-    if(_attempt < 15){
-      setTimeout(()=>drawQrOnCanvas(canvas, text, size, _attempt+1), 200);
-      return;
-    }
-    const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
+  const fallback = () => {
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
     ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
     ctx.textAlign = 'center';
     ctx.fillText('QR GSC', size/2, size/2 - 6);
-    return;
-  }
-  try{
-    QRCode.toCanvas(canvas, text, { width:size, margin:1, color:{ dark:'#0A1628', light:'#ffffff' } }, (err)=>{
-      if(err){
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
-        ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('QR GSC', size/2, size/2 - 6);
-      }
-    });
-  }catch(e){
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size,size);
-    ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size*.09)}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillText('QR GSC', size/2, size/2 - 6);
-  }
+  };
+  // Génération via image distante (api.qrserver.com, CORS activé) : pas de
+  // dépendance à une lib JS tierce, donc pas de risque de collision de nom
+  // global ni d'échec de chargement CDN.
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(text)}`;
+  canvas.dataset.qrImgUrl = qrUrl; // dispo immédiatement pour impression/téléchargement
+  const qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = () => { ctx.clearRect(0,0,size,size); ctx.drawImage(qrImg, 0, 0, size, size); };
+  qrImg.onerror = fallback;
+  qrImg.src = qrUrl;
 }
 
 // ─── Show GSC ID + QR button in own profile ───
@@ -5560,13 +5588,26 @@ function printProfileQr(){
   pz.style.display = 'flex';
   setTimeout(()=>{ window.print(); setTimeout(()=>{ pz.style.display = 'none'; }, 800); }, 300);
 }
-function downloadProfileQr(){
+async function downloadProfileQr(){
   const canvas = document.getElementById('qr-prof-canvas');
   const name = document.getElementById('qr-prof-name').textContent.replace(/\s+/g,'_');
-  const link = document.createElement('a');
-  link.download = `QR_GSC_${name}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  const qrUrl = canvas?.dataset.qrImgUrl;
+  if(!qrUrl) return;
+  try{
+    // Téléchargement via blob : fiable même pour une image cross-origin
+    // (l'attribut download seul est ignoré par la plupart des navigateurs
+    // sur une URL distante).
+    const res = await fetch(qrUrl);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `QR_GSC_${name}.png`;
+    link.href = blobUrl;
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(blobUrl), 4000);
+  }catch(e){
+    window.open(qrUrl, '_blank');
+  }
 }
 
 // ─── QR mini dans les fiches acteurs (actor detail modal) ───

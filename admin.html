@@ -15,21 +15,8 @@
 <!-- Chart.js (requis par l'onglet Rapports) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-<!-- QR Code — génération (identification des membres) + jsQR (scan caméra) -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script>
-  // ── GSC QR LIB RESILIENCE (admin) ──
-  (function(){
-    if (typeof window.QRCode !== 'undefined') return;
-    window.addEventListener('DOMContentLoaded', function(){
-      if (typeof window.QRCode === 'undefined'){
-        var fb = document.createElement('script');
-        fb.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-        document.head.appendChild(fb);
-      }
-    });
-  })();
-</script>
+<!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
+     jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 
 <style>
@@ -1364,22 +1351,26 @@ tr.is-demo-row td { opacity: .82; }
     return `${base}?actor=${uid}`;
   }
 
-  function drawQrOnCanvas(canvas, text, size, attempt) {
+  function drawQrOnCanvas(canvas, text, size) {
     if (!canvas) return;
-    attempt = attempt || 0;
     canvas.width = size; canvas.height = size;
-    if (typeof QRCode === 'undefined') {
-      if (attempt < 15) { setTimeout(() => drawQrOnCanvas(canvas, text, size, attempt + 1), 200); return; }
-      const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+    const fallback = () => {
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size * .14)}px monospace`;
       ctx.textAlign = 'center';
       ctx.fillText('QR', size / 2, size / 2 + 4);
-      return;
-    }
-    try {
-      QRCode.toCanvas(canvas, text, { width: size, margin: 1, color: { dark: '#0A1628', light: '#ffffff' } }, () => {});
-    } catch (e) { /* repli silencieux */ }
+    };
+    // Génération via image distante (api.qrserver.com, CORS activé) :
+    // pas de dépendance à une lib JS tierce, donc pas de risque de collision
+    // de nom global ni d'échec de chargement CDN.
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(text)}`;
+    canvas.dataset.qrImgUrl = qrUrl; // dispo immédiatement pour impression/téléchargement, sans attendre le chargement
+    const qrImg = new Image();
+    qrImg.crossOrigin = 'anonymous';
+    qrImg.onload = () => { ctx.clearRect(0, 0, size, size); ctx.drawImage(qrImg, 0, 0, size, size); };
+    qrImg.onerror = fallback;
+    qrImg.src = qrUrl;
   }
 
   /* Lit le même cache que le module Rapports — fusion réel + démo (seed-data.js) */
@@ -1440,18 +1431,32 @@ tr.is-demo-row td { opacity: .82; }
         <div style="font-size:13px;font-weight:800;letter-spacing:1px;margin-bottom:6px;">GABON SPORT CONNECT</div>
         <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${name}</div>
         <div style="font-size:12px;color:#64748b;margin-bottom:16px;">${ROLE_LABELS_QR[role] || role}</div>
-        <img src="${canvas.toDataURL('image/png')}" style="width:220px;height:220px;">
+        <img src="${canvas.dataset.qrImgUrl}" style="width:220px;height:220px;">
         <div style="font-family:monospace;font-weight:700;color:#009E60;margin-top:14px;letter-spacing:.8px;">${gscId}</div>
       </body></html>`);
       w.document.close();
       setTimeout(() => w.print(), 300);
     };
-    if (dlBtn) dlBtn.onclick = () => {
+    if (dlBtn) dlBtn.onclick = async () => {
       const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ').replace(/\s+/g, '_') || uid.slice(0, 8);
-      const link = document.createElement('a');
-      link.download = `QR_GSC_${name}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const qrUrl = canvas.dataset.qrImgUrl;
+      if (!qrUrl) return;
+      try {
+        // Téléchargement via blob : fiable même pour une image cross-origin
+        // (l'attribut download seul est ignoré par la plupart des navigateurs
+        // sur une URL distante).
+        const res = await fetch(qrUrl);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `QR_GSC_${name}.png`;
+        link.href = blobUrl;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+      } catch (e) {
+        // Repli : ouvrir l'image dans un nouvel onglet si le fetch échoue (réseau, etc.)
+        window.open(qrUrl, '_blank');
+      }
     };
   }
   window.gscInjectModalQr = injectModalQr;
