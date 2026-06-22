@@ -1055,7 +1055,17 @@
     </div>
   </div>
 
-  <!-- MAIN -->
+  <!-- ══ MODAL: COMPLÉTER LE PROFIL (forcé à la première connexion si nom/prénom manquants) ══ -->
+  <div class="modal" id="modal-complete-profile">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-title" style="margin-bottom:6px;">👋 Bienvenue !</div>
+      <p style="font-size:12.5px;color:var(--gray-txt);margin-bottom:16px;">Quelques infos avant de continuer — vos nom et prénom apparaîtront sur votre fiche et votre QR code d'identification.</p>
+      <div class="form-group"><label>Prénom *</label><input type="text" id="complete-profile-prenom" placeholder="Prénom"></div>
+      <div class="form-group"><label>Nom *</label><input type="text" id="complete-profile-nom" placeholder="Nom"></div>
+      <button class="btn-sm" id="complete-profile-submit" onclick="handleCompleteProfile()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Continuer</button>
+      <div id="complete-profile-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+    </div>
+  </div>
   <main class="main-content">
 
     <!-- ── DASHBOARD ── -->
@@ -2510,13 +2520,32 @@ async function handleSupabaseLogin(){
     toast('Connexion réussie !','success');
     await onSupabaseSignedIn(data.user);
   }catch(e){
-    errEl.textContent = supabaseAuthErrorMessage(e);
-    errEl.style.display='block';
+    const msg=(e&&e.message)||'';
+    if(/email not confirmed/i.test(msg)){
+      errEl.innerHTML = 'Veuillez confirmer votre email avant de vous connecter. <a onclick="handleResendConfirmation(\''+email.replace(/'/g,"\\'")+'\')" style="text-decoration:underline;cursor:pointer;color:var(--green-dk);">Renvoyer l\'email</a>';
+      errEl.style.display='block';
+    }else{
+      errEl.textContent = supabaseAuthErrorMessage(e);
+      errEl.style.display='block';
+    }
   }finally{
     btn.disabled=false; btn.textContent='Se connecter';
   }
 }
 window.handleSupabaseLogin=handleSupabaseLogin;
+
+async function handleResendConfirmation(email){
+  const errEl=document.getElementById('auth-login-error');
+  if(!window._sb || !email) return;
+  try{
+    const {error}=await window._sb.auth.resend({type:'signup', email});
+    if(error) throw error;
+    errEl.innerHTML = '✅ Email de confirmation renvoyé. Vérifiez votre boîte de réception.';
+  }catch(e){
+    errEl.innerHTML = 'Impossible de renvoyer l\'email pour le moment.';
+  }
+}
+window.handleResendConfirmation=handleResendConfirmation;
 
 async function handleSupabaseRegister(){
   const errEl=document.getElementById('auth-register-error');
@@ -2634,7 +2663,44 @@ async function onSupabaseSignedIn(user, extra){
     await enregistrerConnexion({uid:user.id, email:user.email, displayName:fullname||user.email});
   }catch(e){}
   enterApp();
+  checkProfileCompletion();
 }
+
+// Affiche le modal "Complétez votre profil" si prénom/nom manquent (compte nouveau ou ancien incomplet)
+function checkProfileCompletion(){
+  if(!userProfile) return;
+  if(!userProfile.prenom?.trim() || !userProfile.nom?.trim()){
+    document.getElementById('complete-profile-prenom').value = userProfile.prenom || '';
+    document.getElementById('complete-profile-nom').value = userProfile.nom || '';
+    document.getElementById('complete-profile-error').style.display='none';
+    document.getElementById('modal-complete-profile').classList.add('open');
+  }
+}
+
+async function handleCompleteProfile(){
+  const errEl=document.getElementById('complete-profile-error');
+  errEl.style.display='none';
+  const prenom=document.getElementById('complete-profile-prenom').value.trim();
+  const nom=document.getElementById('complete-profile-nom').value.trim();
+  if(!prenom||!nom){ errEl.textContent='Le prénom et le nom sont requis.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('complete-profile-submit');
+  btn.disabled=true; btn.textContent='Enregistrement…';
+  try{
+    if(db && typeof updateDoc==='function' && userProfile?.uid){
+      await updateDoc(doc(db,'users',userProfile.uid),{prenom,nom});
+    }
+    userProfile.prenom=prenom; userProfile.nom=nom;
+    closeModal('modal-complete-profile');
+    renderDashboard();
+    toast('Profil mis à jour !','success');
+  }catch(e){
+    errEl.textContent='Impossible d\'enregistrer pour le moment. Réessayez.';
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Continuer';
+  }
+}
+window.handleCompleteProfile=handleCompleteProfile;
 
 // Restaure la session au chargement de la page (utilisateur déjà connecté précédemment)
 async function checkSupabaseSession(){

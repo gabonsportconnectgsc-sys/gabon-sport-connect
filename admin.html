@@ -2004,6 +2004,8 @@ tr.is-demo-row td { opacity: .82; }
     }catch(e){
       const msg=(e&&e.message)||'';
       if(/invalid login credentials/i.test(msg)) errEl.textContent='Email ou mot de passe incorrect.';
+      else if(/email not confirmed/i.test(msg)) errEl.textContent='Ce compte n\'a pas confirmé son email.';
+      else if(/rate limit/i.test(msg)) errEl.textContent='Trop de tentatives. Réessayez dans quelques minutes.';
       else errEl.textContent = msg || 'Connexion impossible. Réessayez.';
       errEl.style.display='block';
     }finally{
