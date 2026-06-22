@@ -2688,15 +2688,29 @@ async function handleCompleteProfile(){
   const btn=document.getElementById('complete-profile-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
   try{
-    if(db && typeof updateDoc==='function' && userProfile?.uid){
-      await updateDoc(doc(db,'users',userProfile.uid),{prenom,nom});
+    if(db && typeof setDoc==='function' && userProfile?.uid){
+      // setDoc avec merge:true crée le document s'il n'existe pas encore (cas nouvel utilisateur)
+      // updateDoc échouerait si le document est absent → remplacé par setDoc+merge
+      await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
     }
     userProfile.prenom=prenom; userProfile.nom=nom;
     closeModal('modal-complete-profile');
     renderDashboard();
     toast('Profil mis à jour !','success');
   }catch(e){
-    errEl.textContent='Impossible d\'enregistrer pour le moment. Réessayez.';
+    console.error('[GSC] handleCompleteProfile error:', e?.code, e?.message);
+    if(e?.code==='permission-denied'){
+      errEl.textContent='Accès refusé par Firestore. Vérifiez les règles de sécurité.';
+    } else if(!db || typeof setDoc!=='function'){
+      // Firestore indisponible : on sauvegarde quand même localement
+      userProfile.prenom=prenom; userProfile.nom=nom;
+      closeModal('modal-complete-profile');
+      renderDashboard();
+      toast('Profil mis à jour localement (mode hors-ligne).','info');
+      return;
+    } else {
+      errEl.textContent='Impossible d\'enregistrer pour le moment. Réessayez.';
+    }
     errEl.style.display='block';
   }finally{
     btn.disabled=false; btn.textContent='Continuer';
