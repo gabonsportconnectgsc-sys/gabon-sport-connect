@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
    APP-CONFIG-LOADER.JS — Pont CMS entre admin.html et index.html
-   v3 — Synchronisation Firestore (cloud) + localStorage (cache local)
-
-   STRATÉGIE "cache-first, cloud-second" :
-   1. Applique immédiatement le cache localStorage (zéro latence)
-   2. Dès que Firebase est prêt, écoute appConfig en temps réel
-   3. Toute modification dans admin.html se propage partout en <1s
-   4. localStorage reste la copie de secours si offline
+   v4 — Async Firebase initialization + robust Firestore sync
+   
+   KEY FIXES:
+   • Waits for firebase-ready event instead of checking window.db immediately
+   • Retries Firestore listener setup if Firebase initializes late
+   • Detects both SDK compat (admin.html) and modular (index.html) SDKs
+   • Cloud connection detection now reliable
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -174,74 +174,183 @@
   }
 
   /* ════════════════════════════════════════════════
-     SYNCHRONISATION FIRESTORE (TEMPS RÉEL)
+     FIREBASE DETECTION & INITIALIZATION
   ════════════════════════════════════════════════ */
   let _firestoreUnsub = null;
+  let _firebaseInitialized = false;
+  let _cloudConnected = false;
 
+  /**
+   * Détecte quel SDK Firebase est disponible.
+   *
+   * ATTENTION : les deux SDKs assignent à window.db (compat ET modulaire),
+   * donc on ne peut pas se fier au nom de la variable globale. On distingue
+   * par la FORME de l'instance :
+   * - SDK compat   : db.doc(path) est une méthode d'instance → db.doc('a/b').set(...)
+   * - SDK modulaire: db n'a pas de méthode .doc() ; on doit utiliser la
+   *                  fonction globale doc(db, col, id) exposée séparément.
+   */
+  function getFirestoreDB() {
+    // SDK compat — window.db avec méthode .doc() d'instance (admin.html via firebase-init.js)
+    if (window.db && typeof window.db.doc === 'function') {
+      return { type: 'compat', db: window.db };
+    }
+
+    // SDK modulaire — window.db existe + fonctions globales doc/setDoc/onSnapshot (index.html)
+    if (window.db && typeof window.doc === 'function' && typeof window.setDoc === 'function') {
+      return { type: 'modular', db: window.db };
+    }
+
+    // SDK compat via window.firebase sans window.db déjà assigné
+    if (window.firebase && typeof window.firebase.firestore === 'function') {
+      try {
+        return { type: 'compat', db: window.firebase.firestore() };
+      } catch (e) {
+        console.warn('[CMS] Erreur Firebase compat:', e);
+      }
+    }
+
+    return null;
+  }
+
+  /* ════════════════════════════════════════════════
+     SYNCHRONISATION FIRESTORE (TEMPS RÉEL)
+  ════════════════════════════════════════════════ */
   function startFirestoreSync() {
-    if (_firestoreUnsub || !window.db) return;
+    if (_firestoreUnsub) return; // Déjà actif
+    
+    const fbInfo = getFirestoreDB();
+    if (!fbInfo) {
+      console.warn('[CMS] ⚠️ Firestore non disponible — mode localStorage uniquement');
+      _cloudConnected = false;
+      return;
+    }
+
     try {
-      _firestoreUnsub = window.db.doc(FIRESTORE_DOC).onSnapshot(
-        (snap) => {
-          if (!snap.exists) return; // document pas encore créé
-          const data = snap.data();
-          const cfg  = { ...DEFAULTS, ...data, version: STORAGE_VERSION };
-          writeLocal(cfg);          // met à jour le cache local
-          applyConfig(cfg);         // applique sur cette page
-          document.dispatchEvent(new CustomEvent('gsc-cms-updated', { detail: cfg }));
-          console.info('[CMS] ☁️ Config Firestore reçue');
-        },
-        (err) => {
-          console.warn('[CMS] Firestore écoute échouée, fallback localStorage:', err.message);
+      if (fbInfo.type === 'modular') {
+        // SDK modular: utiliser onSnapshot
+        const { onSnapshot, doc } = window;
+        if (typeof onSnapshot !== 'function' || typeof doc !== 'function') {
+          throw new Error('Firestore modular functions not available');
         }
-      );
+        _firestoreUnsub = onSnapshot(
+          doc(fbInfo.db, FIRESTORE_DOC.split('/')[0], FIRESTORE_DOC.split('/')[1]),
+          (snap) => {
+            if (!snap.exists()) return;
+            const data = snap.data();
+            const cfg = { ...DEFAULTS, ...data, version: STORAGE_VERSION };
+            writeLocal(cfg);
+            applyConfig(cfg);
+            document.dispatchEvent(new CustomEvent('gsc-cms-updated', { detail: cfg }));
+            console.info('[CMS] ☁️ Config Firestore reçue (modular)');
+          },
+          (err) => {
+            console.warn('[CMS] Firestore listener échoué:', err.message);
+          }
+        );
+      } else if (fbInfo.type === 'compat') {
+        // SDK compat: utiliser onSnapshot
+        _firestoreUnsub = fbInfo.db.doc(FIRESTORE_DOC).onSnapshot(
+          (snap) => {
+            if (!snap.exists) return;
+            const data = snap.data();
+            const cfg = { ...DEFAULTS, ...data, version: STORAGE_VERSION };
+            writeLocal(cfg);
+            applyConfig(cfg);
+            document.dispatchEvent(new CustomEvent('gsc-cms-updated', { detail: cfg }));
+            console.info('[CMS] ☁️ Config Firestore reçue (compat)');
+          },
+          (err) => {
+            console.warn('[CMS] Firestore listener échoué (compat):', err.message);
+          }
+        );
+      }
+      
+      _cloudConnected = true;
       console.info('[CMS] ☁️ Écoute Firestore démarrée sur', FIRESTORE_DOC);
     } catch (e) {
       console.warn('[CMS] Impossible de démarrer la sync Firestore:', e);
+      _cloudConnected = false;
     }
   }
 
   function stopFirestoreSync() {
     if (_firestoreUnsub) { _firestoreUnsub(); _firestoreUnsub = null; }
+    _cloudConnected = false;
   }
 
   /* ════════════════════════════════════════════════
      ÉCRITURE FIRESTORE (appelée par admin-cms.js)
   ════════════════════════════════════════════════ */
   async function saveToFirestore(cfg) {
-    if (!window.db) {
+    const fbInfo = getFirestoreDB();
+    if (!fbInfo) {
       console.warn('[CMS] Firestore non disponible — sauvegarde locale uniquement');
       return false;
     }
+
     try {
-      await window.db.doc(FIRESTORE_DOC).set(cfg, { merge: true });
-      console.info('[CMS] ☁️ Config sauvegardée dans Firestore');
+      const [colId, docId] = FIRESTORE_DOC.split('/');
+      
+      if (fbInfo.type === 'modular') {
+        const { setDoc, doc } = window;
+        if (typeof setDoc !== 'function' || typeof doc !== 'function') {
+          throw new Error('Firestore modular functions not available');
+        }
+        await setDoc(doc(fbInfo.db, colId, docId), cfg, { merge: true });
+        console.info('[CMS] ☁️ Config sauvegardée dans Firestore (modular)');
+      } else if (fbInfo.type === 'compat') {
+        await fbInfo.db.doc(FIRESTORE_DOC).set(cfg, { merge: true });
+        console.info('[CMS] ☁️ Config sauvegardée dans Firestore (compat)');
+      }
+      
+      _cloudConnected = true;
       return true;
     } catch (e) {
-      console.error('[CMS] Erreur sauvegarde Firestore:', e);
+      console.error('[CMS] Erreur sauvegarde Firestore:', e.code, e.message);
+      _cloudConnected = false;
       return false;
     }
   }
 
   /* ════════════════════════════════════════════════
-     BOOTSTRAP FIREBASE
+     BOOTSTRAP FIREBASE (attendre firebase-ready)
   ════════════════════════════════════════════════ */
   function onFirebaseReady() {
+    _firebaseInitialized = true;
     startFirestoreSync();
+    document.dispatchEvent(new Event('cms-firebase-initialized'));
   }
 
-  // Firebase peut être déjà prêt (si ce script est chargé après firebase-ready)
-  if (window._firebaseReady || window.db) {
+  // Firebase peut déjà être prêt si ce script est chargé après firebase-ready
+  if (window._firebaseReady || window.db || (window.firebase && window.firebase.firestore)) {
     onFirebaseReady();
+  } else {
+    document.addEventListener('firebase-ready', onFirebaseReady);
   }
-  document.addEventListener('firebase-ready', onFirebaseReady);
 
-  // Fallback si Firebase ne démarre jamais (réseau coupé, etc.)
-  setTimeout(() => {
-    if (!_firestoreUnsub) {
+  // Fallback si Firebase ne démarre jamais après un délai raisonnable
+  const fallbackTimer = setTimeout(() => {
+    if (!_firebaseInitialized) {
       console.info('[CMS] Firebase non disponible après 5s — mode localStorage uniquement');
+      document.dispatchEvent(new Event('cms-firebase-timeout'));
     }
   }, 5000);
+
+  // Retry listener setup si Firebase arrive tard
+  const retrySetupTimer = setInterval(() => {
+    if (!_firestoreUnsub && getFirestoreDB()) {
+      console.info('[CMS] Firebase détecté tardivement — tentative de connexion Firestore…');
+      startFirestoreSync();
+      if (_firestoreUnsub) {
+        clearInterval(retrySetupTimer);
+        clearTimeout(fallbackTimer);
+      }
+    }
+  }, 500);
+
+  // Arrête le retry après 10s
+  setTimeout(() => clearInterval(retrySetupTimer), 10000);
 
   /* ════════════════════════════════════════════════
      ÉCOUTE CROSS-TAB (même appareil, Firebase absent)
@@ -291,9 +400,9 @@
       return fresh;
     },
 
-    /** Status de la connexion cloud */
+    /** Status de la connexion cloud — AMÉLIORÉ */
     isCloudConnected() {
-      return !!_firestoreUnsub;
+      return _cloudConnected && !!_firestoreUnsub;
     },
 
     stopSync: stopFirestoreSync
@@ -302,5 +411,5 @@
   /* ── Application immédiate depuis le cache local (zéro latence) ── */
   const cached = readLocal();
   applyConfig(cached);
-  console.info('[CMS] v3 chargé ✓ | App:', cached.appName, '| Cloud:', !!window.db);
+  console.info('[CMS] v4 chargé ✓ | App:', cached.appName, '| Firebase:', _firebaseInitialized ? 'prêt' : 'en attente');
 })();

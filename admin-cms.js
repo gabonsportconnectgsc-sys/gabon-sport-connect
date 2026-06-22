@@ -14,18 +14,24 @@
     setTimeout(() => waitForCMS(cb, attempt + 1), 100);
   }
 
-  /* ── Helper : save async avec feedback cloud ── */
+  /* ── Helper : save async avec feedback cloud ──
+     v4 : app-config-loader.js gère désormais la détection SDK compat/modulaire
+     et attend correctement l'initialisation Firebase avant le premier save.
+     GSC_CMS.save() rapporte cloud:true/false de façon fiable — plus besoin de
+     fallback Firestore direct ici. ── */
   async function cmsave(partial, successMsg, btn) {
     const origLabel = btn ? btn.textContent : null;
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi cloud…'; }
     try {
       const result = await window.GSC_CMS.save(partial);
-      const cloud  = result && result.cloud;
-      const suffix = cloud ? ' ☁️' : ' (local)';
+      const cloud = result && result.cloud;
+
+      const suffix = cloud ? ' ☁️' : ' (local uniquement — Firestore indisponible)';
       showToastCMS(successMsg + suffix, cloud ? 'success' : 'warn');
       updateCloudBadge();
       updateLastUpdate();
     } catch (e) {
+      console.error('[admin-cms] cmsave error:', e);
       showToastCMS('❌ ' + e.message, 'error');
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = origLabel; }
