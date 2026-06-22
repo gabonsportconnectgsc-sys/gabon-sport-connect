@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription – Gabon Sport Connect</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green:    #1DB954;
+    --green-dk: #15843C;
+    --navy:     #0A0F1E;
+    --navy2:    #141929;
+    --gold:     #C9A84C;
+    --slate:    #8A93A8;
+    --light:    #F4F6FA;
+    --white:    #FFFFFF;
+    --red:      #E63946;
+    --border:   #2A3152;
+    --card-bg:  #161C32;
+    --radius:   12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 64px;
+    background: var(--navy2);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-mark {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--green), var(--green-dk));
+    display: grid; place-items: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 14px; color: var(--white); letter-spacing: 0.5px;
+  }
+  .logo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; line-height: 1.15; color: var(--white); }
+  .logo-text span { color: var(--green); }
+  .nav-back {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--slate); font-size: 13px; text-decoration: none;
+    border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px;
+    transition: color .2s, border-color .2s;
+  }
+  .nav-back:hover { color: var(--white); border-color: var(--slate); }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ── STEP HEADER ── */
+  .step-header { text-align: center; margin-bottom: 36px; }
+  .step-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--green); margin-bottom: 12px;
+  }
+  .step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(28px, 6vw, 42px); font-weight: 800; line-height: 1.1;
+    letter-spacing: 0.5px;
+  }
+  h1 em { font-style: normal; color: var(--green); }
+  .step-sub { color: var(--slate); font-size: 14px; margin-top: 10px; line-height: 1.6; }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 36px;
+  }
+  .p-step {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    position: relative;
+  }
+  .p-step:not(:last-child)::after {
+    content: ''; position: absolute; top: 16px; left: 50%; width: 100%;
+    height: 2px; background: var(--border); z-index: 0;
+  }
+  .p-step.done:not(:last-child)::after,
+  .p-step.active:not(:last-child)::after { background: var(--green); }
+  .p-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 600; position: relative; z-index: 1;
+    background: var(--border); color: var(--slate); transition: all .3s;
+  }
+  .p-step.done .p-num { background: var(--green); color: var(--white); }
+  .p-step.active .p-num { background: var(--green); color: var(--white); box-shadow: 0 0 0 4px rgba(29,185,84,.25); }
+  .p-label { font-size: 11px; color: var(--slate); text-align: center; }
+  .p-step.active .p-label, .p-step.done .p-label { color: var(--white); }
+
+  /* ── ACCOUNT TYPE CARDS ── */
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .type-card {
+    background: var(--card-bg); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 24px 20px;
+    cursor: pointer; transition: border-color .2s, transform .15s;
+    text-align: left;
+  }
+  .type-card:hover { border-color: var(--green); transform: translateY(-2px); }
+  .type-card.selected { border-color: var(--green); background: rgba(29,185,84,.07); }
+  .type-icon {
+    width: 44px; height: 44px; border-radius: 10px; margin-bottom: 14px;
+    display: grid; place-items: center; font-size: 22px;
+  }
+  .type-icon.visitor { background: rgba(138,147,168,.15); }
+  .type-icon.actor  { background: rgba(29,185,84,.15); }
+  .type-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .type-card p  { font-size: 12px; color: var(--slate); line-height: 1.55; }
+  .type-badge {
+    display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .8px;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-top: 12px;
+  }
+  .badge-free { background: rgba(138,147,168,.2); color: var(--slate); }
+  .badge-pro  { background: rgba(201,168,76,.2); color: var(--gold); }
+
+  /* ── ACTOR CATEGORY GRID ── */
+  .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .cat-card {
+    background: var(--card-bg); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 20px 16px;
+    cursor: pointer; transition: border-color .2s, transform .15s; text-align: center;
+  }
+  .cat-card:hover { border-color: var(--green); transform: translateY(-2px); }
+  .cat-card.selected { border-color: var(--green); background: rgba(29,185,84,.07); }
+  .cat-card .cat-icon { font-size: 28px; margin-bottom: 8px; }
+  .cat-card h4 { font-size: 13px; font-weight: 600; }
+
+  /* ── FORMS ── */
+  .form-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px 24px;
+    margin-bottom: 20px;
+  }
+  .form-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 18px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--slate); }
+  .field label .req { color: var(--red); margin-left: 2px; }
+  .field input, .field select, .field textarea {
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 14px;
+    color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(29,185,84,.12);
+  }
+  .field input::placeholder, .field textarea::placeholder { color: var(--border); }
+  .field select { appearance: none; cursor: pointer; }
+  .field select option { background: var(--navy2); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field-hint { font-size: 11px; color: var(--slate); }
+
+  /* position checkboxes */
+  .check-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .check-item {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--navy); border: 1px solid var(--border); border-radius: 20px;
+    padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: border-color .2s, background .2s;
+  }
+  .check-item input { width: 14px; height: 14px; accent-color: var(--green); }
+  .check-item:has(input:checked) { border-color: var(--green); background: rgba(29,185,84,.1); color: var(--green); }
+
+  /* stat sliders */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .stat-item label { display: flex; justify-content: space-between; }
+  .stat-item label span { color: var(--green); font-weight: 600; }
+  .stat-item input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: var(--border); border-radius: 2px; border: none; padding: 0;
+    cursor: pointer;
+  }
+  .stat-item input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--green); cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(29,185,84,.25);
+  }
+
+  /* upload area */
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 28px 20px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: var(--navy);
+  }
+  .upload-zone:hover { border-color: var(--green); background: rgba(29,185,84,.04); }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-zone p { font-size: 13px; color: var(--slate); line-height: 1.5; }
+  .upload-zone strong { color: var(--white); }
+
+  /* contract alert */
+  .alert-box {
+    background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.3);
+    border-radius: 10px; padding: 16px 18px; display: flex; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .alert-box .alert-icon { font-size: 20px; flex-shrink: 0; }
+  .alert-box p { font-size: 13px; color: #d4b96a; line-height: 1.55; }
+  .alert-box strong { color: var(--gold); }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+  .btn {
+    padding: 13px 28px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; font-family: 'Inter', sans-serif;
+  }
+  .btn-primary { background: var(--green); color: var(--white); }
+  .btn-primary:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(29,185,84,.3); }
+  .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--slate); }
+  .btn-full { width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; }
+
+  /* ── SUCCESS ── */
+  .success-card {
+    background: var(--card-bg); border: 1px solid var(--green);
+    border-radius: var(--radius); padding: 40px 32px; text-align: center;
+    display: none;
+  }
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(29,185,84,.15); display: grid; place-items: center;
+    font-size: 32px; margin: 0 auto 20px;
+    border: 2px solid rgba(29,185,84,.3);
+  }
+  .success-card h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+  .success-card p { color: var(--slate); font-size: 14px; line-height: 1.65; max-width: 440px; margin: 0 auto; }
+  .timeline-steps { text-align: left; margin: 24px 0; display: flex; flex-direction: column; gap: 12px; }
+  .t-step {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--navy); border-radius: 8px; padding: 14px 16px;
+  }
+  .t-num { color: var(--green); font-weight: 700; font-size: 15px; flex-shrink: 0; }
+  .t-text { font-size: 13px; color: var(--slate); line-height: 1.5; }
+  .t-text strong { color: var(--white); }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 520px) {
+    .type-grid { grid-template-columns: 1fr; }
+    .cat-grid  { grid-template-columns: repeat(2,1fr); }
+    .field-row { grid-template-columns: 1fr; }
+    .field-row.triple { grid-template-columns: 1fr 1fr; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .btn-row   { flex-direction: column-reverse; }
+    .btn       { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-mark">GSC</div>
+    <div class="logo-text">GABON SPORT<br><span>CONNECT</span></div>
+  </a>
+  <a href="#" class="nav-back">← Retour à l'accueil</a>
+</nav>
+
+<div class="page">
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="p-step active" id="ps1"><div class="p-num">1</div><div class="p-label">Type</div></div>
+    <div class="p-step" id="ps2"><div class="p-num">2</div><div class="p-label">Catégorie</div></div>
+    <div class="p-step" id="ps3"><div class="p-num">3</div><div class="p-label">Profil</div></div>
+    <div class="p-step" id="ps4"><div class="p-num">4</div><div class="p-label">Validation</div></div>
+  </div>
+
+  <!-- SCREEN 1 – Account type -->
+  <div class="screen active" id="screen1">
+    <div class="step-header">
+      <div class="step-eyebrow"><div class="step-dot"></div>Créer un compte</div>
+      <h1>Quel type de compte <em>vous convient</em> ?</h1>
+      <p class="step-sub">Choisissez selon votre rôle dans l'écosystème du sport gabonais.</p>
+    </div>
+
+    <div class="type-grid">
+      <div class="type-card" onclick="selectType('visitor', this)">
+        <div class="type-icon visitor">👁️</div>
+        <h3>Membre Visiteur</h3>
+        <p>Accédez aux profils publics, effectifs, événements et statistiques de l'application sans pouvoir modifier les fiches.</p>
+        <div class="type-badge badge-free">Accès gratuit</div>
+      </div>
+      <div class="type-card" onclick="selectType('actor', this)">
+        <div class="type-icon actor">⚡</div>
+        <h3>Acteur Sportif</h3>
+        <p>Joueurs, entraîneurs, arbitres, agents, clubs, fédérations, médias, partenaires — créez votre fiche officielle.</p>
+        <div class="type-badge badge-pro">Vérification requise</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo(2)" id="btnStep1" disabled>Continuer →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2a – Visitor form -->
+  <div class="screen" id="screen2v">
+    <div class="step-header">
+      <div class="step-eyebrow"><div class="step-dot"></div>Membre Visiteur</div>
+      <h1>Créer mon <em>accès visiteur</em></h1>
+      <p class="step-sub">Accès immédiat à toutes les informations publiques de Gabon Sport Connect.</p>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">🔐 Informations de connexion</div>
+      <div class="field-row">
+        <div class="field"><label>Prénom <span class="req">*</span></label><input type="text" placeholder="Jean"></div>
+        <div class="field"><label>Nom <span class="req">*</span></label><input type="text" placeholder="Mvé"></div>
+      </div>
+      <div class="field"><label>Adresse email <span class="req">*</span></label><input type="email" placeholder="votre@email.com"></div>
+      <div class="field-row">
+        <div class="field"><label>Mot de passe <span class="req">*</span></label><input type="password" placeholder="8 caractères minimum"></div>
+        <div class="field"><label>Confirmer <span class="req">*</span></label><input type="password" placeholder="Répéter le mot de passe"></div>
+      </div>
+
+      <div class="form-section-title" style="margin-top:8px">📍 Informations optionnelles</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Pays</label>
+          <select><option value="">— Sélectionner —</option><option selected>Gabon</option><option>France</option><option>Cameroun</option><option>Côte d'Ivoire</option><option>Autre</option></select>
+        </div>
+        <div class="field">
+          <label>Ville</label>
+          <input type="text" placeholder="Libreville">
+        </div>
+      </div>
+      <div class="field">
+        <label>Centres d'intérêt sportifs</label>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox"> Football</label>
+          <label class="check-item"><input type="checkbox"> Basketball</label>
+          <label class="check-item"><input type="checkbox"> Athlétisme</label>
+          <label class="check-item"><input type="checkbox"> Boxe</label>
+          <label class="check-item"><input type="checkbox"> Natation</label>
+          <label class="check-item"><input type="checkbox"> Rugby</label>
+          <label class="check-item"><input type="checkbox"> Tennis</label>
+          <label class="check-item"><input type="checkbox"> Arts martiaux</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Retour</button>
+      <button class="btn btn-primary" onclick="submitVisitor()">Créer mon compte →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2b – Actor category -->
+  <div class="screen" id="screen2a">
+    <div class="step-header">
+      <div class="step-eyebrow"><div class="step-dot"></div>Acteur Sportif — Étape 2/4</div>
+      <h1>Quelle est votre <em>catégorie</em> ?</h1>
+      <p class="step-sub">Votre formulaire sera personnalisé selon votre rôle.</p>
+    </div>
+
+    <div class="cat-grid">
+      <div class="cat-card" onclick="selectCat('joueur', this)"><div class="cat-icon">⚽</div><h4>Joueur / Athlète</h4></div>
+      <div class="cat-card" onclick="selectCat('entraineur', this)"><div class="cat-icon">📋</div><h4>Entraîneur / Staff</h4></div>
+      <div class="cat-card" onclick="selectCat('arbitre', this)"><div class="cat-icon">🟨</div><h4>Arbitre / Officiel</h4></div>
+      <div class="cat-card" onclick="selectCat('agent', this)"><div class="cat-icon">🤝</div><h4>Agent Sportif</h4></div>
+      <div class="cat-card" onclick="selectCat('club', this)"><div class="cat-icon">🏟️</div><h4>Club / Association</h4></div>
+      <div class="cat-card" onclick="selectCat('federation', this)"><div class="cat-icon">🏛️</div><h4>Fédération / Ligue</h4></div>
+      <div class="cat-card" onclick="selectCat('media', this)"><div class="cat-icon">📺</div><h4>Média / Journaliste</h4></div>
+      <div class="cat-card" onclick="selectCat('partenaire', this)"><div class="cat-icon">💼</div><h4>Partenaire / Sponsor</h4></div>
+      <div class="cat-card" onclick="selectCat('medecin', this)"><div class="cat-icon">🏥</div><h4>Médecin / Kiné</h4></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Retour</button>
+      <button class="btn btn-primary" id="btnCat" onclick="goTo(3)" disabled>Continuer →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3 – Full actor form -->
+  <div class="screen" id="screen3">
+    <div class="step-header">
+      <div class="step-eyebrow"><div class="step-dot"></div>Acteur Sportif — Étape 3/4</div>
+      <h1>Votre <em>fiche officielle</em></h1>
+      <p class="step-sub">Complétez votre profil. Les champs marqués <span style="color:var(--red)">*</span> sont obligatoires.</p>
+    </div>
+
+    <!-- BASE INFO -->
+    <div class="form-card">
+      <div class="form-section-title">👤 Identité</div>
+      <div class="field-row">
+        <div class="field"><label>Prénom <span class="req">*</span></label><input type="text" placeholder="Jean-Claude"></div>
+        <div class="field"><label>Nom <span class="req">*</span></label><input type="text" placeholder="Obiang"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Date de naissance <span class="req">*</span></label><input type="date"></div>
+        <div class="field"><label>Lieu de naissance</label><input type="text" placeholder="Libreville, Gabon"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Nationalité <span class="req">*</span></label><input type="text" placeholder="Gabonaise"></div>
+        <div class="field"><label>Nationalité secondaire</label><input type="text" placeholder="Optionnel"></div>
+      </div>
+      <div class="field"><label>Adresse email <span class="req">*</span></label><input type="email" placeholder="votre@email.com"></div>
+      <div class="field-row">
+        <div class="field"><label>Téléphone</label><input type="tel" placeholder="+241 …"></div>
+        <div class="field"><label>Ville de résidence</label><input type="text" placeholder="Libreville"></div>
+      </div>
+    </div>
+
+    <!-- PLAYER-SPECIFIC (shown only for joueur) -->
+    <div id="joueurSection">
+      <div class="form-card">
+        <div class="form-section-title">🏃 Données physiques</div>
+        <div class="field-row triple">
+          <div class="field"><label>Taille (cm) <span class="req">*</span></label><input type="number" placeholder="178" min="140" max="220"></div>
+          <div class="field"><label>Poids (kg) <span class="req">*</span></label><input type="number" placeholder="74" min="40" max="150"></div>
+          <div class="field">
+            <label>Pied fort <span class="req">*</span></label>
+            <select><option value="">—</option><option>Droit</option><option>Gauche</option><option>Les deux</option></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Groupe sanguin</label>
+            <select><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+          </div>
+          <div class="field"><label>IMC (calculé auto)</label><input type="text" placeholder="Auto" readonly style="color:var(--slate)"></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">🎯 Poste(s) &amp; discipline</div>
+        <div class="field">
+          <label>Sport principal <span class="req">*</span></label>
+          <select><option value="">— Sélectionner —</option><option>Football</option><option>Basketball</option><option>Athlétisme</option><option>Boxe</option><option>Natation</option><option>Rugby</option><option>Tennis</option><option>Judo / Arts martiaux</option><option>Handball</option><option>Volleyball</option><option>Cyclisme</option><option>Taekwondo</option></select>
+        </div>
+        <div class="field">
+          <label>Poste(s) de jeu <span class="req">*</span></label>
+          <div class="check-grid">
+            <label class="check-item"><input type="checkbox"> Gardien de but</label>
+            <label class="check-item"><input type="checkbox"> Défenseur central</label>
+            <label class="check-item"><input type="checkbox"> Latéral droit</label>
+            <label class="check-item"><input type="checkbox"> Latéral gauche</label>
+            <label class="check-item"><input type="checkbox"> Milieu défensif</label>
+            <label class="check-item"><input type="checkbox"> Milieu central</label>
+            <label class="check-item"><input type="checkbox"> Milieu offensif</label>
+            <label class="check-item"><input type="checkbox"> Ailier droit</label>
+            <label class="check-item"><input type="checkbox"> Ailier gauche</label>
+            <label class="check-item"><input type="checkbox"> Attaquant / Avant-centre</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">⚡ Caractéristiques techniques (note /100)</div>
+        <div class="stat-grid">
+          <div class="stat-item field">
+            <label>Vitesse <span id="vVitesse">72</span>/100</label>
+            <input type="range" min="1" max="100" value="72" oninput="updateStat('vVitesse',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Endurance <span id="vEndurance">68</span>/100</label>
+            <input type="range" min="1" max="100" value="68" oninput="updateStat('vEndurance',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Technique <span id="vTechnique">80</span>/100</label>
+            <input type="range" min="1" max="100" value="80" oninput="updateStat('vTechnique',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Force physique <span id="vForce">65</span>/100</label>
+            <input type="range" min="1" max="100" value="65" oninput="updateStat('vForce',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Vision du jeu <span id="vVision">75</span>/100</label>
+            <input type="range" min="1" max="100" value="75" oninput="updateStat('vVision',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Jeu aérien <span id="vAerien">60</span>/100</label>
+            <input type="range" min="1" max="100" value="60" oninput="updateStat('vAerien',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Dribble <span id="vDribble">78</span>/100</label>
+            <input type="range" min="1" max="100" value="78" oninput="updateStat('vDribble',this.value)">
+          </div>
+          <div class="stat-item field">
+            <label>Tir / Frappe <span id="vTir">70</span>/100</label>
+            <input type="range" min="1" max="100" value="70" oninput="updateStat('vTir',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">📖 Parcours &amp; carrière</div>
+        <div class="field">
+          <label>Club / Structure actuelle</label>
+          <input type="text" placeholder="Nom du club ou structure">
+          <div class="field-hint">Ex : ASC Sogara, Mangasport FC, CF Mounana…</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Division / Niveau</label>
+            <select><option value="">—</option><option>Nationale 1 (Championnat national)</option><option>Nationale 2</option><option>Régionale</option><option>Amateur</option><option>Jeunes / Académie</option><option>International</option></select>
+          </div>
+          <div class="field"><label>Saison en cours</label><input type="text" placeholder="2024–2025"></div>
+        </div>
+        <div class="field">
+          <label>Clubs précédents</label>
+          <textarea placeholder="Listez vos anciens clubs avec les années (ex : ASC Ndende 2018–2020, FC Léopards 2020–2023…)"></textarea>
+        </div>
+        <div class="field">
+          <label>Sélections nationales</label>
+          <textarea placeholder="Équipe nationale, catégorie U17/U20/Sénior, nombre de sélections…"></textarea>
+        </div>
+        <div class="field">
+          <label>Palmarès &amp; distinctions</label>
+          <textarea placeholder="Titres, trophées, récompenses individuelles…"></textarea>
+        </div>
+      </div>
+
+      <!-- CONTRACT ALERT -->
+      <div class="alert-box">
+        <div class="alert-icon">⚠️</div>
+        <p><strong>Important – Joueur sous contrat</strong><br>Si vous êtes actuellement salarié ou sous contrat avec un club, une fédération ou une structure sportive, la gestion de votre fiche sera attribuée à cette structure après vérification. Vous aurez accès à votre fiche en mode visiteur jusqu'à la validation administrative (max 24 h).</p>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">📝 Situation contractuelle</div>
+        <div class="field">
+          <label>Êtes-vous sous contrat actuellement ? <span class="req">*</span></label>
+          <select id="contractStatus" onchange="toggleContractFields()">
+            <option value="">— Sélectionner —</option>
+            <option value="yes">Oui, je suis sous contrat / salarié(e)</option>
+            <option value="no">Non, je suis libre de tout contrat</option>
+            <option value="academy">Je suis en académie / formation</option>
+          </select>
+        </div>
+        <div id="contractFields" style="display:none">
+          <div class="field"><label>Nom de la structure contractante <span class="req">*</span></label><input type="text" placeholder="Nom du club / fédération / employeur"></div>
+          <div class="field-row">
+            <div class="field"><label>Date début de contrat</label><input type="date"></div>
+            <div class="field"><label>Date fin de contrat</label><input type="date"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end joueurSection -->
+
+    <!-- GENERIC ACTOR FORM (for non-player categories) -->
+    <div id="genericActorSection">
+      <div class="form-card">
+        <div class="form-section-title">🏅 Informations professionnelles</div>
+        <div class="field"><label>Intitulé du poste / rôle <span class="req">*</span></label><input type="text" placeholder="Ex : Entraîneur principal, Chef arbitre, Agent FIFA…"></div>
+        <div class="field">
+          <label>Discipline(s) sportive(s)</label>
+          <div class="check-grid">
+            <label class="check-item"><input type="checkbox"> Football</label>
+            <label class="check-item"><input type="checkbox"> Basketball</label>
+            <label class="check-item"><input type="checkbox"> Athlétisme</label>
+            <label class="check-item"><input type="checkbox"> Boxe</label>
+            <label class="check-item"><input type="checkbox"> Rugby</label>
+            <label class="check-item"><input type="checkbox"> Multi-sports</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Structure d'appartenance</label>
+          <input type="text" placeholder="Club, fédération, association, entreprise…">
+        </div>
+        <div class="field"><label>Licences &amp; certifications</label><input type="text" placeholder="Licence UEFA B, Diplôme fédéral, Carte arbitre…"></div>
+        <div class="field"><label>Biographie professionnelle</label><textarea placeholder="Parcours, expériences, spécialités…"></textarea></div>
+      </div>
+    </div>
+
+    <!-- COMMON SECTION -->
+    <div class="form-card">
+      <div class="form-section-title">📸 Photo de profil &amp; documents</div>
+      <div class="field">
+        <label>Photo officielle</label>
+        <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+          <div class="upload-icon">📷</div>
+          <p><strong>Cliquez pour charger une photo</strong><br>Format JPG ou PNG — max 5 Mo</p>
+          <input type="file" id="photoInput" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="field">
+        <label>Justificatif d'identité <span class="req">*</span></label>
+        <div class="upload-zone">
+          <div class="upload-icon">📄</div>
+          <p><strong>CNI, passeport ou permis de conduire</strong><br>Recto / verso — PDF ou image</p>
+        </div>
+        <div class="field-hint">Utilisé uniquement à des fins de vérification administrative.</div>
+      </div>
+      <div class="field" id="licenseUpload">
+        <label>Licence sportive / Contrat (optionnel)</label>
+        <div class="upload-zone">
+          <div class="upload-icon">🏅</div>
+          <p><strong>Licence fédérale, contrat de club</strong><br>Accélère la vérification</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">🔐 Accès &amp; sécurité</div>
+      <div class="field"><label>Adresse email (connexion) <span class="req">*</span></label><input type="email" placeholder="votre@email.com"></div>
+      <div class="field-row">
+        <div class="field"><label>Mot de passe <span class="req">*</span></label><input type="password" placeholder="8 caractères minimum"></div>
+        <div class="field"><label>Confirmer <span class="req">*</span></label><input type="password" placeholder="Répéter"></div>
+      </div>
+      <div class="field">
+        <label class="check-item" style="border:none;padding:0;gap:10px">
+          <input type="checkbox">
+          J'accepte les <a href="#" style="color:var(--green)">conditions d'utilisation</a> et la <a href="#" style="color:var(--green)">politique de confidentialité</a>
+        </label>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(2)">← Retour</button>
+      <button class="btn btn-primary" onclick="submitActor()">Envoyer ma demande →</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div class="screen" id="screenSuccess">
+    <div class="success-card" id="successCard" style="display:block">
+      <div class="success-icon">✅</div>
+      <h2>Demande envoyée avec succès !</h2>
+      <p>Votre dossier d'inscription a été transmis à l'équipe d'administration de <strong>Gabon Sport Connect</strong>. Vous recevrez une réponse dans un délai maximum de <strong>24 heures</strong>.</p>
+
+      <div class="timeline-steps">
+        <div class="t-step"><div class="t-num">1</div><div class="t-text"><strong>Vérification de votre identité</strong><br>L'administrateur examine votre dossier et les justificatifs fournis.</div></div>
+        <div class="t-step"><div class="t-num">2</div><div class="t-text"><strong>Contrôle des droits contractuels</strong><br>Si vous êtes sous contrat, votre fiche sera attribuée à votre structure sportive.</div></div>
+        <div class="t-step"><div class="t-num">3</div><div class="t-text"><strong>Activation de votre compte</strong><br>Vous recevrez un email de confirmation avec vos droits d'accès définitifs.</div></div>
+      </div>
+
+      <p style="margin-bottom:20px">En attendant, vous pouvez naviguer sur la plateforme en <strong>mode visiteur</strong>.</p>
+      <button class="btn btn-primary btn-full" onclick="window.location='#'">← Retour à l'accueil</button>
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+<script>
+  let accountType = null;
+  let actorCat = null;
+
+  // ── PROGRESS ──
+  function setProgress(step) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('ps' + i);
+      el.classList.remove('active','done');
+      if (i < step) el.classList.add('done');
+      else if (i === step) el.classList.add('active');
+    }
+  }
+
+  // ── NAVIGATION ──
+  function goTo(step) {
+    // hide all
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    setProgress(step);
+
+    if (step === 1) {
+      document.getElementById('screen1').classList.add('active');
+    } else if (step === 2) {
+      if (accountType === 'visitor') {
+        document.getElementById('screen2v').classList.add('active');
+        setProgress(3); // visitor skip cat step
+      } else {
+        document.getElementById('screen2a').classList.add('active');
+      }
+    } else if (step === 3) {
+      document.getElementById('screen3').classList.add('active');
+      renderActorForm();
+    } else if (step === 4) {
+      document.getElementById('screenSuccess').classList.add('active');
+      setProgress(4);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── TYPE SELECTION ──
+  function selectType(type, el) {
+    accountType = type;
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('btnStep1').disabled = false;
+  }
+
+  // ── CAT SELECTION ──
+  function selectCat(cat, el) {
+    actorCat = cat;
+    document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('btnCat').disabled = false;
+  }
+
+  // ── RENDER ACTOR FORM ──
+  function renderActorForm() {
+    const joueurSec  = document.getElementById('joueurSection');
+    const genericSec = document.getElementById('genericActorSection');
+    if (actorCat === 'joueur') {
+      joueurSec.style.display  = 'block';
+      genericSec.style.display = 'none';
+    } else {
+      joueurSec.style.display  = 'none';
+      genericSec.style.display = 'block';
+    }
+  }
+
+  // ── CONTRACT TOGGLE ──
+  function toggleContractFields() {
+    const val = document.getElementById('contractStatus').value;
+    document.getElementById('contractFields').style.display = (val === 'yes') ? 'block' : 'none';
+  }
+
+  // ── STAT SLIDERS ──
+  function updateStat(id, val) {
+    document.getElementById(id).textContent = val;
+  }
+
+  // ── SUBMIT ──
+  function submitVisitor() {
+    goTo(4);
+    document.getElementById('screenSuccess').classList.add('active');
+    setProgress(4);
+  }
+
+  function submitActor() {
+    goTo(4);
+    document.getElementById('screenSuccess').classList.add('active');
+    setProgress(4);
+  }
+</script>
+</body>
+</html>

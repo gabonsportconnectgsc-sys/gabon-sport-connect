@@ -2,2153 +2,504 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>GSC Admin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com/">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<!-- Firebase (SDK compat — requis par realtime-sync-module.js) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
-
-<!-- Chart.js (requis par l'onglet Rapports) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
-<!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
-     jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
-
-<!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration – Gabon Sport Connect</title>
 <style>
-:root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
-
-*, ::before, ::after { box-sizing: border-box; margin: 0px; padding: 0px; }
-
-body { font-family: var(--font); background: var(--gray-bg); color: var(--navy); min-height: 100vh; overflow-x: hidden; }
-
-html { overflow-x: hidden; }
-
-img, svg, canvas { max-width: 100%; }
-
-.main-content, .app-tiles-grid, .role-items-grid, .filters-bar, .dash-grid { max-width: 100%; min-width: 0; }
-
-.app-tile, .role-item, .stat-card, .dash-card { min-width: 0; }
-
-@keyframes fadeUp { 
-  0% { opacity: 0; transform: translateY(14px); }
-  100% { opacity: 1; transform: translateY(0px); }
-}
-
-@keyframes spin { 
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse { 
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes bounceIn { 
-  0% { transform: scale(0.85); opacity: 0; }
-  60% { transform: scale(1.03); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes slideIn { 
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0px); opacity: 1; }
-}
-
-#loading-screen { position: fixed; inset: 0px; background: linear-gradient(135deg,var(--navy),#0d3a1f); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 9999; }
-
-.loading-logo { font-size: 56px; animation: 0.6s ease 0s 1 normal none running bounceIn; }
-
-.loading-title { font-size: 22px; font-weight: 800; color: rgb(255, 255, 255); }
-
-.loading-sub { font-size: 13px; color: rgba(255, 255, 255, 0.5); animation: 1.5s ease 0s infinite normal none running pulse; }
-
-.spinner { width: 36px; height: 36px; border-width: 3px; border-style: solid; border-right-color: rgba(255, 255, 255, 0.12); border-bottom-color: rgba(255, 255, 255, 0.12); border-left-color: rgba(255, 255, 255, 0.12); border-image: initial; border-top-color: var(--green); border-radius: 50%; animation: 0.8s linear 0s infinite normal none running spin; }
-
-#app { display: none; }
-#app.gate-locked { display: none !important; }
-
-.layout { display: flex; min-height: 100vh; }
-
-.sidebar { width: var(--sidebar-w); background: linear-gradient(180deg,var(--navy),#0d2035); position: fixed; top: 0px; left: 0px; height: 100vh; z-index: 200; display: flex; flex-direction: column; transition: transform 0.3s; overflow-y: auto; }
-
-.sidebar-header { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-
-.sidebar-brand { display: flex; align-items: center; gap: 10px; }
-
-.brand-icon { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg,var(--green),var(--green-dk)); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-
-.brand-text { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: rgb(255, 255, 255); }
-
-.brand-sub { font-size: 10px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.5px; }
-
-.admin-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.3); color: var(--yellow); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-top: 8px; }
-
-.sidebar-nav { flex: 1 1 0%; padding: 10px 8px; }
-
-.nav-label { font-size: 10px; font-weight: 700; color: rgba(255, 255, 255, 0.28); text-transform: uppercase; letter-spacing: 0.8px; padding: 12px 10px 5px; }
-
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: 0.18s; color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 500; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: none; width: 100%; text-align: left; position: relative; }
-
-.nav-item:hover { background: rgba(255, 255, 255, 0.07); color: rgb(255, 255, 255); }
-
-.nav-item.active { background: linear-gradient(135deg, rgba(0, 158, 96, 0.35), rgba(0, 158, 96, 0.12)); color: rgb(255, 255, 255); font-weight: 600; }
-
-.nav-item.active::before { content: ""; position: absolute; left: 0px; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--green); border-radius: 0px 4px 4px 0px; }
-
-.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
-
-#nav-open-app { color: var(--green); font-weight: 700; background: rgba(0, 158, 96, 0.1); border: 1px solid rgba(0, 158, 96, 0.25); }
-
-#nav-open-app:hover { background: rgba(0, 158, 96, 0.22); color: rgb(255, 255, 255); }
-
-.sidebar-footer { padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-
-.admin-profile { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); margin-bottom: 8px; }
-
-.admin-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--navy); flex-shrink: 0; }
-
-.admin-info { flex: 1 1 0%; min-width: 0px; }
-
-.admin-name { font-size: 12px; font-weight: 700; color: rgb(255, 255, 255); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.admin-role { font-size: 10px; color: rgba(255, 255, 255, 0.4); }
-
-.btn-logout { width: 100%; padding: 9px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); color: rgb(252, 165, 165); font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-
-.btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
-
-.topbar { position: fixed; top: 0px; left: var(--sidebar-w); right: 0px; height: var(--topbar-h); background: rgb(255, 255, 255); border-bottom: 1px solid var(--gray-bd); display: flex; align-items: center; gap: 12px; padding: 0px 20px; z-index: 100; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px; }
-
-.btn-menu { display: none; width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; }
-
-.topbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--navy); flex: 1 1 0%; }
-
-.topbar-sub { font-size: 12px; font-weight: 500; color: var(--gray-txt); margin-left: 6px; }
-
-.sync-indicator { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 5px 10px; border-radius: 20px; }
-
-.sync-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: 1.5s ease 0s infinite normal none running pulse; }
-
-#realtime-status { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 158, 96, 0.12); border: 1px solid rgba(0, 158, 96, 0.25); color: var(--green); font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; }
-
-#gsc-sync-badge { position: fixed; top: 14px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: none; align-items: center; gap: 7px; z-index: 9999; box-shadow: rgba(0, 158, 96, 0.3) 0px 4px 14px; }
-
-#gsc-sync-badge .gsc-sync-dot { width: 7px; height: 7px; background: rgb(255, 255, 255); border-radius: 50%; animation: 1.4s ease 0s infinite normal none running pulse; }
-
-.toast { position: fixed; bottom: 20px; right: 20px; background: var(--navy); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 10000; box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 16px; animation: 0.3s ease 0s 1 normal none running slideIn; }
-
-.toast.success { background: rgb(0, 158, 96); }
-
-.toast.error { background: var(--danger); }
-
-.toast.warn { background: var(--warn); color: var(--navy); }
-
-.toast.info { background: var(--blue); }
-
-.realtime-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(0, 158, 96, 0.12); border: 1px solid rgba(0, 158, 96, 0.25); color: var(--green); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-left: 8px; }
-
-.realtime-dot { width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: 2s ease 0s infinite normal none running pulse; }
-
-.main-content { margin-left: var(--sidebar-w); margin-top: var(--topbar-h); padding: 22px; min-height: calc(100vh - var(--topbar-h)); }
-
-.section { display: none; animation: 0.3s ease 0s 1 normal none running fadeUp; }
-
-.section.active { display: block; }
-
-.admin-header { background: linear-gradient(135deg,var(--navy),var(--navy-md) 55%,#0d3a1f); border-radius: var(--radius-lg); padding: 24px 22px; color: rgb(255, 255, 255); margin-bottom: 20px; position: relative; overflow: hidden; }
-
-.admin-header::after { content: "⚙️"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 60px; opacity: 0.1; }
-
-.admin-header-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
-
-.admin-header-sub { font-size: 13px; opacity: 0.65; margin-top: 4px; }
-
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-
-.stat-card { border-radius: 14px; padding: 20px 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 18px; position: relative; overflow: hidden; }
-
-.stat-card::after { content: ""; position: absolute; right: -14px; bottom: -14px; width: 65px; height: 65px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); }
-
-.stat-card.c1 { background: linear-gradient(135deg, rgb(0, 158, 96), rgb(0, 122, 71)); }
-
-.stat-card.c2 { background: linear-gradient(135deg, rgb(26, 45, 74), rgb(15, 52, 96)); }
-
-.stat-card.c3 { background: linear-gradient(135deg, rgb(249, 115, 22), rgb(194, 65, 12)); }
-
-.stat-card.c4 { background: linear-gradient(135deg, rgb(139, 92, 246), rgb(109, 40, 217)); }
-
-.stat-icon { font-size: 26px; flex-shrink: 0; }
-
-.stat-data { flex: 1 1 0%; z-index: 1; }
-
-.stat-value { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: rgb(255, 255, 255); line-height: 1; }
-
-.stat-label { font-size: 10px; color: rgba(255, 255, 255, 0.65); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
-
-.stat-trend { font-size: 10px; color: rgba(255, 255, 255, 0.45); margin-top: 4px; }
-
-.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-.dash-card { background: rgb(255, 255, 255); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
-
-.dash-card-title { font-family: var(--font-display); font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
-
-.status-bars { display: flex; flex-direction: column; gap: 12px; }
-
-.sb-item { display: flex; flex-direction: column; gap: 5px; }
-
-.sb-item.clickable { padding: 6px 8px; margin: -6px -8px; border-radius: 8px; transition: background 0.15s; }
-
-.sb-item.clickable:hover { background: var(--gray-bg); }
-
-/* Photos & Logos — cadres d'import */
-.photo-card { background: rgb(255,255,255); border: 1px solid var(--gray-bd); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
-
-.photo-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
-
-.photo-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; background: linear-gradient(135deg,#f1f5f9,#e2e8f0); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-
-.photo-frame.has-photo { background-size: cover; background-position: center; }
-
-.photo-frame .photo-placeholder { font-size: 30px; color: #94a3b8; }
-
-.photo-frame .photo-overlay { position: absolute; inset: 0; background: rgba(10,22,40,0.0); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; transition: background 0.2s; }
-
-.photo-frame:hover .photo-overlay { background: rgba(10,22,40,0.45); }
-
-.photo-frame .photo-overlay-btn { opacity: 0; transform: translateY(6px); transition: 0.2s; background: rgba(255,255,255,0.95); color: var(--navy); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
-
-.photo-frame:hover .photo-overlay-btn { opacity: 1; transform: translateY(0); }
-
-.photo-frame .photo-uploading { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--green); }
-
-.photo-info { padding: 9px 10px; }
-
-.photo-name { font-size: 12.5px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.photo-role { font-size: 11px; color: var(--gray-txt); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.default-avatar-card { background: linear-gradient(135deg,#fffbeb,#fef3c7); border: 1.5px dashed var(--warn); border-radius: var(--radius); overflow: hidden; }
-
-.default-avatar-card .photo-frame { background: linear-gradient(135deg,#fde68a,#fcd34d); aspect-ratio: 1 / 1; }
-
-.default-avatar-card .photo-info { text-align: center; }
-
-.default-avatar-card .photo-role { color: var(--navy); font-weight: 700; }
-
-.admin-only-badge { display: inline-block; font-size: 9px; font-weight: 800; color: var(--navy); background: var(--yellow); padding: 1px 6px; border-radius: 10px; margin-top: 3px; }
-
-.sb-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
-
-.sb-track { height: 6px; background: var(--gray-bg); border-radius: 6px; overflow: hidden; }
-
-.sb-fill { height: 100%; border-radius: 6px; transition: width 0.7s; }
-
-.activity-list { display: flex; flex-direction: column; gap: 8px; }
-
-.act-item { display: flex; align-items: center; gap: 9px; padding: 7px 0px; border-bottom: 1px solid var(--gray-bg); }
-
-.act-item:last-child { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
-
-.act-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-
-.act-text { font-size: 12px; color: var(--navy); flex: 1 1 0%; }
-
-.act-time { font-size: 10px; color: var(--gray-txt); }
-
-.quick-actions { display: flex; flex-direction: column; gap: 8px; }
-
-.btn-action { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
-
-.btn-action.green { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
-
-.btn-action.blue { background: linear-gradient(135deg,var(--blue),#2563eb); color: rgb(255, 255, 255); }
-
-.btn-action.outline { background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); color: var(--navy); }
-
-.btn-action:hover { transform: translateY(-1px); }
-
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-
-.page-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--navy); }
-
-.filters-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 16px; align-items: stretch; }
-
-.filter-btn { width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); color: var(--navy); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.filter-btn:hover, .filter-btn.active { background: var(--green); color: rgb(255, 255, 255); border-color: var(--green); }
-
-.search-box { grid-column: 1 / -1; min-width: 200px; display: flex; gap: 8px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 8px; padding: 8px 12px; }
-
-.search-box input { border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; outline: none; flex: 1 1 0%; font-size: 13px; color: var(--navy); }
-
-.users-table-wrap { overflow-x: auto; background: rgb(255, 255, 255); border-radius: var(--radius); box-shadow: var(--shadow); }
-
-table.users-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-table.users-table th { background: var(--gray-bg); padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-txt); border-bottom: 2px solid var(--gray-bd); white-space: nowrap; }
-
-table.users-table td { padding: 12px; border-bottom: 1px solid var(--gray-bd); color: var(--navy); vertical-align: middle; }
-
-table.users-table tr { cursor: pointer; transition: background 0.15s; }
-
-table.users-table tr:hover td { background: rgb(248, 250, 252); }
-
-table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
-
-.user-row-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: rgb(255, 255, 255); flex-shrink: 0; overflow: hidden; }
-
-.user-row-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.user-name-cell { display: flex; align-items: center; gap: 10px; min-width: 0px; }
-
-.user-name-txt { font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.user-gscid-cell { font-family: monospace; font-size: 11px; font-weight: 700; color: var(--green-dk); background: var(--green-lt); border-radius: 14px; padding: 3px 9px; letter-spacing: .4px; white-space: nowrap; }
-
-.user-qr-cell { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--gray-bd); background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-.status-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: inline-block; white-space: nowrap; }
-
-.status-active { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
-
-.status-hidden { background: rgb(254, 249, 195); color: rgb(146, 64, 14); }
-
-.status-deleted { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
-
-.status-pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
-
-/* Groupement par catégorie (Tous) et marquage des fiches démo */
-tr.group-header-row { cursor: default; background: var(--gray-bg); }
-tr.group-header-row:hover td { background: var(--gray-bg) !important; }
-tr.group-header-row td { padding: 9px 12px; border-bottom: 1.5px solid var(--gray-bd); }
-.group-header-label { font-size: 12px; font-weight: 800; color: var(--navy); letter-spacing: .3px; }
-.group-header-count { float: right; font-size: 11px; font-weight: 700; color: #94a3b8; background: #fff; border-radius: 12px; padding: 2px 9px; }
-tr.is-demo-row td { opacity: .82; }
-.demo-pill { font-size: 9px; font-weight: 800; color: #94a3b8; background: #f1f5f9; border-radius: 8px; padding: 1px 6px; margin-left: 8px; letter-spacing: .3px; white-space: nowrap; }
-.demo-modal-notice { border: 1px solid #e2e8f0; }
-
-/* Bibliothèque de documents : pastilles avec actions (partage, verrou, suppression) */
-.doc-pill-list { display: flex; flex-direction: column; gap: 6px; }
-.doc-pill-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--gray-bg); border-radius: 8px; padding: 5px 8px; }
-.doc-pill-link { font-size: 11px; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-.doc-pill-link:hover { text-decoration: underline; }
-.doc-lock-badge { font-size: 9px; font-weight: 800; color: #92400e; background: #fef3c7; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
-.doc-act-btn { border: none; background: rgba(0,0,0,.05); width: 22px; height: 22px; border-radius: 6px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
-.doc-act-btn:hover { background: rgba(0,0,0,.1); }
-.doc-act-btn:disabled { opacity: .35; cursor: not-allowed; }
-.doc-act-btn.doc-act-danger:hover { background: var(--danger); color: #fff; }
-
-@media (max-width: 640px) {
-  table.users-table thead { display: none; }
-  table.users-table, table.users-table tbody, table.users-table tr, table.users-table td { display: block; width: 100%; }
-  table.users-table tr { border-bottom: 1px solid var(--gray-bd); padding: 10px 12px; }
-  table.users-table td { padding: 3px 0px; border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  table.users-table td::before { content: attr(data-label); font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
-  table.users-table td:first-child::before { display: none; }
-  table.users-table td:first-child { justify-content: flex-start; padding-bottom: 6px; }
-}
-
-/* ── TUILES DE L'APPLICATION ── */
-.app-tiles-section { margin-top: 28px; padding: 0; }
-
-.app-tiles-header { margin-bottom: 18px; }
-
-.app-tiles-header h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-
-.app-tiles-header p { font-size: 12px; color: var(--gray-txt); }
-
-.app-tiles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
-
-.app-tile { border-radius: 14px; padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-weight: 600; }
-
-.app-tile:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-
-.app-tile-green { background: linear-gradient(135deg, #009E60, #00c84a); color: white; }
-
-.app-tile-navy { background: linear-gradient(135deg, #0A1628, #1a3a52); color: white; }
-
-.app-tile-purple { background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; }
-
-.app-tile-orange { background: linear-gradient(135deg, #f97316, #fb923c); color: white; }
-
-.tile-icon { font-size: 32px; line-height: 1; }
-
-.tile-value { font-size: 28px; font-weight: 800; line-height: 1.2; }
-
-.tile-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.95; }
-
-.tile-sublabel { font-size: 10px; opacity: 0.8; font-weight: 500; }
-
-.clickable { cursor: pointer; position: relative; overflow: hidden; }
-
-.clickable::after { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: background 0.2s; pointer-events: none; }
-
-.clickable:active::after { background: rgba(255,255,255,0.2); }
-
-/* Répartition par rôle */
-.app-tile-roles { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-
-.role-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-
-.role-item { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid var(--gray-bd); border-radius: 10px; padding: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; transition: all 0.2s; }
-
-.role-item:hover { background: linear-gradient(135deg, #e0f2fe, #dbeafe); border-color: var(--blue); transform: translateY(-1px); }
-
-.role-icon { font-size: 24px; flex-shrink: 0; }
-
-.role-info { text-align: left; min-width: 0; }
-
-.role-name { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
-
-.role-count { font-size: 16px; font-weight: 800; color: var(--green); }
-
-.player-image img { width: 100%; height: 100%; object-fit: cover; }
-
-.player-info { padding: 12px; text-align: center; }
-
-.player-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.player-role { font-size: 10px; color: var(--gray-txt); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 7px; }
-
-.player-badges { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
-
-.badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
-
-.badge.verified { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
-
-.badge.pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
-
-.badge.hidden { background: rgb(254, 249, 195); color: rgb(146, 64, 14); }
-
-.badge.deleted { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
-
-.empty { text-align: center; padding: 50px 20px; color: var(--gray-txt); }
-
-.empty-icon { font-size: 44px; margin-bottom: 10px; }
-
-.empty h3 { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
-
-.empty p { font-size: 13px; }
-
-.match-tabs { display: flex; gap: 5px; margin-bottom: 16px; background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); border-radius: 10px; padding: 4px; }
-
-.match-tab { flex: 1 1 0%; padding: 8px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--gray-txt); transition: 0.2s; }
-
-.match-tab.active { background: var(--green); color: rgb(255, 255, 255); }
-
-.btn-add { display: flex; align-items: center; gap: 7px; padding: 9px 16px; background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-
-.btn-add:hover { transform: translateY(-1px); box-shadow: rgba(0, 158, 96, 0.3) 0px 5px 14px; }
-
-.matches-list { display: flex; flex-direction: column; gap: 11px; }
-
-.match-card { background: rgb(255, 255, 255); border-radius: 13px; padding: 15px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 13px; cursor: pointer; transition: 0.2s; border: 1.5px solid transparent; }
-
-.match-card:hover { border-color: var(--green); box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 18px; }
-
-.match-date-col { text-align: center; min-width: 44px; }
-
-.match-day { font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1; }
-
-.match-month { font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.4px; }
-
-.match-divider { width: 1px; height: 46px; background: var(--gray-bd); flex-shrink: 0; }
-
-.match-info { flex: 1 1 0%; min-width: 0px; }
-
-.match-teams { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.match-meta { font-size: 11px; color: var(--gray-txt); display: flex; gap: 8px; flex-wrap: wrap; }
-
-.match-score-col { text-align: center; flex-shrink: 0; }
-
-.match-score { font-size: 20px; font-weight: 800; color: var(--navy); }
-
-.match-result { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 3px; display: inline-block; }
-
-.match-result.win { background: rgb(220, 252, 231); color: rgb(22, 101, 52); }
-
-.match-result.loss { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
-
-.match-result.draw { background: rgb(254, 243, 199); color: rgb(146, 64, 14); }
-
-.match-result.upcoming { background: var(--gray-bg); color: var(--gray-txt); }
-
-.modal-overlay { display: none; position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.45); z-index: 500; align-items: center; justify-content: center; }
-
-.modal-overlay.open { display: flex; }
-
-.modal { background: rgb(255, 255, 255); border-radius: 16px; width: 90%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.25) 0px 20px 60px; animation: 0.3s ease 0s 1 normal none running bounceIn; }
-
-.modal-header { padding: 18px 20px; border-bottom: 1.5px solid var(--gray-bd); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0px; background: rgb(255, 255, 255); z-index: 10; }
-
-.modal-title { font-size: 16px; font-weight: 800; color: var(--navy); }
-
-.modal-subtitle { font-size: 11px; color: var(--gray-txt); margin-top: 2px; }
-
-.modal-close { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
-
-.modal-close:hover { background: var(--gray-bg); }
-
-.modal-content { padding: 18px 20px; }
-
-.msection { margin-bottom: 18px; }
-
-.msection-title { font-size: 10px; font-weight: 800; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-.field { display: flex; flex-direction: column; gap: 4px; }
-
-.field label { font-size: 10px; font-weight: 700; color: var(--gray-txt); text-transform: uppercase; letter-spacing: 0.3px; }
-
-.field input, .field select { padding: 9px 11px; border: 1.5px solid var(--gray-bd); border-radius: 8px; font-size: 13px; color: var(--navy); outline: none; background: rgb(255, 255, 255); width: 100%; font-family: var(--font); }
-
-.field input:focus, .field select:focus { border-color: var(--green); }
-
-.field .val { font-size: 13px; font-weight: 600; color: var(--navy); }
-
-.player-photo-section { text-align: center; margin-bottom: 16px; }
-
-.player-photo-container { width: 110px; height: 145px; margin: 0px auto; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; border: 2px solid var(--gray-bd); }
-
-.player-photo-container img { width: 100%; height: 100%; object-fit: cover; }
-
-.upload-trigger { position: absolute; bottom: 6px; right: 6px; width: 28px; height: 28px; background: var(--green); color: rgb(255, 255, 255); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
-
-#photo-input { display: none; }
-
-.ph-actor-card { background: rgb(255, 255, 255); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1.5px solid transparent; transition: 0.3s; }
-
-.ph-actor-card:hover { transform: translateY(-2px); box-shadow: rgba(0, 0, 0, 0.12) 0px 8px 20px; border-color: var(--green); }
-
-.ph-photo-zone { width: 100%; height: 150px; background: linear-gradient(135deg, rgba(0, 158, 96, 0.1), rgba(255, 215, 0, 0.1)); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: background 0.2s; }
-
-.ph-photo-zone:hover { background: linear-gradient(135deg, rgba(0, 158, 96, 0.2), rgba(255, 215, 0, 0.2)); }
-
-.ph-avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,var(--green),var(--yellow)); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: rgb(255, 255, 255); overflow: hidden; position: relative; }
-
-.ph-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.ph-hover-overlay { position: absolute; inset: 0px; background: rgba(0, 0, 0, 0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: 0; transition: opacity 0.2s; }
-
-.ph-photo-zone:hover .ph-hover-overlay { opacity: 1; }
-
-.ph-info { padding: 12px 10px; text-align: center; }
-
-.ph-name { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.ph-role { font-size: 10px; font-weight: 600; color: var(--gray-txt); text-transform: uppercase; margin-bottom: 6px; }
-
-.ph-actions { display: flex; gap: 5px; padding: 0px 10px 10px; }
-
-.ph-btn { flex: 1 1 0%; padding: 6px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-
-.ph-btn.upload { background: var(--green-lt); color: var(--green-dk); }
-
-.ph-btn.upload:hover { background: var(--green); color: rgb(255, 255, 255); }
-
-.ph-btn.remove { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
-
-.ph-btn.remove:hover { background: rgba(239, 68, 68, 0.25); }
-
-.ph-has-photo { border-color: var(--green) !important; }
-
-.ph-has-photo .ph-photo-zone { background: transparent; }
-
-.score-row { display: flex; align-items: center; gap: 10px; }
-
-.score-row input { text-align: center; font-weight: 800; font-size: 18px; max-width: 65px; }
-
-.score-sep { font-size: 18px; font-weight: 800; color: var(--gray-txt); }
-
-.modal-actions { display: flex; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1.5px solid var(--gray-bd); }
-
-.btn { padding: 10px 16px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-
-.btn-primary { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
-
-.btn-primary:hover { transform: translateY(-1px); }
-
-.btn-secondary { background: var(--gray-bg); color: var(--navy); border: 1.5px solid var(--gray-bd); }
-
-.btn-danger { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
-.btn-sm { padding: 3px 8px; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; background: var(--gray-bg); color: var(--navy); }
-.btn-sm.danger { background: rgb(254, 226, 226); color: rgb(153, 27, 27); }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-
-.toast { position: fixed; bottom: 80px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; box-shadow: rgba(0, 0, 0, 0.15) 0px 6px 20px; animation: 0.3s ease 0s 1 normal none running slideIn; z-index: 1000; }
-
-.toast.error { background: var(--danger); }
-
-.toast.warn { background: var(--warn); }
-
-.toast.info { background: var(--blue); }
-
-.sidebar-overlay { display: none; position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.45); z-index: 199; }
-
-.sidebar-overlay.open { display: block; }
-
-.mobile-nav { display: none; position: fixed; bottom: 0px; left: 0px; right: 0px; height: var(--mobile-nav-h); background: rgb(255, 255, 255); border-top: 1px solid var(--gray-bd); z-index: 150; align-items: center; justify-content: flex-start; box-shadow: rgba(0, 0, 0, 0.06) 0px -2px 10px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.mobile-nav::-webkit-scrollbar { display: none; }
-
-.mn-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--gray-txt); background: none; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; padding: 8px 14px; flex-shrink: 0; min-width: 64px; white-space: nowrap; }
-
-.mn-icon { font-size: 21px; }
-
-.mn-btn.active { color: var(--green); }
-
-.stat-val { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--navy); line-height: 1; }
-
-.stat-lbl { font-size: 10px; color: var(--gray-txt); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
-
-.report-canvas-wrap { position: relative; height: 220px; }
-
-.report-meta-line { font-size: 11px; color: var(--gray-txt); font-family: monospace; margin-bottom: 14px; }
-
-.btn-report { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-width: medium; border-style: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-
-.btn-report.primary { background: linear-gradient(135deg,var(--green),var(--green-dk)); color: rgb(255, 255, 255); }
-
-.btn-report.outline { background: rgb(255, 255, 255); border: 1.5px solid var(--gray-bd); color: var(--navy); }
-
-.btn-report:hover { transform: translateY(-1px); }
-
-@media print {
-  .sidebar, .topbar, .mobile-nav, .sidebar-overlay, #gsc-sync-badge, .toast, .btn-report { display: none !important; }
-  .main-content { margin: 0px; padding: 0px; }
-  .dash-card, .stat-card { box-shadow: none; border: 1px solid var(--gray-bd); break-inside: avoid; }
-  body { background: rgb(255, 255, 255); }
-}
-
-@media (max-width: 768px) {
-  :root { --sidebar-w: 0px; }
-  .sidebar { width: 240px; transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0px); }
-  .topbar { left: 0px; padding: 0px 14px; }
-  .btn-menu { display: flex; }
-  .main-content { margin-left: 0px; padding-top: 14px; padding-right: 12px; padding-left: 12px; padding-bottom: calc(var(--mobile-nav-h) + 8px); }
-  .mobile-nav { display: flex; }
-  .toast { bottom: calc(var(--mobile-nav-h) + 8px); }
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat-value { font-size: 22px; }
-  .stat-card { padding: 14px 12px; }
-  .dash-grid { grid-template-columns: 1fr; }
-  .grid2 { grid-template-columns: 1fr; }
-  .modal { width: 97%; max-height: 88vh; }
-  .match-card { padding: 12px 10px; gap: 10px; }
-  .match-teams { font-size: 13px; }
-}
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green:   #1DB954; --green-dk:#15843C;
+    --navy:    #0A0F1E; --navy2:   #141929;
+    --gold:    #C9A84C; --slate:   #8A93A8;
+    --red:     #E63946; --orange:  #FF7C2E;
+    --border:  #2A3152; --card:    #161C32;
+    --radius:  10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--navy); color: #fff; display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  aside {
+    width: 230px; flex-shrink: 0;
+    background: var(--navy2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 20px 0;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .sb-logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sb-logo-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--green), var(--green-dk));
+    display: grid; place-items: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 13px; color: #fff; margin-bottom: 8px;
+  }
+  .sb-logo p { font-size: 11px; color: var(--slate); }
+  .sb-logo strong { display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: #fff; }
+  .sb-section { padding: 0 12px; margin-bottom: 4px; }
+  .sb-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--slate); padding: 0 8px; margin-bottom: 6px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--slate); cursor: pointer; transition: all .15s;
+    text-decoration: none;
+  }
+  .sb-item:hover { background: rgba(255,255,255,.05); color: #fff; }
+  .sb-item.active { background: rgba(29,185,84,.12); color: var(--green); }
+  .sb-badge {
+    margin-left: auto; background: var(--red); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+  }
+  .sb-badge.gold { background: var(--gold); }
+
+  /* MAIN */
+  main { flex: 1; overflow-y: auto; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 60px;
+    background: var(--navy2); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; }
+  .admin-tag {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--slate);
+  }
+  .admin-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(29,185,84,.25); }
+
+  .content { padding: 28px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  .stat-card .s-label { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+  .stat-card .s-value { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; }
+  .stat-card .s-sub { font-size: 11px; color: var(--slate); margin-top: 4px; }
+  .s-value.red { color: var(--red); }
+  .s-value.orange { color: var(--orange); }
+  .s-value.green { color: var(--green); }
+  .s-value.gold { color: var(--gold); }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-tab {
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: transparent;
+    color: var(--slate); transition: all .15s;
+  }
+  .filter-tab:hover { border-color: var(--slate); color: #fff; }
+  .filter-tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .filter-tab .count { font-size: 11px; opacity: .75; margin-left: 4px; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 14px; margin-left: auto;
+  }
+  .search-box input {
+    background: transparent; border: none; color: #fff; font-size: 13px;
+    font-family: 'Inter', sans-serif; outline: none; width: 180px;
+  }
+  .search-box input::placeholder { color: var(--slate); }
+
+  /* TABLE */
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 12px 16px; text-align: left;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--slate); border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+  td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green-dk), #0a3d21);
+    display: grid; place-items: center; font-size: 13px; font-weight: 600;
+    color: var(--green); border: 1px solid rgba(29,185,84,.3); flex-shrink: 0;
+  }
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .u-name { font-weight: 500; }
+  .u-email { font-size: 11px; color: var(--slate); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+  }
+  .badge-pending  { background: rgba(255,124,46,.15); color: var(--orange); }
+  .badge-approved { background: rgba(29,185,84,.15);  color: var(--green);  }
+  .badge-review   { background: rgba(201,168,76,.15); color: var(--gold);   }
+  .badge-rejected { background: rgba(230,57,70,.15);  color: var(--red);    }
+
+  .cat-pill {
+    display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px;
+    background: rgba(138,147,168,.12); color: var(--slate); white-space: nowrap;
+  }
+  .time-cell { font-size: 12px; color: var(--slate); white-space: nowrap; }
+  .urgency { display: flex; align-items: center; gap: 4px; }
+  .dot-red    { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+  .dot-orange { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+  .dot-green  { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .action-btns { display: flex; gap: 6px; }
+  .ab {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
+  }
+  .ab-view     { background: rgba(138,147,168,.15); color: var(--slate); }
+  .ab-view:hover { background: rgba(138,147,168,.25); color: #fff; }
+  .ab-approve  { background: rgba(29,185,84,.15);  color: var(--green); }
+  .ab-approve:hover { background: var(--green); color: #fff; }
+  .ab-reject   { background: rgba(230,57,70,.12);  color: var(--red); }
+  .ab-reject:hover  { background: var(--red); color: #fff; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(5,8,20,.8);
+    display: none; place-items: center; z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--navy2); border: 1px solid var(--border);
+    border-radius: 14px; width: 90%; max-width: 680px; max-height: 90vh;
+    overflow-y: auto; padding: 28px;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .modal-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; }
+  .modal-close { background: transparent; border: none; color: var(--slate); font-size: 22px; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: #fff; }
+
+  .profile-hero {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+  }
+  .big-avatar {
+    width: 64px; height: 64px; border-radius: 14px; font-size: 24px;
+    background: linear-gradient(135deg, var(--green-dk), #0a3d21);
+    display: grid; place-items: center; color: var(--green);
+    border: 2px solid rgba(29,185,84,.3); flex-shrink: 0;
+  }
+  .profile-meta h4 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .profile-meta p  { font-size: 12px; color: var(--slate); line-height: 1.6; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .info-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .info-item .i-label { font-size: 10px; color: var(--slate); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 4px; }
+  .info-item .i-val { font-size: 13px; font-weight: 500; }
+
+  .contract-alert {
+    background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.3);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+    font-size: 13px; color: #d4b96a; line-height: 1.55;
+  }
+  .contract-alert strong { color: var(--gold); }
+
+  .doc-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 8px;
+  }
+  .doc-name { font-size: 13px; }
+  .doc-status { font-size: 11px; color: var(--green); }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .btn { padding: 11px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
+  .btn-approve { background: var(--green); color: #fff; }
+  .btn-approve:hover { background: var(--green-dk); }
+  .btn-review  { background: rgba(201,168,76,.2); color: var(--gold); border: 1px solid rgba(201,168,76,.4); }
+  .btn-reject  { background: rgba(230,57,70,.15); color: var(--red); border: 1px solid rgba(230,57,70,.3); }
+
+  @media (max-width: 900px) {
+    aside { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    table { font-size: 12px; }
+  }
 </style>
 </head>
 <body>
 
-<div id="loading-screen" style="display: none;">
-  <div class="loading-logo">⚽</div>
-  <div class="loading-title">GSC Admin</div>
-  <div class="loading-sub">Chargement du panneau…</div>
-  <div class="spinner"></div>
-</div>
-
-<!-- ══ ÉCRAN DE CONNEXION ADMIN (Supabase Auth) ══ -->
-<div id="admin-login-screen" style="display:flex;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),#0d2035);padding:20px;">
-  <div style="width:100%;max-width:380px;background:#fff;border-radius:var(--radius-lg);padding:32px 28px;box-shadow:0 10px 40px rgba(0,0,0,.3);">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-size:42px;margin-bottom:8px;">⚽</div>
-      <div style="font-family:var(--font-display);font-weight:800;font-size:20px;color:var(--navy);">GSC Admin</div>
-      <div style="font-size:12.5px;color:var(--gray-txt);margin-top:4px;">Accès réservé à l'administration</div>
-    </div>
-    <div style="margin-bottom:14px;">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">Email</label>
-      <input type="email" id="admin-login-email" placeholder="admin@exemple.com" autocomplete="username" style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-bd);border-radius:10px;font-size:14px;">
-    </div>
-    <div style="margin-bottom:18px;">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">Mot de passe</label>
-      <input type="password" id="admin-login-password" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-bd);border-radius:10px;font-size:14px;">
-    </div>
-    <button id="admin-login-submit" onclick="handleAdminLogin()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;">Se connecter</button>
-    <div id="admin-login-error" style="color:var(--danger);font-size:12.5px;margin-top:12px;text-align:center;display:none;"></div>
+<!-- SIDEBAR -->
+<aside>
+  <div class="sb-logo">
+    <div class="sb-logo-mark">GSC</div>
+    <strong>Admin Panel</strong>
+    <p>Gabon Sport Connect</p>
   </div>
-</div>
+  <div class="sb-section">
+    <div class="sb-label">Inscriptions</div>
+    <a class="sb-item active" href="#">📋 Demandes en attente <span class="sb-badge">7</span></a>
+    <a class="sb-item" href="#">✅ Approuvées</a>
+    <a class="sb-item" href="#">❌ Refusées</a>
+  </div>
+  <div class="sb-section" style="margin-top:12px">
+    <div class="sb-label">Gestion</div>
+    <a class="sb-item" href="#">👥 Acteurs sportifs</a>
+    <a class="sb-item" href="#">🏟️ Clubs & structures</a>
+    <a class="sb-item" href="#">📣 Événements</a>
+    <a class="sb-item" href="#">⚠️ Signalements <span class="sb-badge gold">2</span></a>
+  </div>
+  <div class="sb-section" style="margin-top:12px">
+    <div class="sb-label">Système</div>
+    <a class="sb-item" href="#">⚙️ Paramètres</a>
+    <a class="sb-item" href="#">📊 Rapports</a>
+  </div>
+</aside>
 
-<div id="app" class="gate-locked" style="display: none;">
-  <div class="layout">
-
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-brand" onclick="goToAppHome()" style="cursor: pointer;" title="Retour à l'accueil GSC">
-          <div class="brand-icon">⚽</div>
-          <div><div class="brand-text">GSC Admin</div><div class="brand-sub">Dashboard</div></div>
-        </div>
-        <div class="admin-badge">✨ Admin</div>
-      </div>
-      <div class="sidebar-nav">
-        <div class="nav-label">Menu</div>
-        <button class="nav-item active" id="nav-dashboard">
-          <span class="nav-icon">📊</span><span>Dashboard</span>
-        </button>
-        <button class="nav-item" id="nav-joueurs">
-          <span class="nav-icon">👥</span><span>Joueurs</span>
-        </button>
-        <button class="nav-item" id="nav-photos">
-          <span class="nav-icon">📸</span><span>Photos &amp; Logos</span>
-        </button>
-        <button class="nav-item" id="nav-matchs">
-          <span class="nav-icon">📅</span><span>Matchs</span>
-        </button>
-        <button class="nav-item" id="nav-rapports">
-          <span class="nav-icon">📈</span><span>Rapports</span>
-        </button>
-        <button class="nav-item" id="nav-documents">
-          <span class="nav-icon">📁</span><span>Documents</span>
-        </button>
-        <button class="nav-item" id="nav-verification">
-          <span class="nav-icon">🌍</span><span>Vérification internationale</span>
-        </button>
-        <button class="nav-item" id="nav-qrscan">
-          <span class="nav-icon">📷</span><span>Scanner QR</span>
-        </button>
-
-        <div class="nav-label">Application</div>
-        <button class="nav-item" id="nav-open-app" onclick="window.open('index.html', '_blank')" title="Ouvre index.html dans un nouvel onglet pour vérifier vos modifications en direct">
-          <span class="nav-icon">🌐</span><span>Ouvrir l'application</span>
-        </button>
-      </div>
-      <div class="sidebar-footer">
-        <div class="admin-profile">
-          <div class="admin-avatar">A</div>
-          <div class="admin-info"><div class="admin-name">Admin</div><div class="admin-role">Administrateur</div></div>
-        </div>
-        <button class="btn-logout" id="logout-btn">🚪 Déconnexion</button>
-      </div>
-    </div>
-
-    <div class="topbar">
-      <button class="btn-menu">☰</button>
-      <div class="topbar-title" id="topbar-title">Dashboard<span class="topbar-sub" id="topbar-sub"></span></div>
-      <div class="sync-indicator" id="sync-indicator" style="display: none;"><div class="sync-dot"></div><span>Sync…</span></div>
-      <div id="realtime-status" class="realtime-badge" style="display: inline-flex;"><div class="realtime-dot"></div><span>Temps réel</span></div>
-    </div>
-
-    <!-- Badge sync global (utilisé par realtime-sync-module.js) -->
-    <div id="gsc-sync-badge"><div class="gsc-sync-dot"></div><span class="gsc-sync-label">Synchronisation…</span></div>
-
-    <div class="main-content">
-
-      <!-- DASHBOARD -->
-      <div id="dashboard" class="section active">
-        <div class="admin-header">
-          <div class="admin-header-title">⚙️ Panneau d'administration</div>
-          <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
-          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">—</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
-          <div class="stat-card c3 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'pending', title:'Fiches en attente'})" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
-          <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
-        </div>
-        <div class="dash-grid">
-          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur / Athlète</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
-          <div class="dash-card"><div class="dash-card-title">🕐 Activité récente</div><div class="activity-list" id="activity-list"><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">6 membre(s) actif(s)</div><div class="act-time">—</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div></div></div>
-          <div class="dash-card"><div class="dash-card-title">📅 Prochain match</div><div id="next-match-preview" style="text-align:center;padding:16px;color:var(--gray-txt);font-size:13px"><div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div></div></div>
-          <div class="dash-card"><div class="dash-card-title">⚡ Actions rapides</div><div class="quick-actions">
-            <button class="btn-action green" onclick="window.gscGoToFiltered&&window.gscGoToFiltered({roles:'joueur',title:'Gestion des Joueurs'})">👥 Gérer les joueurs</button>
-            <button class="btn-action blue" onclick="window.gscGoToMatches&&window.gscGoToMatches()">➕ Ajouter un match</button>
-            <button class="btn-action outline" onclick="window.gscGoToMatches&&window.gscGoToMatches()">📅 Voir les matchs</button>
-            <button class="btn-action outline" onclick="document.querySelector('[data-section=photos]')?.click()||showSection('photos')">📸 Photos &amp; Logos</button>
-            <button class="btn-action outline" onclick="document.querySelector('[data-section=reports]')?.click()||showSection('reports')">📈 Voir les rapports</button>
-            <button class="btn-action outline" onclick="document.querySelector('[data-section=documents]')?.click()||showSection('documents')">📁 Documents</button>
-            <button class="btn-action outline" onclick="document.querySelector('[data-section=verif]')?.click()||showSection('verif')">🌍 Vérification internationale</button>
-            <button class="btn-action outline" onclick="document.querySelector('[data-section=qr]')?.click()||showSection('qr')">📷 Scanner un QR code</button>
-            <button class="btn-action outline" onclick="window.open('index.html','_blank')">🌐 Ouvrir l'application publique</button>
-          </div></div>
-        </div>
-
-        <!-- TUILES DE L'APPLICATION -->
-        <div class="app-tiles-section">
-          <div class="app-tiles-header">
-            <h3>🎯 Tuiles de l'Application</h3>
-            <p>Accès rapide aux statistiques principales de GSC</p>
-          </div>
-          
-          <!-- Stats principales -->
-          <div class="app-tiles-grid">
-            <div class="app-tile app-tile-green clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})">
-              <div class="tile-icon">👥</div>
-              <div class="tile-value" id="app-total-membres">—</div>
-              <div class="tile-label">MEMBRES</div>
-              <div class="tile-sublabel">Total enregistrés</div>
-            </div>
-            
-            <div class="app-tile app-tile-navy clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})">
-              <div class="tile-icon">✅</div>
-              <div class="tile-value" id="app-actifs">—</div>
-              <div class="tile-label">ACTIFS (= APP)</div>
-              <div class="tile-sublabel">Fiches actives</div>
-            </div>
-            
-            <div class="app-tile app-tile-purple clickable" onclick="window.gscGoToFiltered({roles:['club','federation','association'], title:'Organisations (Clubs / Féd. / Assoc.)'})">
-              <div class="tile-icon">🏟️</div>
-              <div class="tile-value" id="app-organisations">—</div>
-              <div class="tile-label">ORGANISATIONS</div>
-              <div class="tile-sublabel">Clubs / Fédé. / Assoc.</div>
-            </div>
-            
-            <div class="app-tile app-tile-orange clickable" onclick="window.gscGoToMatches()">
-              <div class="tile-icon">📅</div>
-              <div class="tile-value" id="app-matchs">17</div>
-              <div class="tile-label">MATCHS</div>
-              <div class="tile-sublabel">Enregistrés</div>
-            </div>
-          </div>
-
-          <!-- Répartition par rôle -->
-          <div class="app-tile-roles">
-            <h4 style="margin-bottom: 14px; font-size: 14px; color: var(--navy); display: flex; align-items: center; gap: 6px;"><span>⚽</span> Répartition par rôle</h4>
-            <div class="role-items-grid">
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'joueur', title:'Gestion des Acteurs'})">
-                <div class="role-icon">⚽</div>
-                <div class="role-info">
-                  <div class="role-name">Joueur / Athlète</div>
-                  <div class="role-count" id="rc-joueur">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'entraineur', title:'Gestion des Acteurs'})">
-                <div class="role-icon">📋</div>
-                <div class="role-info">
-                  <div class="role-name">Entraîneur</div>
-                  <div class="role-count" id="rc-entraineur">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'arbitre', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🟨</div>
-                <div class="role-info">
-                  <div class="role-name">Arbitre</div>
-                  <div class="role-count" id="rc-arbitre">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'club', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🏟️</div>
-                <div class="role-info">
-                  <div class="role-name">Club</div>
-                  <div class="role-count" id="rc-club">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'federation', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🏛️</div>
-                <div class="role-info">
-                  <div class="role-name">Fédération</div>
-                  <div class="role-count" id="rc-federation">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'association', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🤝</div>
-                <div class="role-info">
-                  <div class="role-name">Association</div>
-                  <div class="role-count" id="rc-association">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'organisateur', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🎪</div>
-                <div class="role-info">
-                  <div class="role-name">Organisateur</div>
-                  <div class="role-count" id="rc-organisateur">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'supporter', title:'Gestion des Acteurs'})">
-                <div class="role-icon">💗</div>
-                <div class="role-info">
-                  <div class="role-name">Supporter</div>
-                  <div class="role-count" id="rc-supporter">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'independant', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🚴</div>
-                <div class="role-info">
-                  <div class="role-name">Indépendant</div>
-                  <div class="role-count" id="rc-independant">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'eleve_etudiant', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🎓</div>
-                <div class="role-info">
-                  <div class="role-name">Élève/Étudiant</div>
-                  <div class="role-count" id="rc-eleve-etudiant">—</div>
-                </div>
-              </div>
-              <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'sportif_etranger', title:'Gestion des Acteurs'})">
-                <div class="role-icon">🌍</div>
-                <div class="role-info">
-                  <div class="role-name">Sportif étranger</div>
-                  <div class="role-count" id="rc-sportif-etranger">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- JOUEURS -->
-      <div id="joueurs" class="section">
-        <div class="page-header"><div class="page-title">Gestion des Acteurs</div></div>
-        <div class="filters-bar">
-          <button class="filter-btn role-all active">👥 Tous</button>
-          <button class="filter-btn role-joueur">⚽ Joueurs</button>
-          <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
-          <button class="filter-btn role-arbitre">🟨 Arbitres</button>
-          <button class="filter-btn role-club">🏟️ Clubs</button>
-          <button class="filter-btn role-federation">🏛️ Fédérations</button>
-          <button class="filter-btn role-association">🤝 Associations</button>
-          <button class="filter-btn role-organisateur">🎪 Organisateurs</button>
-          <button class="filter-btn role-supporter">💗 Supporters</button>
-          <button class="filter-btn role-independant">🚴 Indépendants</button>
-          <button class="filter-btn role-eleve_etudiant">🎓 Élèves/Étudiants</button>
-          <button class="filter-btn role-sportif_etranger">🌍 Sportifs étrangers</button>
-          <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
-        </div>
-        <div class="users-table-wrap">
-          <table class="users-table">
-            <thead><tr><th>ID</th><th>Membre</th><th>Rôle</th><th>Club</th><th>QR</th><th>Statut</th></tr></thead>
-            <tbody id="players-grid"></tbody>
-          </table>
-        </div>
-        <div id="empty-state" class="empty" style="display:none;"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères</p></div>
-      </div>
-
-      <!-- PHOTOS & LOGOS -->
-      <div id="photos" class="section">
-        <div class="page-header">
-          <div class="page-title">📸 Photos &amp; Logos de profil</div>
-        </div>
-        <!-- Stats -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
-          <div class="stat-card"><div class="stat-val" id="ph-stat-total">0</div><div class="stat-lbl">Acteurs</div></div>
-          <div class="stat-card"><div class="stat-val" id="ph-stat-photos">0</div><div class="stat-lbl">Avec photo</div></div>
-          <div class="stat-card"><div class="stat-val" id="ph-stat-rate">0%</div><div class="stat-lbl">Taux couverture</div></div>
-        </div>
-
-        <!-- PHOTOS PAR DÉFAUT (par catégorie / tuile d'accueil) — admin uniquement -->
-        <div class="app-tile-roles" style="margin-bottom:24px;">
-          <h4 style="margin-bottom:6px; font-size:14px; color: var(--navy); display: flex; align-items: center; gap: 6px;"><span>🖼️</span> Photos / logos par défaut, par catégorie</h4>
-          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:14px;max-width:680px;">
-            Une image par défaut pour chacune des catégories affichées en tuiles sur l'accueil. Utilisée automatiquement pour tout acteur sportif de cette catégorie qui n'a pas encore importé sa propre photo. <strong>Réservé à l'administrateur.</strong>
-          </p>
-          <div id="default-avatars-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;"></div>
-        </div>
-
-        <!-- Filters -->
-        <div class="filters-bar" id="ph-filter-bar">
-          <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
-          <button class="filter-btn role-joueur" data-phfilter="joueur">🏃 Joueurs</button>
-          <button class="filter-btn role-arbitre" data-phfilter="arbitre">🟨 Arbitres</button>
-          <button class="filter-btn role-entraineur" data-phfilter="entraineur">📋 Entraîneurs</button>
-          <button class="filter-btn role-club" data-phfilter="club">⚽ Clubs</button>
-          <button class="filter-btn role-federation" data-phfilter="federation">🏆 Fédérations</button>
-          <button class="filter-btn role-association" data-phfilter="association">🏢 Associations</button>
-          <button class="filter-btn role-organisateur" data-phfilter="organisateur">🎪 Organisateurs</button>
-          <button class="filter-btn role-supporter" data-phfilter="supporter">💗 Supporters</button>
-          <button class="filter-btn role-independant" data-phfilter="independant">🚴 Indépendants</button>
-          <button class="filter-btn role-eleve_etudiant" data-phfilter="eleve_etudiant">🎓 Élèves/Étudiants</button>
-          <button class="filter-btn role-sportif_etranger" data-phfilter="sportif_etranger">🌍 Sportifs étrangers</button>
-        </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin:-6px 0 14px;">
-          Cliquez sur le cadre photo d'un acteur pour importer une image depuis le stockage du téléphone (admin). L'acteur pourra bientôt le faire lui-même depuis son profil.
-        </p>
-        <!-- Grid -->
-        <div id="photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
-
-        <!-- Inputs fichiers cachés (réutilisés dynamiquement) -->
-        <input type="file" id="actor-photo-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
-        <input type="file" id="default-avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
-      </div>
-
-      <!-- MATCHS -->
-      <div id="matchs" class="section">
-        <div class="page-header">
-          <div class="page-title">Gestion des Matchs</div>
-          <button class="btn-add">➕ Ajouter</button>
-        </div>
-        <div class="match-tabs">
-          <button class="match-tab active">Tous</button>
-          <button class="match-tab">À venir</button>
-          <button class="match-tab">Joués</button>
-        </div>
-        <div id="matches-list" class="matches-list"><div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div></div>
-      </div>
-
-      <!-- RAPPORTS -->
-      <div id="rapports" class="section">
-        <div class="page-header">
-          <div class="page-title">📈 Rapports &amp; statistiques</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-report outline" id="btn-refresh-rapports">🔄 Actualiser</button>
-            <button class="btn-report primary" id="btn-print-rapports">🖨️ Imprimer</button>
-          </div>
-        </div>
-        <div class="report-meta-line" id="report-generated-line">Généré le —</div>
-
-        <div class="stats-grid">
-          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="report-stat-total">0</div><div class="stat-label">Membres</div><div class="stat-trend">Total enregistrés</div></div></div>
-          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="report-stat-actifs">0</div><div class="stat-label">Actifs</div><div class="stat-trend">Fiches actives</div></div></div>
-          <div class="stat-card c4 clickable" onclick="window.gscGoToFiltered({roles:['club','federation','association'], title:'Organisations (Clubs / Féd. / Assoc.)'})" style="cursor:pointer;"><div class="stat-icon">🏟️</div><div class="stat-data"><div class="stat-value" id="report-stat-clubs">0</div><div class="stat-label">Organisations</div><div class="stat-trend">Clubs / Féd. / Assoc.</div></div></div>
-          <div class="stat-card c3 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="report-stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
-        </div>
-
-        <div class="dash-grid">
-          <div class="dash-card"><div class="dash-card-title">🥧 Répartition par rôle</div><div class="report-canvas-wrap"><canvas id="chart-roles"></canvas></div></div>
-          <div class="dash-card"><div class="dash-card-title">✅ Répartition par statut</div><div class="report-canvas-wrap"><canvas id="chart-statuts"></canvas></div></div>
-          <div class="dash-card"><div class="dash-card-title">🏟️ Membres par club</div><div class="report-canvas-wrap"><canvas id="chart-clubs"></canvas></div></div>
-          <div class="dash-card"><div class="dash-card-title">⚽ Top buteurs</div><div class="report-canvas-wrap"><canvas id="chart-buteurs"></canvas></div></div>
-        </div>
-
-        <div class="dash-card" style="margin-top:16px;">
-          <div class="dash-card-title">📋 Synthèse chiffrée</div>
-          <div class="users-table-wrap">
-            <table class="users-table">
-              <thead><tr><th>#</th><th>Indicateur</th><th>Valeur</th></tr></thead>
-              <tbody id="report-summary-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- OUTILS AVANCÉS -->
-        <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
-          <div class="dash-card-title" style="color:var(--danger);">⚠️ Outils avancés — Réinitialisation</div>
-          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
-            Supprime <strong>définitivement</strong> tous les documents d'une collection Firestore. Action irréversible — à utiliser uniquement pour repartir d'une base propre.
-          </p>
-          <div class="grid2" style="margin-bottom:12px;">
-            <div class="field">
-              <label>Collection à réinitialiser</label>
-              <select id="reset-collection-select">
-                <option value="users">users (membres)</option>
-                <option value="matchs">matchs</option>
-                <option value="sitesSportifs">sitesSportifs</option>
-                <option value="actualites">actualites</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Confirmation (taper SUPPRIMER)</label>
-              <input type="text" id="reset-confirm-input" placeholder="SUPPRIMER">
-            </div>
-          </div>
-          <button class="btn btn-danger" id="btn-execute-reset">🗑️ Réinitialiser cette collection</button>
-        </div>
-
-        <!-- NOUVEAU CYCLE — RESET ACTEURS -->
-        <div class="dash-card" id="reset-actors-card" style="margin-top:16px;border:1.5px solid var(--danger);">
-          <div class="dash-card-title" style="color:var(--danger);">🔄 Nouveau cycle — Réinitialisation des acteurs</div>
-          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
-            À utiliser le jour du lancement officiel pour repartir sur une base propre. Supprime les <strong>vrais</strong> acteurs enregistrés (Firestore) et leurs coordonnées. Les profils de démonstration (seed) ne sont jamais affectés.
-          </p>
-
-          <div class="field" style="margin-bottom:12px;">
-            <label>Catégories (réinitialisation partielle)</label>
-            <div id="reset-role-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
-          </div>
-          <div id="reset-scope-summary" style="font-size:12px;color:var(--navy);font-weight:600;margin-bottom:12px;"></div>
-
-          <button class="btn btn-secondary" id="btn-verify-archives" style="width:100%;margin-bottom:12px;">🔎 Vérifier les archives avant réinitialisation</button>
-          <div id="reset-archive-status" style="font-size:12px;margin-bottom:14px;"></div>
-
-          <div class="field" style="margin-bottom:12px;max-width:320px;">
-            <label>Confirmation (taper SUPPRIMER)</label>
-            <input type="text" id="reset-actors-confirm-input" placeholder="SUPPRIMER">
-          </div>
-
-          <div style="display:flex;flex-wrap:wrap;gap:10px;">
-            <button class="btn btn-danger" id="btn-reset-general">♻️ Réinitialisation générale (TOUS les acteurs)</button>
-            <button class="btn btn-danger" id="btn-reset-partial" disabled>✂️ Réinitialisation partielle (catégories sélectionnées)</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- DOCUMENTS (archive des dossiers d'inscription) -->
-      <div id="documents" class="section">
-        <div class="page-header">
-          <div class="page-title">📁 Bibliothèque des documents</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-report outline" id="btn-print-documents">🖨️ Imprimer la liste</button>
-          </div>
-        </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;max-width:680px;">
-          Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur.
-          Le membre lui-même, le club/l'association qui l'emploie, et l'administrateur peuvent ajouter ou supprimer un document.
-          Un document marqué <strong>🔒 sous contrat</strong> ne peut plus être supprimé ni partagé tant que l'administrateur n'a pas levé le verrou.
-        </p>
-        <div id="documents-archive-summary" style="font-size:13px;margin-bottom:16px;"></div>
-        <div class="filters-bar">
-          <button class="filter-btn role-all active">👥 Tous</button>
-          <button class="filter-btn role-joueur">⚽ Joueurs</button>
-          <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
-          <button class="filter-btn role-arbitre">🟨 Arbitres</button>
-          <button class="filter-btn role-club">🏟️ Clubs</button>
-          <button class="filter-btn role-federation">🏛️ Fédérations</button>
-          <button class="filter-btn role-association">🤝 Associations</button>
-          <button class="filter-btn role-organisateur">🎪 Organisateurs</button>
-          <button class="filter-btn role-supporter">💗 Supporters</button>
-          <button class="filter-btn role-independant">🚴 Indépendants</button>
-          <button class="filter-btn role-eleve_etudiant">🎓 Élèves/Étudiants</button>
-          <button class="filter-btn role-sportif_etranger">🌍 Sportifs étrangers</button>
-          <div class="search-box"><span>🔍</span><input type="text" id="doc-search-input" placeholder="Nom de l'acteur…"></div>
-        </div>
-        <div class="users-table-wrap">
-          <table class="users-table">
-            <thead><tr><th>Acteur</th><th>Rôle</th><th>Documents archivés</th><th>Actions</th></tr></thead>
-            <tbody id="documents-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- VÉRIFICATION INTERNATIONALE — Élèves/Étudiants & Sportifs étrangers -->
-      <div id="verification" class="section">
-        <div class="page-header">
-          <div class="page-title">🌍 Vérification internationale</div>
-        </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
-          Centralise la vérification des sportifs étrangers (document d'identité, statut contractuel) via les registres
-          internationaux de référence, et liste les établissements scolaires/universitaires reconnus pour les profils Élève/Étudiant.
-        </p>
-
-        <div class="dash-card" style="margin-bottom:16px;">
-          <div class="dash-card-title">🔗 Sites de référencement international</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">FIFA TMS / Clearing House</a>
-            <a href="https://www.transfermarkt.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">Transfermarkt</a>
-            <a href="https://www.cafonline.com" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">CAF</a>
-            <a href="https://www.fiba.basketball" target="_blank" rel="noopener" class="btn-action outline" style="text-decoration:none;">FIBA</a>
-          </div>
-        </div>
-
-        <div class="page-header" style="margin-top:8px;">
-          <div class="page-title" style="font-size:15px;">🌍 Sportifs étrangers — statut documentaire</div>
-        </div>
-        <div class="users-table-wrap" style="margin-bottom:20px;">
-          <table class="users-table">
-            <thead><tr><th>Nom</th><th>Nationalité</th><th>Statut</th><th>Document</th><th>Vérification</th><th>Actions</th></tr></thead>
-            <tbody id="verif-etrangers-tbody"><tr><td colspan="6" style="text-align:center;color:var(--gray-txt);padding:16px;">Chargement…</td></tr></tbody>
-          </table>
-        </div>
-
-        <div class="page-header">
-          <div class="page-title" style="font-size:15px;">🎓 Établissements scolaires & universitaires reconnus</div>
-        </div>
-        <div class="users-table-wrap">
-          <table class="users-table">
-            <thead><tr><th>Établissement</th><th>Ville</th><th>Type</th></tr></thead>
-            <tbody id="verif-etablissements-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- SCANNER QR — identification rapide de tout membre inscrit -->
-      <div id="qrscan" class="section">
-        <div class="page-header">
-          <div class="page-title">📷 Scanner QR — Identification des membres</div>
-        </div>
-        <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
-          Scannez le QR Code imprimé ou affiché par un membre (joueur, club, fédération, indépendant…) pour
-          ouvrir directement sa fiche. Fonctionne avec tous les acteurs réels et les fiches de démonstration.
-        </p>
-        <div class="dash-grid" style="grid-template-columns:1fr 1fr;align-items:start;">
-          <div class="dash-card">
-            <div class="dash-card-title">📷 Caméra</div>
-            <div id="qrscan-viewport" style="position:relative;width:100%;max-width:340px;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#000;margin:0 auto 14px;">
-              <video id="qrscan-video" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;"></video>
-              <div style="position:absolute;inset:14%;border:3px solid var(--green);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.35);pointer-events:none;"></div>
-            </div>
-            <canvas id="qrscan-canvas" style="display:none;"></canvas>
-            <div style="text-align:center;">
-              <button class="btn-action green" id="qrscan-start-btn" style="max-width:240px;margin:0 auto 8px;">▶️ Démarrer le scan</button>
-              <button class="btn-action outline" id="qrscan-stop-btn" style="max-width:240px;margin:0 auto;display:none;">⏹️ Arrêter</button>
-            </div>
-            <div id="qrscan-status" style="text-align:center;font-size:12px;color:var(--gray-txt);margin-top:10px;">Caméra inactive — cliquez sur « Démarrer le scan ».</div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">🔎 Recherche manuelle</div>
-            <div class="field" style="margin-bottom:12px;">
-              <label>Code GSC-ID ou UID</label>
-              <input type="text" id="qrscan-manual-input" placeholder="Ex : GSC-JOU-A1B2C3">
-            </div>
-            <button class="btn-action blue" id="qrscan-manual-btn" style="margin-bottom:18px;">Rechercher</button>
-            <div id="qrscan-result" style="display:none;">
-              <div class="player-photo-section" style="margin-bottom:10px;">
-                <div class="player-photo-container" id="qrscan-result-photo" style="width:84px;height:110px;font-size:36px;"><span>👤</span></div>
-              </div>
-              <div style="text-align:center;">
-                <div style="font-weight:800;font-size:15px;color:var(--navy);" id="qrscan-result-name">—</div>
-                <div style="font-size:12px;color:var(--gray-txt);margin-bottom:4px;" id="qrscan-result-role">—</div>
-                <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:12px;" id="qrscan-result-gscid">—</div>
-                <div>
-                  <button class="btn-action green" id="qrscan-open-btn" style="max-width:220px;margin:0 auto;">👤 Ouvrir la fiche complète</button>
-                </div>
-              </div>
-            </div>
-            <div id="qrscan-empty" style="text-align:center;color:var(--gray-txt);font-size:12px;padding:20px 0;">Aucun résultat pour le moment.</div>
-          </div>
-        </div>
-      </div>
-
+<!-- MAIN -->
+<main>
+  <div class="topbar">
+    <h2>Demandes d'inscription</h2>
+    <div class="admin-tag">
+      <div class="admin-dot"></div>
+      Administrateur connecté
     </div>
   </div>
-</div>
 
-<!-- MODAL JOUEUR -->
-<div id="player-modal" class="modal-overlay">
-  <div class="modal">
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="s-label">En attente</div><div class="s-value red">7</div><div class="s-sub">Dont 3 urgentes (&lt;24h)</div></div>
+      <div class="stat-card"><div class="s-label">En révision</div><div class="s-value orange">2</div><div class="s-sub">Vérification en cours</div></div>
+      <div class="stat-card"><div class="s-label">Approuvées (mois)</div><div class="s-value green">43</div><div class="s-sub">Taux : 89%</div></div>
+      <div class="stat-card"><div class="s-label">Sous contrat</div><div class="s-value gold">5</div><div class="s-sub">Attribution à valider</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <button class="filter-tab active" onclick="filterTab(this)">Tous <span class="count">(9)</span></button>
+      <button class="filter-tab" onclick="filterTab(this)">En attente <span class="count">(7)</span></button>
+      <button class="filter-tab" onclick="filterTab(this)">En révision <span class="count">(2)</span></button>
+      <button class="filter-tab" onclick="filterTab(this)">Joueurs <span class="count">(4)</span></button>
+      <button class="filter-tab" onclick="filterTab(this)">Clubs <span class="count">(2)</span></button>
+      <div class="search-box">
+        🔍 <input type="text" placeholder="Rechercher un acteur…">
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Acteur</th>
+            <th>Catégorie</th>
+            <th>Statut</th>
+            <th>Sous contrat</th>
+            <th>Reçu</th>
+            <th>Délai</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr onclick="openModal('marc')">
+            <td><div class="user-cell"><div class="avatar">MO</div><div><div class="u-name">Marc Obiang</div><div class="u-email">marc.obiang@gmail.com</div></div></div></td>
+            <td><span class="cat-pill">⚽ Joueur</span></td>
+            <td><span class="badge badge-pending">⏳ En attente</span></td>
+            <td><span style="color:var(--orange);font-size:12px;font-weight:600">⚠️ Oui – ASC Sogara</span></td>
+            <td class="time-cell">Il y a 2h</td>
+            <td><div class="urgency"><div class="dot-red"></div><span style="font-size:12px;color:var(--red)">22h restantes</span></div></td>
+            <td onclick="event.stopPropagation()"><div class="action-btns">
+              <button class="ab ab-view" onclick="openModal('marc')">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr onclick="openModal('aminata')">
+            <td><div class="user-cell"><div class="avatar">AN</div><div><div class="u-name">Aminata Nzamba</div><div class="u-email">aminata.nzamba@yahoo.fr</div></div></div></td>
+            <td><span class="cat-pill">🏃 Athlète</span></td>
+            <td><span class="badge badge-review">🔍 En révision</span></td>
+            <td><span style="color:var(--slate);font-size:12px">Non</span></td>
+            <td class="time-cell">Il y a 5h</td>
+            <td><div class="urgency"><div class="dot-orange"></div><span style="font-size:12px;color:var(--orange)">19h restantes</span></div></td>
+            <td onclick="event.stopPropagation()"><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar">JE</div><div><div class="u-name">Jean-Paul Ekong</div><div class="u-email">jpekong@club-fc.ga</div></div></div></td>
+            <td><span class="cat-pill">📋 Entraîneur</span></td>
+            <td><span class="badge badge-pending">⏳ En attente</span></td>
+            <td><span style="color:var(--slate);font-size:12px">Non</span></td>
+            <td class="time-cell">Il y a 8h</td>
+            <td><div class="urgency"><div class="dot-orange"></div><span style="font-size:12px;color:var(--orange)">16h restantes</span></div></td>
+            <td><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar">PA</div><div><div class="u-name">Pierre Abessolo</div><div class="u-email">pierre.a@mangasport.ga</div></div></div></td>
+            <td><span class="cat-pill">⚽ Joueur</span></td>
+            <td><span class="badge badge-pending">⏳ En attente</span></td>
+            <td><span style="color:var(--orange);font-size:12px;font-weight:600">⚠️ Oui – Mangasport FC</span></td>
+            <td class="time-cell">Il y a 11h</td>
+            <td><div class="urgency"><div class="dot-orange"></div><span style="font-size:12px;color:var(--orange)">13h restantes</span></div></td>
+            <td><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar">FC</div><div><div class="u-name">FC Léopards Libreville</div><div class="u-email">admin@fc-leopards.ga</div></div></div></td>
+            <td><span class="cat-pill">🏟️ Club</span></td>
+            <td><span class="badge badge-review">🔍 En révision</span></td>
+            <td><span style="color:var(--slate);font-size:12px">N/A</span></td>
+            <td class="time-cell">Hier 18h</td>
+            <td><div class="urgency"><div class="dot-red"></div><span style="font-size:12px;color:var(--red)">7h restantes</span></div></td>
+            <td><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar">SB</div><div><div class="u-name">Sylvie Bouanga</div><div class="u-email">sylvie.bouanga@fgf.ga</div></div></div></td>
+            <td><span class="cat-pill">🟨 Arbitre</span></td>
+            <td><span class="badge badge-pending">⏳ En attente</span></td>
+            <td><span style="color:var(--slate);font-size:12px">Non</span></td>
+            <td class="time-cell">Hier 14h</td>
+            <td><div class="urgency"><div class="dot-red"></div><span style="font-size:12px;color:var(--red)">3h restantes</span></div></td>
+            <td><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar">LM</div><div><div class="u-name">Landry Moundounga</div><div class="u-email">landry.m@gmail.com</div></div></div></td>
+            <td><span class="cat-pill">⚽ Joueur</span></td>
+            <td><span class="badge badge-pending">⏳ En attente</span></td>
+            <td><span style="color:var(--orange);font-size:12px;font-weight:600">⚠️ Oui – CF Mounana</span></td>
+            <td class="time-cell">Hier 10h</td>
+            <td><div class="urgency"><div class="dot-green"></div><span style="font-size:12px;color:var(--green)">En délai</span></div></td>
+            <td><div class="action-btns">
+              <button class="ab ab-view">Voir</button>
+              <button class="ab ab-approve">✓</button>
+              <button class="ab ab-reject">✗</button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div><div class="modal-title" id="modal-player-name">Fiche Joueur</div><div class="modal-subtitle" id="modal-player-role"></div></div>
-      <button class="modal-close">✕</button>
+      <h3>Dossier de demande</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-content">
-      <div class="player-photo-section">
-        <div class="player-photo-container" id="modal-photo"><span id="modal-photo-content">👤</span><div class="upload-trigger" id="modal-photo-trigger">📷</div></div>
-        <input type="file" id="photo-input" accept="image/*">
-      </div>
-      <div class="msection">
-        <div class="msection-title">📋 Informations</div>
-        <div class="grid2">
-          <div class="field"><label>Email</label><div class="val" id="modal-email">—</div></div>
-          <div class="field"><label>Téléphone</label><div class="val" id="modal-phone">—</div></div>
-          <div class="field"><label>Inscription</label><div class="val" id="modal-date">—</div></div>
-          <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="pending">⏳ En attente</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
-        </div>
-        <div class="field" style="margin-top:10px;">
-          <label>Titre / rôle personnalisé</label>
-          <input type="text" id="modal-titre-perso" placeholder="Ex : Président, Arbitre vidéo (VAR), Organisateur principal…">
-        </div>
-      </div>
-      <div class="msection" id="modal-qr-section">
-        <div class="msection-title">🔖 Identification GSC (QR Code)</div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-          <div style="width:84px;height:84px;border-radius:10px;border:1.5px solid var(--gray-bd);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;">
-            <canvas id="modal-qr-canvas" width="84" height="84"></canvas>
-          </div>
-          <div style="flex:1;min-width:160px;">
-            <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--green-dk);background:var(--green-lt);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:6px;" id="modal-qr-gscid">—</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="filter-btn" id="modal-qr-print-btn" type="button">🖨️ Imprimer</button>
-              <button class="filter-btn" id="modal-qr-download-btn" type="button">⬇️ Télécharger</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="msection">
-        <div class="msection-title">🏃 Physique</div>
-        <div class="grid2">
-          <div class="field"><label>Taille (cm)</label><input type="number" id="modal-taille" placeholder="175"></div>
-          <div class="field"><label>Poids (kg)</label><input type="number" id="modal-poids" placeholder="70"></div>
-          <div class="field"><label>Pied fort</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
-          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droite/Gauche"></div>
-        </div>
-      </div>
-      <div class="msection">
-        <div class="msection-title">⚡ Performance</div>
-        <div class="grid2">
-          <div class="field"><label>Matchs</label><input type="number" id="modal-matchs" placeholder="0"></div>
-          <div class="field"><label>Buts</label><input type="number" id="modal-buts" placeholder="0"></div>
-          <div class="field"><label>Passes décisives</label><input type="number" id="modal-passes" placeholder="0"></div>
-          <div class="field"><label>Club</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary">💾 Enregistrer</button>
-        <button class="btn btn-secondary">Fermer</button>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL MATCH -->
-<div id="match-modal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="match-modal-title">Nouveau Match</div>
-      <button class="modal-close">✕</button>
+    <!-- marc profile -->
+    <div id="modal-marc">
+      <div class="profile-hero">
+        <div class="big-avatar">MO</div>
+        <div class="profile-meta">
+          <h4>Marc Obiang</h4>
+          <p>⚽ Joueur — Milieu offensif · Demande reçue il y a 2h<br>
+          marc.obiang@gmail.com · +241 06 12 34 567</p>
+        </div>
+        <span class="badge badge-pending" style="margin-left:auto;align-self:flex-start">⏳ En attente</span>
+      </div>
+
+      <div class="contract-alert">
+        ⚠️ <strong>Joueur sous contrat déclaré</strong> — Marc Obiang déclare être lié à <strong>ASC Sogara</strong>. Sa fiche doit être attribuée à cette structure après vérification. Il n'aura accès qu'en mode visiteur jusqu'à confirmation.
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item"><div class="i-label">Date de naissance</div><div class="i-val">14 mars 2000 (26 ans)</div></div>
+        <div class="info-item"><div class="i-label">Lieu de naissance</div><div class="i-val">Port-Gentil, Gabon</div></div>
+        <div class="info-item"><div class="i-label">Taille / Poids</div><div class="i-val">180 cm / 76 kg</div></div>
+        <div class="info-item"><div class="i-label">Pied fort</div><div class="i-val">Droit</div></div>
+        <div class="info-item"><div class="i-label">Poste(s)</div><div class="i-val">Milieu offensif, Ailier droit</div></div>
+        <div class="info-item"><div class="i-label">Club déclaré</div><div class="i-val">ASC Sogara (Nationale 1)</div></div>
+        <div class="info-item"><div class="i-label">Contrat</div><div class="i-val">2022–2025 (déclaré)</div></div>
+        <div class="info-item"><div class="i-label">Clubs précédents</div><div class="i-val">Académie FGF (2018–2022)</div></div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--slate);margin-bottom:10px">Documents soumis</div>
+        <div class="doc-item"><span class="doc-name">📄 Carte nationale d'identité</span><span class="doc-status">✓ Chargé</span></div>
+        <div class="doc-item"><span class="doc-name">🏅 Licence sportive FGF 2024–25</span><span class="doc-status">✓ Chargé</span></div>
+        <div class="doc-item"><span class="doc-name">📋 Contrat ASC Sogara</span><span class="doc-status" style="color:var(--orange)">⚠️ Non fourni</span></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--slate);margin-bottom:8px">Note de l'administrateur</div>
+      <textarea style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;min-height:80px;resize:vertical" placeholder="Ajouter une note interne…"></textarea>
     </div>
-    <div class="modal-content">
-      <div class="msection">
-        <div class="msection-title">⚽ Équipes</div>
-        <div class="grid2">
-          <div class="field"><label>Équipe domicile</label><input type="text" id="match-home" placeholder="GSC" value="GSC"></div>
-          <div class="field"><label>Équipe visiteur</label><input type="text" id="match-away" placeholder="Adversaire"></div>
+
+    <!-- aminata profile (hidden by default) -->
+    <div id="modal-aminata" style="display:none">
+      <div class="profile-hero">
+        <div class="big-avatar">AN</div>
+        <div class="profile-meta">
+          <h4>Aminata Nzamba</h4>
+          <p>🏃 Athlète — Sprint / 100m · Demande reçue il y a 5h<br>
+          aminata.nzamba@yahoo.fr · +241 07 98 76 543</p>
         </div>
+        <span class="badge badge-review" style="margin-left:auto;align-self:flex-start">🔍 En révision</span>
       </div>
-      <div class="msection">
-        <div class="msection-title">📅 Planification</div>
-        <div class="grid2">
-          <div class="field"><label>Date</label><input type="date" id="match-date"></div>
-          <div class="field"><label>Heure</label><input type="time" id="match-time"></div>
-          <div class="field"><label>Lieu</label><input type="text" id="match-lieu" placeholder="Stade / Terrain"></div>
-          <div class="field"><label>Compétition</label><input type="text" id="match-competition" placeholder="Championnat…"></div>
-        </div>
+      <div class="info-grid">
+        <div class="info-item"><div class="i-label">Date de naissance</div><div class="i-val">3 juillet 2003 (22 ans)</div></div>
+        <div class="info-item"><div class="i-label">Spécialité</div><div class="i-val">Sprint — 100m / 200m</div></div>
+        <div class="info-item"><div class="i-label">Taille / Poids</div><div class="i-val">168 cm / 58 kg</div></div>
+        <div class="info-item"><div class="i-label">Fédération</div><div class="i-val">Fédération Gabonaise d'Athlétisme</div></div>
       </div>
-      <div class="msection">
-        <div class="msection-title">🏆 Score (si joué)</div>
-        <div class="score-row">
-          <input type="number" id="match-score-home" placeholder="0" min="0">
-          <span class="score-sep">—</span>
-          <input type="number" id="match-score-away" placeholder="0" min="0">
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary">💾 Enregistrer</button>
-        <button class="btn btn-secondary">Annuler</button>
-        <button class="btn btn-danger" id="btn-delete-match" style="display:none">🗑️ Supprimer</button>
-      </div>
+      <div class="doc-item"><span class="doc-name">📄 Passeport</span><span class="doc-status">✓ Chargé</span></div>
+      <div class="doc-item"><span class="doc-name">🏅 Licence FGA 2024–25</span><span class="doc-status">✓ Chargé</span></div>
+      <textarea style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;min-height:80px;resize:vertical;margin-top:16px" placeholder="Ajouter une note interne…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-reject" onclick="closeModal()">✗ Refuser</button>
+      <button class="btn btn-review" onclick="closeModal()">📋 Demander un justificatif</button>
+      <button class="btn btn-approve" onclick="approveAndClose()">✓ Approuver</button>
     </div>
   </div>
 </div>
 
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="mobile-nav">
-  <button class="mn-btn active" id="mnav-dashboard"><span class="mn-icon">📊</span><span>Dashboard</span></button>
-  <button class="mn-btn" id="mnav-joueurs"><span class="mn-icon">👥</span><span>Joueurs</span></button>
-  <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
-  <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
-  <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
-  <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
-  <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
-  <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
-</div>
-
-<!-- Module de synchronisation temps réel -->
-<script src="firebase-init.js"></script>
-<script src="seed-data.js"></script>
-<script src="realtime-sync-module.js"></script>
-<script src="admin-controller.js"></script>
-
-<!-- Module Rapports — autonome, lit le cache de realtime-sync-module.js -->
 <script>
-(function () {
-  'use strict';
-
-  let _reportCharts = {};
-
-  const ROLE_LABELS = {
-    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
-    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
-    organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
-  };
-  const ROLE_COLORS = {
-    joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
-    club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
-    organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
-    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04'
-  };
-  const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
-
-  function esc(str) {
-    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
-  function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
+  function filterTab(el) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
   }
 
-  /* Lit les données déjà synchronisées par realtime-sync-module.js
-     (admin-controller.js a déjà ouvert les listeners "users"/"matchs",
-     ce module ne fait qu'en lire le cache — aucun listener dupliqué). */
-  function getUsers() {
-    const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
-    const seed = window.GSC_SEED_ACTORS || [];
-    const realIds = new Set(real.map(u => u.uid || u.id));
-    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
-    return [...real, ...demoOnly];
-  }
-  function getMatches() {
-    return (window.realtimeSync && window.realtimeSync.getCache('matchs')) || [];
+  let currentModal = null;
+
+  function openModal(id) {
+    document.querySelectorAll('[id^="modal-"]').forEach(el => el.style.display = 'none');
+    const el = document.getElementById('modal-' + id);
+    if (el) { el.style.display = 'block'; currentModal = id; }
+    document.getElementById('modalOverlay').classList.add('open');
   }
 
-  function mkChart(canvasId, type, labels, data, colors) {
-    const ctx = document.getElementById(canvasId);
-    if (!ctx || typeof Chart === 'undefined') return;
-    if (_reportCharts[canvasId]) { _reportCharts[canvasId].destroy(); delete _reportCharts[canvasId]; }
-    if (!labels.length) return;
-    _reportCharts[canvasId] = new Chart(ctx, {
-      type,
-      data: { labels, datasets: [{ data, backgroundColor: colors || PALETTE, borderWidth: type === 'line' ? 2 : 1, borderColor: type === 'bar' ? (colors || PALETTE) : '#fff' }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
-        scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {}
-      }
-    });
-  }
-
-  function renderReports() {
-    const users = getUsers();
-    const matches = getMatches();
-    const now = new Date();
-    setText('report-generated-line', `Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · Réf. RPT-${now.getTime().toString().slice(-8)}`);
-
-    setText('report-stat-total', users.length);
-    setText('report-stat-matchs', matches.length);
-
-    if (!users.length) {
-      ['chart-roles', 'chart-statuts', 'chart-clubs', 'chart-buteurs'].forEach(id => {
-        if (_reportCharts[id]) { _reportCharts[id].destroy(); delete _reportCharts[id]; }
-      });
-      setText('report-stat-actifs', 0);
-      setText('report-stat-clubs', 0);
-      const tbody = document.getElementById('report-summary-tbody');
-      if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-txt)">Aucune donnée disponible pour le moment.</td></tr>`;
-      return;
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('modalOverlay')) {
+      document.getElementById('modalOverlay').classList.remove('open');
     }
-
-    const visible = users.filter(u => u.status !== 'deleted');
-
-    const byRole = {};
-    visible.forEach(u => { const r = ROLE_LABELS[u.role] || u.role || 'Autre'; byRole[r] = (byRole[r] || 0) + 1; });
-    const roleColors = Object.keys(byRole).map(label => {
-      const key = Object.keys(ROLE_LABELS).find(k => ROLE_LABELS[k] === label);
-      return ROLE_COLORS[key] || '#94a3b8';
-    });
-
-    const byStatus = { 'Actif': 0, 'En attente': 0, 'Masqué': 0 };
-    users.forEach(u => {
-      if (u.status === 'pending') byStatus['En attente']++;
-      else if (u.status === 'hidden') byStatus['Masqué']++;
-      else if (u.status !== 'deleted') byStatus['Actif']++;
-    });
-
-    const byClub = {};
-    visible.forEach(u => { const c = (u.club || '').trim(); if (c) byClub[c] = (byClub[c] || 0) + 1; });
-
-    const topScorers = visible
-      .filter(u => Number(u.buts) > 0)
-      .sort((a, b) => (Number(b.buts) || 0) - (Number(a.buts) || 0))
-      .slice(0, 8);
-
-    mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
-    mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
-    mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
-    mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
-
-    const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
-    const totalPending = users.filter(u => u.status === 'pending').length;
-    const totalOrgs = visible.filter(u => ['club', 'federation', 'association'].includes(u.role)).length;
-
-    setText('report-stat-actifs', totalActifs);
-    setText('report-stat-clubs', totalOrgs);
-
-    const rows = [
-      ['Membres enregistrés (total)', users.length],
-      ['Fiches actives', totalActifs],
-      ['Fiches en attente de validation', totalPending],
-      ['Clubs / Fédérations / Associations', totalOrgs],
-      ['Matchs enregistrés', matches.length],
-      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
-      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
-    ];
-    const tbody = document.getElementById('report-summary-tbody');
-    if (tbody) tbody.innerHTML = rows.map((r, i) =>
-      `<tr><td style="font-size:12px;color:var(--gray-txt)">RPT-${String(i + 1).padStart(3, '0')}</td><td>${esc(r[0])}</td><td style="font-weight:700">${esc(r[1])}</td></tr>`
-    ).join('');
   }
 
-  function showRapportsSection() {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById('rapports');
-    if (target) target.classList.add('active');
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
-    const navBtn = document.getElementById('nav-rapports');
-    if (navBtn) navBtn.classList.add('active');
-    const mNavBtn = document.getElementById('mnav-rapports');
-    if (mNavBtn) mNavBtn.classList.add('active');
-
-    const topbarTitle = document.getElementById('topbar-title');
-    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Rapports';
-
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-
-    renderReports();
+  function approveAndClose() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    // In a real app: fire API call, update row status
+    alert('✅ Compte approuvé. Un email de confirmation a été envoyé à l\'acteur.');
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const navBtn = document.getElementById('nav-rapports');
-    if (navBtn) navBtn.addEventListener('click', showRapportsSection);
-    const mNavBtn = document.getElementById('mnav-rapports');
-    if (mNavBtn) mNavBtn.addEventListener('click', showRapportsSection);
-
-    const printBtn = document.getElementById('btn-print-rapports');
-    if (printBtn) printBtn.addEventListener('click', () => window.print());
-
-    const refreshBtn = document.getElementById('btn-refresh-rapports');
-    if (refreshBtn) refreshBtn.addEventListener('click', renderReports);
-  });
-})();
 </script>
-
-<!-- Module Vérification internationale — autonome, lit Firestore via le SDK compat déjà initialisé -->
-<script>
-(function () {
-  'use strict';
-
-  function esc(str) {
-    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
-
-  const ETABLISSEMENTS_GA = [
-    {nom:'Université Omar Bongo (UOB)', ville:'Libreville', type:'Université'},
-    {nom:'Université des Sciences et Techniques de Masuku (USTM)', ville:'Franceville', type:'Université'},
-    {nom:'Université des Sciences de la Santé (USS)', ville:'Libreville (Owendo)', type:'Université'},
-    {nom:'École Normale Supérieure (ENS) Libreville', ville:'Libreville', type:'Université'},
-    {nom:"École Normale Supérieure de l'Enseignement Technique (ENSET)", ville:'Libreville', type:'Université'},
-    {nom:'Institut National des Sciences de Gestion (INSG)', ville:'Libreville', type:'Université'},
-    {nom:'Institut Supérieur de Technologie (IST)', ville:'Libreville', type:'Université'},
-    {nom:'Université Internationale de Libreville (UIL)', ville:'Libreville', type:'Université'},
-    {nom:'Lycée National Léon Mba', ville:'Libreville', type:'Lycée'},
-    {nom:'Lycée Quaben', ville:'Libreville', type:'Lycée'},
-    {nom:'Collège Bessieux', ville:'Libreville', type:'Collège'},
-    {nom:'Lycée Technique National Omar Bongo', ville:'Libreville', type:'Lycée'},
-    {nom:"Lycée d'État de Port-Gentil", ville:'Port-Gentil', type:'Lycée'},
-    {nom:'Lycée Provincial de Franceville', ville:'Franceville', type:'Lycée'},
-    {nom:'Établissement international (hors Gabon)', ville:'International', type:'International'}
-  ];
-
-  function renderEtablissements() {
-    const tbody = document.getElementById('verif-etablissements-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = ETABLISSEMENTS_GA.map(e =>
-      `<tr><td>${esc(e.nom)}</td><td>${esc(e.ville)}</td><td>${esc(e.type)}</td></tr>`
-    ).join('');
-  }
-
-  async function toggleVerifie(uid, value) {
-    try {
-      if (window.firebase && firebase.firestore) {
-        await firebase.firestore().collection('users').doc(uid).update({ documentVerifie: value });
-      }
-    } catch (e) { console.warn('toggleVerifie:', e); }
-    renderEtrangers();
-  }
-  window.gscToggleVerifie = toggleVerifie;
-
-  async function renderEtrangers() {
-    const tbody = document.getElementById('verif-etrangers-tbody');
-    if (!tbody) return;
-    let users = [];
-    try {
-      if (window.firebase && firebase.firestore) {
-        const snap = await firebase.firestore().collection('users').where('role', '==', 'sportif_etranger').get();
-        users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      }
-    } catch (e) { console.warn('renderEtrangers:', e); }
-    if (!users.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-txt);padding:16px;">Aucun sportif étranger enregistré pour le moment.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = users.map(u => {
-      const name = [u.prenom, u.nom].filter(Boolean).join(' ') || u.email || '—';
-      const verified = !!u.documentVerifie;
-      const uid = u.uid || u.id;
-      const gscId = u.gscId || (typeof generateGscId === 'function' ? generateGscId(uid, 'sportif_etranger') : '');
-      return `<tr>
-        <td>${gscId ? `<span class="user-gscid-cell" style="margin-right:6px;">${esc(gscId)}</span>` : ''}${esc(name)}</td>
-        <td>${esc(u.nationalite || '—')}</td>
-        <td>${esc(u.statutPro || '—')}${u.employeur ? ' · ' + esc(u.employeur) : ''}</td>
-        <td>${esc(u.documentType || '—')}${u.documentNumero ? ' n° ' + esc(u.documentNumero) : ''}</td>
-        <td>${verified ? '✅ Vérifié' : '⏳ Non vérifié'}</td>
-        <td><button class="filter-btn" onclick="gscToggleVerifie('${u.id}',${!verified})">${verified ? 'Marquer non vérifié' : 'Marquer vérifié'}</button></td>
-      </tr>`;
-    }).join('');
-  }
-  window.gscRenderEtrangers = renderEtrangers;
-
-  function showVerificationSection() {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById('verification');
-    if (target) target.classList.add('active');
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
-    const navBtn = document.getElementById('nav-verification');
-    if (navBtn) navBtn.classList.add('active');
-    const mNavBtn = document.getElementById('mnav-verification');
-    if (mNavBtn) mNavBtn.classList.add('active');
-
-    const topbarTitle = document.getElementById('topbar-title');
-    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Vérification internationale';
-
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-
-    renderEtablissements();
-    renderEtrangers();
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const navBtn = document.getElementById('nav-verification');
-    if (navBtn) navBtn.addEventListener('click', showVerificationSection);
-    const mNavBtn = document.getElementById('mnav-verification');
-    if (mNavBtn) mNavBtn.addEventListener('click', showVerificationSection);
-    renderEtablissements();
-  });
-})();
-</script>
-
-<!-- Module QR — identification (modal joueur) + Scanner caméra. Autonome :
-     lit le cache déjà synchronisé par realtime-sync-module.js (même pattern
-     que le module Rapports), aucun listener Firestore dupliqué. -->
-<script>
-(function () {
-  'use strict';
-
-  // ── Génération du GSC-ID : ALGORITHME IDENTIQUE à celui d'index.html ──
-  // (même hash déterministe sur l'UID) afin qu'un même membre ait toujours
-  // le même GSC-ID et le même QR Code, qu'on le consulte depuis le site
-  // public ou depuis l'admin.
-  const ROLE_CODES_QR = {
-    joueur: 'JOU', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
-    association: 'ASS', federation: 'FED', independant: 'IND',
-    admin: 'ADM', supporter: 'SUP', organisateur: 'ORG',
-    eleve_etudiant: 'ELE', sportif_etranger: 'ETR'
-  };
-  const ROLE_LABELS_QR = {
-    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
-    club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
-    organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
-  };
-
-  function generateGscId(uid, role) {
-    if (!uid) return null;
-    const roleCode = ROLE_CODES_QR[role] || 'ACT';
-    let hash = 0;
-    for (let i = 0; i < uid.length; i++) {
-      hash = ((hash << 5) - hash) + uid.charCodeAt(i);
-      hash |= 0;
-    }
-    const abs = Math.abs(hash).toString(36).toUpperCase().padStart(6, '0').slice(-6);
-    return `GSC-${roleCode}-${abs}`;
-  }
-  window.gscGenerateId = generateGscId;
-
-  function buildQrUrl(uid) {
-    // Pointe vers index.html (annuaire public) avec le paramètre ?actor=
-    const base = window.location.origin + window.location.pathname.replace(/admin\.html$/, 'index.html');
-    return `${base}?actor=${uid}`;
-  }
-
-  function drawQrOnCanvas(canvas, text, size) {
-    if (!canvas) return;
-    canvas.width = size; canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    const fallback = () => {
-      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#009E60'; ctx.font = `bold ${Math.floor(size * .14)}px monospace`;
-      ctx.textAlign = 'center';
-      ctx.fillText('QR', size / 2, size / 2 + 4);
-    };
-    // Génération via image distante (api.qrserver.com, CORS activé) :
-    // pas de dépendance à une lib JS tierce, donc pas de risque de collision
-    // de nom global ni d'échec de chargement CDN.
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(text)}`;
-    canvas.dataset.qrImgUrl = qrUrl; // dispo immédiatement pour impression/téléchargement, sans attendre le chargement
-    const qrImg = new Image();
-    qrImg.crossOrigin = 'anonymous';
-    qrImg.onload = () => { ctx.clearRect(0, 0, size, size); ctx.drawImage(qrImg, 0, 0, size, size); };
-    qrImg.onerror = fallback;
-    qrImg.src = qrUrl;
-  }
-  window.gscDrawQrOnCanvas = drawQrOnCanvas;
-  window.gscBuildQrUrl = buildQrUrl;
-  window.gscRoleLabelsQr = ROLE_LABELS_QR;
-
-  /* Lit le même cache que le module Rapports — fusion réel + démo (seed-data.js) */
-  function getUsers() {
-    const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
-    const seed = window.GSC_SEED_ACTORS || [];
-    const realIds = new Set(real.map(u => u.uid || u.id));
-    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
-    return [...real, ...demoOnly];
-  }
-
-  function findUserByCode(payload) {
-    if (!payload) return null;
-    const list = getUsers();
-    // 1) URL avec ?actor=UID
-    try {
-      const url = new URL(payload, window.location.origin);
-      const uidParam = url.searchParams.get('actor');
-      if (uidParam) {
-        const found = list.find(u => (u.uid || u.id) === uidParam);
-        if (found) return found;
-      }
-    } catch (e) { /* pas une URL, on continue */ }
-    // 2) GSC-ID direct contenu dans le texte
-    const m = String(payload).toUpperCase().match(/GSC-[A-Z]{3}-[A-Z0-9]{6}/);
-    if (m) {
-      const code = m[0];
-      const found = list.find(u => {
-        const uid = u.uid || u.id;
-        const gscId = u.gscId || (uid && generateGscId(uid, u.role || 'joueur'));
-        return gscId === code;
-      });
-      if (found) return found;
-    }
-    // 3) UID brut
-    return list.find(u => (u.uid || u.id) === payload) || null;
-  }
-  window.gscFindUserByCode = findUserByCode;
-
-  // ─── Injection QR dans le modal Joueur (déclenché à l'ouverture de la fiche) ───
-  function injectModalQr(user) {
-    const canvas = document.getElementById('modal-qr-canvas');
-    const gscIdEl = document.getElementById('modal-qr-gscid');
-    if (!canvas || !gscIdEl || !user) return;
-    const uid = user.uid || user.id;
-    const role = user.role || 'joueur';
-    const gscId = user.gscId || generateGscId(uid, role);
-    gscIdEl.textContent = gscId;
-    const url = buildQrUrl(uid);
-    drawQrOnCanvas(canvas, url, 84);
-
-    const printBtn = document.getElementById('modal-qr-print-btn');
-    const dlBtn = document.getElementById('modal-qr-download-btn');
-    if (printBtn) printBtn.onclick = () => {
-      const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ') || uid.slice(0, 8);
-      const w = window.open('', '_blank');
-      w.document.write(`<html><head><title>QR GSC — ${name}</title></head><body style="text-align:center;font-family:sans-serif;padding:40px;">
-        <div style="font-size:13px;font-weight:800;letter-spacing:1px;margin-bottom:6px;">GABON SPORT CONNECT</div>
-        <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${name}</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:16px;">${ROLE_LABELS_QR[role] || role}</div>
-        <img src="${canvas.dataset.qrImgUrl}" style="width:220px;height:220px;">
-        <div style="font-family:monospace;font-weight:700;color:#009E60;margin-top:14px;letter-spacing:.8px;">${gscId}</div>
-      </body></html>`);
-      w.document.close();
-      setTimeout(() => w.print(), 300);
-    };
-    if (dlBtn) dlBtn.onclick = async () => {
-      const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ').replace(/\s+/g, '_') || uid.slice(0, 8);
-      const qrUrl = canvas.dataset.qrImgUrl;
-      if (!qrUrl) return;
-      try {
-        // Téléchargement via blob : fiable même pour une image cross-origin
-        // (l'attribut download seul est ignoré par la plupart des navigateurs
-        // sur une URL distante).
-        const res = await fetch(qrUrl);
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `QR_GSC_${name}.png`;
-        link.href = blobUrl;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
-      } catch (e) {
-        // Repli : ouvrir l'image dans un nouvel onglet si le fetch échoue (réseau, etc.)
-        window.open(qrUrl, '_blank');
-      }
-    };
-  }
-  window.gscInjectModalQr = injectModalQr;
-
-  // Patch léger : si admin-controller.js expose openPlayerModal(uid) ou équivalent,
-  // on observe l'ouverture du modal pour y injecter automatiquement le QR, sans
-  // dépendre du contenu exact de ce fichier externe (non fourni ici).
-  function tryAutoInjectFromModal() {
-    const nameEl = document.getElementById('modal-player-name');
-    if (!nameEl) return;
-    const observer = new MutationObserver(() => {
-      const overlay = document.getElementById('player-modal');
-      if (!overlay || !overlay.classList.contains('open')) return;
-      const email = (document.getElementById('modal-email') || {}).textContent || '';
-      if (!email || email === '—') return;
-      const list = getUsers();
-      const match = list.find(u => u.email === email);
-      if (match) injectModalQr(match);
-    });
-    observer.observe(document.getElementById('player-modal'), { attributes: true, attributeFilter: ['class'] });
-  }
-
-  // ── SCANNER CAMÉRA (section dédiée) ──
-  let qrScanStream = null, qrScanRAF = null, qrScanActive = false, qrScanLastUser = null;
-
-  function setStatus(msg) {
-    const el = document.getElementById('qrscan-status');
-    if (el) el.textContent = msg;
-  }
-
-  function showResult(user) {
-    qrScanLastUser = user;
-    const name = [user.prenom, user.nom, user.nomOrganisation].filter(Boolean).join(' ') || user.email || '—';
-    const role = user.role || 'joueur';
-    document.getElementById('qrscan-result-name').textContent = name;
-    document.getElementById('qrscan-result-role').textContent = ROLE_LABELS_QR[role] || role;
-    document.getElementById('qrscan-result-gscid').textContent = user.gscId || generateGscId(user.uid || user.id, role);
-    const photoBox = document.getElementById('qrscan-result-photo');
-    if (photoBox) {
-      photoBox.innerHTML = user.photoURL || user.photo
-        ? `<img src="${user.photoURL || user.photo}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<span>👤</span>`;
-    }
-    document.getElementById('qrscan-result').style.display = 'block';
-    document.getElementById('qrscan-empty').style.display = 'none';
-    setStatus('✅ Membre identifié — ' + name);
-    stopScanLoop();
-  }
-
-  function showNotFound() {
-    document.getElementById('qrscan-result').style.display = 'none';
-    document.getElementById('qrscan-empty').style.display = 'block';
-    document.getElementById('qrscan-empty').textContent = '❌ Aucun membre trouvé pour ce code.';
-  }
-
-  function scanTick() {
-    if (!qrScanActive) return;
-    const video = document.getElementById('qrscan-video');
-    const canvas = document.getElementById('qrscan-canvas');
-    if (video && video.readyState === video.HAVE_ENOUGH_DATA && typeof jsQR !== 'undefined') {
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      let imageData;
-      try { imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch (e) { imageData = null; }
-      if (imageData) {
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-        if (code && code.data) {
-          const user = findUserByCode(code.data);
-          if (user) { showResult(user); return; }
-          setStatus('⚠️ QR Code détecté mais non reconnu par GSC');
-        }
-      }
-    }
-    qrScanRAF = requestAnimationFrame(scanTick);
-  }
-
-  function stopScanLoop() {
-    qrScanActive = false;
-    if (qrScanRAF) { cancelAnimationFrame(qrScanRAF); qrScanRAF = null; }
-  }
-
-  async function startScan() {
-    setStatus('Activation de la caméra…');
-    document.getElementById('qrscan-start-btn').style.display = 'none';
-    document.getElementById('qrscan-stop-btn').style.display = '';
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setStatus('❌ Caméra non disponible sur cet appareil/navigateur. Utilisez la recherche manuelle.');
-      document.getElementById('qrscan-start-btn').style.display = '';
-      document.getElementById('qrscan-stop-btn').style.display = 'none';
-      return;
-    }
-    try {
-      qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      const video = document.getElementById('qrscan-video');
-      video.srcObject = qrScanStream;
-      await video.play();
-      setStatus('Pointez la caméra vers un QR Code GSC…');
-      qrScanActive = true;
-      qrScanRAF = requestAnimationFrame(scanTick);
-    } catch (e) {
-      console.warn('Caméra inaccessible:', e);
-      setStatus('❌ Accès à la caméra refusé ou indisponible. Utilisez la recherche manuelle.');
-      document.getElementById('qrscan-start-btn').style.display = '';
-      document.getElementById('qrscan-stop-btn').style.display = 'none';
-    }
-  }
-
-  function stopScan() {
-    stopScanLoop();
-    if (qrScanStream) { qrScanStream.getTracks().forEach(t => t.stop()); qrScanStream = null; }
-    document.getElementById('qrscan-start-btn').style.display = '';
-    document.getElementById('qrscan-stop-btn').style.display = 'none';
-    setStatus('Caméra inactive — cliquez sur « Démarrer le scan ».');
-  }
-
-  function manualLookup() {
-    const input = document.getElementById('qrscan-manual-input');
-    const val = (input?.value || '').trim();
-    if (!val) return;
-    const user = findUserByCode(val);
-    if (user) showResult(user); else showNotFound();
-  }
-
-  function showQrScanSection() {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById('qrscan');
-    if (target) target.classList.add('active');
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
-    const navBtn = document.getElementById('nav-qrscan');
-    if (navBtn) navBtn.classList.add('active');
-    const mNavBtn = document.getElementById('mnav-qrscan');
-    if (mNavBtn) mNavBtn.classList.add('active');
-
-    const topbarTitle = document.getElementById('topbar-title');
-    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Scanner QR';
-
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const navBtn = document.getElementById('nav-qrscan');
-    if (navBtn) navBtn.addEventListener('click', showQrScanSection);
-    const mNavBtn = document.getElementById('mnav-qrscan');
-    if (mNavBtn) mNavBtn.addEventListener('click', showQrScanSection);
-
-    const startBtn = document.getElementById('qrscan-start-btn');
-    if (startBtn) startBtn.addEventListener('click', startScan);
-    const stopBtn = document.getElementById('qrscan-stop-btn');
-    if (stopBtn) stopBtn.addEventListener('click', stopScan);
-    const manualBtn = document.getElementById('qrscan-manual-btn');
-    if (manualBtn) manualBtn.addEventListener('click', manualLookup);
-    const openBtn = document.getElementById('qrscan-open-btn');
-    if (openBtn) openBtn.addEventListener('click', () => {
-      if (!qrScanLastUser) return;
-      const uid = qrScanLastUser.uid || qrScanLastUser.id;
-      // Ouvre la fiche complète dans le module Joueurs si la fonction existe déjà
-      // dans admin-controller.js (ex: openPlayerModal). Repli : section Joueurs + recherche.
-      if (typeof window.openPlayerModal === 'function') {
-        window.openPlayerModal(uid);
-      } else {
-        const navJoueurs = document.getElementById('nav-joueurs');
-        if (navJoueurs) navJoueurs.click();
-        const search = document.getElementById('search-input');
-        if (search) {
-          const name = [qrScanLastUser.prenom, qrScanLastUser.nom, qrScanLastUser.nomOrganisation].filter(Boolean).join(' ');
-          search.value = name;
-          search.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }
-    });
-
-    // Stoppe la caméra si on quitte la section (clic sur un autre item du menu)
-    document.querySelectorAll('.nav-item:not(#nav-qrscan)').forEach(btn => {
-      btn.addEventListener('click', stopScan);
-    });
-
-    tryAutoInjectFromModal();
-  });
-  
-  // Fonction pour revenir à l'accueil (index.html)
-  window.goToAppHome = function() {
-    window.location.href = 'index.html';
-  };
-})();
-</script>
-
-<!-- ══ AUTHENTIFICATION ADMIN (Supabase) ══ -->
-<script>
-(function(){
-  'use strict';
-  const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
-
-  let sb = null;
-  try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
-  catch(e){ console.error('Supabase indisponible.', e); }
-
-  function showApp(){
-    document.getElementById('admin-login-screen').style.display='none';
-    const appEl=document.getElementById('app');
-    appEl.classList.remove('gate-locked');
-    appEl.style.display='block';
-    // Fix #3 — charger les stats dynamiques depuis Firestore (SDK compat déjà initialisé)
-    loadDashboardStats();
-  }
-
-  // Fix #3 — Charge toutes les statistiques du dashboard depuis Firestore.
-  // Source unique de vérité : toutes les valeurs du dashboard (tuiles, barres, répartition par rôle)
-  // sont désormais calculées à partir de la même requête Firestore.
-  async function loadDashboardStats(){
-    const setText=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-    try{
-      if(!window.firebase||!firebase.firestore) return;
-      const snap=await firebase.firestore().collection('users').get();
-      const users=snap.docs.map(d=>d.data());
-      const active=users.filter(u=>u.status==='active'||u.status===undefined);
-      const pending=users.filter(u=>u.status==='pending');
-      const total=users.length;
-      const totalActive=active.length;
-      // Stat-cards (bloc supérieur)
-      setText('stat-total',total);
-      setText('stat-verified',totalActive);
-      setText('stat-pending',pending.length);
-      // Tuiles
-      setText('app-total-membres',total);
-      setText('app-actifs',totalActive);
-      const orgs=active.filter(u=>['club','federation','association'].includes(u.role));
-      setText('app-organisations',orgs.length);
-      // Répartition par rôle (tuiles inférieures)
-      const countRole=(r)=>active.filter(u=>u.role===r).length;
-      setText('rc-joueur',countRole('joueur'));
-      setText('rc-entraineur',countRole('entraineur'));
-      setText('rc-arbitre',countRole('arbitre'));
-      setText('rc-club',countRole('club'));
-      setText('rc-federation',countRole('federation'));
-      setText('rc-association',countRole('association'));
-      setText('rc-organisateur',countRole('organisateur'));
-      setText('rc-supporter',countRole('supporter'));
-      setText('rc-independant',countRole('independant'));
-      setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
-      setText('rc-sportif-etranger',countRole('sportif_etranger'));
-      // Barres de répartition (role-bars)
-      const barData=[
-        {role:'joueur',color:'#009E60'},
-        {role:'entraineur',color:'#f97316'},
-        {role:'arbitre',color:'#8b5cf6'},
-        {role:'club',color:'#3b82f6'},
-        {role:'federation',color:'#f97316'},
-        {role:'association',color:'#e11d48'},
-      ];
-      const barContainer=document.getElementById('role-bars');
-      if(barContainer&&totalActive>0){
-        barContainer.innerHTML=barData.map(b=>{
-          const c=countRole(b.role);
-          const pct=Math.round((c/totalActive)*100);
-          const labels={'joueur':'⚽ Joueur / Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
-          return `<div class="sb-item"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
-        }).join('');
-      }
-      // Activité récente
-      const actList=document.getElementById('activity-list');
-      if(actList){
-        actList.innerHTML=`<div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${totalActive} membre(s) actif(s)</div><div class="act-time">Firestore</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div>`;
-      }
-    }catch(e){ console.warn('[GSC Admin] loadDashboardStats:', e); }
-  }
-  window.loadDashboardStats=loadDashboardStats;
-
-  function showLogin(){
-    const appEl=document.getElementById('app');
-    appEl.classList.add('gate-locked');
-    appEl.style.display='none';
-    document.getElementById('admin-login-screen').style.display='flex';
-  }
-
-  async function handleAdminLogin(){
-    const errEl=document.getElementById('admin-login-error');
-    errEl.style.display='none';
-    const email=document.getElementById('admin-login-email').value.trim();
-    const password=document.getElementById('admin-login-password').value;
-    if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs.'; errEl.style.display='block'; return; }
-    if(!sb){ errEl.textContent='Service de connexion indisponible.'; errEl.style.display='block'; return; }
-    const btn=document.getElementById('admin-login-submit');
-    btn.disabled=true; btn.textContent='Connexion…';
-    try{
-      const {data,error}=await sb.auth.signInWithPassword({email,password});
-      if(error) throw error;
-      // Fix #11 — mettre à jour l'identité admin dans la sidebar avec les infos de la session
-      if(data&&data.user){
-        const adminEmail=data.user.email||'';
-        const adminMeta=data.user.user_metadata||{};
-        const adminName=adminMeta.full_name||adminMeta.name||adminEmail.split('@')[0]||'Admin';
-        const avatarLetter=(adminName.charAt(0)||'A').toUpperCase();
-        const nameEl=document.querySelector('.admin-name');
-        const avatarEl=document.querySelector('.admin-avatar');
-        if(nameEl) nameEl.textContent=adminName;
-        if(avatarEl) avatarEl.textContent=avatarLetter;
-      }
-      showApp();
-    }catch(e){
-      const msg=(e&&e.message)||'';
-      if(/invalid login credentials/i.test(msg)) errEl.textContent='Email ou mot de passe incorrect.';
-      else if(/email not confirmed/i.test(msg)) errEl.textContent='Ce compte n\'a pas confirmé son email.';
-      else if(/rate limit/i.test(msg)) errEl.textContent='Trop de tentatives. Réessayez dans quelques minutes.';
-      else errEl.textContent = msg || 'Connexion impossible. Réessayez.';
-      errEl.style.display='block';
-    }finally{
-      btn.disabled=false; btn.textContent='Se connecter';
-    }
-  }
-  window.handleAdminLogin = handleAdminLogin;
-
-  // Fix #13 — définitions de secours pour gscGoToFiltered et gscGoToMatches.
-  // Ces fonctions doivent normalement être fournies par admin-controller.js.
-  // Ce fallback minimal navigue vers la section Acteurs ou Matchs par son onglet de navigation,
-  // évitant ainsi une erreur silencieuse si le script externe est absent ou en échec.
-  if(typeof window.gscGoToFiltered !== 'function'){
-    window.gscGoToFiltered = function(opts){
-      const target = document.querySelector('[data-section="acteurs"],[data-nav="acteurs"],.nav-item[onclick*="acteur"]');
-      if(target) target.click();
-      else console.warn('[GSC] gscGoToFiltered: admin-controller.js non chargé. Opts:', opts);
-    };
-  }
-  if(typeof window.gscGoToMatches !== 'function'){
-    window.gscGoToMatches = function(){
-      const target = document.querySelector('[data-section="matchs"],[data-nav="matchs"],.nav-item[onclick*="match"]');
-      if(target) target.click();
-      else console.warn('[GSC] gscGoToMatches: admin-controller.js non chargé.');
-    };
-  }
-
-  // Fonction utilitaire de navigation de secours (utilisée par les boutons d'actions rapides)
-  window.showSection = window.showSection || function(section){
-    const target = document.querySelector(`[data-section="${section}"],.nav-item[onclick*="${section}"]`);
-    if(target) target.click();
-    else console.warn('[GSC] showSection: section introuvable —', section);
-  };
-
-  async function handleAdminLogout(){
-    try{ if(sb) await sb.auth.signOut(); }catch(e){}
-    showLogin();
-  }
-
-  // Permet de soumettre avec Entrée dans les deux champs
-  document.addEventListener('DOMContentLoaded', function(){
-    ['admin-login-email','admin-login-password'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.addEventListener('keydown', function(ev){ if(ev.key==='Enter') handleAdminLogin(); });
-    });
-    const logoutBtn=document.getElementById('logout-btn');
-    if(logoutBtn) logoutBtn.addEventListener('click', handleAdminLogout);
-  });
-
-  // Vérifie si une session admin existe déjà (rafraîchissement de page)
-  (async function checkSession(){
-    if(!sb){ showLogin(); return; }
-    try{
-      const {data:{session}}=await sb.auth.getSession();
-      if(session && session.user) showApp();
-      else showLogin();
-    }catch(e){ showLogin(); }
-  })();
-
-  // Si la session expire ou est invalidée ailleurs, on revient à l'écran de login
-  if(sb){
-    sb.auth.onAuthStateChange((event)=>{
-      if(event==='SIGNED_OUT') showLogin();
-    });
-  }
-})();
-</script>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     CMS — Chargé en dernier : app-config-loader (API) + admin-cms (UI)
-     app-config-loader.js est aussi chargé par index.html pour appliquer
-     les changements en temps réel sans toucher au code.
-════════════════════════════════════════════════════════════════ -->
-<script src="app-config-loader.js"></script>
-<script src="admin-cms.js"></script>
-
 </body>
 </html>
