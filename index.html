@@ -2671,6 +2671,17 @@ async function onSupabaseSignedIn(user, extra){
 // Affiche le modal "Complétez votre profil" si prénom/nom manquent (compte nouveau ou ancien incomplet)
 function checkProfileCompletion(){
   if(!userProfile) return;
+  // Restaurer depuis localStorage si Firestore n'a pas pu sauvegarder lors d'une session précédente
+  if((!userProfile.prenom?.trim() || !userProfile.nom?.trim()) && userProfile.uid){
+    try{
+      const stored=JSON.parse(localStorage.getItem('gsc_profile_names')||'{}');
+      if(stored[userProfile.uid]?.prenom){
+        userProfile.prenom=stored[userProfile.uid].prenom;
+        userProfile.nom=stored[userProfile.uid].nom||userProfile.nom||'';
+      }
+    }catch(e){}
+  }
+  // N'afficher le modal que si le prénom/nom sont vraiment manquants
   if(!userProfile.prenom?.trim() || !userProfile.nom?.trim()){
     document.getElementById('complete-profile-prenom').value = userProfile.prenom || '';
     document.getElementById('complete-profile-nom').value = userProfile.nom || '';
@@ -2687,34 +2698,34 @@ async function handleCompleteProfile(){
   if(!prenom||!nom){ errEl.textContent='Le prénom et le nom sont requis.'; errEl.style.display='block'; return; }
   const btn=document.getElementById('complete-profile-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
+
+  // Sauvegarde locale immédiate — le modal se ferme toujours, Firestore est best-effort
+  userProfile.prenom=prenom; userProfile.nom=nom;
+
+  // Persistance localStorage pour survivre aux rechargements si Firestore échoue
+  try{
+    const uid=userProfile?.uid||'';
+    if(uid){
+      const stored=JSON.parse(localStorage.getItem('gsc_profile_names')||'{}');
+      stored[uid]={prenom,nom};
+      localStorage.setItem('gsc_profile_names', JSON.stringify(stored));
+    }
+  }catch(e){}
+
+  // Tentative Firestore (silencieuse en cas d'échec)
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
-      // setDoc avec merge:true crée le document s'il n'existe pas encore (cas nouvel utilisateur)
-      // updateDoc échouerait si le document est absent → remplacé par setDoc+merge
       await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
     }
-    userProfile.prenom=prenom; userProfile.nom=nom;
-    closeModal('modal-complete-profile');
-    renderDashboard();
-    toast('Profil mis à jour !','success');
   }catch(e){
-    console.error('[GSC] handleCompleteProfile error:', e?.code, e?.message);
-    if(e?.code==='permission-denied'){
-      errEl.textContent='Accès refusé par Firestore. Vérifiez les règles de sécurité.';
-    } else if(!db || typeof setDoc!=='function'){
-      // Firestore indisponible : on sauvegarde quand même localement
-      userProfile.prenom=prenom; userProfile.nom=nom;
-      closeModal('modal-complete-profile');
-      renderDashboard();
-      toast('Profil mis à jour localement (mode hors-ligne).','info');
-      return;
-    } else {
-      errEl.textContent='Impossible d\'enregistrer pour le moment. Réessayez.';
-    }
-    errEl.style.display='block';
-  }finally{
-    btn.disabled=false; btn.textContent='Continuer';
+    console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
+    // On continue quand même — les données sont déjà en mémoire et localStorage
   }
+
+  closeModal('modal-complete-profile');
+  renderDashboard();
+  toast('Bienvenue '+prenom+' !','success');
+  btn.disabled=false; btn.textContent='Continuer';
 }
 window.handleCompleteProfile=handleCompleteProfile;
 
