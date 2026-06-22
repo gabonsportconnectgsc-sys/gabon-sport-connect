@@ -21,6 +21,8 @@
   <!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
        jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+  <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
@@ -992,6 +994,64 @@
       <div class="login-history-full-list" id="login-history-full-list">
         <div class="login-history-empty">Aucune connexion enregistrée.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: AUTHENTIFICATION (Supabase) ══ -->
+  <div class="modal" id="modal-auth" onclick="if(event.target===this)closeModal('modal-auth')">
+    <div class="modal-card" style="max-width:400px;">
+      <button class="modal-close-x" onclick="closeModal('modal-auth')" aria-label="Fermer">✕</button>
+
+      <!-- Onglets -->
+      <div class="auth-tabs" id="auth-tabs" style="display:flex;gap:6px;margin-bottom:18px;">
+        <button class="auth-tab active" id="auth-tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--gray-bd);background:var(--green-lt);color:var(--green-dk);font-weight:700;font-size:13px;cursor:pointer;">Connexion</button>
+        <button class="auth-tab" id="auth-tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--gray-bd);background:#fff;color:var(--gray-txt);font-weight:700;font-size:13px;cursor:pointer;">Inscription</button>
+      </div>
+
+      <!-- Vue: LOGIN -->
+      <div id="auth-view-login">
+        <div class="modal-title" style="margin-bottom:14px;">🔑 Connexion</div>
+        <div class="form-group"><label>Email</label><input type="email" id="auth-login-email" placeholder="votre@email.com" autocomplete="username"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-login-password" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn-sm" id="auth-login-submit" onclick="handleSupabaseLogin()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Se connecter</button>
+        <div style="text-align:center;margin-top:14px;">
+          <a onclick="switchAuthTab('forgot')" style="font-size:12.5px;color:var(--gray-txt);cursor:pointer;text-decoration:underline;">Mot de passe oublié ?</a>
+        </div>
+        <div id="auth-login-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+
+      <!-- Vue: INSCRIPTION -->
+      <div id="auth-view-register" style="display:none;">
+        <div class="modal-title" style="margin-bottom:14px;">🆕 Créer un compte</div>
+        <div class="form-group"><label>Prénom</label><input type="text" id="auth-register-prenom" placeholder="Prénom"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="auth-register-nom" placeholder="Nom"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="auth-register-email" placeholder="votre@email.com" autocomplete="username"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+        <button class="btn-sm" id="auth-register-submit" onclick="handleSupabaseRegister()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Créer mon compte</button>
+        <div id="auth-register-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+
+      <!-- Vue: MOT DE PASSE OUBLIÉ -->
+      <div id="auth-view-forgot" style="display:none;">
+        <div class="modal-title" style="margin-bottom:14px;">🔓 Mot de passe oublié</div>
+        <p style="font-size:12.5px;color:var(--gray-txt);margin-bottom:14px;">Entrez votre email, vous recevrez un lien pour réinitialiser votre mot de passe.</p>
+        <div class="form-group"><label>Email</label><input type="email" id="auth-forgot-email" placeholder="votre@email.com" autocomplete="username"></div>
+        <button class="btn-sm" id="auth-forgot-submit" onclick="handleSupabaseForgotPassword()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Envoyer le lien</button>
+        <div style="text-align:center;margin-top:14px;">
+          <a onclick="switchAuthTab('login')" style="font-size:12.5px;color:var(--gray-txt);cursor:pointer;text-decoration:underline;">← Retour à la connexion</a>
+        </div>
+        <div id="auth-forgot-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+        <div id="auth-forgot-success" style="color:var(--green-dk);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+
+      <!-- Vue: NOUVEAU MOT DE PASSE (après clic sur le lien reçu par email) -->
+      <div id="auth-view-reset" style="display:none;">
+        <div class="modal-title" style="margin-bottom:14px;">🔐 Nouveau mot de passe</div>
+        <div class="form-group"><label>Nouveau mot de passe</label><input type="password" id="auth-reset-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+        <button class="btn-sm" id="auth-reset-submit" onclick="handleSupabaseResetPassword()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Mettre à jour le mot de passe</button>
+        <div id="auth-reset-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+
     </div>
   </div>
 
@@ -2277,6 +2337,22 @@ const ETABLISSEMENTS_GA=[
 })();
 </script>
 
+<!-- Supabase bootstrap (Authentication uniquement) -->
+<script>
+(function(){
+  const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
+  try{
+    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._supabaseReady = true;
+  }catch(e){
+    window._supabaseReady = false;
+    window._sb = null;
+  }
+  document.dispatchEvent(new Event('supabase-ready'));
+})();
+</script>
+
 <!-- Acteurs de démonstration (isDemo:true) — fichier partagé avec admin.html -->
 <script src="seed-data.js"></script>
 
@@ -2394,9 +2470,187 @@ function enterAsVisitor(silent=false){
 }
 
 function goToAuth(tab){
-  // L'écran de connexion a été retiré — un nouveau système d'authentification
-  // (gestion Firestore) sera ajouté prochainement.
-  toast('🔒 La connexion sera bientôt disponible.','info');
+  document.getElementById('auth-login-error').style.display='none';
+  document.getElementById('auth-register-error').style.display='none';
+  switchAuthTab(tab==='register'?'register':'login');
+  document.getElementById('modal-auth').classList.add('open');
+}
+window.goToAuth=goToAuth;
+
+function switchAuthTab(tab){
+  const views=['login','register','forgot','reset'];
+  views.forEach(v=>{
+    const el=document.getElementById('auth-view-'+v);
+    if(el) el.style.display = (v===tab)?'':'none';
+  });
+  // Les onglets visibles sont seulement login/register ; forgot et reset n'ont pas de bouton d'onglet dédié
+  const tabsEl=document.getElementById('auth-tabs');
+  if(tabsEl) tabsEl.style.display = (tab==='login'||tab==='register')?'flex':'none';
+  const tl=document.getElementById('auth-tab-login'), tr=document.getElementById('auth-tab-register');
+  if(tl&&tr){
+    if(tab==='login'){ tl.style.background='var(--green-lt)';tl.style.color='var(--green-dk)';tr.style.background='#fff';tr.style.color='var(--gray-txt)'; }
+    else if(tab==='register'){ tr.style.background='var(--green-lt)';tr.style.color='var(--green-dk)';tl.style.background='#fff';tl.style.color='var(--gray-txt)'; }
+  }
+}
+window.switchAuthTab=switchAuthTab;
+
+async function handleSupabaseLogin(){
+  const errEl=document.getElementById('auth-login-error');
+  errEl.style.display='none';
+  const email=document.getElementById('auth-login-email').value.trim();
+  const password=document.getElementById('auth-login-password').value;
+  if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs.'; errEl.style.display='block'; return; }
+  if(!window._sb){ errEl.textContent='Service de connexion indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('auth-login-submit');
+  btn.disabled=true; btn.textContent='Connexion…';
+  try{
+    const {data,error}=await window._sb.auth.signInWithPassword({email,password});
+    if(error) throw error;
+    closeModal('modal-auth');
+    toast('Connexion réussie !','success');
+    await onSupabaseSignedIn(data.user);
+  }catch(e){
+    errEl.textContent = supabaseAuthErrorMessage(e);
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Se connecter';
+  }
+}
+window.handleSupabaseLogin=handleSupabaseLogin;
+
+async function handleSupabaseRegister(){
+  const errEl=document.getElementById('auth-register-error');
+  errEl.style.display='none';
+  const prenom=document.getElementById('auth-register-prenom').value.trim();
+  const nom=document.getElementById('auth-register-nom').value.trim();
+  const email=document.getElementById('auth-register-email').value.trim();
+  const password=document.getElementById('auth-register-password').value;
+  if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
+  if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
+  if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('auth-register-submit');
+  btn.disabled=true; btn.textContent='Création…';
+  try{
+    const {data,error}=await window._sb.auth.signUp({
+      email,password,
+      options:{data:{prenom,nom}}
+    });
+    if(error) throw error;
+    if(data.user && !data.session){
+      // Confirmation email requise par le projet Supabase
+      toast('Compte créé ! Vérifiez votre email pour confirmer votre inscription.','success');
+      switchAuthTab('login');
+    }else{
+      closeModal('modal-auth');
+      toast('Compte créé avec succès !','success');
+      await onSupabaseSignedIn(data.user,{prenom,nom});
+    }
+  }catch(e){
+    errEl.textContent = supabaseAuthErrorMessage(e);
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Créer mon compte';
+  }
+}
+window.handleSupabaseRegister=handleSupabaseRegister;
+
+async function handleSupabaseForgotPassword(){
+  const errEl=document.getElementById('auth-forgot-error');
+  const okEl=document.getElementById('auth-forgot-success');
+  errEl.style.display='none'; okEl.style.display='none';
+  const email=document.getElementById('auth-forgot-email').value.trim();
+  if(!email){ errEl.textContent='Veuillez entrer votre email.'; errEl.style.display='block'; return; }
+  if(!window._sb){ errEl.textContent='Service indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('auth-forgot-submit');
+  btn.disabled=true; btn.textContent='Envoi…';
+  try{
+    const redirectTo = window.location.origin + window.location.pathname;
+    const {error}=await window._sb.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error) throw error;
+    okEl.textContent='Email envoyé ! Vérifiez votre boîte de réception (et vos spams).';
+    okEl.style.display='block';
+  }catch(e){
+    errEl.textContent = supabaseAuthErrorMessage(e);
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Envoyer le lien';
+  }
+}
+window.handleSupabaseForgotPassword=handleSupabaseForgotPassword;
+
+async function handleSupabaseResetPassword(){
+  const errEl=document.getElementById('auth-reset-error');
+  errEl.style.display='none';
+  const password=document.getElementById('auth-reset-password').value;
+  if(!password||password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
+  if(!window._sb){ errEl.textContent='Service indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('auth-reset-submit');
+  btn.disabled=true; btn.textContent='Mise à jour…';
+  try{
+    const {error}=await window._sb.auth.updateUser({password});
+    if(error) throw error;
+    toast('Mot de passe mis à jour ! Vous êtes connecté.','success');
+    closeModal('modal-auth');
+    const {data:{user}}=await window._sb.auth.getUser();
+    await onSupabaseSignedIn(user);
+  }catch(e){
+    errEl.textContent = supabaseAuthErrorMessage(e);
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Mettre à jour le mot de passe';
+  }
+}
+window.handleSupabaseResetPassword=handleSupabaseResetPassword;
+
+function supabaseAuthErrorMessage(e){
+  const msg=(e&&e.message)||'';
+  if(/invalid login credentials/i.test(msg)) return 'Email ou mot de passe incorrect.';
+  if(/user already registered/i.test(msg)) return 'Un compte existe déjà avec cet email.';
+  if(/password should be at least/i.test(msg)) return 'Le mot de passe doit contenir au moins 6 caractères.';
+  if(/email not confirmed/i.test(msg)) return 'Veuillez confirmer votre email avant de vous connecter.';
+  if(/rate limit/i.test(msg)) return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  return msg || 'Une erreur est survenue. Réessayez.';
+}
+
+// Appelé après un login/signup/reset Supabase réussi : relie l'identité Supabase
+// au profil Firestore existant (collection 'users', clé = uid Supabase).
+async function onSupabaseSignedIn(user, extra){
+  if(!user) return;
+  _uid = user.id;
+  currentUser = {uid:user.id, email:user.email};
+  await loadUserProfile(user.id);
+  if(userProfile && userProfile._isNew){
+    // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
+    const prenom = extra?.prenom || user.user_metadata?.prenom || '';
+    const nom = extra?.nom || user.user_metadata?.nom || '';
+    delete userProfile._isNew;
+    userProfile.prenom = prenom; userProfile.nom = nom;
+    try{
+      if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
+    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
+  }
+  try{
+    const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
+    await enregistrerConnexion({uid:user.id, email:user.email, displayName:fullname||user.email});
+  }catch(e){}
+  enterApp();
+}
+
+// Restaure la session au chargement de la page (utilisateur déjà connecté précédemment)
+async function checkSupabaseSession(){
+  if(!window._sb){ enterAsVisitor(true); return; }
+  // Cas particulier : lien "mot de passe oublié" cliqué (Supabase ajoute #access_token=...&type=recovery)
+  if(window.location.hash.includes('type=recovery')){
+    document.getElementById('modal-auth').classList.add('open');
+    switchAuthTab('reset');
+    return;
+  }
+  const {data:{session}}=await window._sb.auth.getSession();
+  if(session && session.user){
+    await onSupabaseSignedIn(session.user);
+  }else{
+    enterAsVisitor(true);
+  }
 }
 
 // ── MENU LATÉRAL (plan de l'application) ──
@@ -2699,7 +2953,8 @@ function enterApp(){
 }
 
 async function handleLogout(){
-  currentUser=null;userProfile=null;
+  try{ if(window._sb) await window._sb.auth.signOut(); }catch(e){}
+  currentUser=null;userProfile=null;_uid=null;
   toast('Déconnecté.','info');
   enterAsVisitor(true);
 }
@@ -2710,9 +2965,9 @@ async function loadUserProfile(uid){
   try{
     const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active'};
+    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
   }catch(e){
-    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active'};
+    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
   }
 }
 
@@ -4719,14 +4974,24 @@ document.addEventListener('firebase-ready', async function(){
     return;
   }
 
-  // L'app démarre toujours en mode visiteur (lecture seule).
-  // L'authentification (gestion Firestore) sera réintroduite ultérieurement.
+  // Démarrage : on vérifie s'il existe déjà une session Supabase (utilisateur précédemment connecté).
+  // Sinon l'app démarre en mode visiteur (lecture seule).
   loadGlobalStats();
   await loadNewsFromDb();
   renderNews();
   showApp();
-  enterAsVisitor(true);
+  await checkSupabaseSession();
   loadActors();
+});
+
+// Écoute les changements de session Supabase (connexion/déconnexion depuis un autre onglet, expiration, etc.)
+document.addEventListener('supabase-ready', function(){
+  if(!window._sb) return;
+  window._sb.auth.onAuthStateChange((event)=>{
+    if(event==='SIGNED_OUT'){
+      if(!isVisitor){ currentUser=null; userProfile=null; _uid=null; enterAsVisitor(true); }
+    }
+  });
 });
 
 // ══════════════════════════════════════════════════
