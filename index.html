@@ -239,7 +239,7 @@
     .dashboard-hero{border-radius:var(--radius-lg);padding:28px 24px;background:linear-gradient(130deg,var(--navy) 0%,var(--navy-md) 55%,#104d30 100%);color:var(--white);margin-bottom:20px;position:relative;overflow:hidden;}
     .dashboard-hero::after{content:'🇬🇦';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:70px;opacity:.12;}
     .hero-greeting{font-size:13px;opacity:.85;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700;background:linear-gradient(90deg,#FFD700,#fff7cc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));overflow-wrap:break-word;word-break:break-word;hyphens:auto;}
+    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));}
     .hero-sub{font-size:13px;opacity:.75;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
     .profile-completion{background:var(--green-lt);border:1px solid rgba(0,158,96,.2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer;transition:background .2s;}
     .profile-completion:hover{background:#d4f0e4;}
@@ -1055,19 +1055,7 @@
     </div>
   </div>
 
-  <!-- ══ MODAL: COMPLÉTER LE PROFIL (forcé à la première connexion si nom/prénom manquants) ══ -->
-  <!-- modal-complete-profile : volontairement fermable par clic sur l'overlay pour ne pas bloquer l'utilisateur en cas d'erreur.
-       Si ce modal doit redevenir obligatoire (non annulable), supprimer l'attribut onclick ci-dessous. -->
-  <div class="modal" id="modal-complete-profile" onclick="if(event.target===this)closeModal('modal-complete-profile')">`
-    <div class="modal-card" style="max-width:400px;">
-      <div class="modal-title" style="margin-bottom:6px;">👋 Bienvenue !</div>
-      <p style="font-size:12.5px;color:var(--gray-txt);margin-bottom:16px;">Quelques infos avant de continuer — vos nom et prénom apparaîtront sur votre fiche et votre QR code d'identification.</p>
-      <div class="form-group"><label>Prénom *</label><input type="text" id="complete-profile-prenom" placeholder="Prénom"></div>
-      <div class="form-group"><label>Nom *</label><input type="text" id="complete-profile-nom" placeholder="Nom"></div>
-      <button class="btn-sm" id="complete-profile-submit" onclick="handleCompleteProfile()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Continuer</button>
-      <div id="complete-profile-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
-    </div>
-  </div>
+  <!-- MAIN -->
   <main class="main-content">
 
     <!-- ── DASHBOARD ── -->
@@ -2522,32 +2510,13 @@ async function handleSupabaseLogin(){
     toast('Connexion réussie !','success');
     await onSupabaseSignedIn(data.user);
   }catch(e){
-    const msg=(e&&e.message)||'';
-    if(/email not confirmed/i.test(msg)){
-      errEl.innerHTML = 'Veuillez confirmer votre email avant de vous connecter. <a onclick="handleResendConfirmation(\''+email.replace(/'/g,"\\'")+'\')" style="text-decoration:underline;cursor:pointer;color:var(--green-dk);">Renvoyer l\'email</a>';
-      errEl.style.display='block';
-    }else{
-      errEl.textContent = supabaseAuthErrorMessage(e);
-      errEl.style.display='block';
-    }
+    errEl.textContent = supabaseAuthErrorMessage(e);
+    errEl.style.display='block';
   }finally{
     btn.disabled=false; btn.textContent='Se connecter';
   }
 }
 window.handleSupabaseLogin=handleSupabaseLogin;
-
-async function handleResendConfirmation(email){
-  const errEl=document.getElementById('auth-login-error');
-  if(!window._sb || !email) return;
-  try{
-    const {error}=await window._sb.auth.resend({type:'signup', email});
-    if(error) throw error;
-    errEl.innerHTML = '✅ Email de confirmation renvoyé. Vérifiez votre boîte de réception.';
-  }catch(e){
-    errEl.innerHTML = 'Impossible de renvoyer l\'email pour le moment.';
-  }
-}
-window.handleResendConfirmation=handleResendConfirmation;
 
 async function handleSupabaseRegister(){
   const errEl=document.getElementById('auth-register-error');
@@ -2665,69 +2634,7 @@ async function onSupabaseSignedIn(user, extra){
     await enregistrerConnexion({uid:user.id, email:user.email, displayName:fullname||user.email});
   }catch(e){}
   enterApp();
-  checkProfileCompletion();
 }
-
-// Affiche le modal "Complétez votre profil" si prénom/nom manquent (compte nouveau ou ancien incomplet)
-function checkProfileCompletion(){
-  if(!userProfile) return;
-  // Restaurer depuis localStorage si Firestore n'a pas pu sauvegarder lors d'une session précédente
-  if((!userProfile.prenom?.trim() || !userProfile.nom?.trim()) && userProfile.uid){
-    try{
-      const stored=JSON.parse(localStorage.getItem('gsc_profile_names')||'{}');
-      if(stored[userProfile.uid]?.prenom){
-        userProfile.prenom=stored[userProfile.uid].prenom;
-        userProfile.nom=stored[userProfile.uid].nom||userProfile.nom||'';
-      }
-    }catch(e){}
-  }
-  // N'afficher le modal que si le prénom/nom sont vraiment manquants
-  if(!userProfile.prenom?.trim() || !userProfile.nom?.trim()){
-    document.getElementById('complete-profile-prenom').value = userProfile.prenom || '';
-    document.getElementById('complete-profile-nom').value = userProfile.nom || '';
-    document.getElementById('complete-profile-error').style.display='none';
-    document.getElementById('modal-complete-profile').classList.add('open');
-  }
-}
-
-async function handleCompleteProfile(){
-  const errEl=document.getElementById('complete-profile-error');
-  errEl.style.display='none';
-  const prenom=document.getElementById('complete-profile-prenom').value.trim();
-  const nom=document.getElementById('complete-profile-nom').value.trim();
-  if(!prenom||!nom){ errEl.textContent='Le prénom et le nom sont requis.'; errEl.style.display='block'; return; }
-  const btn=document.getElementById('complete-profile-submit');
-  btn.disabled=true; btn.textContent='Enregistrement…';
-
-  // Sauvegarde locale immédiate — le modal se ferme toujours, Firestore est best-effort
-  userProfile.prenom=prenom; userProfile.nom=nom;
-
-  // Persistance localStorage pour survivre aux rechargements si Firestore échoue
-  try{
-    const uid=userProfile?.uid||'';
-    if(uid){
-      const stored=JSON.parse(localStorage.getItem('gsc_profile_names')||'{}');
-      stored[uid]={prenom,nom};
-      localStorage.setItem('gsc_profile_names', JSON.stringify(stored));
-    }
-  }catch(e){}
-
-  // Tentative Firestore (silencieuse en cas d'échec)
-  try{
-    if(db && typeof setDoc==='function' && userProfile?.uid){
-      await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
-    }
-  }catch(e){
-    console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
-    // On continue quand même — les données sont déjà en mémoire et localStorage
-  }
-
-  closeModal('modal-complete-profile');
-  renderDashboard();
-  toast('Bienvenue '+prenom+' !','success');
-  btn.disabled=false; btn.textContent='Continuer';
-}
-window.handleCompleteProfile=handleCompleteProfile;
 
 // Restaure la session au chargement de la page (utilisateur déjà connecté précédemment)
 async function checkSupabaseSession(){
@@ -3039,9 +2946,9 @@ function enterApp(){
   // Add site button for logged-in users (not visitor)
   document.getElementById('btn-add-site').style.display='';
   renderDashboard();
+  loadGlobalStats();
   // Init news preview
   if(!allNewsItems.length){ allNewsItems=[...GSC_SEED_NEWS]; renderNewsFiltered(); }
-  // loadActors() met à jour stat-total-acteurs et toutes les stats globales avec déduplication correcte
   loadActors();
 }
 
@@ -3077,8 +2984,7 @@ function renderDashboard(){
   if(navPhotoSrc) document.getElementById('nav-avatar').innerHTML=`<img src="${navPhotoSrc}" alt="av">`;
   const roleLabel=ROLE_LABELS[p.role]||p.role;
   document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
-  const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
-  document.getElementById('hero-name').textContent=`Bonjour, ${heroDisplayName} !`;
+  document.getElementById('hero-name').textContent=`Bonjour, ${p.prenom||fullname} !`;
   document.getElementById('hero-role-label').textContent=roleLabel;
   document.getElementById('hero-sport-label').textContent=p.sport||'—';
   document.getElementById('hero-email-label').textContent=p.email||'';
@@ -3098,31 +3004,24 @@ function renderDashboard(){
   document.getElementById('completion-label').textContent=pct===100?'✅ Profil complet !':'Profil complété à '+pct+'% — Cliquez pour compléter';
 }
 
-// Fallback generateGscId — utilisé si seed-data.js ne définit pas cette fonction.
-// L'algorithme produit un identifiant reproductible basé sur l'uid et le rôle.
-if(typeof generateGscId!=='function'){
-  window.generateGscId=function(uid,role){
-    const roleCode=(role||'UNK').slice(0,3).toUpperCase();
-    const hash=(uid||'').split('').reduce((acc,c)=>((acc<<5)-acc+c.charCodeAt(0))|0,0);
-    const hex=Math.abs(hash).toString(16).toUpperCase().padStart(6,'0').slice(0,6);
-    return 'GSC-'+roleCode+'-'+hex;
-  };
-}
-
 async function loadGlobalStats(){
-  // Même logique de déduplication que loadActors : Firebase d'abord, puis seed sans doublon
-  let dbActors=[];
+  // Start with seed data counts
+  const seedActive=GSC_SEED_ACTORS.filter(u=>u.status==='active');
+  let total=seedActive.length;
+  let joueurs=seedActive.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+  let clubs=seedActive.filter(u=>['club','association','federation'].includes(u.role)).length;
   if(db&&typeof collection==='function'){
     try{
       const snap=await getDocs(collection(db,'users'));
-      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+      const users=snap.docs.map(d=>d.data()).filter(u=>u.status==='active');
+      // Add Firebase users (seed already counted)
+      total+=users.length;
+      joueurs+=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+      clubs+=users.filter(u=>['club','association','federation'].includes(u.role)).length;
     }catch(e){console.warn('stats:',e);}
   }
-  const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
-  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&(a.status==='active'||a.status===undefined));
-  const merged=[...dbActors,...seedActors];
   const el1=document.getElementById('stat-total-acteurs');
-  if(el1) el1.textContent=merged.length;
+  if(el1) el1.textContent=total;
 }
 
 // ── ANNUAIRE ──
@@ -3163,11 +3062,10 @@ async function loadActors(){
   if(etrEl) etrEl.textContent=activeAll.filter(u=>u.role==='sportif_etranger').length;
 }
 
-function filterActors(type,btn){
+function filterActors(type){
   currentActorType=type;
   document.querySelectorAll('.actor-filter-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else document.querySelector(`.actor-filter-btn[onclick*="'${type}'"]`)?.classList.add('active');
+  event.target.classList.add('active');
   searchAnnuaire();
 }
 
@@ -4072,11 +3970,10 @@ async function loadSites(){
   const el=document.getElementById('admin-total-sites');
   if(el) el.textContent=allSites.length;
 }
-function filterSites(type,btn){
+function filterSites(type){
   currentSiteType=type;
   document.querySelectorAll('.site-filter-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else document.querySelector(`.site-filter-btn[onclick*="'${type}'"]`)?.classList.add('active');
+  event.target.classList.add('active');
   applySiteFilters();
 }
 window.filterSites=filterSites;
@@ -4375,12 +4272,11 @@ function switchLegalTab(tab,e){
 }
 
 // ── ADMIN ──
-function switchAdminTab(tab,btn){
+function switchAdminTab(tab){
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('admin-section-'+tab)?.classList.add('active');
-  if(btn) btn.classList.add('active');
-  else document.querySelector(`.admin-tab[onclick*="'${tab}'"]`)?.classList.add('active');
+  event.target.classList.add('active');
   window.scrollTo({top:0,left:0,behavior:'auto'});
   if(tab==='sites') loadAdminSites();
   if(tab==='news') renderNews();
@@ -4876,11 +4772,10 @@ const librevilleSportsData={
   ]
 };
 
-function switchMapsTab(tab,btn){
+function switchMapsTab(tab){
   document.querySelectorAll('.maps-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.maps-panel').forEach(p=>p.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else document.querySelector(`.maps-tab[onclick*="'${tab}'"]`)?.classList.add('active');
+  event.target.classList.add('active');
   document.getElementById(tab+'-panel').classList.add('active');
   if(tab==='osm') setTimeout(()=>initOsmMap(),100);
 }
@@ -5087,13 +4982,6 @@ document.addEventListener('firebase-ready', async function(){
   showApp();
   await checkSupabaseSession();
   loadActors();
-  // Fix #9 — détection du paramètre ?admin=1 dans l'URL : ouvre directement la vue admin après chargement
-  if(new URLSearchParams(window.location.search).get('admin')==='1'){
-    setTimeout(()=>{
-      const adminBtn=document.getElementById('bnav-admin')||document.getElementById('side-menu-admin');
-      if(adminBtn) adminBtn.click();
-    }, 800);
-  }
 });
 
 // Écoute les changements de session Supabase (connexion/déconnexion depuis un autre onglet, expiration, etc.)
