@@ -941,7 +941,7 @@
       <div class="user-avatar" id="nav-avatar">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
-    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
+    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code" style="display:none;">📷</button>
     <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter" style="display:none;font-size:18px;">👤</button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
@@ -2470,6 +2470,7 @@ function enterAsVisitor(silent=false){
   document.getElementById('hero-email-label').textContent='';
   document.getElementById('stat-niveau').textContent='—';
   document.getElementById('btn-add-site').style.display='none';
+  document.getElementById('nav-qr-scan-btn').style.display='none';
   if(!silent) showView('dashboard');
   loadGlobalStats();
   // Init news preview with seed data
@@ -3025,6 +3026,7 @@ function enterApp(){
   document.getElementById('nav-visitor-banner').style.display='none';
   document.getElementById('nav-login-btn').style.display='none';
   document.getElementById('nav-user-chip').style.display='';
+  document.getElementById('nav-qr-scan-btn').style.display='';
   document.getElementById('quick-actions-visitor').style.display='none';
   document.getElementById('quick-actions-auth').style.display='grid';
   document.getElementById('profile-completion-bar').style.display='flex';
@@ -3449,7 +3451,7 @@ function openActorDetail(uid){
   else el.textContent=ROLE_ICONS[a.role]||initial;
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
-  // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables
+  // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables (masqué pour visiteurs)
   (function(){
     const roleKey=a.role||'joueur';
     const block=document.getElementById('adm-gscid-block');
@@ -3458,8 +3460,16 @@ function openActorDetail(uid){
     if(!block||!pill||!canvas) return;
     const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(uid,roleKey):null);
     if(!gscId){ block.style.display='none'; return; }
+    // Visiteur : masquer le QR (garder seulement l'identifiant GSC)
+    if(isVisitor){
+      block.style.display='flex';
+      pill.textContent=gscId;
+      document.getElementById('adm-qr-mini').style.display='none';
+      return;
+    }
     block.style.display='flex';
     pill.textContent=gscId;
+    document.getElementById('adm-qr-mini').style.display='';
     const url=location.origin+location.pathname+'?actor='+encodeURIComponent(uid);
     drawQrOnCanvas(canvas,url,40);
     document.getElementById('adm-qr-mini').onclick=function(e){
@@ -3478,8 +3488,8 @@ function openActorDetail(uid){
   if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${a.nationalite}</span></div>`;
   html+=`</div>`;
   if(isPersonnel){
-    // Physique
-    if(a.taille||a.poids){
+    // Physique — masqué pour les visiteurs
+    if((a.taille||a.poids) && !isVisitor){
       html+=`<div class="adm-section"><div class="adm-section-title">💪 Profil physique</div>`;
       html+=`<div class="adm-stats-grid">`;
       if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.taille}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
@@ -3508,8 +3518,8 @@ function openActorDetail(uid){
       });
       html+=`</div>`;
     }
-    // Licence
-    if(a.licenceNumero){
+    // Licence — masqué pour les visiteurs
+    if(a.licenceNumero && !isVisitor){
       html+=`<div class="adm-section"><div class="adm-section-title">🪪 Licence officielle</div>`;
       html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceNumero}</span></div>`;
       if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${a.licenceExpire}</span></div>`;
@@ -3552,13 +3562,13 @@ function openActorDetail(uid){
   if(a.palmares){
     html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
   }
-  // Documents personnels : visibles avec actions si on est le propriétaire,
+  // Documents personnels : masqués pour les visiteurs ; visibles avec actions si on est le propriétaire,
   // son club/association employeur, ou l'admin. Sinon lecture seule masquée.
   const docs=Array.isArray(a.documents)?a.documents:[];
   const isOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
   const isEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
   const canManageDocs=isOwner||isEmployerOrg;
-  if(docs.length||canManageDocs){
+  if(!isVisitor && (docs.length||canManageDocs)){
     html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?'':' (visibles par l\'intéressé et son club)'}</div>`;
     if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
     else docs.forEach((d,i)=>{
@@ -6413,6 +6423,9 @@ function openActorQrZoom(uid, role){
   const url = buildQrUrl(uid);
   drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
   drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
+  // Masquer les boutons Télécharger et Imprimer pour les visiteurs
+  const actionsEl = document.querySelector('.qr-profile-actions');
+  if(actionsEl) actionsEl.style.display = isVisitor ? 'none' : '';
   document.getElementById('qr-profile-modal').classList.add('open');
 }
 
@@ -6439,8 +6452,10 @@ window.openActorDetail = function(uid){
   const actor = allActors.find(a=>(a.id||a.uid)===uid);
   if(!actor) return;
   const role = actor.role || 'joueur';
-  // Inject QR after short delay (modal must be open)
-  setTimeout(()=>{ injectActorQr(uid, role, '.adm-body'); }, 200);
+  // Inject QR after short delay (modal must be open) — masqué pour les visiteurs
+  if(!isVisitor){
+    setTimeout(()=>{ injectActorQr(uid, role, '.adm-body'); }, 200);
+  }
 };
 
 // Handle deep link ?actor=uid — open actor detail directly
