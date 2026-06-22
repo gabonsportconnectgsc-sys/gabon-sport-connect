@@ -19,6 +19,9 @@
      jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 
+<!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -70,6 +73,7 @@ img, svg, canvas { max-width: 100%; }
 .spinner { width: 36px; height: 36px; border-width: 3px; border-style: solid; border-right-color: rgba(255, 255, 255, 0.12); border-bottom-color: rgba(255, 255, 255, 0.12); border-left-color: rgba(255, 255, 255, 0.12); border-image: initial; border-top-color: var(--green); border-radius: 50%; animation: 0.8s linear 0s infinite normal none running spin; }
 
 #app { display: none; }
+#app.gate-locked { display: none !important; }
 
 .layout { display: flex; min-height: 100vh; }
 
@@ -663,7 +667,28 @@ tr.is-demo-row td { opacity: .82; }
   <div class="spinner"></div>
 </div>
 
-<div id="app" style="display: block;">
+<!-- ══ ÉCRAN DE CONNEXION ADMIN (Supabase Auth) ══ -->
+<div id="admin-login-screen" style="display:flex;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),#0d2035);padding:20px;">
+  <div style="width:100%;max-width:380px;background:#fff;border-radius:var(--radius-lg);padding:32px 28px;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:42px;margin-bottom:8px;">⚽</div>
+      <div style="font-family:var(--font-display);font-weight:800;font-size:20px;color:var(--navy);">GSC Admin</div>
+      <div style="font-size:12.5px;color:var(--gray-txt);margin-top:4px;">Accès réservé à l'administration</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">Email</label>
+      <input type="email" id="admin-login-email" placeholder="admin@exemple.com" autocomplete="username" style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-bd);border-radius:10px;font-size:14px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">Mot de passe</label>
+      <input type="password" id="admin-login-password" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-bd);border-radius:10px;font-size:14px;">
+    </div>
+    <button id="admin-login-submit" onclick="handleAdminLogin()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;">Se connecter</button>
+    <div id="admin-login-error" style="color:var(--danger);font-size:12.5px;margin-top:12px;text-align:center;display:none;"></div>
+  </div>
+</div>
+
+<div id="app" class="gate-locked" style="display: none;">
   <div class="layout">
 
     <div class="sidebar" id="sidebar">
@@ -1936,6 +1961,88 @@ tr.is-demo-row td { opacity: .82; }
   window.goToAppHome = function() {
     window.location.href = 'index.html';
   };
+})();
+</script>
+
+<!-- ══ AUTHENTIFICATION ADMIN (Supabase) ══ -->
+<script>
+(function(){
+  'use strict';
+  const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
+
+  let sb = null;
+  try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  catch(e){ console.error('Supabase indisponible.', e); }
+
+  function showApp(){
+    document.getElementById('admin-login-screen').style.display='none';
+    const appEl=document.getElementById('app');
+    appEl.classList.remove('gate-locked');
+    appEl.style.display='block';
+  }
+  function showLogin(){
+    const appEl=document.getElementById('app');
+    appEl.classList.add('gate-locked');
+    appEl.style.display='none';
+    document.getElementById('admin-login-screen').style.display='flex';
+  }
+
+  async function handleAdminLogin(){
+    const errEl=document.getElementById('admin-login-error');
+    errEl.style.display='none';
+    const email=document.getElementById('admin-login-email').value.trim();
+    const password=document.getElementById('admin-login-password').value;
+    if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs.'; errEl.style.display='block'; return; }
+    if(!sb){ errEl.textContent='Service de connexion indisponible.'; errEl.style.display='block'; return; }
+    const btn=document.getElementById('admin-login-submit');
+    btn.disabled=true; btn.textContent='Connexion…';
+    try{
+      const {data,error}=await sb.auth.signInWithPassword({email,password});
+      if(error) throw error;
+      showApp();
+    }catch(e){
+      const msg=(e&&e.message)||'';
+      if(/invalid login credentials/i.test(msg)) errEl.textContent='Email ou mot de passe incorrect.';
+      else errEl.textContent = msg || 'Connexion impossible. Réessayez.';
+      errEl.style.display='block';
+    }finally{
+      btn.disabled=false; btn.textContent='Se connecter';
+    }
+  }
+  window.handleAdminLogin = handleAdminLogin;
+
+  async function handleAdminLogout(){
+    try{ if(sb) await sb.auth.signOut(); }catch(e){}
+    showLogin();
+  }
+
+  // Permet de soumettre avec Entrée dans les deux champs
+  document.addEventListener('DOMContentLoaded', function(){
+    ['admin-login-email','admin-login-password'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener('keydown', function(ev){ if(ev.key==='Enter') handleAdminLogin(); });
+    });
+    const logoutBtn=document.getElementById('logout-btn');
+    if(logoutBtn) logoutBtn.addEventListener('click', handleAdminLogout);
+  });
+
+  // Vérifie si une session admin existe déjà (rafraîchissement de page)
+  (async function checkSession(){
+    if(!sb){ showLogin(); return; }
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      if(session && session.user) showApp();
+      else showLogin();
+    }catch(e){ showLogin(); }
+  })();
+
+  // Si la session expire ou est invalidée ailleurs, on revient à l'écran de login
+  if(sb){
+    sb.auth.onAuthStateChange((event)=>{
+      if(event==='SIGNED_OUT') showLogin();
+    });
+  }
 })();
 </script>
 
