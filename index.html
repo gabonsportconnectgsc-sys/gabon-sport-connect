@@ -239,7 +239,7 @@
     .dashboard-hero{border-radius:var(--radius-lg);padding:28px 24px;background:linear-gradient(130deg,var(--navy) 0%,var(--navy-md) 55%,#104d30 100%);color:var(--white);margin-bottom:20px;position:relative;overflow:hidden;}
     .dashboard-hero::after{content:'🇬🇦';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:70px;opacity:.12;}
     .hero-greeting{font-size:13px;opacity:.85;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700;background:linear-gradient(90deg,#FFD700,#fff7cc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));}
+    .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));overflow-wrap:break-word;word-break:break-word;hyphens:auto;}
     .hero-sub{font-size:13px;opacity:.75;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
     .profile-completion{background:var(--green-lt);border:1px solid rgba(0,158,96,.2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer;transition:background .2s;}
     .profile-completion:hover{background:#d4f0e4;}
@@ -2984,7 +2984,8 @@ function renderDashboard(){
   if(navPhotoSrc) document.getElementById('nav-avatar').innerHTML=`<img src="${navPhotoSrc}" alt="av">`;
   const roleLabel=ROLE_LABELS[p.role]||p.role;
   document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
-  document.getElementById('hero-name').textContent=`Bonjour, ${p.prenom||fullname} !`;
+  const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
+  document.getElementById('hero-name').textContent=`Bonjour, ${heroDisplayName} !`;
   document.getElementById('hero-role-label').textContent=roleLabel;
   document.getElementById('hero-sport-label').textContent=p.sport||'—';
   document.getElementById('hero-email-label').textContent=p.email||'';
