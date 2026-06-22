@@ -143,14 +143,6 @@ img, svg, canvas { max-width: 100%; }
 
 #gsc-sync-badge .gsc-sync-dot { width: 7px; height: 7px; background: rgb(255, 255, 255); border-radius: 50%; animation: 1.4s ease 0s infinite normal none running pulse; }
 
-.sync-indicator { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 5px 10px; border-radius: 20px; }
-
-.sync-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: 1.5s ease 0s infinite normal none running pulse; }
-
-#gsc-sync-badge { position: fixed; top: 14px; right: 16px; background: var(--green); color: rgb(255, 255, 255); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: none; align-items: center; gap: 7px; z-index: 9999; box-shadow: rgba(0, 158, 96, 0.3) 0px 4px 14px; }
-
-#gsc-sync-badge .gsc-sync-dot { width: 7px; height: 7px; background: rgb(255, 255, 255); border-radius: 50%; animation: 1.4s ease 0s infinite normal none running pulse; }
-
 .toast { position: fixed; bottom: 20px; right: 20px; background: var(--navy); color: rgb(255, 255, 255); padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 10000; box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 16px; animation: 0.3s ease 0s 1 normal none running slideIn; }
 
 .toast.success { background: rgb(0, 158, 96); }
@@ -759,8 +751,8 @@ tr.is-demo-row td { opacity: .82; }
           <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
         </div>
         <div class="stats-grid">
-          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">6</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
-          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">6</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
+          <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
+          <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">—</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
           <div class="stat-card c3 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'pending', title:'Fiches en attente'})" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
           <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
@@ -769,15 +761,15 @@ tr.is-demo-row td { opacity: .82; }
           <div class="dash-card"><div class="dash-card-title">🕐 Activité récente</div><div class="activity-list" id="activity-list"><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">6 membre(s) actif(s)</div><div class="act-time">—</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div></div></div>
           <div class="dash-card"><div class="dash-card-title">📅 Prochain match</div><div id="next-match-preview" style="text-align:center;padding:16px;color:var(--gray-txt);font-size:13px"><div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div></div></div>
           <div class="dash-card"><div class="dash-card-title">⚡ Actions rapides</div><div class="quick-actions">
-            <button class="btn-action green">👥 Gérer les joueurs</button>
-            <button class="btn-action blue">➕ Ajouter un match</button>
-            <button class="btn-action outline">📅 Voir les matchs</button>
-            <button class="btn-action outline">📸 Photos &amp; Logos</button>
-            <button class="btn-action outline">📈 Voir les rapports</button>
-            <button class="btn-action outline">📁 Documents</button>
-            <button class="btn-action outline">🌍 Vérification internationale</button>
-            <button class="btn-action outline">📷 Scanner un QR code</button>
-            <button class="btn-action outline">🌐 Ouvrir l'application publique</button>
+            <button class="btn-action green" onclick="window.gscGoToFiltered&&window.gscGoToFiltered({roles:'joueur',title:'Gestion des Joueurs'})">👥 Gérer les joueurs</button>
+            <button class="btn-action blue" onclick="window.gscGoToMatches&&window.gscGoToMatches()">➕ Ajouter un match</button>
+            <button class="btn-action outline" onclick="window.gscGoToMatches&&window.gscGoToMatches()">📅 Voir les matchs</button>
+            <button class="btn-action outline" onclick="document.querySelector('[data-section=photos]')?.click()||showSection('photos')">📸 Photos &amp; Logos</button>
+            <button class="btn-action outline" onclick="document.querySelector('[data-section=reports]')?.click()||showSection('reports')">📈 Voir les rapports</button>
+            <button class="btn-action outline" onclick="document.querySelector('[data-section=documents]')?.click()||showSection('documents')">📁 Documents</button>
+            <button class="btn-action outline" onclick="document.querySelector('[data-section=verif]')?.click()||showSection('verif')">🌍 Vérification internationale</button>
+            <button class="btn-action outline" onclick="document.querySelector('[data-section=qr]')?.click()||showSection('qr')">📷 Scanner un QR code</button>
+            <button class="btn-action outline" onclick="window.open('index.html','_blank')">🌐 Ouvrir l'application publique</button>
           </div></div>
         </div>
 
@@ -792,21 +784,21 @@ tr.is-demo-row td { opacity: .82; }
           <div class="app-tiles-grid">
             <div class="app-tile app-tile-green clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})">
               <div class="tile-icon">👥</div>
-              <div class="tile-value" id="app-total-membres">96</div>
+              <div class="tile-value" id="app-total-membres">—</div>
               <div class="tile-label">MEMBRES</div>
               <div class="tile-sublabel">Total enregistrés</div>
             </div>
             
             <div class="app-tile app-tile-navy clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})">
               <div class="tile-icon">✅</div>
-              <div class="tile-value" id="app-actifs">92</div>
+              <div class="tile-value" id="app-actifs">—</div>
               <div class="tile-label">ACTIFS (= APP)</div>
               <div class="tile-sublabel">Fiches actives</div>
             </div>
             
             <div class="app-tile app-tile-purple clickable" onclick="window.gscGoToFiltered({roles:['club','federation','association'], title:'Organisations (Clubs / Féd. / Assoc.)'})">
               <div class="tile-icon">🏟️</div>
-              <div class="tile-value" id="app-organisations">13</div>
+              <div class="tile-value" id="app-organisations">—</div>
               <div class="tile-label">ORGANISATIONS</div>
               <div class="tile-sublabel">Clubs / Fédé. / Assoc.</div>
             </div>
@@ -827,77 +819,77 @@ tr.is-demo-row td { opacity: .82; }
                 <div class="role-icon">⚽</div>
                 <div class="role-info">
                   <div class="role-name">Joueur / Athlète</div>
-                  <div class="role-count">34</div>
+                  <div class="role-count" id="rc-joueur">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'entraineur', title:'Gestion des Acteurs'})">
                 <div class="role-icon">📋</div>
                 <div class="role-info">
                   <div class="role-name">Entraîneur</div>
-                  <div class="role-count">12</div>
+                  <div class="role-count" id="rc-entraineur">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'arbitre', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🟨</div>
                 <div class="role-info">
                   <div class="role-name">Arbitre</div>
-                  <div class="role-count">8</div>
+                  <div class="role-count" id="rc-arbitre">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'club', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🏟️</div>
                 <div class="role-info">
                   <div class="role-name">Club</div>
-                  <div class="role-count">5</div>
+                  <div class="role-count" id="rc-club">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'federation', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🏛️</div>
                 <div class="role-info">
                   <div class="role-name">Fédération</div>
-                  <div class="role-count">3</div>
+                  <div class="role-count" id="rc-federation">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'association', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🤝</div>
                 <div class="role-info">
                   <div class="role-name">Association</div>
-                  <div class="role-count">5</div>
+                  <div class="role-count" id="rc-association">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'organisateur', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🎪</div>
                 <div class="role-info">
                   <div class="role-name">Organisateur</div>
-                  <div class="role-count">2</div>
+                  <div class="role-count" id="rc-organisateur">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'supporter', title:'Gestion des Acteurs'})">
                 <div class="role-icon">💗</div>
                 <div class="role-info">
                   <div class="role-name">Supporter</div>
-                  <div class="role-count">14</div>
+                  <div class="role-count" id="rc-supporter">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'independant', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🚴</div>
                 <div class="role-info">
                   <div class="role-name">Indépendant</div>
-                  <div class="role-count">3</div>
+                  <div class="role-count" id="rc-independant">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'eleve_etudiant', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🎓</div>
                 <div class="role-info">
                   <div class="role-name">Élève/Étudiant</div>
-                  <div class="role-count">4</div>
+                  <div class="role-count" id="rc-eleve-etudiant">—</div>
                 </div>
               </div>
               <div class="role-item clickable" onclick="window.gscGoToFiltered({roles:'sportif_etranger', title:'Gestion des Acteurs'})">
                 <div class="role-icon">🌍</div>
                 <div class="role-info">
                   <div class="role-name">Sportif étranger</div>
-                  <div class="role-count">2</div>
+                  <div class="role-count" id="rc-sportif-etranger">—</div>
                 </div>
               </div>
             </div>
@@ -1980,7 +1972,72 @@ tr.is-demo-row td { opacity: .82; }
     const appEl=document.getElementById('app');
     appEl.classList.remove('gate-locked');
     appEl.style.display='block';
+    // Fix #3 — charger les stats dynamiques depuis Firestore (SDK compat déjà initialisé)
+    loadDashboardStats();
   }
+
+  // Fix #3 — Charge toutes les statistiques du dashboard depuis Firestore.
+  // Source unique de vérité : toutes les valeurs du dashboard (tuiles, barres, répartition par rôle)
+  // sont désormais calculées à partir de la même requête Firestore.
+  async function loadDashboardStats(){
+    const setText=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+    try{
+      if(!window.firebase||!firebase.firestore) return;
+      const snap=await firebase.firestore().collection('users').get();
+      const users=snap.docs.map(d=>d.data());
+      const active=users.filter(u=>u.status==='active'||u.status===undefined);
+      const pending=users.filter(u=>u.status==='pending');
+      const total=users.length;
+      const totalActive=active.length;
+      // Stat-cards (bloc supérieur)
+      setText('stat-total',total);
+      setText('stat-verified',totalActive);
+      setText('stat-pending',pending.length);
+      // Tuiles
+      setText('app-total-membres',total);
+      setText('app-actifs',totalActive);
+      const orgs=active.filter(u=>['club','federation','association'].includes(u.role));
+      setText('app-organisations',orgs.length);
+      // Répartition par rôle (tuiles inférieures)
+      const countRole=(r)=>active.filter(u=>u.role===r).length;
+      setText('rc-joueur',countRole('joueur'));
+      setText('rc-entraineur',countRole('entraineur'));
+      setText('rc-arbitre',countRole('arbitre'));
+      setText('rc-club',countRole('club'));
+      setText('rc-federation',countRole('federation'));
+      setText('rc-association',countRole('association'));
+      setText('rc-organisateur',countRole('organisateur'));
+      setText('rc-supporter',countRole('supporter'));
+      setText('rc-independant',countRole('independant'));
+      setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
+      setText('rc-sportif-etranger',countRole('sportif_etranger'));
+      // Barres de répartition (role-bars)
+      const barData=[
+        {role:'joueur',color:'#009E60'},
+        {role:'entraineur',color:'#f97316'},
+        {role:'arbitre',color:'#8b5cf6'},
+        {role:'club',color:'#3b82f6'},
+        {role:'federation',color:'#f97316'},
+        {role:'association',color:'#e11d48'},
+      ];
+      const barContainer=document.getElementById('role-bars');
+      if(barContainer&&totalActive>0){
+        barContainer.innerHTML=barData.map(b=>{
+          const c=countRole(b.role);
+          const pct=Math.round((c/totalActive)*100);
+          const labels={'joueur':'⚽ Joueur / Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
+          return `<div class="sb-item"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
+        }).join('');
+      }
+      // Activité récente
+      const actList=document.getElementById('activity-list');
+      if(actList){
+        actList.innerHTML=`<div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">${totalActive} membre(s) actif(s)</div><div class="act-time">Firestore</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div>`;
+      }
+    }catch(e){ console.warn('[GSC Admin] loadDashboardStats:', e); }
+  }
+  window.loadDashboardStats=loadDashboardStats;
+
   function showLogin(){
     const appEl=document.getElementById('app');
     appEl.classList.add('gate-locked');
@@ -2000,6 +2057,17 @@ tr.is-demo-row td { opacity: .82; }
     try{
       const {data,error}=await sb.auth.signInWithPassword({email,password});
       if(error) throw error;
+      // Fix #11 — mettre à jour l'identité admin dans la sidebar avec les infos de la session
+      if(data&&data.user){
+        const adminEmail=data.user.email||'';
+        const adminMeta=data.user.user_metadata||{};
+        const adminName=adminMeta.full_name||adminMeta.name||adminEmail.split('@')[0]||'Admin';
+        const avatarLetter=(adminName.charAt(0)||'A').toUpperCase();
+        const nameEl=document.querySelector('.admin-name');
+        const avatarEl=document.querySelector('.admin-avatar');
+        if(nameEl) nameEl.textContent=adminName;
+        if(avatarEl) avatarEl.textContent=avatarLetter;
+      }
       showApp();
     }catch(e){
       const msg=(e&&e.message)||'';
@@ -2013,6 +2081,32 @@ tr.is-demo-row td { opacity: .82; }
     }
   }
   window.handleAdminLogin = handleAdminLogin;
+
+  // Fix #13 — définitions de secours pour gscGoToFiltered et gscGoToMatches.
+  // Ces fonctions doivent normalement être fournies par admin-controller.js.
+  // Ce fallback minimal navigue vers la section Acteurs ou Matchs par son onglet de navigation,
+  // évitant ainsi une erreur silencieuse si le script externe est absent ou en échec.
+  if(typeof window.gscGoToFiltered !== 'function'){
+    window.gscGoToFiltered = function(opts){
+      const target = document.querySelector('[data-section="acteurs"],[data-nav="acteurs"],.nav-item[onclick*="acteur"]');
+      if(target) target.click();
+      else console.warn('[GSC] gscGoToFiltered: admin-controller.js non chargé. Opts:', opts);
+    };
+  }
+  if(typeof window.gscGoToMatches !== 'function'){
+    window.gscGoToMatches = function(){
+      const target = document.querySelector('[data-section="matchs"],[data-nav="matchs"],.nav-item[onclick*="match"]');
+      if(target) target.click();
+      else console.warn('[GSC] gscGoToMatches: admin-controller.js non chargé.');
+    };
+  }
+
+  // Fonction utilitaire de navigation de secours (utilisée par les boutons d'actions rapides)
+  window.showSection = window.showSection || function(section){
+    const target = document.querySelector(`[data-section="${section}"],.nav-item[onclick*="${section}"]`);
+    if(target) target.click();
+    else console.warn('[GSC] showSection: section introuvable —', section);
+  };
 
   async function handleAdminLogout(){
     try{ if(sb) await sb.auth.signOut(); }catch(e){}

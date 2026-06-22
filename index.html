@@ -1056,7 +1056,9 @@
   </div>
 
   <!-- ══ MODAL: COMPLÉTER LE PROFIL (forcé à la première connexion si nom/prénom manquants) ══ -->
-  <div class="modal" id="modal-complete-profile">
+  <!-- modal-complete-profile : volontairement fermable par clic sur l'overlay pour ne pas bloquer l'utilisateur en cas d'erreur.
+       Si ce modal doit redevenir obligatoire (non annulable), supprimer l'attribut onclick ci-dessous. -->
+  <div class="modal" id="modal-complete-profile" onclick="if(event.target===this)closeModal('modal-complete-profile')">`
     <div class="modal-card" style="max-width:400px;">
       <div class="modal-title" style="margin-bottom:6px;">👋 Bienvenue !</div>
       <p style="font-size:12.5px;color:var(--gray-txt);margin-bottom:16px;">Quelques infos avant de continuer — vos nom et prénom apparaîtront sur votre fiche et votre QR code d'identification.</p>
@@ -3012,9 +3014,9 @@ function enterApp(){
   // Add site button for logged-in users (not visitor)
   document.getElementById('btn-add-site').style.display='';
   renderDashboard();
-  loadGlobalStats();
   // Init news preview
   if(!allNewsItems.length){ allNewsItems=[...GSC_SEED_NEWS]; renderNewsFiltered(); }
+  // loadActors() met à jour stat-total-acteurs et toutes les stats globales avec déduplication correcte
   loadActors();
 }
 
@@ -3071,24 +3073,31 @@ function renderDashboard(){
   document.getElementById('completion-label').textContent=pct===100?'✅ Profil complet !':'Profil complété à '+pct+'% — Cliquez pour compléter';
 }
 
+// Fallback generateGscId — utilisé si seed-data.js ne définit pas cette fonction.
+// L'algorithme produit un identifiant reproductible basé sur l'uid et le rôle.
+if(typeof generateGscId!=='function'){
+  window.generateGscId=function(uid,role){
+    const roleCode=(role||'UNK').slice(0,3).toUpperCase();
+    const hash=(uid||'').split('').reduce((acc,c)=>((acc<<5)-acc+c.charCodeAt(0))|0,0);
+    const hex=Math.abs(hash).toString(16).toUpperCase().padStart(6,'0').slice(0,6);
+    return 'GSC-'+roleCode+'-'+hex;
+  };
+}
+
 async function loadGlobalStats(){
-  // Start with seed data counts
-  const seedActive=GSC_SEED_ACTORS.filter(u=>u.status==='active');
-  let total=seedActive.length;
-  let joueurs=seedActive.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
-  let clubs=seedActive.filter(u=>['club','association','federation'].includes(u.role)).length;
+  // Même logique de déduplication que loadActors : Firebase d'abord, puis seed sans doublon
+  let dbActors=[];
   if(db&&typeof collection==='function'){
     try{
       const snap=await getDocs(collection(db,'users'));
-      const users=snap.docs.map(d=>d.data()).filter(u=>u.status==='active');
-      // Add Firebase users (seed already counted)
-      total+=users.length;
-      joueurs+=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
-      clubs+=users.filter(u=>['club','association','federation'].includes(u.role)).length;
+      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
     }catch(e){console.warn('stats:',e);}
   }
+  const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
+  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&(a.status==='active'||a.status===undefined));
+  const merged=[...dbActors,...seedActors];
   const el1=document.getElementById('stat-total-acteurs');
-  if(el1) el1.textContent=total;
+  if(el1) el1.textContent=merged.length;
 }
 
 // ── ANNUAIRE ──
@@ -3129,10 +3138,11 @@ async function loadActors(){
   if(etrEl) etrEl.textContent=activeAll.filter(u=>u.role==='sportif_etranger').length;
 }
 
-function filterActors(type){
+function filterActors(type,btn){
   currentActorType=type;
   document.querySelectorAll('.actor-filter-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelector(`.actor-filter-btn[onclick*="'${type}'"]`)?.classList.add('active');
   searchAnnuaire();
 }
 
@@ -4037,10 +4047,11 @@ async function loadSites(){
   const el=document.getElementById('admin-total-sites');
   if(el) el.textContent=allSites.length;
 }
-function filterSites(type){
+function filterSites(type,btn){
   currentSiteType=type;
   document.querySelectorAll('.site-filter-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelector(`.site-filter-btn[onclick*="'${type}'"]`)?.classList.add('active');
   applySiteFilters();
 }
 window.filterSites=filterSites;
@@ -4339,11 +4350,12 @@ function switchLegalTab(tab,e){
 }
 
 // ── ADMIN ──
-function switchAdminTab(tab){
+function switchAdminTab(tab,btn){
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('admin-section-'+tab)?.classList.add('active');
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelector(`.admin-tab[onclick*="'${tab}'"]`)?.classList.add('active');
   window.scrollTo({top:0,left:0,behavior:'auto'});
   if(tab==='sites') loadAdminSites();
   if(tab==='news') renderNews();
@@ -4839,10 +4851,11 @@ const librevilleSportsData={
   ]
 };
 
-function switchMapsTab(tab){
+function switchMapsTab(tab,btn){
   document.querySelectorAll('.maps-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.maps-panel').forEach(p=>p.classList.remove('active'));
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelector(`.maps-tab[onclick*="'${tab}'"]`)?.classList.add('active');
   document.getElementById(tab+'-panel').classList.add('active');
   if(tab==='osm') setTimeout(()=>initOsmMap(),100);
 }
@@ -5049,6 +5062,13 @@ document.addEventListener('firebase-ready', async function(){
   showApp();
   await checkSupabaseSession();
   loadActors();
+  // Fix #9 — détection du paramètre ?admin=1 dans l'URL : ouvre directement la vue admin après chargement
+  if(new URLSearchParams(window.location.search).get('admin')==='1'){
+    setTimeout(()=>{
+      const adminBtn=document.getElementById('bnav-admin')||document.getElementById('side-menu-admin');
+      if(adminBtn) adminBtn.click();
+    }, 800);
+  }
 });
 
 // Écoute les changements de session Supabase (connexion/déconnexion depuis un autre onglet, expiration, etc.)
