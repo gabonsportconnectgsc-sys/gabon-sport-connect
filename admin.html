@@ -2068,6 +2068,18 @@ tr.is-demo-row td { opacity: .82; }
         if(nameEl) nameEl.textContent=adminName;
         if(avatarEl) avatarEl.textContent=avatarLetter;
       }
+      // Vérification rôle admin avant accès
+      const uid = data&&data.user ? data.user.id : null;
+      if(uid){
+        const isAdmin = await verifyAdminRole(uid);
+        if(!isAdmin){
+          await sb.auth.signOut();
+          errEl.textContent = '⛔ Accès refusé — ce compte n\'a pas les droits administrateur.';
+          errEl.style.display='block';
+          btn.disabled=false; btn.textContent='Se connecter';
+          return;
+        }
+      }
       showApp();
     }catch(e){
       const msg=(e&&e.message)||'';
@@ -2123,12 +2135,33 @@ tr.is-demo-row td { opacity: .82; }
     if(logoutBtn) logoutBtn.addEventListener('click', handleAdminLogout);
   });
 
+  // Vérifie dans Firestore que l'uid a bien role === 'admin'
+  async function verifyAdminRole(uid){
+    try{
+      if(!window.firebase||!firebase.firestore) return false;
+      const snap=await firebase.firestore().collection('users').doc(uid).get();
+      return snap.exists && snap.data().role==='admin';
+    }catch(e){ console.warn('[GSC Admin] verifyAdminRole:',e); return false; }
+  }
+
   // Vérifie si une session admin existe déjà (rafraîchissement de page)
   (async function checkSession(){
     if(!sb){ showLogin(); return; }
     try{
       const {data:{session}}=await sb.auth.getSession();
-      if(session && session.user) showApp();
+      if(session && session.user){
+        const isAdmin = await verifyAdminRole(session.user.id);
+        if(!isAdmin){
+          await sb.auth.signOut();
+          showLogin();
+          const e2=document.getElementById('admin-login-error');
+          if(e2){e2.textContent='⛔ Accès refusé — droits administrateur requis.';e2.style.display='block';}
+          return;
+        }
+        // Pont Firebase Auth
+        try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('[GSC Admin] Pont indisponible (checkSession):',e); }
+        showApp();
+      }
       else showLogin();
     }catch(e){ showLogin(); }
   })();
