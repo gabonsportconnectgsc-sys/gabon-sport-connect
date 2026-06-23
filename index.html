@@ -2340,6 +2340,25 @@ const ETABLISSEMENTS_GA=[
       window.getDownloadURL = sm.getDownloadURL;
       window.storage = sm.getStorage(app);
     }catch(e){ /* Firebase Storage non disponible — silencieux */ }
+    // ── Pont d'authentification Firebase (corrige "Missing or insufficient permissions") ──
+    // L'app utilise Supabase pour le login, mais Firestore/Storage exigent une session
+    // Firebase Auth (request.auth) pour autoriser les écritures. On ouvre donc une session
+    // Firebase anonyme en parallèle dès que possible, pour que request.auth != null.
+    try{
+      const fa = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      window._fbAuth = fa.getAuth(app);
+      window._signInAnonymously = fa.signInAnonymously;
+      window._fbOnAuthStateChanged = fa.onAuthStateChanged;
+      window.ensureFirebaseAuth = function(){
+        return new Promise((resolve)=>{
+          if(window._fbAuth.currentUser){ resolve(window._fbAuth.currentUser); return; }
+          window._fbOnAuthStateChanged(window._fbAuth, (u)=>{
+            if(u){ resolve(u); return; }
+            window._signInAnonymously(window._fbAuth).catch(()=>resolve(null));
+          });
+        });
+      };
+    }catch(e){ window.ensureFirebaseAuth = function(){ return Promise.resolve(null); }; }
     window._firebaseReady = true;
   }catch(e){
     window._firebaseReady = false;
@@ -2650,6 +2669,9 @@ async function onSupabaseSignedIn(user, extra){
   if(!user) return;
   _uid = user.id;
   currentUser = {uid:user.id, email:user.email};
+  // Ouvre/assure la session Firebase Auth AVANT tout accès Firestore/Storage,
+  // sinon les écritures échouent avec "Missing or insufficient permissions".
+  try{ if(window.ensureFirebaseAuth) await window.ensureFirebaseAuth(); }catch(e){}
   await loadUserProfile(user.id);
   if(userProfile && userProfile._isNew){
     // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
@@ -3982,6 +4004,21 @@ async function saveProfile(){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 
+// ── CLOUDINARY (remplace Firebase Storage pour l'upload de fichiers) ──
+// Upload "unsigned" direct depuis le navigateur, sans clé secrète exposée.
+const CLOUDINARY_CLOUD_NAME='djvzc3vqp';
+const CLOUDINARY_UPLOAD_PRESET='gsc_admin_uploads';
+async function uploadToCloudinary(file, resourceType){
+  resourceType = resourceType || 'auto';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method:'POST', body: fd });
+  const data = await res.json();
+  if(!res.ok || !data.secure_url) throw new Error(data?.error?.message || 'Échec de l\'upload Cloudinary.');
+  return data.secure_url;
+}
+
 async function uploadProfilePhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
@@ -3989,7 +4026,6 @@ async function uploadProfilePhoto(input){
   const allowedTypes=['image/jpeg','image/png','image/webp'];
   if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
-  if(!storage) return toast('Service de stockage indisponible.','error');
   // Vérification professionnelle minimale (dimensions, format portrait recommandé)
   try{
     const dims=await new Promise((resolve,reject)=>{
@@ -4005,9 +4041,7 @@ async function uploadProfilePhoto(input){
   }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
   toast('📤 Upload en cours…','info');
   try{
-    const r=sRef(storage,`profiles/photos/${currentUser.uid}`);
-    await uploadBytes(r,file);
-    const url=await getDownloadURL(r);
+    const url=await uploadToCloudinary(file,'image');
     await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
@@ -4724,7 +4758,6 @@ window.closeGalleryModal=closeGalleryModal;
 async function uploadGalleryPhotos(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files.length||!currentUser) return;
-  if(!storage){toast('Service de stockage indisponible.','error');return;}
   const files=Array.from(input.files).slice(0,10);
   toast('📤 Upload de '+files.length+' photo(s)…','info');
   const existingPhotos=userProfile.photos||[];
@@ -4732,9 +4765,7 @@ async function uploadGalleryPhotos(input){
   for(const file of files){
     if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo).','error');continue;}
     try{
-      const r=sRef(storage,`profiles/gallery/${currentUser.uid}/${Date.now()}_${file.name}`);
-      await uploadBytes(r,file);
-      const url=await getDownloadURL(r);
+      const url=await uploadToCloudinary(file,'image');
       newUrls.push(url);
     }catch(e){toast('Erreur upload : '+e.message,'error');}
   }
@@ -4787,15 +4818,12 @@ async function uploadOwnDocument(input){
   const file=input.files[0];
   const targetUid=_ownDocUploadTargetUid||currentUser?.uid;
   if(!file||!targetUid) return;
-  if(!storage){toast('Service de stockage indisponible.','error');return;}
   if(file.size>10*1024*1024){toast('Fichier trop lourd (max 10 Mo).','error');input.value='';return;}
   const label=prompt('Type de document (ex : Carte d\'identité, Licence, Justificatif de domicile)','Document');
   if(label===null){input.value='';return;}
   try{
     toast('📤 Envoi du document…','info');
-    const r=sRef(storage,`documents/${targetUid}/${Date.now()}_${file.name}`);
-    await uploadBytes(r,file);
-    const url=await getDownloadURL(r);
+    const url=await uploadToCloudinary(file,'auto');
     const targetProfile = targetUid===currentUser?.uid ? userProfile : (allActors.find(a=>(a.uid||a.id)===targetUid)||{});
     const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
     const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
