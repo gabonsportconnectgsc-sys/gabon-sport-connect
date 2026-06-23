@@ -6,6 +6,19 @@
    • Modes d'affichage (grille/liste/compact)
    ═══════════════════════════════════════════════════════════════ */
 (function () {
+  /* ── Pont d'authentification Firebase ──────────────────────────────────────
+     Toutes les écritures Firestore passent par withAuth() pour garantir que
+     Firebase Auth a un uid valide (request.auth != null dans les règles Firestore).
+     Le pont est défini dans admin.html via ensureFirebaseAuthViaSupabase().
+  ────────────────────────────────────────────────────────────────────────── */
+  async function withAuth(fn) {
+    if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+      try { await window.ensureFirebaseAuthViaSupabase(); }
+      catch (e) { console.warn('[GSC Admin] withAuth — pont Firebase indisponible :', e); }
+    }
+    return fn();
+  }
+
   const ROLE_LABELS = {
     joueur: '⚽ Joueur / Athlète',
     entraineur: '📋 Entraîneur',
@@ -419,7 +432,7 @@
       titrePersonnalise: document.getElementById('modal-titre-perso').value || null
     };
     try {
-      await window.db.collection('users').doc(id).update(updates);
+      await withAuth(() => window.db.collection('users').doc(id).update(updates));
       toast('Acteur mis à jour', 'success');
       closeModal('player-modal');
     } catch (e) {
@@ -430,7 +443,7 @@
   async function deletePlayer(id) {
     if (!confirm('Supprimer ce profil ? Cette action est irréversible.')) return;
     try {
-      await window.db.collection('users').doc(id).update({ status: 'deleted' });
+      await withAuth(() => window.db.collection('users').doc(id).update({ status: 'deleted' }));
       toast('Profil supprimé', 'success');
       closeModal('player-modal');
       renderPlayers();
@@ -741,7 +754,7 @@
       try {
         const url = await doUpload(file, `profiles/photos/${uid}`);
         if (!url) { photoUploadBusyId = null; renderPhotos(); return; }
-        await window.db.collection('users').doc(u.id).update({ photoURL: url });
+        await withAuth(() => window.db.collection('users').doc(u.id).update({ photoURL: url }));
         toast('Photo mise à jour', 'success');
       } catch (e) {
         toast('Erreur upload : ' + e.message, 'error');
@@ -762,7 +775,7 @@
         const url = await doUpload(file, `defaults/avatars/${role}`);
         if (!url) { photoUploadBusyId = null; renderDefaultAvatars(); return; }
         defaultAvatars[role] = url;
-        await window.db.collection('settings').doc('defaultAvatars').set(defaultAvatars, { merge: true });
+        await withAuth(() => window.db.collection('settings').doc('defaultAvatars').set(defaultAvatars, { merge: true }));
         toast('Photo/logo par défaut mis à jour pour cette catégorie', 'success');
         renderPhotos();
       } catch (e) {
@@ -847,10 +860,10 @@
     if (!data.home || !data.away || !data.date) { toast('Remplissez au minimum : équipes et date', 'warn'); return; }
     try {
       if (currentMatchId) {
-        await window.db.collection('matchs').doc(currentMatchId).update(data);
+        await withAuth(() => window.db.collection('matchs').doc(currentMatchId).update(data));
         toast('Match mis à jour', 'success');
       } else {
-        await window.db.collection('matchs').add({ ...data, createdAt: new Date() });
+        await withAuth(() => window.db.collection('matchs').add({ ...data, createdAt: new Date() }));
         toast('Match créé', 'success');
       }
       closeModal('match-modal');
@@ -863,7 +876,7 @@
   async function deleteMatch() {
     if (!confirm('Supprimer ce match ?')) return;
     try {
-      await window.db.collection('matchs').doc(currentMatchId).update({ status: 'deleted' });
+      await withAuth(() => window.db.collection('matchs').doc(currentMatchId).update({ status: 'deleted' }));
       toast('Match supprimé', 'success');
       closeModal('match-modal');
       renderMatches();
@@ -943,7 +956,7 @@
     if (!confirm('Supprimer ce document ?')) return;
     const updated = docs.filter((_, i) => i !== idx);
     try {
-      await window.db.collection('users').doc(uid).update({ documents: updated });
+      await withAuth(() => window.db.collection('users').doc(uid).update({ documents: updated }));
       toast('Document supprimé', 'success');
       renderDocuments();
     } catch (e) {
@@ -998,7 +1011,7 @@
       for (let i = 0; i < docs.length; i += BATCH_SIZE) {
         const batch = window.db.batch();
         docs.slice(i, i + BATCH_SIZE).forEach(d => batch.delete(d.ref));
-        await batch.commit();
+        await withAuth(() => batch.commit());
       }
       document.getElementById('reset-confirm-input').value = '';
       toast(coll + ' réinitialisé (' + docs.length + ' doc(s) supprimé(s))', 'success');
@@ -1092,7 +1105,7 @@
       for (let i = 0; i < targets.length; i += BATCH_SIZE) {
         const batch = window.db.batch();
         targets.slice(i, i + BATCH_SIZE).forEach(u => batch.delete(window.db.collection('users').doc(u.id)));
-        await batch.commit();
+        await withAuth(() => batch.commit());
       }
       document.getElementById('reset-actors-confirm-input').value = '';
       resetSelectedRoles.clear();
@@ -1231,8 +1244,8 @@
       status: 'active'
     };
     try {
-      if (currentSiteId) await window.db.collection('sitesSportifs').doc(currentSiteId).update(data);
-      else await window.db.collection('sitesSportifs').add({ ...data, createdAt: new Date() });
+      if (currentSiteId) await withAuth(() => window.db.collection('sitesSportifs').doc(currentSiteId).update(data));
+      else await withAuth(() => window.db.collection('sitesSportifs').add({ ...data, createdAt: new Date() }));
       toast('✅ Site enregistré.', 'success');
       closeModal('site-modal');
     } catch (e) { toast('Erreur lors de l\'enregistrement.', 'error'); }
@@ -1242,7 +1255,7 @@
     if (!currentSiteId) return;
     if (!confirm('Supprimer définitivement ce site ?')) return;
     try {
-      await window.db.collection('sitesSportifs').doc(currentSiteId).delete();
+      await withAuth(() => window.db.collection('sitesSportifs').doc(currentSiteId).delete());
       toast('🗑️ Site supprimé.', 'success');
       closeModal('site-modal');
     } catch (e) { toast('Erreur lors de la suppression.', 'error'); }
@@ -1267,11 +1280,11 @@
         const res = results[parseInt(btn.dataset.i, 10)];
         const type = document.getElementById('osm-import-type')?.value || 'Stade';
         try {
-          await window.db.collection('sitesSportifs').add({
+          await withAuth(() => window.db.collection('sitesSportifs').add({
             nom: res.display_name.split(',')[0], type,
             ville: q, lat: parseFloat(res.lat), lng: parseFloat(res.lon),
             capacite: 0, status: 'active', source: 'osm', createdAt: new Date()
-          });
+          }));
           toast('✅ Site importé depuis OpenStreetMap.', 'success');
         } catch (e) { toast('Erreur import OSM.', 'error'); }
       }));
@@ -1311,10 +1324,10 @@
     const excerpt = document.getElementById('news-excerpt-admin').value.trim();
     if (!titre) { toast('Le titre est requis.', 'error'); return; }
     try {
-      await window.db.collection('actualites').add({
+      await withAuth(() => window.db.collection('actualites').add({
         titre, excerpt, categorie: document.getElementById('news-cat-admin').value,
         tag: document.getElementById('news-tag-admin').value.trim(), createdAt: new Date()
-      });
+      }));
       toast('📢 Actualité publiée.', 'success');
       document.getElementById('news-titre-admin').value = '';
       document.getElementById('news-excerpt-admin').value = '';
