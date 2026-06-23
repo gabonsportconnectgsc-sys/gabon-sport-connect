@@ -2341,34 +2341,18 @@ const ETABLISSEMENTS_GA=[
       window.storage = sm.getStorage(app);
     }catch(e){ /* Firebase Storage non disponible — silencieux */ }
     // ── Pont d'authentification Firebase (corrige "Missing or insufficient permissions") ──
-    // L'app utilise Supabase pour le login, mais Firestore/Storage exigent une session
-    // Firebase Auth (request.auth) pour autoriser les écritures. On ouvre donc une session
-    // Firebase anonyme en parallèle dès que possible, pour que request.auth != null.
+    // L'app utilise Supabase pour le login. Pour que Firestore voie request.auth.uid,
+    // on se connecte à Firebase avec un Custom Token (généré par un Cloudflare Worker
+    // à partir du token Supabase) — voir ensureFirebaseAuthViaSupabase() plus bas.
     window._fbAuthLastError = null;
     try{
       const fa = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
       window._fbAuth = fa.getAuth(app);
-      window._signInAnonymously = fa.signInAnonymously;
+      window._signInWithCustomToken = fa.signInWithCustomToken;
       window._fbOnAuthStateChanged = fa.onAuthStateChanged;
-      window.ensureFirebaseAuth = function(){
-        return new Promise((resolve)=>{
-          if(window._fbAuth.currentUser){ resolve(window._fbAuth.currentUser); return; }
-          window._fbOnAuthStateChanged(window._fbAuth, (u)=>{
-            if(u){ resolve(u); return; }
-            window._signInAnonymously(window._fbAuth)
-              .then((cred)=>resolve(cred?.user||null))
-              .catch((err)=>{
-                window._fbAuthLastError = (err?.code||'erreur inconnue')+(err?.message?(' — '+err.message):'');
-                console.error('signInAnonymously a échoué :', err?.code, err?.message);
-                resolve(null);
-              });
-          });
-        });
-      };
     }catch(e){
       window._fbAuthLastError = 'import firebase-auth.js a échoué — '+(e?.message||e);
       console.error('Import firebase-auth.js a échoué :', e);
-      window.ensureFirebaseAuth = function(){ return Promise.resolve(null); };
     }
     window._firebaseReady = true;
   }catch(e){
@@ -2674,6 +2658,54 @@ function supabaseAuthErrorMessage(e){
   return msg || 'Une erreur est survenue. Réessayez.';
 }
 
+// ── Pont d'authentification : Supabase → Firebase Custom Token (via Cloudflare Worker) ──
+// Remplace l'ancienne approche "Firebase Auth anonyme" qui se heurtait à des
+// blocages de domaine/referer instables. Ici, on récupère le token Supabase de
+// la session en cours, on l'envoie au Worker qui le vérifie et renvoie un
+// Firebase Custom Token signé avec le MÊME uid. On se connecte ensuite à
+// Firebase avec ce token, ce qui rend request.auth.uid fiable dans les règles
+// Firestore (request.auth.uid == uid du document utilisateur).
+const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+let _firebaseCustomAuthPromise = null;
+
+async function ensureFirebaseAuthViaSupabase(){
+  // Déjà connecté à Firebase avec le bon uid ? Rien à refaire.
+  if(window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === _uid){
+    return window._fbAuth.currentUser;
+  }
+  // Évite les appels concurrents multiples si plusieurs écritures arrivent en même temps
+  if(_firebaseCustomAuthPromise) return _firebaseCustomAuthPromise;
+
+  _firebaseCustomAuthPromise = (async () => {
+    if(!window._sb) throw new Error('Supabase non initialisé.');
+    const {data:{session}} = await window._sb.auth.getSession();
+    if(!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+
+    const res = await fetch(GSC_AUTH_WORKER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({supabaseAccessToken: session.access_token})
+    });
+    const data = await res.json();
+    if(!res.ok || !data.firebaseToken){
+      throw new Error(data?.error || 'Le pont d\'authentification a refusé la demande.');
+    }
+
+    if(!window._fbAuth || !window._signInWithCustomToken){
+      throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+    }
+    const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+    return cred.user;
+  })();
+
+  try{
+    return await _firebaseCustomAuthPromise;
+  }finally{
+    _firebaseCustomAuthPromise = null;
+  }
+}
+window.ensureFirebaseAuthViaSupabase = ensureFirebaseAuthViaSupabase;
+
 // Appelé après un login/signup/reset Supabase réussi : relie l'identité Supabase
 // au profil Firestore existant (collection 'users', clé = uid Supabase).
 async function onSupabaseSignedIn(user, extra){
@@ -2682,7 +2714,9 @@ async function onSupabaseSignedIn(user, extra){
   currentUser = {uid:user.id, email:user.email};
   // Ouvre/assure la session Firebase Auth AVANT tout accès Firestore/Storage,
   // sinon les écritures échouent avec "Missing or insufficient permissions".
-  try{ if(window.ensureFirebaseAuth) await window.ensureFirebaseAuth(); }catch(e){}
+  // Le pont passe désormais par un Firebase Custom Token (généré par le Worker
+  // Cloudflare à partir du token Supabase), pour que request.auth.uid == uid Supabase.
+  try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('Pont Firebase Auth indisponible :', e); }
   await loadUserProfile(user.id);
   if(userProfile && userProfile._isNew){
     // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
@@ -4053,13 +4087,10 @@ async function uploadProfilePhoto(input){
   toast('📤 Upload en cours…','info');
   try{
     const url=await uploadToCloudinary(file,'image');
-    // S'assure qu'une session Firebase Auth est bien ouverte avant d'écrire dans Firestore.
-    // Sans ça, request.auth est null côté règles et l'updateDoc échoue avec
-    // "Missing or insufficient permissions" même si l'upload Cloudinary a réussi.
-    if(window.ensureFirebaseAuth){
-      const fbUser = await window.ensureFirebaseAuth();
-      if(!fbUser) throw new Error('Session Firebase non disponible — '+(window._fbAuthLastError||'cause inconnue'));
-    }
+    // S'assure qu'une session Firebase Auth (via Custom Token Supabase) est bien
+    // ouverte avant d'écrire dans Firestore. Sans ça, request.auth est null côté
+    // règles et l'updateDoc échoue avec "Missing or insufficient permissions".
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
