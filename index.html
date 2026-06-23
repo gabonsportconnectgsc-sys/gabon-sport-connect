@@ -2354,7 +2354,9 @@ const ETABLISSEMENTS_GA=[
           if(window._fbAuth.currentUser){ resolve(window._fbAuth.currentUser); return; }
           window._fbOnAuthStateChanged(window._fbAuth, (u)=>{
             if(u){ resolve(u); return; }
-            window._signInAnonymously(window._fbAuth).catch(()=>resolve(null));
+            window._signInAnonymously(window._fbAuth)
+              .then((cred)=>resolve(cred?.user||null))
+              .catch((err)=>{ console.error('signInAnonymously a échoué :', err?.code, err?.message); resolve(null); });
           });
         });
       };
@@ -4042,6 +4044,13 @@ async function uploadProfilePhoto(input){
   toast('📤 Upload en cours…','info');
   try{
     const url=await uploadToCloudinary(file,'image');
+    // S'assure qu'une session Firebase Auth est bien ouverte avant d'écrire dans Firestore.
+    // Sans ça, request.auth est null côté règles et l'updateDoc échoue avec
+    // "Missing or insufficient permissions" même si l'upload Cloudinary a réussi.
+    if(window.ensureFirebaseAuth){
+      const fbUser = await window.ensureFirebaseAuth();
+      if(!fbUser) throw new Error('Session Firebase non disponible (vérifiez que "Anonyme" est activé dans Authentication > Méthode de connexion, et que le domaine est autorisé).');
+    }
     await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
