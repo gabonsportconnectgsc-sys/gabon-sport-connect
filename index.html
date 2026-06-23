@@ -2344,6 +2344,7 @@ const ETABLISSEMENTS_GA=[
     // L'app utilise Supabase pour le login, mais Firestore/Storage exigent une session
     // Firebase Auth (request.auth) pour autoriser les écritures. On ouvre donc une session
     // Firebase anonyme en parallèle dès que possible, pour que request.auth != null.
+    window._fbAuthLastError = null;
     try{
       const fa = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
       window._fbAuth = fa.getAuth(app);
@@ -2356,11 +2357,19 @@ const ETABLISSEMENTS_GA=[
             if(u){ resolve(u); return; }
             window._signInAnonymously(window._fbAuth)
               .then((cred)=>resolve(cred?.user||null))
-              .catch((err)=>{ console.error('signInAnonymously a échoué :', err?.code, err?.message); resolve(null); });
+              .catch((err)=>{
+                window._fbAuthLastError = (err?.code||'erreur inconnue')+(err?.message?(' — '+err.message):'');
+                console.error('signInAnonymously a échoué :', err?.code, err?.message);
+                resolve(null);
+              });
           });
         });
       };
-    }catch(e){ window.ensureFirebaseAuth = function(){ return Promise.resolve(null); }; }
+    }catch(e){
+      window._fbAuthLastError = 'import firebase-auth.js a échoué — '+(e?.message||e);
+      console.error('Import firebase-auth.js a échoué :', e);
+      window.ensureFirebaseAuth = function(){ return Promise.resolve(null); };
+    }
     window._firebaseReady = true;
   }catch(e){
     window._firebaseReady = false;
@@ -4049,7 +4058,7 @@ async function uploadProfilePhoto(input){
     // "Missing or insufficient permissions" même si l'upload Cloudinary a réussi.
     if(window.ensureFirebaseAuth){
       const fbUser = await window.ensureFirebaseAuth();
-      if(!fbUser) throw new Error('Session Firebase non disponible (vérifiez que "Anonyme" est activé dans Authentication > Méthode de connexion, et que le domaine est autorisé).');
+      if(!fbUser) throw new Error('Session Firebase non disponible — '+(window._fbAuthLastError||'cause inconnue'));
     }
     await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
     userProfile.photoURL=url;
