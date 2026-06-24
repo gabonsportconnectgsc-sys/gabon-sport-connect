@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#009E60"/>
+  <title>Inscription — Gabon Sport Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Firebase (Firestore pour le profil) -->
+  <style>
+    :root{
+      --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
+      --yellow:#FFD700;--navy:#0A1628;--navy-md:#1a2d4a;
+      --white:#fff;--gray-bg:#F4F6F8;--gray-bd:#e2e8f0;
+      --gray-txt:#64748b;--danger:#ef4444;--blue:#3b82f6;
+      --font-display:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+      --radius-sm:8px;--radius-md:14px;--radius-lg:22px;
+      --shadow-md:0 4px 20px rgba(0,0,0,.10);--shadow-lg:0 8px 40px rgba(0,0,0,.16);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--gray-bg);color:var(--navy);min-height:100vh;display:flex;flex-direction:column;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:var(--navy);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .topbar-logo{font-family:var(--font-display);font-weight:800;display:flex;gap:1px;font-size:15px;cursor:pointer;}
+    .l-g{color:#009E60;}.l-s{color:#FFD100;}.l-c{color:#009FCA;}
+    .topbar-login{color:rgba(255,255,255,.65);font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;font-family:var(--font-body);}
+    .topbar-login:hover{color:#fff;}
+
+    /* ── MAIN WRAPPER ── */
+    .page{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:16px 12px 32px;}
+    @media(min-width:600px){.page{align-items:center;padding:32px 16px;}}
+
+    /* ── CARD ── */
+    .card{background:var(--white);border-radius:var(--radius-lg);width:100%;max-width:460px;box-shadow:var(--shadow-lg);overflow:hidden;}
+
+    /* ── CARD HEADER ── */
+    .card-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-md) 100%);padding:24px 20px 20px;}
+    .card-header-logo{font-family:var(--font-display);font-size:12px;font-weight:800;display:flex;gap:1px;opacity:.6;margin-bottom:12px;}
+    .card-title{font-family:var(--font-display);font-size:21px;font-weight:800;color:#fff;line-height:1.2;}
+    .card-sub{font-size:12.5px;color:rgba(255,255,255,.5);margin-top:4px;}
+    .account-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px;margin-top:10px;}
+    .account-tag.visiteur{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd;}
+    .account-tag.acteur{background:rgba(0,158,96,.15);border:1px solid rgba(0,158,96,.3);color:#6ee7b7;}
+
+    /* ── STEP BAR ── */
+    .step-bar{display:flex;align-items:center;margin-top:18px;position:relative;}
+    .step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:var(--font-display);flex-shrink:0;transition:all .3s;position:relative;}
+    .step-dot.done{background:var(--green);color:#fff;}
+    .step-dot.active{background:var(--yellow);color:var(--navy);}
+    .step-dot.pending{background:rgba(255,255,255,.12);color:rgba(255,255,255,.3);}
+    .step-dot .step-lbl{position:absolute;top:30px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;white-space:nowrap;color:rgba(255,255,255,.4);letter-spacing:.3px;}
+    .step-line{flex:1;height:2px;transition:background .3s;}
+    .step-line.done{background:var(--green);}
+    .step-line.pending{background:rgba(255,255,255,.12);}
+
+    /* ── CARD BODY ── */
+    .card-body{padding:20px;}
+
+    /* ── TYPE CHOOSER ── */
+    .type-chooser{display:flex;flex-direction:column;gap:12px;}
+    .type-card{border:2px solid var(--gray-bd);border-radius:var(--radius-md);padding:16px;cursor:pointer;transition:all .22s;background:var(--white);display:flex;align-items:flex-start;gap:12px;position:relative;overflow:hidden;}
+    .type-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+    .type-card.visiteur:hover,.type-card.visiteur.sel{border-color:var(--blue);}
+    .type-card.acteur:hover,.type-card.acteur.sel{border-color:var(--green);}
+    .type-card.sel{box-shadow:var(--shadow-md);}
+    .type-icon{width:48px;height:48px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+    .type-icon.visiteur{background:linear-gradient(135deg,#eff6ff,#dbeafe);}
+    .type-icon.acteur{background:linear-gradient(135deg,var(--green-lt),#d4f0e4);}
+    .type-info{flex:1;}
+    .type-name{font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:3px;}
+    .type-desc{font-size:12px;color:var(--gray-txt);line-height:1.5;}
+    .type-perms{display:flex;flex-direction:column;gap:3px;margin-top:8px;}
+    .prow{display:flex;align-items:center;gap:5px;font-size:11px;}
+    .prow.y{color:#15803d;}.prow.n{color:#94a3b8;}
+    .type-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--gray-bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:2px;}
+    .type-card.visiteur.sel .type-radio{border-color:var(--blue);background:var(--blue);}
+    .type-card.acteur.sel .type-radio{border-color:var(--green);background:var(--green);}
+    .type-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;opacity:0;transition:opacity .2s;}
+    .type-card.sel .type-radio::after{opacity:1;}
+    .rec-badge{position:absolute;top:8px;right:8px;background:var(--green);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.4px;}
+
+    /* ── ROLE GRID ── */
+    .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .role-tile{border:2px solid var(--gray-bd);border-radius:var(--radius-sm);padding:11px 8px;cursor:pointer;text-align:center;transition:all .2s;background:var(--white);}
+    .role-tile:hover,.role-tile.sel{border-color:var(--green);background:var(--green-lt);}
+    .rt-icon{font-size:20px;margin-bottom:3px;}
+    .rt-label{font-size:11px;font-weight:700;color:var(--navy);}
+    .rt-desc{font-size:10px;color:var(--gray-txt);margin-top:1px;}
+
+    /* ── PERMS CARD ── */
+    .perms-box{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1.5px solid var(--gray-bd);border-radius:var(--radius-md);padding:13px 15px;margin-bottom:14px;}
+    .perms-box.green{background:linear-gradient(135deg,var(--green-lt),#d4f0e4);border-color:rgba(0,158,96,.2);}
+    .perms-title{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-txt);margin-bottom:8px;}
+    .perms-title.g{color:var(--green-dk);}
+    .perm-item{display:flex;align-items:flex-start;gap:7px;font-size:12px;margin-bottom:5px;}
+    .perm-item.y{color:#15803d;}.perm-item.n{color:#94a3b8;}
+
+    /* ── FORMS ── */
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .fg{margin-bottom:13px;}
+    .fg label{display:block;font-size:10.5px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+    .fg input,.fg select{width:100%;padding:10px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13.5px;color:var(--navy);background:var(--white);outline:none;transition:border-color .2s,box-shadow .2s;}
+    .fg input:focus,.fg select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.1);}
+    .fg-icon{position:relative;}
+    .fg-icon input{padding-left:36px;}
+    .fi{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+    .form-hint{font-size:11px;color:var(--gray-txt);margin-top:3px;}
+    .section-sep{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-txt);margin:14px 0 10px;padding-top:13px;border-top:1px solid var(--gray-bd);}
+    .extra{display:none;animation:fadeIn .2s ease both;}
+    .extra.show{display:block;}
+
+    /* ── CHECKBOXES ── */
+    .cb-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;}
+    .cb-row input[type=checkbox]{width:15px;height:15px;margin-top:2px;accent-color:var(--green);flex-shrink:0;}
+    .cb-row label{font-size:12px;color:var(--gray-txt);line-height:1.5;cursor:pointer;}
+    .cb-row label a{color:var(--green-dk);font-weight:600;}
+
+    /* ── NOTICE ── */
+    .notice{background:var(--green-lt);border:1.5px solid rgba(0,158,96,.2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--green-dk);line-height:1.5;margin-bottom:13px;display:flex;gap:7px;}
+
+    /* ── BUTTONS ── */
+    .btn-p{width:100%;padding:13px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:14.5px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+    .btn-p:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,158,96,.35);}
+    .btn-p:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-p.blue{background:linear-gradient(135deg,var(--blue),#1d4ed8);}
+    .btn-p.blue:hover:not(:disabled){box-shadow:0 6px 20px rgba(59,130,246,.35);}
+    .btn-back{display:flex;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,.5);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px;font-family:var(--font-body);transition:color .2s;}
+    .btn-back:hover{color:#fff;}
+    .btn-sec{width:100%;padding:11px;background:var(--white);color:var(--gray-txt);border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px;font-family:var(--font-body);}
+    .btn-sec:hover{border-color:var(--navy);color:var(--navy);}
+
+    /* ── ERROR ── */
+    .err-msg{display:none;color:var(--danger);font-size:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-sm);padding:8px 12px;margin-top:10px;text-align:center;}
+
+    /* ── OR DIVIDER ── */
+    .or-div{display:flex;align-items:center;gap:10px;margin:13px 0;}
+    .or-div::before,.or-div::after{content:'';flex:1;height:1px;background:var(--gray-bd);}
+    .or-div span{font-size:11px;color:var(--gray-txt);font-weight:600;}
+
+    /* ── CARD FOOT ── */
+    .card-foot{padding:0 20px 18px;text-align:center;}
+    .card-foot p{font-size:12px;color:var(--gray-txt);}
+    .card-foot a{color:var(--green-dk);font-weight:700;cursor:pointer;}
+    .card-foot a:hover{text-decoration:underline;}
+
+    /* ── SUCCESS ── */
+    .success-wrap{text-align:center;padding:28px 20px 22px;}
+    .success-ico{width:68px;height:68px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:30px;}
+    .success-ico.g{background:linear-gradient(135deg,var(--green-lt),#d4f0e4);border:2px solid rgba(0,158,96,.2);}
+    .success-ico.b{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #bfdbfe;}
+    .success-title{font-family:var(--font-display);font-size:19px;font-weight:800;margin-bottom:7px;}
+    .success-desc{font-size:13px;color:var(--gray-txt);line-height:1.6;max-width:300px;margin:0 auto 18px;}
+    .next-steps{text-align:left;margin-bottom:18px;}
+    .ns{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.4;margin-bottom:8px;}
+    .ns-num{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:var(--font-display);}
+
+    /* ── VISITOR PROFILE PREVIEW ── */
+    .vp-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:var(--radius-md);padding:13px 15px;margin-bottom:14px;text-align:left;}
+    .vp-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+    .vp-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:800;font-family:var(--font-display);}
+    .vp-badge{display:inline-flex;align-items:center;gap:3px;background:#dbeafe;border:1px solid #93c5fd;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:800;color:#1d4ed8;letter-spacing:.4px;margin-top:2px;}
+
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fadeIn .25s ease both;}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;top:70px;right:16px;z-index:999;padding:11px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;box-shadow:var(--shadow-md);display:none;animation:fadeIn .3s ease;}
+    #toast.success{background:#dcfce7;color:#166534;border-left:4px solid var(--green);}
+    #toast.error{background:#fef2f2;color:#991b1b;border-left:4px solid var(--danger);}
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-logo" onclick="goHome()">
+    <span class="l-g">Gabon</span><span class="l-s">Sport</span><span class="l-c">Connect</span>
+  </div>
+  <button class="topbar-login" onclick="goHome('login')">Déjà inscrit ? Se connecter →</button>
+</nav>
+
+<main class="page">
+  <div class="card" id="card">
+
+    <!-- ══ ÉCRAN 0 : CHOIX DU TYPE ══ -->
+    <div id="s0" class="fade-in">
+      <div class="card-header">
+        <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">S</span><span class="l-c">C</span></div>
+        <div class="card-title">Créer un compte</div>
+        <div class="card-sub">Choisissez votre type de profil pour commencer</div>
+        <div class="step-bar">
+          <div class="step-dot active">1<span class="step-lbl">Type</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">2<span class="step-lbl">Infos</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">3<span class="step-lbl">Accès</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">4<span class="step-lbl">Confirmé</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="type-chooser">
+          <!-- VISITEUR -->
+          <div class="type-card visiteur" id="tc-v" onclick="pickType('visiteur')">
+            <div class="type-icon visiteur">👁️</div>
+            <div class="type-info">
+              <div class="type-name">Membre Visiteur</div>
+              <div class="type-desc">Explorez la plateforme, consultez l'annuaire et suivez l'actualité sportive.</div>
+              <div class="type-perms">
+                <div class="prow y"><span>✓</span> Consulter l'annuaire sportif</div>
+                <div class="prow y"><span>✓</span> Lire actualités &amp; résultats</div>
+                <div class="prow y"><span>✓</span> Sauvegarder des favoris</div>
+                <div class="prow n"><span>—</span> Figurer dans l'annuaire</div>
+                <div class="prow n"><span>—</span> Modifier des fiches acteurs</div>
+              </div>
+            </div>
+            <div class="type-radio" id="tr-v"></div>
+          </div>
+          <!-- ACTEUR -->
+          <div class="type-card acteur" id="tc-a" onclick="pickType('acteur')">
+            <span class="rec-badge">Intégrez l'annuaire</span>
+            <div class="type-icon acteur">🏅</div>
+            <div class="type-info">
+              <div class="type-name">Acteur Sportif</div>
+              <div class="type-desc">Joueur, entraîneur, arbitre, club, fédération ou indépendant : intégrez l'annuaire national.</div>
+              <div class="type-perms">
+                <div class="prow y"><span>✓</span> Fiche dans l'annuaire national</div>
+                <div class="prow y"><span>✓</span> Carte GSC &amp; QR code officiel</div>
+                <div class="prow y"><span>✓</span> Gérer votre profil sportif</div>
+                <div class="prow y"><span>✓</span> Outils selon votre rôle</div>
+              </div>
+            </div>
+            <div class="type-radio" id="tr-a"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot"><p>Déjà inscrit ? <a onclick="goHome('login')">Se connecter</a></p></div>
+    </div>
+
+    <!-- ══ ÉCRAN 1V : FORMULAIRE VISITEUR ══ -->
+    <div id="s1v" style="display:none;">
+      <div class="card-header">
+        <button class="btn-back" onclick="show('s0')">← Retour</button>
+        <div class="card-title">Membre Visiteur</div>
+        <div class="card-sub">Accès complet en lecture — inscription rapide</div>
+        <div class="account-tag visiteur">👁️ Membre Visiteur</div>
+        <div class="step-bar">
+          <div class="step-dot done">✓<span class="step-lbl">Type</span></div>
+          <div class="step-line done"></div>
+          <div class="step-dot active">2<span class="step-lbl">Infos</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">3<span class="step-lbl">Accès</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">4<span class="step-lbl">Confirmé</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="perms-box">
+          <div class="perms-title">🔑 Votre accès Membre Visiteur</div>
+          <div class="perm-item y">✅ Consulter l'annuaire national des acteurs sportifs</div>
+          <div class="perm-item y">✅ Lire toutes les actualités, résultats &amp; calendriers</div>
+          <div class="perm-item y">✅ Explorer la carte des sites sportifs du Gabon</div>
+          <div class="perm-item y">✅ Sauvegarder des acteurs et structures en favoris</div>
+          <div class="perm-item n">🚫 Figurer dans l'annuaire (compte Acteur Sportif requis)</div>
+          <div class="perm-item n">🚫 Modifier des fiches ou publier du contenu</div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Prénom *</label><input type="text" id="v-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
+          <div class="fg"><label>Nom *</label><input type="text" id="v-nom" placeholder="Nom" autocomplete="family-name"/></div>
+        </div>
+        <div class="fg">
+          <label>Email *</label>
+          <div class="fg-icon"><span class="fi">✉️</span><input type="email" id="v-email" placeholder="votre@email.com" autocomplete="email"/></div>
+        </div>
+        <div class="fg">
+          <label>Mot de passe *</label>
+          <div class="fg-icon"><span class="fi">🔒</span><input type="password" id="v-pw" placeholder="6 caractères minimum" autocomplete="new-password"/></div>
+          <div class="form-hint">Minimum 6 caractères</div>
+        </div>
+        <div class="fg">
+          <label>Ville (optionnel)</label>
+          <select id="v-ville">
+            <option value="">Sélectionner une ville</option>
+            <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
+            <option>Oyem</option><option>Moanda</option><option>Mouila</option>
+            <option>Lambaréné</option><option>Tchibanga</option><option>Koulamoutou</option>
+            <option>Makokou</option><option>Autre</option>
+          </select>
+          <div class="form-hint">Pour personnaliser les actualités locales</div>
+        </div>
+        <div class="fg">
+          <label>Sport suivi (optionnel)</label>
+          <select id="v-sport">
+            <option value="">Tous les sports</option>
+            <option>Football</option><option>Basketball</option><option>Athlétisme</option>
+            <option>Judo</option><option>Boxe</option><option>Natation</option>
+            <option>Handball</option><option>Volleyball</option><option>Tennis</option>
+            <option>Rugby</option><option>Cyclisme</option><option>Taekwondo</option>
+          </select>
+        </div>
+        <div class="cb-row"><input type="checkbox" id="v-cgu" checked/><label for="v-cgu">J'accepte les <a>Conditions Générales</a> et la <a>Politique de confidentialité</a> de Gabon Sport Connect.</label></div>
+        <div id="v-err" class="err-msg"></div>
+        <button class="btn-p blue" id="v-btn" onclick="submitVisiteur()">Créer mon compte Visiteur</button>
+      </div>
+      <div class="card-foot"><p>Vous êtes acteur du sport ? <a onclick="show('s1a')">Créer un compte Acteur Sportif</a></p></div>
+    </div>
+
+    <!-- ══ ÉCRAN 1A : CHOIX DU RÔLE ACTEUR ══ -->
+    <div id="s1a" style="display:none;">
+      <div class="card-header">
+        <button class="btn-back" onclick="show('s0')">← Retour</button>
+        <div class="card-title">Acteur Sportif</div>
+        <div class="card-sub">Quel est votre rôle dans l'écosystème sportif ?</div>
+        <div class="account-tag acteur">🏅 Acteur Sportif</div>
+        <div class="step-bar">
+          <div class="step-dot done">✓<span class="step-lbl">Type</span></div>
+          <div class="step-line done"></div>
+          <div class="step-dot active">2<span class="step-lbl">Rôle</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">3<span class="step-lbl">Profil</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">4<span class="step-lbl">Confirmé</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="notice"><span>ℹ️</span><span>Votre rôle détermine les champs de votre profil et vos droits sur la plateforme.</span></div>
+        <div class="role-grid">
+          <div class="role-tile" data-role="joueur" onclick="pickRole('joueur',this)"><div class="rt-icon">⚽</div><div class="rt-label">Joueur / Athlète</div><div class="rt-desc">Sport collectif ou individuel</div></div>
+          <div class="role-tile" data-role="entraineur" onclick="pickRole('entraineur',this)"><div class="rt-icon">📋</div><div class="rt-label">Entraîneur</div><div class="rt-desc">Coach ou staff technique</div></div>
+          <div class="role-tile" data-role="arbitre" onclick="pickRole('arbitre',this)"><div class="rt-icon">🟨</div><div class="rt-label">Arbitre</div><div class="rt-desc">Officiel de match</div></div>
+          <div class="role-tile" data-role="club" onclick="pickRole('club',this)"><div class="rt-icon">🏟️</div><div class="rt-label">Club sportif</div><div class="rt-desc">Représentant officiel</div></div>
+          <div class="role-tile" data-role="federation" onclick="pickRole('federation',this)"><div class="rt-icon">🏛️</div><div class="rt-label">Fédération</div><div class="rt-desc">Instance nationale</div></div>
+          <div class="role-tile" data-role="independant" onclick="pickRole('independant',this)"><div class="rt-icon">🧍</div><div class="rt-label">Indépendant</div><div class="rt-desc">Sportif sans structure</div></div>
+          <div class="role-tile" data-role="association" onclick="pickRole('association',this)"><div class="rt-icon">🤝</div><div class="rt-label">Association</div><div class="rt-desc">Organisation sportive</div></div>
+          <div class="role-tile" data-role="eleve_etudiant" onclick="pickRole('eleve_etudiant',this)"><div class="rt-icon">🎓</div><div class="rt-label">Élève / Étudiant</div><div class="rt-desc">Espoir sportif</div></div>
+        </div>
+        <div id="a-role-err" class="err-msg" style="margin-top:8px;"></div>
+        <div style="margin-top:14px;"><button class="btn-p" onclick="goToActeurForm()">Continuer →</button></div>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN 2A : FORMULAIRE ACTEUR ══ -->
+    <div id="s2a" style="display:none;">
+      <div class="card-header">
+        <button class="btn-back" onclick="show('s1a')">← Retour</button>
+        <div class="card-title" id="a-title">Mon profil sportif</div>
+        <div class="card-sub">Complétez vos informations</div>
+        <div class="account-tag acteur" id="a-tag">🏅 Acteur Sportif</div>
+        <div class="step-bar">
+          <div class="step-dot done">✓<span class="step-lbl">Type</span></div>
+          <div class="step-line done"></div>
+          <div class="step-dot done">✓<span class="step-lbl">Rôle</span></div>
+          <div class="step-line done"></div>
+          <div class="step-dot active">3<span class="step-lbl">Profil</span></div>
+          <div class="step-line pending"></div>
+          <div class="step-dot pending">4<span class="step-lbl">Confirmé</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="fg"><label>Prénom *</label><input type="text" id="a-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
+          <div class="fg"><label>Nom *</label><input type="text" id="a-nom" placeholder="Nom" autocomplete="family-name"/></div>
+        </div>
+        <div class="fg"><label>Email *</label><div class="fg-icon"><span class="fi">✉️</span><input type="email" id="a-email" placeholder="votre@email.com" autocomplete="email"/></div></div>
+        <div class="fg"><label>Téléphone</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <div class="fg"><label>Mot de passe *</label><div class="fg-icon"><span class="fi">🔒</span><input type="password" id="a-pw" placeholder="6 caractères minimum" autocomplete="new-password"/></div></div>
+        <div class="section-sep">Informations sportives</div>
+        <div class="fg">
+          <label>Sport principal *</label>
+          <select id="a-sport">
+            <option value="">Choisir un sport</option>
+            <option>Football</option><option>Basketball</option><option>Athlétisme</option>
+            <option>Judo</option><option>Boxe</option><option>Natation</option>
+            <option>Handball</option><option>Volleyball</option><option>Tennis</option>
+            <option>Rugby</option><option>Cyclisme</option><option>Taekwondo</option>
+            <option>Karaté</option><option>Lutte</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Ville / Province *</label>
+          <select id="a-ville">
+            <option value="">Sélectionner</option>
+            <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
+            <option>Oyem</option><option>Moanda</option><option>Mouila</option>
+            <option>Lambaréné</option><option>Tchibanga</option><option>Koulamoutou</option>
+            <option>Makokou</option><option>Autre</option>
+          </select>
+        </div>
+        <!-- Champs joueur/indépendant/étudiant -->
+        <div class="extra" id="ex-joueur">
+          <div class="form-row">
+            <div class="fg"><label>Poste / Spécialité</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
+            <div class="fg"><label>Niveau</label>
+              <select id="a-niveau"><option value="">Niveau</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>International</option></select>
+            </div>
+          </div>
+        </div>
+        <!-- Champs club/fédération/association -->
+        <div class="extra" id="ex-org">
+          <div class="fg"><label>Nom de l'organisation *</label><input type="text" id="a-org" placeholder="Nom officiel"/></div>
+          <div class="fg"><label>Année de création</label><input type="number" id="a-annee" placeholder="ex: 1985" min="1900" max="2025"/></div>
+        </div>
+        <!-- Champs entraîneur/arbitre -->
+        <div class="extra" id="ex-off">
+          <div class="fg"><label>Niveau de licence</label>
+            <select id="a-licence"><option value="">Niveau</option><option>Régional</option><option>National</option><option>International</option><option>CAF</option><option>FIFA / Fédération internationale</option></select>
+          </div>
+        </div>
+        <div class="cb-row"><input type="checkbox" id="a-cgu" checked/><label for="a-cgu">J'accepte les <a style="color:var(--green-dk);font-weight:600;">Conditions Générales</a> et la <a style="color:var(--green-dk);font-weight:600;">Politique de confidentialité</a>.</label></div>
+        <div class="cb-row"><input type="checkbox" id="a-exact"/><label for="a-exact">Je certifie que les informations fournies sont exactes et me concernent personnellement.</label></div>
+        <div id="a-err" class="err-msg"></div>
+        <button class="btn-p" id="a-btn" onclick="submitActeur()">Créer mon profil sportif →</button>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN SUCCESS VISITEUR ══ -->
+    <div id="sv" style="display:none;">
+      <div class="success-wrap fade-in">
+        <div class="success-ico b">👁️</div>
+        <div class="success-title">Bienvenue, <span id="sv-prenom"></span> !</div>
+        <div class="success-desc">Votre compte <strong>Membre Visiteur</strong> a été créé. Vérifiez votre email pour confirmer votre inscription.</div>
+        <div class="vp-box">
+          <div class="vp-head">
+            <div class="vp-av" id="sv-av"></div>
+            <div><div style="font-weight:700;font-size:13.5px;" id="sv-name"></div><div class="vp-badge">👁️ MEMBRE VISITEUR</div></div>
+          </div>
+          <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-txt);margin-bottom:8px;">Vos permissions</div>
+          <div class="perm-item y">✅ Consulter l'annuaire des acteurs sportifs</div>
+          <div class="perm-item y">✅ Lire actualités, résultats &amp; calendriers</div>
+          <div class="perm-item y">✅ Explorer la carte des sites sportifs</div>
+          <div class="perm-item y">✅ Sauvegarder des favoris personnels</div>
+          <div class="perm-item n">🚫 Modifier des fiches ou publier du contenu</div>
+        </div>
+        <div class="next-steps">
+          <div class="ns"><div class="ns-num">1</div><div>Confirmez votre email (vérifiez vos spams si besoin)</div></div>
+          <div class="ns"><div class="ns-num">2</div><div>Connectez-vous et explorez l'annuaire national</div></div>
+          <div class="ns"><div class="ns-num">3</div><div>Envie de rejoindre l'annuaire ? Convertissez votre compte en Acteur Sportif depuis votre profil</div></div>
+        </div>
+        <button class="btn-p blue" onclick="goHome('login')">Se connecter</button>
+        <button class="btn-sec" onclick="show('s1a')">↗ Créer un compte Acteur Sportif à la place</button>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN SUCCESS ACTEUR ══ -->
+    <div id="sa" style="display:none;">
+      <div class="success-wrap fade-in">
+        <div class="success-ico g">🏅</div>
+        <div class="success-title">Profil créé, <span id="sa-prenom"></span> !</div>
+        <div class="success-desc">Votre fiche <strong>Acteur Sportif</strong> a été soumise. Après validation, vous figurerez dans l'annuaire national.</div>
+        <div class="perms-box green" style="text-align:left;margin-bottom:14px;">
+          <div class="perms-title g">🏅 Votre compte Acteur Sportif</div>
+          <div class="perm-item y">✅ Fiche dans l'annuaire national dès validation</div>
+          <div class="perm-item y">✅ Carte GSC officielle &amp; QR code personnel</div>
+          <div class="perm-item y">✅ Gestion de votre profil sportif complet</div>
+          <div class="perm-item y">✅ Accès aux outils — rôle : <strong id="sa-role"></strong></div>
+          <div class="perm-item" style="color:#92400e;">⏳ Validation en cours — votre fédération sera notifiée</div>
+        </div>
+        <div class="next-steps">
+          <div class="ns"><div class="ns-num">1</div><div>Confirmez votre email de vérification</div></div>
+          <div class="ns"><div class="ns-num">2</div><div>Complétez votre profil : photo, biographie, palmarès</div></div>
+          <div class="ns"><div class="ns-num">3</div><div>Votre fédération valide votre fiche — vous recevrez une confirmation</div></div>
+        </div>
+        <button class="btn-p" onclick="goHome('login')">Se connecter</button>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</main>
+
+<script>
+  // ── CONFIG SUPABASE (même projet que index.html) ──
+  const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
+  let _sb;
+  try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { _sb = null; }
+
+  // ── FIREBASE FIRESTORE (pour sauvegarder le profil) ──
+  let db = null, _setDoc, _doc;
+  (async () => {
+    try {
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+      const { getFirestore, doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const app = initializeApp({
+        apiKey:"AIzaSyDYvkHiYd2c3XtBiPh9L1Ixu0Kx3RiKfQo",
+        authDomain:"gabon-sport-connect.firebaseapp.com",
+        projectId:"gabon-sport-connect"
+      }, "gsc-inscription");
+      db = getFirestore(app);
+      _doc = doc; _setDoc = setDoc;
+    } catch(e) { console.warn("Firestore non disponible:", e); }
+  })();
+
+  const ROLE_LABELS = {
+    joueur:'⚽ Joueur / Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
+    club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
+    association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant'
+  };
+
+  let selectedRole = null;
+
+  function show(id) {
+    ['s0','s1v','s1a','s2a','sv','sa'].forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = 'none';
+    });
+    const t = document.getElementById(id);
+    if (t) { t.style.display = 'block'; t.classList.add('fade-in'); setTimeout(()=>t.classList.remove('fade-in'),300); }
+    document.getElementById('card').scrollTop = 0;
+    window.scrollTo(0,0);
+  }
+
+  function pickType(type) {
+    document.getElementById('tc-v').classList.toggle('sel', type==='visiteur');
+    document.getElementById('tc-a').classList.toggle('sel', type==='acteur');
+    setTimeout(() => show(type==='visiteur' ? 's1v' : 's1a'), 180);
+  }
+
+  function pickRole(role, el) {
+    selectedRole = role;
+    document.querySelectorAll('.role-tile').forEach(t => t.classList.remove('sel'));
+    el.classList.add('sel');
+    document.getElementById('a-role-err').style.display = 'none';
+  }
+
+  function goToActeurForm() {
+    if (!selectedRole) {
+      const e = document.getElementById('a-role-err');
+      e.textContent = 'Veuillez sélectionner votre rôle pour continuer.';
+      e.style.display = 'block';
+      return;
+    }
+    document.getElementById('a-title').textContent = ROLE_LABELS[selectedRole];
+    document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
+    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','independant','eleve_etudiant'].includes(selectedRole));
+    document.getElementById('ex-org').classList.toggle('show', ['club','federation','association'].includes(selectedRole));
+    document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
+    show('s2a');
+  }
+
+  function toast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = type; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  function errMsg(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function isEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+  function sbError(e) {
+    const m = (e && e.message) || '';
+    if (/invalid login credentials/i.test(m)) return 'Email ou mot de passe incorrect.';
+    if (/user already registered/i.test(m)) return 'Un compte existe déjà avec cet email.';
+    if (/password should be at least/i.test(m)) return 'Le mot de passe doit contenir au moins 6 caractères.';
+    if (/email not confirmed/i.test(m)) return 'Veuillez confirmer votre email avant de vous connecter.';
+    if (/rate limit/i.test(m)) return 'Trop de tentatives. Réessayez dans quelques minutes.';
+    return m || 'Une erreur est survenue. Réessayez.';
+  }
+
+  async function saveProfile(uid, email, profile) {
+    if (!db || !_setDoc || !_doc) return;
+    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, status:'active', createdAt: new Date().toISOString() }); }
+    catch(e) { console.warn('Firestore save failed:', e); }
+  }
+
+  // ── INSCRIPTION VISITEUR ──
+  async function submitVisiteur() {
+    document.getElementById('v-err').style.display = 'none';
+    const prenom = document.getElementById('v-prenom').value.trim();
+    const nom    = document.getElementById('v-nom').value.trim();
+    const email  = document.getElementById('v-email').value.trim();
+    const pw     = document.getElementById('v-pw').value;
+    const cgu    = document.getElementById('v-cgu').checked;
+    const ville  = document.getElementById('v-ville').value;
+    const sport  = document.getElementById('v-sport').value;
+
+    if (!prenom || !nom) { errMsg('v-err','Veuillez entrer votre prénom et nom.'); return; }
+    if (!isEmail(email)) { errMsg('v-err','Adresse email invalide.'); return; }
+    if (pw.length < 6)   { errMsg('v-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
+    if (!cgu)            { errMsg('v-err','Vous devez accepter les conditions d\'utilisation.'); return; }
+    if (!_sb)            { errMsg('v-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
+
+    const btn = document.getElementById('v-btn');
+    btn.disabled = true; btn.textContent = 'Création en cours…';
+    try {
+      const { data, error } = await _sb.auth.signUp({
+        email, password: pw,
+        options: { data: { prenom, nom } }
+      });
+      if (error) throw error;
+      // Sauvegarder profil Firestore
+      const uid = data.user?.id;
+      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', ville, sport });
+      // Afficher succès
+      document.getElementById('sv-prenom').textContent = prenom;
+      document.getElementById('sv-name').textContent = prenom + ' ' + nom;
+      document.getElementById('sv-av').textContent = prenom[0].toUpperCase();
+      show('sv');
+    } catch(e) {
+      errMsg('v-err', sbError(e));
+    } finally {
+      btn.disabled = false; btn.textContent = 'Créer mon compte Visiteur';
+    }
+  }
+
+  // ── INSCRIPTION ACTEUR SPORTIF ──
+  async function submitActeur() {
+    document.getElementById('a-err').style.display = 'none';
+    const prenom = document.getElementById('a-prenom').value.trim();
+    const nom    = document.getElementById('a-nom').value.trim();
+    const email  = document.getElementById('a-email').value.trim();
+    const tel    = document.getElementById('a-tel').value.trim();
+    const pw     = document.getElementById('a-pw').value;
+    const sport  = document.getElementById('a-sport').value;
+    const ville  = document.getElementById('a-ville').value;
+    const cgu    = document.getElementById('a-cgu').checked;
+    const exact  = document.getElementById('a-exact').checked;
+
+    // Champs spécifiques selon rôle
+    const poste  = document.getElementById('a-poste')?.value?.trim() || '';
+    const niveau = document.getElementById('a-niveau')?.value || '';
+    const org    = document.getElementById('a-org')?.value?.trim() || '';
+    const annee  = document.getElementById('a-annee')?.value || '';
+    const licence= document.getElementById('a-licence')?.value || '';
+
+    if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
+    if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
+    if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
+    if (!sport)          { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
+    if (!ville)          { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
+    if (['club','federation','association'].includes(selectedRole) && !org) {
+                           errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
+    if (!cgu)            { errMsg('a-err','Vous devez accepter les conditions d\'utilisation.'); return; }
+    if (!exact)          { errMsg('a-err','Veuillez certifier l\'exactitude de vos informations.'); return; }
+    if (!_sb)            { errMsg('a-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
+
+    const btn = document.getElementById('a-btn');
+    btn.disabled = true; btn.textContent = 'Création en cours…';
+    try {
+      const { data, error } = await _sb.auth.signUp({
+        email, password: pw,
+        options: { data: { prenom, nom } }
+      });
+      if (error) throw error;
+      const uid = data.user?.id;
+      if (uid) {
+        const profile = { prenom, nom, role: selectedRole, sport, ville, telephone: tel,
+          poste, niveau, nomOrganisation: org, anneeCreation: annee, licence,
+          status: 'active' };
+        await saveProfile(uid, email, profile);
+      }
+      document.getElementById('sa-prenom').textContent = prenom;
+      document.getElementById('sa-role').textContent = ROLE_LABELS[selectedRole] || selectedRole;
+      show('sa');
+    } catch(e) {
+      errMsg('a-err', sbError(e));
+    } finally {
+      btn.disabled = false; btn.textContent = 'Créer mon profil sportif →';
+    }
+  }
+
+  // ── NAVIGATION RETOUR VERS INDEX.HTML ──
+  function goHome(tab) {
+    // Passe le tab souhaité en paramètre URL pour que index.html ouvre le bon écran
+    const url = 'index.html' + (tab ? '?auth=' + tab : '');
+    window.location.href = url;
+  }
+
+  // Démarrer sur l'écran 0
+  show('s0');
+</script>
+</body>
+</html>

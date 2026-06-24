@@ -2497,9 +2497,13 @@ function enterAsVisitor(silent=false){
 }
 
 function goToAuth(tab){
+  if(tab==='register'){
+    // Parcours d'inscription refondé — page dédiée
+    window.location.href='inscription.html';
+    return;
+  }
   document.getElementById('auth-login-error').style.display='none';
-  document.getElementById('auth-register-error').style.display='none';
-  switchAuthTab(tab==='register'?'register':'login');
+  switchAuthTab('login');
   document.getElementById('modal-auth').classList.add('open');
 }
 window.goToAuth=goToAuth;
@@ -2800,6 +2804,15 @@ window.handleCompleteProfile=handleCompleteProfile;
 // Restaure la session au chargement de la page (utilisateur déjà connecté précédemment)
 async function checkSupabaseSession(){
   if(!window._sb){ enterAsVisitor(true); return; }
+  // Retour depuis inscription.html : ouvrir directement le modal de connexion
+  const urlParams=new URLSearchParams(window.location.search);
+  if(urlParams.get('auth')==='login'){
+    // Nettoyer l'URL sans recharger
+    history.replaceState(null,'',window.location.pathname);
+    enterAsVisitor(true);
+    setTimeout(()=>{ document.getElementById('modal-auth').classList.add('open'); switchAuthTab('login'); },300);
+    return;
+  }
   // Cas particulier : lien "mot de passe oublié" cliqué (Supabase ajoute #access_token=...&type=recovery)
   if(window.location.hash.includes('type=recovery')){
     document.getElementById('modal-auth').classList.add('open');
