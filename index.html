@@ -3690,10 +3690,16 @@ function renderProfile(){
 
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
-  const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
+  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
 
   document.getElementById('fed-notice').style.display=fedManaged?'flex':'none';
+  if(fedManaged){
+    const ownerManaged=p.editLocked&&p.ownershipStatus!=='owner_self';
+    document.getElementById('fed-notice').innerHTML=ownerManaged
+      ? `<span>🏢</span><span>Informations de club/mandat gérées par <strong>${p.ownerRef?.clubName||'votre club/employeur'}</strong>. Vos données personnelles restent modifiables par vous.</span>`
+      : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
+  }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
   document.getElementById('prof-stats-card').style.display=isPersonnel&&p.role==='joueur'?'':'none';
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
@@ -3741,7 +3747,7 @@ function renderProfile(){
   if(isPersonnel){
     mandatsCard.style.display='';
     const mandats=p.mandats||[];
-    const src=fedManaged?'Géré par la Fédération':'Géré par vous';
+    const src=p.editLocked&&p.ownershipStatus!=='owner_self'?`Géré par ${p.ownerRef?.clubName||'votre club'}`:(fedManaged?'Géré par la Fédération':'Géré par vous');
     document.getElementById('mandats-source-label').textContent=src;
     let mandHtml='';
     if(p.club) mandHtml+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${p.club}</div>${p.poste?`<div class="mandat-dates">Poste : ${p.poste}</div>`:''}</div>`;
@@ -3788,7 +3794,7 @@ function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
-  const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
+  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';
 
   // Always: identité
@@ -3877,7 +3883,7 @@ function buildEditForm(p){
       h+=`</div>`;
       h+=`<button class="btn-add-mandat" onclick="addMandatField()">+ Ajouter un mandat</button>`;
     } else {
-      h+=`<div class="fed-notice"><span>🏛️</span><span>Club et mandats gérés par la Fédération. Contactez-les pour toute modification.</span></div>`;
+      h+=`<div class="fed-notice">${p.editLocked&&p.ownershipStatus!=='owner_self'?`<span>🏢</span><span>Fiche gérée par ${p.ownerRef?.clubName||'votre club/employeur'}. Contactez-le pour toute modification.</span>`:`<span>🏛️</span><span>Club et mandats gérés par la Fédération. Contactez-les pour toute modification.</span>`}</div>`;
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
@@ -3995,7 +4001,7 @@ async function saveProfile(){
   const p=userProfile;
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
-  const fedManaged=p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International');
+  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
   const updates={
     prenom:document.getElementById('edit-prenom')?.value.trim()||p.prenom||'',
