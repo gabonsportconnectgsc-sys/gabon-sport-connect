@@ -2395,18 +2395,35 @@ tr.is-demo-row td { opacity: .82; }
   const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 
   window.ensureFirebaseAuthViaSupabase = async function() {
-    // Si Firebase Auth a déjà un uid valide non-anonyme, rien à faire
+    // Si Firebase Auth a déjà un uid valide non-anonyme et token encore frais, rien à faire
     if (window.firebase && firebase.auth) {
       const current = firebase.auth().currentUser;
-      if (current && !current.isAnonymous) return;
+      if (current && !current.isAnonymous) {
+        try {
+          const idTokenResult = await current.getIdTokenResult();
+          const expiresAt = new Date(idTokenResult.expirationTime).getTime();
+          if (expiresAt - Date.now() > 5 * 60 * 1000) return; // valide > 5 min
+        } catch (_) { /* continuer et re-authentifier */ }
+      }
     }
 
-    // Récupérer le token Supabase de la session admin en cours
+    // Récupérer le token Supabase — forcer un refresh si expiré
     if (!sb) throw new Error('[GSC] Supabase non initialisé');
-    const { data: { session }, error } = await sb.auth.getSession();
+    let { data: { session }, error } = await sb.auth.getSession();
     if (error || !session) throw new Error('[GSC] Pas de session Supabase active');
 
+    // Si access_token absent ou proche expiration, forcer le refresh
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (!session.access_token || (session.expires_at && session.expires_at - nowSec < 60)) {
+      const refreshed = await sb.auth.refreshSession();
+      if (refreshed.error || !refreshed.data?.session) {
+        throw new Error('[GSC] Session expirée — veuillez vous reconnecter.');
+      }
+      session = refreshed.data.session;
+    }
+
     const supabaseToken = session.access_token;
+    if (!supabaseToken) throw new Error('[GSC] Token Supabase introuvable après refresh.');
 
     // Appeler le Worker Cloudflare pour obtenir un Firebase Custom Token
     const resp = await fetch(GSC_WORKER_URL, {
