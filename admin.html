@@ -2407,10 +2407,20 @@ tr.is-demo-row td { opacity: .82; }
       }
     }
 
-    // Récupérer le token Supabase — forcer un refresh si expiré
+    // Récupérer le token Supabase — forcer un refresh si expiré ou absent
     if (!sb) throw new Error('[GSC] Supabase non initialisé');
     let { data: { session }, error } = await sb.auth.getSession();
-    if (error || !session) throw new Error('[GSC] Pas de session Supabase active');
+
+    // Si aucune session en mémoire (ex: onglet resté en arrière-plan trop longtemps
+    // sur mobile, minuteur de refresh automatique suspendu), ne pas abandonner tout
+    // de suite : le refresh token est souvent toujours valide en localStorage.
+    if (error || !session) {
+      const recovered = await sb.auth.refreshSession();
+      if (recovered.error || !recovered.data?.session) {
+        throw new Error('[GSC] Session expirée — veuillez vous reconnecter.');
+      }
+      session = recovered.data.session;
+    }
 
     // Si access_token absent ou proche expiration, forcer le refresh
     const nowSec = Math.floor(Date.now() / 1000);
