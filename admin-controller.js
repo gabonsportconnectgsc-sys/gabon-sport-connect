@@ -13,8 +13,7 @@
   ────────────────────────────────────────────────────────────────────────── */
   async function withAuth(fn) {
     if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
-      try { await window.ensureFirebaseAuthViaSupabase(); }
-      catch (e) { console.warn('[GSC Admin] withAuth — pont Firebase indisponible :', e); }
+      await window.ensureFirebaseAuthViaSupabase();
     }
     return fn();
   }
@@ -958,7 +957,13 @@
         await withAuth(() => window.db.collection('users').doc(u.id).update({ photoURL: url }));
         toast('Photo mise à jour', 'success');
       } catch (e) {
-        toast('Erreur upload : ' + e.message, 'error');
+        console.error('[GSC Photos] Erreur sauvegarde photo acteur:', e);
+        const msg = e.message || String(e);
+        if (msg.includes('permission') || msg.includes('auth') || msg.includes('token') || msg.includes('session')) {
+          toast('❌ Session expirée — reconnectez-vous puis réessayez.', 'error');
+        } else {
+          toast('❌ Erreur sauvegarde : ' + msg, 'error');
+        }
       } finally {
         photoUploadBusyId = null;
         renderPhotos();
@@ -980,7 +985,13 @@
         toast('Photo/logo par défaut mis à jour pour cette catégorie', 'success');
         renderPhotos();
       } catch (e) {
-        toast('Erreur upload : ' + e.message, 'error');
+        console.error('[GSC Photos] Erreur sauvegarde avatar défaut:', e);
+        const msg = e.message || String(e);
+        if (msg.includes('permission') || msg.includes('auth') || msg.includes('token') || msg.includes('session')) {
+          toast('❌ Session expirée — reconnectez-vous puis réessayez.', 'error');
+        } else {
+          toast('❌ Erreur sauvegarde : ' + msg, 'error');
+        }
       } finally {
         photoUploadBusyId = null;
         renderDefaultAvatars();
