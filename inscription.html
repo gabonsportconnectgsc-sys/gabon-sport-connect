@@ -164,6 +164,24 @@
     .vp-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:800;font-family:var(--font-display);}
     .vp-badge{display:inline-flex;align-items:center;gap:3px;background:#dbeafe;border:1px solid #93c5fd;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:800;color:#1d4ed8;letter-spacing:.4px;margin-top:2px;}
 
+
+    /* ── JOUEUR ENRICHI ── */
+    .subsection{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green-dk);margin:16px 0 10px;padding:10px 12px;background:linear-gradient(135deg,var(--green-lt),#d4f0e4);border-left:3px solid var(--green);border-radius:0 var(--radius-sm) var(--radius-sm) 0;display:flex;align-items:center;gap:6px;}
+    .rating-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+    .rating-label{font-size:11.5px;color:var(--navy);font-weight:600;width:110px;flex-shrink:0;}
+    .rating-stars{display:flex;gap:4px;}
+    .star{width:24px;height:24px;border-radius:4px;border:1.5px solid var(--gray-bd);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;color:#94a3b8;}
+    .star.on{background:var(--yellow);border-color:#d97706;color:var(--navy);}
+    .star:hover{transform:scale(1.15);}
+    .career-entry{background:var(--gray-bg);border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:11px;margin-bottom:8px;position:relative;}
+    .career-entry .remove-btn{position:absolute;top:8px;right:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;padding:0;line-height:1;}
+    .career-entry .remove-btn:hover{color:var(--danger);}
+    .add-entry-btn{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--gray-bd);border-radius:var(--radius-sm);padding:9px 14px;width:100%;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-txt);transition:all .2s;font-family:var(--font-body);}
+    .add-entry-btn:hover{border-color:var(--green);color:var(--green);}
+    .fg textarea{width:100%;padding:9px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;color:var(--navy);resize:vertical;min-height:64px;outline:none;transition:border-color .2s;}
+    .fg textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.1);}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     .fade-in{animation:fadeIn .25s ease both;}
 
@@ -392,14 +410,76 @@
             <option>Makokou</option><option>Autre</option>
           </select>
         </div>
-        <!-- Champs joueur/indépendant/étudiant -->
+        <!-- Champs joueur/indépendant/étudiant — FORMULAIRE ENRICHI -->
         <div class="extra" id="ex-joueur">
-          <div class="form-row">
-            <div class="fg"><label>Poste / Spécialité</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
-            <div class="fg"><label>Niveau</label>
-              <select id="a-niveau"><option value="">Niveau</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>International</option></select>
+
+          <!-- MORPHOLOGIE -->
+          <div class="subsection">📐 Morphologie</div>
+          <div class="form-row-3">
+            <div class="fg"><label>Taille (cm)</label><input type="number" id="a-taille" placeholder="ex: 178" min="100" max="250"/></div>
+            <div class="fg"><label>Poids (kg)</label><input type="number" id="a-poids" placeholder="ex: 72" min="30" max="200"/></div>
+            <div class="fg"><label>Pied fort</label>
+              <select id="a-pied"><option value="">—</option><option>Droit</option><option>Gauche</option><option>Les deux</option></select>
             </div>
           </div>
+          <div class="form-row">
+            <div class="fg"><label>Poste / Spécialité *</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
+            <div class="fg"><label>Poste secondaire</label><input type="text" id="a-poste2" placeholder="ex: Milieu, 200m…"/></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Niveau</label>
+              <select id="a-niveau"><option value="">Niveau</option><option>Débutant</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
+            </div>
+            <div class="fg"><label>Numéro de maillot</label><input type="number" id="a-maillot" placeholder="ex: 10" min="1" max="99"/></div>
+          </div>
+
+          <!-- CARACTÉRISTIQUES PHYSIQUES -->
+          <div class="subsection">⚡ Caractéristiques physiques</div>
+          <div id="phys-ratings">
+            <div class="rating-row"><span class="rating-label">Vitesse</span><div class="rating-stars" data-field="vitesse"></div></div>
+            <div class="rating-row"><span class="rating-label">Force</span><div class="rating-stars" data-field="force"></div></div>
+            <div class="rating-row"><span class="rating-label">Endurance</span><div class="rating-stars" data-field="endurance"></div></div>
+            <div class="rating-row"><span class="rating-label">Agilité</span><div class="rating-stars" data-field="agilite"></div></div>
+            <div class="rating-row"><span class="rating-label">Détente</span><div class="rating-stars" data-field="detente"></div></div>
+          </div>
+
+          <!-- DONNÉES TECHNIQUES -->
+          <div class="subsection" id="tech-section">🎯 Données techniques</div>
+          <div id="tech-ratings">
+            <div class="rating-row"><span class="rating-label">Tir / Finition</span><div class="rating-stars" data-field="tir"></div></div>
+            <div class="rating-row"><span class="rating-label">Passes</span><div class="rating-stars" data-field="passes"></div></div>
+            <div class="rating-row"><span class="rating-label">Dribble</span><div class="rating-stars" data-field="dribble"></div></div>
+            <div class="rating-row"><span class="rating-label">Défense</span><div class="rating-stars" data-field="defense"></div></div>
+            <div class="rating-row"><span class="rating-label">Vision du jeu</span><div class="rating-stars" data-field="vision"></div></div>
+          </div>
+
+          <!-- HISTORIQUE DE CARRIÈRE -->
+          <div class="subsection">📋 Historique de carrière</div>
+          <div id="career-list"></div>
+          <button type="button" class="add-entry-btn" onclick="addCareerEntry()">＋ Ajouter une expérience</button>
+
+          <!-- CONTRATS / MANDATS -->
+          <div class="subsection">📄 Contrat / Mandat actuel</div>
+          <div class="form-row">
+            <div class="fg"><label>Club / Structure actuel(le)</label><input type="text" id="a-club-actuel" placeholder="Nom du club ou structure"/></div>
+            <div class="fg"><label>Type de contrat</label>
+              <select id="a-contrat-type"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Début de contrat</label><input type="month" id="a-contrat-debut"/></div>
+            <div class="fg"><label>Fin de contrat</label><input type="month" id="a-contrat-fin"/></div>
+          </div>
+          <div class="fg"><label>Agent / Mandataire (optionnel)</label><input type="text" id="a-agent" placeholder="Nom de l'agent ou mandataire"/></div>
+
+          <!-- BIOGRAPHIE COURTE -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg">
+            <label>Bio / Présentation (optionnel)</label>
+            <textarea id="a-bio" placeholder="Décrivez votre parcours, vos points forts, vos objectifs…"></textarea>
+            <div class="form-hint">Max 500 caractères</div>
+          </div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-palmares" placeholder="ex: Champion national 2023, Meilleur buteur ligue 2022…"></textarea></div>
         </div>
         <!-- Champs club/fédération/association -->
         <div class="extra" id="ex-org">
@@ -460,6 +540,10 @@
           <div class="perm-item y">✅ Gestion de votre profil sportif complet</div>
           <div class="perm-item y">✅ Accès aux outils — rôle : <strong id="sa-role"></strong></div>
           <div class="perm-item" style="color:#92400e;">⏳ Validation en cours — votre fédération sera notifiée</div>
+          <div class="perm-item" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,158,96,.2);">
+            <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green-dk);display:block;margin-bottom:4px;">Votre identifiant GSC (QR Code)</span>
+            <code id="sa-gscid" style="font-family:monospace;font-size:13px;font-weight:700;color:var(--navy);background:rgba(0,158,96,.08);padding:4px 10px;border-radius:6px;letter-spacing:.5px;">—</code>
+          </div>
         </div>
         <div class="next-steps">
           <div class="ns"><div class="ns-num">1</div><div>Confirmez votre email de vérification</div></div>
@@ -495,6 +579,27 @@
       _doc = doc; _setDoc = setDoc;
     } catch(e) { console.warn("Firestore non disponible:", e); }
   })();
+
+  // ── GSC ID — fonction identique à index.html & admin.html ──
+  // Déterministe : même uid + même role → même GSC-ID partout dans l'application.
+  const ROLE_CODES_QR = {
+    joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
+    association:'ASS', federation:'FED', independant:'IND',
+    admin:'ADM', supporter:'SUP', organisateur:'ORG',
+    eleve_etudiant:'ELE', sportif_etranger:'ETR'
+  };
+
+  function generateGscId(uid, role) {
+    if (!uid) return null;
+    const roleCode = ROLE_CODES_QR[role] || 'ACT';
+    let hash = 0;
+    for (let i = 0; i < uid.length; i++) {
+      hash = ((hash << 5) - hash) + uid.charCodeAt(i);
+      hash |= 0;
+    }
+    const abs = Math.abs(hash).toString(36).toUpperCase().padStart(6, '0').slice(-6);
+    return `GSC-${roleCode}-${abs}`;
+  }
 
   const ROLE_LABELS = {
     joueur:'⚽ Joueur / Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
@@ -568,7 +673,7 @@
 
   async function saveProfile(uid, email, profile) {
     if (!db || !_setDoc || !_doc) return;
-    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, status:'active', createdAt: new Date().toISOString() }); }
+    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: new Date().toISOString() }); }
     catch(e) { console.warn('Firestore save failed:', e); }
   }
 
@@ -599,7 +704,7 @@
       if (error) throw error;
       // Sauvegarder profil Firestore
       const uid = data.user?.id;
-      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', ville, sport });
+      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'active', ville, sport });
       // Afficher succès
       document.getElementById('sv-prenom').textContent = prenom;
       document.getElementById('sv-name').textContent = prenom + ' ' + nom;
@@ -631,6 +736,23 @@
     const org    = document.getElementById('a-org')?.value?.trim() || '';
     const annee  = document.getElementById('a-annee')?.value || '';
     const licence= document.getElementById('a-licence')?.value || '';
+    // Champs enrichis joueur/athlète
+    const isJoueurRole = ['joueur','independant','eleve_etudiant'].includes(selectedRole);
+    const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
+    const poids        = isJoueurRole ? (document.getElementById('a-poids')?.value || '') : '';
+    const piedFort     = isJoueurRole ? (document.getElementById('a-pied')?.value || '') : '';
+    const poste2       = isJoueurRole ? (document.getElementById('a-poste2')?.value?.trim() || '') : '';
+    const numMaillot   = isJoueurRole ? (document.getElementById('a-maillot')?.value || '') : '';
+    const physique     = isJoueurRole ? collectRatings('phys-ratings') : {};
+    const technique    = isJoueurRole ? collectRatings('tech-ratings') : {};
+    const carriere     = isJoueurRole ? collectCareerEntries() : [];
+    const clubActuel   = isJoueurRole ? (document.getElementById('a-club-actuel')?.value?.trim() || '') : '';
+    const contratType  = isJoueurRole ? (document.getElementById('a-contrat-type')?.value || '') : '';
+    const contratDebut = isJoueurRole ? (document.getElementById('a-contrat-debut')?.value || '') : '';
+    const contratFin   = isJoueurRole ? (document.getElementById('a-contrat-fin')?.value || '') : '';
+    const agent        = isJoueurRole ? (document.getElementById('a-agent')?.value?.trim() || '') : '';
+    const bio          = isJoueurRole ? (document.getElementById('a-bio')?.value?.trim() || '').slice(0,500) : '';
+    const palmares     = isJoueurRole ? (document.getElementById('a-palmares')?.value?.trim() || '') : '';
 
     if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
@@ -653,10 +775,27 @@
       if (error) throw error;
       const uid = data.user?.id;
       if (uid) {
-        const profile = { prenom, nom, role: selectedRole, sport, ville, telephone: tel,
+        // Génère le GSC-ID avec la même fonction déterministe qu'index.html et admin.html
+        // → même uid + même role = même code QR partout dans l'application
+        const gscId = generateGscId(uid, selectedRole);
+        const profile = {
+          prenom, nom, role: selectedRole, accountType: 'acteur',
+          sport, ville, telephone: tel,
           poste, niveau, nomOrganisation: org, anneeCreation: annee, licence,
-          status: 'active' };
+          // Champs enrichis joueur/athlète (vides pour les autres rôles)
+          ...(isJoueurRole && {
+            taille, poids, piedFort, poste2, numMaillot,
+            physique, technique, carriere,
+            contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
+            bio, palmares
+          }),
+          gscId,          // stocké dès l'inscription pour cohérence admin ↔ public
+          status: 'pending' // en attente de validation par l'admin
+        };
         await saveProfile(uid, email, profile);
+        // Afficher le GSC-ID généré sur l'écran de succès
+        const gscEl = document.getElementById('sa-gscid');
+        if (gscEl) gscEl.textContent = gscId;
       }
       document.getElementById('sa-prenom').textContent = prenom;
       document.getElementById('sa-role').textContent = ROLE_LABELS[selectedRole] || selectedRole;
@@ -674,6 +813,123 @@
     const url = 'index.html' + (tab ? '?auth=' + tab : '');
     window.location.href = url;
   }
+
+  // ── RATINGS (étoiles cliquables) ──
+  const _ratings = {}; // { field: value 1-5 }
+
+  function initRatings() {
+    document.querySelectorAll('.rating-stars').forEach(container => {
+      const field = container.dataset.field;
+      _ratings[field] = 0;
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.val = i;
+        star.onclick = () => setRating(field, i);
+        container.appendChild(star);
+      }
+    });
+  }
+
+  function setRating(field, val) {
+    _ratings[field] = val;
+    const container = document.querySelector(`.rating-stars[data-field="${field}"]`);
+    if (!container) return;
+    container.querySelectorAll('.star').forEach(s => {
+      s.classList.toggle('on', parseInt(s.dataset.val) <= val);
+    });
+  }
+
+  function collectRatings(containerId) {
+    const result = {};
+    const container = document.getElementById(containerId);
+    if (!container) return result;
+    container.querySelectorAll('.rating-stars').forEach(el => {
+      const field = el.dataset.field;
+      result[field] = _ratings[field] || 0;
+    });
+    return result;
+  }
+
+  // ── CARRIÈRE ──
+  let _careerCount = 0;
+
+  function addCareerEntry() {
+    _careerCount++;
+    const id = _careerCount;
+    const list = document.getElementById('career-list');
+    const div = document.createElement('div');
+    div.className = 'career-entry';
+    div.id = 'career-' + id;
+    div.innerHTML = `
+      <button type="button" class="remove-btn" onclick="removeCareerEntry(${id})" title="Supprimer">✕</button>
+      <div class="form-row" style="margin-bottom:8px;">
+        <div class="fg"><label>Club / Structure</label><input type="text" id="c${id}-club" placeholder="Nom du club"/></div>
+        <div class="fg"><label>Saison / Période</label><input type="text" id="c${id}-periode" placeholder="ex: 2021–2023"/></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Poste</label><input type="text" id="c${id}-poste" placeholder="Poste occupé"/></div>
+        <div class="fg"><label>Matchs joués</label><input type="number" id="c${id}-matchs" placeholder="ex: 24" min="0"/></div>
+      </div>
+      <div class="fg"><label>Statistiques clés</label><input type="text" id="c${id}-stats" placeholder="ex: 12 buts, 8 passes décisives"/></div>
+    `;
+    list.appendChild(div);
+  }
+
+  function removeCareerEntry(id) {
+    const el = document.getElementById('career-' + id);
+    if (el) el.remove();
+  }
+
+  function collectCareerEntries() {
+    const entries = [];
+    document.querySelectorAll('.career-entry').forEach(el => {
+      const id = el.id.replace('career-', '');
+      const club    = document.getElementById('c' + id + '-club')?.value?.trim() || '';
+      const periode = document.getElementById('c' + id + '-periode')?.value?.trim() || '';
+      const poste   = document.getElementById('c' + id + '-poste')?.value?.trim() || '';
+      const matchs  = document.getElementById('c' + id + '-matchs')?.value || '';
+      const stats   = document.getElementById('c' + id + '-stats')?.value?.trim() || '';
+      if (club || periode) entries.push({ club, periode, poste, matchs, stats });
+    });
+    return entries;
+  }
+
+  // Initialiser les étoiles au chargement
+  initRatings();
+
+  // Adapter les labels techniques selon le sport sélectionné
+  const TECH_LABELS_BY_SPORT = {
+    'Football':    ['Tir / Finition','Passes','Dribble','Défense','Vision du jeu'],
+    'Basketball':  ['Tir','Passes','Dribble','Défense','Vision du jeu'],
+    'Handball':    ['Tir','Passes','Feinte','Défense','Jeu collectif'],
+    'Volleyball':  ['Service','Passe','Smash','Réception','Lecture du jeu'],
+    'Athlétisme':  ['Départ réaction','Allure de course','Technique de saut','Lancer','Résistance'],
+    'Judo':        ['Attaque','Défense','Projection','Sol','Stratégie'],
+    'Boxe':        ['Jab','Cross','Crochet','Uppercut','Défense'],
+    'Natation':    ['Départ','Virage','Nage libre','Endurance','Technique bras'],
+    'Tennis':      ['Service','Revers','Coup droit','Vollée','Mental'],
+  };
+  document.getElementById('a-sport')?.addEventListener('change', function() {
+    const labels = TECH_LABELS_BY_SPORT[this.value];
+    if (!labels) return;
+    const container = document.getElementById('tech-ratings');
+    const rows = container?.querySelectorAll('.rating-row');
+    if (!rows) return;
+    rows.forEach((row, i) => {
+      const labelEl = row.querySelector('.rating-label');
+      const starsEl = row.querySelector('.rating-stars');
+      if (labelEl && labels[i]) labelEl.textContent = labels[i];
+      if (starsEl && labels[i]) {
+        const field = starsEl.dataset.field;
+        // Rename the data-field to match new label for storage
+        const newField = labels[i].toLowerCase().replace(/[^a-z]/g,'').slice(0,10);
+        starsEl.dataset.field = newField;
+        _ratings[newField] = _ratings[field] || 0;
+      }
+    });
+  });
 
   // Démarrer sur l'écran 0
   show('s0');
