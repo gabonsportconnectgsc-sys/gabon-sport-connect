@@ -2080,8 +2080,6 @@ tr.is-demo-row td { opacity: .82; }
         if(nameEl) nameEl.textContent=adminName;
         if(avatarEl) avatarEl.textContent=avatarLetter;
       }
-      // Pont Firebase Auth avant verifyAdminRole
-      try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('[GSC Admin] Pont login:', e.message||e); }
       // Vérification rôle admin
       const uid = data&&data.user ? data.user.id : null;
       if(uid){
@@ -2150,46 +2148,25 @@ tr.is-demo-row td { opacity: .82; }
     if(logoutBtn) logoutBtn.addEventListener('click', handleAdminLogout);
   });
 
-  // Vérifie dans Firestore que l'uid a bien role === 'admin'
-  // Stratégie : 1) SDK Firebase après pont auth, 2) fallback API REST Firestore
+  // Vérifie que le compte connecté a bien role === 'admin'
+  // Utilise l'API REST Firestore directement avec la clé API Firebase (pas besoin du pont auth)
   async function verifyAdminRole(uid){
-    // Tentative 1 : SDK Firebase (après pont Supabase→Firebase Auth)
-    if(window.firebase && firebase.firestore){
-      try{
-        if(typeof window.ensureFirebaseAuthViaSupabase === 'function'){
-          await window.ensureFirebaseAuthViaSupabase();
-        }
-        const snap = await firebase.firestore().collection('users').doc(uid).get();
-        if(snap.exists){
-          const role = snap.data().role;
-          console.log('[GSC Admin] verifyAdminRole SDK — role:', role);
-          return role === 'admin';
-        }
-      }catch(e){
-        console.warn('[GSC Admin] verifyAdminRole SDK échoué, fallback REST:', e.message||e);
-      }
-    }
-    // Tentative 2 : API REST Firestore publique
+    const FIREBASE_API_KEY = 'AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM';
+    const PROJECT_ID       = 'gabon-sport-connect';
     try{
-      const projectId = (window.firebase && firebase.apps.length)
-        ? firebase.app().options.projectId
-        : (window.GSC_CONFIG?.firebaseProjectId || 'gabon-sport-connect');
-      const sessionData = sb ? (await sb.auth.getSession()).data?.session : null;
-      const token = sessionData?.access_token || null;
-      const headers = { 'Content-Type': 'application/json' };
-      if(token) headers['Authorization'] = 'Bearer ' + token;
-      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
-      const res = await fetch(url, { headers });
-      if(!res.ok) throw new Error('REST HTTP ' + res.status);
+      const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}?key=${FIREBASE_API_KEY}`;
+      const res  = await fetch(url);
+      if(!res.ok){ console.warn('[GSC Admin] verifyAdminRole REST HTTP', res.status); return false; }
       const json = await res.json();
       const role = json.fields?.role?.stringValue || '';
-      console.log('[GSC Admin] verifyAdminRole REST — role:', role);
+      console.log('[GSC Admin] verifyAdminRole — uid:', uid, '| role:', role);
       return role === 'admin';
-    }catch(e2){
-      console.warn('[GSC Admin] verifyAdminRole REST échoué:', e2.message||e2);
+    }catch(e){
+      console.error('[GSC Admin] verifyAdminRole échoué:', e.message||e);
+      return false;
     }
-    return false;
   }
+
 
   // Vérifie si une session admin existe déjà (rafraîchissement de page)
   (async function checkSession(){
@@ -2223,7 +2200,7 @@ tr.is-demo-row td { opacity: .82; }
   // ── PONT SUPABASE → FIREBASE (Custom Token via Cloudflare Worker) ──────────
   // Remplacez <VOTRE_COMPTE> par votre sous-domaine Cloudflare Workers réel
   // (ex: https://gsc-auth-bridge.dupont-abc123.workers.dev)
-  const GSC_WORKER_URL = 'https://gsc-auth-bridge.<VOTRE_COMPTE>.workers.dev';
+  const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 
   window.ensureFirebaseAuthViaSupabase = async function() {
     // Si Firebase Auth a déjà un uid valide non-anonyme, rien à faire
