@@ -659,11 +659,11 @@
   try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { _sb = null; }
 
   // ── FIREBASE FIRESTORE (pour sauvegarder le profil) ──
-  let db = null, _setDoc, _doc;
+  let db = null, _setDoc, _doc, _collection, _query, _where, _getDocs;
   (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-      const { getFirestore, doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { getFirestore, doc, setDoc, collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       const app = initializeApp({
         apiKey:"AIzaSyDYvkHiYd2c3XtBiPh9L1Ixu0Kx3RiKfQo",
         authDomain:"gabon-sport-connect.firebaseapp.com",
@@ -671,8 +671,36 @@
       }, "gsc-inscription");
       db = getFirestore(app);
       _doc = doc; _setDoc = setDoc;
+      _collection = collection; _query = query; _where = where; _getDocs = getDocs;
     } catch(e) { console.warn("Firestore non disponible:", e); }
   })();
+
+  // ── DÉTECTION AUTOMATIQUE DE STRUCTURE SOUS CONTRAT ──
+  // Cherche si le club/fédération/association déclaré par l'acteur existe déjà
+  // et est actif dans la base. Si oui, les droits d'administration lui sont
+  // attribués automatiquement (sous réserve de confirmation admin en validation).
+  async function detecterStructureContractante(nomClub) {
+    const result = { found: false, uid: null, nom: null, ambiguous: false };
+    if (!db || !_collection || !nomClub) return result;
+    try {
+      const snap = await _getDocs(_query(_collection(db, 'users'), _where('role', 'in', ['club', 'federation', 'association'])));
+      const target = nomClub.trim().toLowerCase();
+      const matches = [];
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        const nom = (d.nomOrganisation || '').trim().toLowerCase();
+        if (nom && (nom === target || nom.includes(target) || target.includes(nom))) {
+          matches.push({ uid: d.uid || docSnap.id, nom: d.nomOrganisation, status: d.status });
+        }
+      });
+      const actives = matches.filter(m => m.status === 'active');
+      const exact = actives.find(m => m.nom.trim().toLowerCase() === target) || matches.find(m => m.nom.trim().toLowerCase() === target);
+      if (exact) { result.found = true; result.uid = exact.uid; result.nom = exact.nom; }
+      else if (actives.length === 1) { result.found = true; result.uid = actives[0].uid; result.nom = actives[0].nom; }
+      else if (matches.length > 1) { result.ambiguous = true; }
+    } catch (e) { console.warn('Détection structure échouée:', e); }
+    return result;
+  }
 
   // ── GSC ID — fonction identique à index.html & admin.html ──
   // Déterministe : même uid + même role → même GSC-ID partout dans l'application.
@@ -879,6 +907,15 @@
         // Génère le GSC-ID avec la même fonction déterministe qu'index.html et admin.html
         // → même uid + même role = même code QR partout dans l'application
         const gscId = generateGscId(uid, selectedRole);
+
+        // ── DÉTECTION AUTOMATIQUE DE LA STRUCTURE CONTRACTANTE ──
+        let autoOwnerUid = null, autoOwnerNom = null, autoDetectionAmbiguous = false;
+        if (editLocked && clubActuel) {
+          const detection = await detecterStructureContractante(clubActuel);
+          if (detection.found) { autoOwnerUid = detection.uid; autoOwnerNom = detection.nom; }
+          autoDetectionAmbiguous = detection.ambiguous;
+        }
+
         const profile = {
           prenom, nom, role: selectedRole, accountType: 'acteur',
           sport, ville, telephone: tel,
@@ -891,10 +928,13 @@
             bio, palmares
           }),
           gscId,          // stocké dès l'inscription pour cohérence admin ↔ public
-          status: 'pending', // en attente de validation par l'admin
+          status: 'pending', // en attente de validation par l'admin (createdAt posé par saveProfile — référence pour le délai 24h)
           // ── DROITS & PROPRIÉTÉ ──
           editLocked,       // true = fiche en lecture seule (contrat pro + club_manage)
-          ownershipStatus: editLocked ? 'pending_owner_claim'    // club doit revendiquer
+          ownershipStatus: editLocked
+                         ? (autoOwnerUid ? 'owner_confirmed_auto'        // structure détectée automatiquement
+                            : autoDetectionAmbiguous ? 'pending_owner_claim_ambiguous' // plusieurs structures possibles
+                            : 'pending_owner_claim')                    // club doit revendiquer / admin doit assigner
                          : (hasBindingContract && ownershipChoice === 'self_manage') ? 'self_managed_pending_confirm'
                          : 'free',                               // libre ou hors contrat
           ownershipChoice,  // 'club_manage' | 'self_manage' | 'free_agent'
@@ -903,8 +943,9 @@
             email: employerEmail,
             contactName: employerContact
           },
-          ownerUid: null,   // sera rempli par l'admin quand le club revendique la fiche
-          ownerConfirmedAt: null,
+          ownerUid: autoOwnerUid,     // rempli automatiquement si la structure est détectée, sinon par l'admin
+          ownerDetectedAuto: !!autoOwnerUid,
+          ownerConfirmedAt: autoOwnerUid ? new Date().toISOString() : null,
           // Droit d'accès effectif à la connexion :
           // editLocked=true  → mode visiteur jusqu'à ownerUid confirmé
           // editLocked=false → accès acteur normal après validation status='active'
@@ -918,7 +959,7 @@
       document.getElementById('sa-prenom').textContent = prenom;
       document.getElementById('sa-role').textContent = ROLE_LABELS[selectedRole] || selectedRole;
       // Afficher le bloc droits sur l'écran de succès
-      renderRightsBlock(editLocked, ownershipChoice, clubActuel, contratType);
+      renderRightsBlock(editLocked, ownershipChoice, clubActuel, contratType, autoOwnerUid ? autoOwnerNom : null);
       // Adapter le bouton de connexion
       const loginBtn = document.querySelector('#sa .btn-p');
       if (loginBtn) {
@@ -1069,13 +1110,23 @@
     if (empSec) empSec.style.display = (choice === 'club_manage' || choice === 'self_manage') ? 'block' : 'none';
   }
 
-  function renderRightsBlock(editLocked, ownershipChoice, clubName, contratType) {
+  function renderRightsBlock(editLocked, ownershipChoice, clubName, contratType, autoDetectedNom) {
     const block = document.getElementById('sa-rights-block');
     if (!block) return;
     if (!contratType) { block.style.display = 'none'; return; }
 
     let html = '';
-    if (editLocked) {
+    if (editLocked && autoDetectedNom) {
+      html = `
+        <div class="ownership-box" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#93c5fd;text-align:left;">
+          <div class="ownership-title" style="color:#1e40af;">🤖 Structure détectée automatiquement</div>
+          <div class="ownership-info" style="color:#1e40af;">
+            Vous avez déclaré être sous contrat <strong>${contratType}</strong> avec <strong>${clubName || 'votre club'}</strong>.<br>
+            <strong>${autoDetectedNom}</strong> existe déjà dans le système GSC et a été automatiquement associé à votre fiche.<br>
+            Statut : <span class="status-badge pending">⏳ En attente de confirmation admin (sous 24h)</span>
+          </div>
+        </div>`;
+    } else if (editLocked) {
       html = `
         <div class="ownership-box locked" style="text-align:left;">
           <div class="ownership-title red">🔒 Fiche en lecture seule</div>

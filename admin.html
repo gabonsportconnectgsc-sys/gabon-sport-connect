@@ -1298,9 +1298,9 @@ tr.is-demo-row td { opacity: .82; }
         <div class="field"><label>Profil</label><div class="val" id="validation-player-name" style="font-weight:700;">—</div></div>
       </div>
       <div class="msection" id="validation-owner-section" style="display:none;">
-        <div class="msection-title">🏢 Propriétaire / Club</div>
+        <div class="msection-title" id="validation-owner-title">🏢 Propriétaire / Club</div>
         <div class="field">
-          <label>Assigner un propriétaire</label>
+          <label>Assigner / confirmer un propriétaire</label>
           <select id="validation-owner-select"></select>
         </div>
         <div style="font-size:11px;color:var(--gray-txt);margin-top:6px;" id="validation-owner-hint"></div>
@@ -1308,6 +1308,7 @@ tr.is-demo-row td { opacity: .82; }
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary" id="btn-validate-actor">✅ Valider le profil</button>
+        <button class="btn btn-danger" id="btn-reject-actor" type="button">🚫 Refuser</button>
         <button class="btn btn-secondary">Annuler</button>
       </div>
     </div>

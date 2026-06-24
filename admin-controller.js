@@ -235,23 +235,54 @@
      Réutilise les champs déjà posés par inscription.html :
      status ('pending'/'active'), editLocked, ownershipStatus,
      ownerRef {clubName,email,contactName}, ownerUid, ownerConfirmedAt, accessLevel */
+  function hoursSince(createdAt) {
+    try {
+      const d = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt);
+      if (isNaN(d.getTime())) return null;
+      return (Date.now() - d.getTime()) / 3600000;
+    } catch (e) { return null; }
+  }
+
+  let _overdueAlertShown = false;
+
   function renderPendingValidation(pendingList) {
     const card = document.getElementById('pending-validation-card');
     const listEl = document.getElementById('pending-validation-list');
     if (!card || !listEl) return;
+
+    const withAge = pendingList.map(u => ({ u, hrs: hoursSince(u.createdAt) }));
+    withAge.sort((a, b) => (b.hrs ?? 0) - (a.hrs ?? 0)); // plus ancien en premier (le plus urgent)
+    const overdueCount = withAge.filter(x => x.hrs !== null && x.hrs > 24).length;
+
     card.style.display = pendingList.length ? '' : 'none';
     const countEl = document.getElementById('pending-validation-count');
-    if (countEl) countEl.textContent = pendingList.length ? `(${pendingList.length})` : '';
+    if (countEl) {
+      countEl.innerHTML = pendingList.length
+        ? `(${pendingList.length})${overdueCount ? ` · <span style="color:#dc2626;">🚨 ${overdueCount} en retard (&gt;24h)</span>` : ''}`
+        : '';
+    }
     if (!pendingList.length) { listEl.innerHTML = ''; return; }
 
-    listEl.innerHTML = pendingList.map(u => {
-      const needsOwner = u.editLocked && u.ownershipStatus === 'pending_owner_claim' && !u.ownerUid;
+    if (overdueCount > 0 && !_overdueAlertShown) {
+      _overdueAlertShown = true;
+      toast(`🚨 ${overdueCount} profil(s) en attente depuis plus de 24h — validation requise.`, 'error');
+    }
+    if (overdueCount === 0) _overdueAlertShown = false;
+
+    listEl.innerHTML = withAge.map(({ u, hrs }) => {
+      const needsOwner = u.editLocked && !u.ownerUid && ['pending_owner_claim', 'pending_owner_claim_ambiguous'].includes(u.ownershipStatus);
+      const autoDetected = u.editLocked && u.ownerUid && u.ownershipStatus === 'owner_confirmed_auto';
+      const overdue = hrs !== null && hrs > 24;
+      const ageLabel = hrs === null ? '' : overdue
+        ? `🚨 En retard de ${Math.round(hrs - 24)}h`
+        : `🕐 Reçu il y a ${hrs < 1 ? '<1h' : Math.round(hrs) + 'h'}`;
       return `
-      <div class="pending-row" data-id="${u.id}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--white);border:1.5px solid var(--gray-bd);border-left:4px solid #f97316;border-radius:6px;margin-bottom:8px;">
+      <div class="pending-row" data-id="${u.id}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--white);border:1.5px solid ${overdue ? '#fca5a5' : 'var(--gray-bd)'};border-left:4px solid ${overdue ? '#dc2626' : '#f97316'};border-radius:6px;margin-bottom:8px;">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;color:var(--navy);font-size:13px;">${esc(fullName(u))}</div>
-          <div style="font-size:11px;color:var(--gray-txt);margin-top:2px;">${esc(ROLE_LABELS[u.role] || u.role)}${u.club || u.nomOrganisation ? ' • ' + esc(u.club || u.nomOrganisation) : ''}</div>
+          <div style="font-size:11px;color:var(--gray-txt);margin-top:2px;">${esc(ROLE_LABELS[u.role] || u.role)}${u.club || u.nomOrganisation ? ' • ' + esc(u.club || u.nomOrganisation) : ''}${ageLabel ? ' • ' + ageLabel : ''}</div>
           ${needsOwner ? `<div style="font-size:10px;color:#f97316;margin-top:4px;">🔒 En attente de revendication par : ${esc(u.ownerRef?.clubName || 'un club')}</div>` : ''}
+          ${autoDetected ? `<div style="font-size:10px;color:#1e40af;margin-top:4px;">🤖 Structure détectée automatiquement — à confirmer</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn-sm btn-pending-view" data-id="${u.id}">👁️ Voir</button>
@@ -277,21 +308,31 @@
     document.getElementById('validation-player-name').textContent = fullName(u);
     document.getElementById('validation-player-role').textContent = ROLE_LABELS[u.role] || u.role || '';
 
-    const needsOwner = !!u.editLocked && u.ownershipStatus === 'pending_owner_claim' && !u.ownerUid;
+    const needsAssign = !!u.editLocked && !u.ownerUid && ['pending_owner_claim', 'pending_owner_claim_ambiguous'].includes(u.ownershipStatus);
+    const needsReview = !!u.editLocked && !!u.ownerUid && u.ownershipStatus === 'owner_confirmed_auto';
     const ownerSection = document.getElementById('validation-owner-section');
     if (ownerSection) {
-      if (needsOwner) {
+      if (needsAssign || needsReview) {
         ownerSection.style.display = '';
         const orgOptions = users
           .filter(x => ['club', 'federation', 'association'].includes(x.role) && !x.isDemo)
           .sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
-        const suggested = (u.ownerRef?.clubName || '').toLowerCase();
         document.getElementById('validation-owner-select').innerHTML =
           `<option value="">— Choisir un club / fédération / association —</option>` +
-          orgOptions.map(o => `<option value="${o.id}" ${fullName(o).toLowerCase() === suggested ? 'selected' : ''}>${esc(fullName(o))}</option>`).join('');
-        document.getElementById('validation-owner-hint').textContent = u.ownerRef?.clubName
-          ? `Déclaré par l'acteur : ${u.ownerRef.clubName}${u.ownerRef.contactName ? ' (' + u.ownerRef.contactName + ')' : ''}`
-          : '';
+          orgOptions.map(o => `<option value="${o.id}" ${(o.uid || o.id) === u.ownerUid ? 'selected' : ''}>${esc(fullName(o))}</option>`).join('');
+
+        const hintEl = document.getElementById('validation-owner-hint');
+        const titleEl = document.getElementById('validation-owner-title');
+        if (needsReview) {
+          if (titleEl) titleEl.textContent = '🤖 Structure détectée automatiquement';
+          hintEl.innerHTML = `<strong>${esc(fullName(users.find(o => (o.uid || o.id) === u.ownerUid)) || u.ownerRef?.clubName || '')}</strong> a été associée automatiquement à l'inscription. Vérifiez puis validez, ou changez la structure ci-dessus.`;
+        } else if (u.ownershipStatus === 'pending_owner_claim_ambiguous') {
+          if (titleEl) titleEl.textContent = '⚠️ Plusieurs structures correspondantes';
+          hintEl.innerHTML = `Plusieurs structures correspondent à « ${esc(u.ownerRef?.clubName || '')} ». Sélectionnez la bonne manuellement.`;
+        } else {
+          if (titleEl) titleEl.textContent = '🏢 Propriétaire / Club';
+          hintEl.textContent = u.ownerRef?.clubName ? `Déclaré par l'acteur : ${u.ownerRef.clubName}${u.ownerRef.contactName ? ' (' + u.ownerRef.contactName + ')' : ''}` : '';
+        }
       } else {
         ownerSection.style.display = 'none';
       }
@@ -303,9 +344,15 @@
   async function validateActor(id) {
     const u = users.find(x => x.id === id);
     if (!u) return;
-    const needsOwner = !!u.editLocked && u.ownershipStatus === 'pending_owner_claim' && !u.ownerUid;
+    const needsAssign = !!u.editLocked && !u.ownerUid && ['pending_owner_claim', 'pending_owner_claim_ambiguous'].includes(u.ownershipStatus);
+    const needsReview = !!u.editLocked && !!u.ownerUid && u.ownershipStatus === 'owner_confirmed_auto';
     const ownerSelect = document.getElementById('validation-owner-select');
-    const chosenOwnerId = needsOwner ? (ownerSelect?.value || '') : '';
+    const chosenOwnerId = (needsAssign || needsReview) ? (ownerSelect?.value || '') : '';
+
+    if (needsAssign && !chosenOwnerId) {
+      toast('Cette fiche nécessite un propriétaire — sélectionnez un club/organisation avant de valider.', 'error');
+      return;
+    }
 
     const updates = {
       status: 'active',
@@ -313,7 +360,7 @@
       validatedAt: new Date(),
       validatedBy: 'admin'
     };
-    if (needsOwner && chosenOwnerId) {
+    if ((needsAssign || needsReview) && chosenOwnerId) {
       const owner = users.find(x => x.id === chosenOwnerId);
       updates.ownerUid = owner ? (owner.uid || owner.id) : chosenOwnerId;
       updates.ownershipStatus = 'owner_confirmed';
@@ -328,6 +375,27 @@
       if (document.getElementById('joueurs')?.classList.contains('active')) renderPlayers();
     } catch (e) {
       toast('Erreur lors de la validation : ' + e.message, 'error');
+    }
+  }
+
+  async function rejectActor(id) {
+    const u = users.find(x => x.id === id);
+    if (!u) return;
+    const reason = prompt('Motif du refus (visible par l\'équipe admin uniquement) :', '');
+    if (reason === null) return; // annulé
+    try {
+      await withAuth(() => window.db.collection('users').doc(id).update({
+        status: 'hidden',
+        rejectedAt: new Date(),
+        rejectedBy: 'admin',
+        rejectionReason: reason || 'Non spécifié'
+      }));
+      toast('🚫 Demande refusée.', 'info');
+      closeModal('validation-modal');
+      renderDashboard();
+      if (document.getElementById('joueurs')?.classList.contains('active')) renderPlayers();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
     }
   }
 
@@ -1298,6 +1366,7 @@
 
     const validationModal = document.getElementById('validation-modal');
     document.getElementById('btn-validate-actor')?.addEventListener('click', () => validateActor(currentPlayerId));
+    document.getElementById('btn-reject-actor')?.addEventListener('click', () => rejectActor(currentPlayerId));
     document.getElementById('btn-assign-owner-only')?.addEventListener('click', assignOwnerOnly);
     validationModal?.querySelector('.btn-secondary')?.addEventListener('click', () => closeModal('validation-modal'));
 
