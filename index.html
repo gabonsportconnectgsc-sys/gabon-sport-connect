@@ -79,6 +79,18 @@
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
     .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;}
+    /* Icônes visibles en permanence - mode adaptatif */
+    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge, .topnav .user-chip {
+      flex-shrink:0;
+      opacity:1;
+      transition:opacity .2s ease, visibility .2s ease;
+    }
+    .topnav .btn-icon[style*="display:none"], 
+    .topnav .visitor-banner[style*="display:none"],
+    .topnav .user-chip[style*="display:none"] {
+      visibility:hidden;
+      opacity:0;
+    }
     .topnav-logo{font-family:var(--font-display);font-size:0;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:pointer;position:relative;}
     .topnav-logo img{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;}
     .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1;}
@@ -933,14 +945,14 @@
       </div>
     </div>
     <div class="topnav-spacer"></div>
-    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Se connecter" style="display:none;cursor:pointer;">MEMBRE</div>
+    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Se connecter" style="cursor:pointer;">👁️ VISITEUR</div>
     <div id="nav-rolebadge"></div>
-    <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
+    <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()">
       <div class="user-avatar" id="nav-avatar">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
-    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code" style="display:none;">📷</button>
-    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter" style="display:none;">👤</button>
+    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter">👤</button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
     </button>
@@ -2463,9 +2475,28 @@ function enterAsVisitor(silent=false){
   currentUser=null;userProfile=null;
   showApp();
   document.getElementById('visitor-notice').style.display='flex';
-  document.getElementById('nav-visitor-banner').style.display='';
-  document.getElementById('nav-login-btn').style.display='';
-  document.getElementById('nav-user-chip').style.display='none';
+  // ── ADAPTER LES ICÔNES POUR VISITEUR (rester visibles) ──
+  const visitorBanner = document.getElementById('nav-visitor-banner');
+  if(visitorBanner) {
+    visitorBanner.style.display = '';
+    visitorBanner.textContent = '👁️ VISITEUR';
+    visitorBanner.style.opacity = '1';
+  }
+  const loginBtn = document.getElementById('nav-login-btn');
+  if(loginBtn) {
+    loginBtn.style.display = '';
+    loginBtn.style.opacity = '1';
+    loginBtn.setAttribute('title', 'Se connecter');
+  }
+  const userChip = document.getElementById('nav-user-chip');
+  if(userChip) {
+    userChip.style.display = 'none';
+  }
+  const qrBtn = document.getElementById('nav-qr-scan-btn');
+  if(qrBtn) {
+    qrBtn.style.display = '';
+    qrBtn.style.opacity = '0.7';
+  }
   document.getElementById('quick-actions-visitor').style.display='grid';
   document.getElementById('quick-actions-auth').style.display='none';
   document.getElementById('profile-completion-bar').style.display='none';
@@ -2482,7 +2513,6 @@ function enterAsVisitor(silent=false){
   document.getElementById('hero-email-label').textContent='';
   document.getElementById('stat-niveau').textContent='—';
   document.getElementById('btn-add-site').style.display='none';
-  document.getElementById('nav-qr-scan-btn').style.display='';
   if(!silent) showView('dashboard');
   loadGlobalStats();
   // Init news preview with seed data
@@ -3101,10 +3131,25 @@ function enterApp(){
   isVisitor=false;
   showApp();
   document.getElementById('visitor-notice').style.display='none';
-  document.getElementById('nav-visitor-banner').style.display='none';
-  document.getElementById('nav-login-btn').style.display='none';
-  document.getElementById('nav-user-chip').style.display='';
-  document.getElementById('nav-qr-scan-btn').style.display='';
+  // ── ADAPTER LES ICÔNES POUR UTILISATEUR CONNECTÉ ──
+  const visitorBanner = document.getElementById('nav-visitor-banner');
+  if(visitorBanner) {
+    visitorBanner.style.display = 'none'; // Masquer le badge visiteur
+  }
+  const loginBtn = document.getElementById('nav-login-btn');
+  if(loginBtn) {
+    loginBtn.style.display = 'none'; // Masquer le bouton login
+  }
+  const userChip = document.getElementById('nav-user-chip');
+  if(userChip) {
+    userChip.style.display = ''; // Afficher le chip utilisateur
+    userChip.style.opacity = '1';
+  }
+  const qrBtn = document.getElementById('nav-qr-scan-btn');
+  if(qrBtn) {
+    qrBtn.style.display = '';
+    qrBtn.style.opacity = '1'; // QR visible pour utilisateurs connectés
+  }
   document.getElementById('quick-actions-visitor').style.display='none';
   document.getElementById('quick-actions-auth').style.display='grid';
   document.getElementById('profile-completion-bar').style.display='flex';
