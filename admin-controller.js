@@ -944,59 +944,15 @@
   }
 
   function triggerActorPhotoUpload(uid) {
-    const u = users.find(x => (x.uid || x.id) === uid);
-    if (!u || u.isDemo) return;
-    const input = document.getElementById('actor-photo-input');
-    if (!input) return;
-    pickAndUpload(input, async (file) => {
-      photoUploadBusyId = uid;
-      renderPhotos();
-      try {
-        const url = await doUpload(file, `profiles/photos/${uid}`);
-        if (!url) { photoUploadBusyId = null; renderPhotos(); return; }
-        await withAuth(() => window.db.collection('users').doc(u.id).update({ photoURL: url }));
-        toast('Photo mise à jour', 'success');
-      } catch (e) {
-        console.error('[GSC Photos] Erreur sauvegarde photo acteur:', e);
-        const msg = e.message || String(e);
-        if (msg.includes('permission') || msg.includes('auth') || msg.includes('token') || msg.includes('session')) {
-          toast('❌ Session expirée — reconnectez-vous puis réessayez.', 'error');
-        } else {
-          toast('❌ Erreur sauvegarde : ' + msg, 'error');
-        }
-      } finally {
-        photoUploadBusyId = null;
-        renderPhotos();
-      }
-    });
+    // Import désactivé côté admin — la gestion des photos de profil est désormais
+    // entièrement déléguée à l'application (index.html), qui dispose déjà d'un
+    // flux d'upload fiable. L'admin reste lecture seule sur ce point.
+    toast('📷 La modification de photo se fait désormais depuis l\'application (profil de l\'acteur).', 'info');
   }
 
   function triggerDefaultAvatarUpload(role) {
-    const input = document.getElementById('default-avatar-input');
-    if (!input) return;
-    pickAndUpload(input, async (file) => {
-      photoUploadBusyId = 'default:' + role;
-      renderDefaultAvatars();
-      try {
-        const url = await doUpload(file, `defaults/avatars/${role}`);
-        if (!url) { photoUploadBusyId = null; renderDefaultAvatars(); return; }
-        defaultAvatars[role] = url;
-        await withAuth(() => window.db.collection('settings').doc('defaultAvatars').set(defaultAvatars, { merge: true }));
-        toast('Photo/logo par défaut mis à jour pour cette catégorie', 'success');
-        renderPhotos();
-      } catch (e) {
-        console.error('[GSC Photos] Erreur sauvegarde avatar défaut:', e);
-        const msg = e.message || String(e);
-        if (msg.includes('permission') || msg.includes('auth') || msg.includes('token') || msg.includes('session')) {
-          toast('❌ Session expirée — reconnectez-vous puis réessayez.', 'error');
-        } else {
-          toast('❌ Erreur sauvegarde : ' + msg, 'error');
-        }
-      } finally {
-        photoUploadBusyId = null;
-        renderDefaultAvatars();
-      }
-    });
+    // Import désactivé côté admin — voir triggerActorPhotoUpload ci-dessus pour le contexte.
+    toast('📷 Cette fonctionnalité est temporairement désactivée dans l\'admin.', 'info');
   }
 
   window.AdminController_triggerActorPhotoUpload = triggerActorPhotoUpload;
