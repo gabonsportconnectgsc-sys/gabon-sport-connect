@@ -1,0 +1,468 @@
+/**
+ * cms-controls.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Styles pour les contrôles CMS & Apparence
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* Onglets */
+.cms-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+
+.cms-tab {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cms-tab:hover {
+  color: var(--navy);
+}
+
+.cms-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--green);
+}
+
+/* Contenu des onglets */
+.cms-tab-content {
+  display: none;
+}
+
+.cms-tab-content.active {
+  display: block;
+  animation: fadeUp 0.3s ease;
+}
+
+/* Grille */
+.cms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1024px) {
+  .cms-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cms-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Lignes */
+.cms-row {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Label */
+.cms-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  margin-bottom: 6px;
+  cursor: default;
+}
+
+.cms-label span {
+  color: var(--green);
+  font-weight: 800;
+}
+
+/* Rangée couleur */
+.cms-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Input couleur */
+.cms-color-input {
+  width: 50px;
+  height: 40px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cms-color-input:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0, 158, 96, 0.1);
+}
+
+.cms-color-input:active {
+  border-color: var(--green);
+}
+
+/* Input hex */
+.cms-hex-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s ease;
+}
+
+.cms-hex-input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--green-lt);
+}
+
+/* Slider */
+.cms-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #e2e8f0, #e2e8f0);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cms-slider:hover {
+  background: linear-gradient(to right, #cbd5e1, #cbd5e1);
+}
+
+.cms-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 158, 96, 0.3);
+  transition: all 0.2s ease;
+  border: 2px solid white;
+}
+
+.cms-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(0, 158, 96, 0.4);
+}
+
+.cms-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 158, 96, 0.3);
+  transition: all 0.2s ease;
+}
+
+.cms-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(0, 158, 96, 0.4);
+}
+
+.cms-slider::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+/* Select */
+.cms-select {
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+  color: var(--navy);
+}
+
+.cms-select:hover {
+  border-color: var(--green);
+  background: var(--green-lt);
+}
+
+.cms-select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0, 158, 96, 0.1);
+}
+
+.cms-select option {
+  padding: 6px;
+  background: white;
+  color: var(--navy);
+}
+
+/* Cartes */
+.dash-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.dash-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--green);
+}
+
+.dash-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 16px;
+  font-family: var(--font-display);
+}
+
+/* Zones et images */
+#zones-editor,
+#images-editor {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  max-height: 700px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+#zones-editor::-webkit-scrollbar,
+#images-editor::-webkit-scrollbar {
+  width: 6px;
+}
+
+#zones-editor::-webkit-scrollbar-track,
+#images-editor::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#zones-editor::-webkit-scrollbar-thumb,
+#images-editor::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#zones-editor::-webkit-scrollbar-thumb:hover,
+#images-editor::-webkit-scrollbar-thumb:hover {
+  background: var(--green);
+}
+
+/* Valeurs affichées */
+.zone-size-val,
+.image-size-val,
+.image-opacity-val,
+.image-radius-val {
+  color: var(--green);
+  font-weight: 800;
+}
+
+/* Boutons CMS */
+#cms-btn-save,
+#cms-btn-reset,
+#cms-btn-export {
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#cms-btn-save {
+  flex: 1;
+  background: linear-gradient(135deg, var(--green), var(--green-dk));
+  color: white;
+  min-width: 200px;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+#cms-btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 158, 96, 0.3);
+}
+
+#cms-btn-save:active {
+  transform: translateY(0);
+}
+
+#cms-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#cms-btn-reset,
+#cms-btn-export {
+  background: white;
+  border: 2px solid #e2e8f0;
+  color: var(--navy);
+}
+
+#cms-btn-reset:hover,
+#cms-btn-export:hover {
+  border-color: var(--green);
+  background: var(--green-lt);
+  color: var(--green-dk);
+}
+
+#cms-btn-reset:active,
+#cms-btn-export:active {
+  transform: scale(0.98);
+}
+
+/* Prévisualisation */
+#cms-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#cms-preview button,
+#cms-preview span {
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+#prev-primary {
+  padding: 9px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: default;
+  background: var(--green);
+  color: white;
+}
+
+#prev-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid var(--green);
+  background: var(--green-lt);
+  color: var(--green);
+}
+
+#prev-font-display,
+#prev-font-body {
+  line-height: var(--line-height, 1.6);
+}
+
+/* Animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cms-tabs {
+    gap: 4px;
+  }
+
+  .cms-tab {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .cms-color-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cms-color-input {
+    width: 100%;
+    height: 44px;
+  }
+
+  #cms-btn-save,
+  #cms-btn-reset,
+  #cms-btn-export {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+/* Modes sombres (optionnel) */
+@media (prefers-color-scheme: dark) {
+  .cms-hex-input {
+    background: #1a2d4a;
+    color: white;
+    border-color: #2d4a6d;
+  }
+
+  .cms-hex-input:focus {
+    background: rgba(0, 158, 96, 0.1);
+  }
+
+  .cms-select {
+    background: #1a2d4a;
+    color: white;
+    border-color: #2d4a6d;
+  }
+
+  .cms-select:hover {
+    background: rgba(0, 158, 96, 0.15);
+  }
+
+  .cms-select option {
+    background: #0A1628;
+    color: white;
+  }
+
+  .dash-card {
+    background: #1a2d4a;
+    border-color: #2d4a6d;
+    color: white;
+  }
+
+  .dash-card-title {
+    color: white;
+  }
+
+  .cms-label {
+    color: #94a3b8;
+  }
+}
