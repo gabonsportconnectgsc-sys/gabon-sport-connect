@@ -2379,7 +2379,7 @@ const ETABLISSEMENTS_GA=[
   const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
   try{
-    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'sb-gsc-player-auth', persistSession: true, autoRefreshToken: true } });
     window._supabaseReady = true;
   }catch(e){
     window._supabaseReady = false;

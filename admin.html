@@ -2164,7 +2164,7 @@ tr.is-demo-row td { opacity: .82; }
   const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
 
   let sb = null;
-  try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  try{ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'sb-gsc-admin-auth', persistSession: true, autoRefreshToken: true } }); }
   catch(e){ console.error('Supabase indisponible.', e); }
 
   function showApp(){
