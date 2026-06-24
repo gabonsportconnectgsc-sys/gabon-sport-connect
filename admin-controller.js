@@ -990,6 +990,11 @@
 
   window.AdminController_triggerActorPhotoUpload = triggerActorPhotoUpload;
   window.AdminController_triggerDefaultAvatarUpload = triggerDefaultAvatarUpload;
+  window.AdminController_openPlayerModal = openPlayerModal;
+  window.AdminController_getRealUsers = () => realUsers.filter(u => u.status !== 'deleted');
+  window.AdminController_fullName = fullName;
+  window.AdminController_fmtDate = fmtDate;
+  window.AdminController_ROLE_LABELS = ROLE_LABELS;
 
   function wirePhotoFilters() {
     document.querySelectorAll('#photos .filter-btn').forEach(btn => {

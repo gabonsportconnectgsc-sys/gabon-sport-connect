@@ -641,6 +641,10 @@ tr.is-demo-row td { opacity: .82; }
   .main-content { margin: 0px; padding: 0px; }
   .dash-card, .stat-card { box-shadow: none; border: 1px solid var(--gray-bd); break-inside: avoid; }
   body { background: rgb(255, 255, 255); }
+  body.print-indiv-only .main-content > *:not(#rapports) { display: none !important; }
+  body.print-indiv-only #rapports > *:not(#indiv-report-detail) { display: none !important; }
+  body.print-indiv-only #indiv-report-detail #indiv-report-close,
+  body.print-indiv-only #indiv-report-detail #indiv-report-print { display: none !important; }
 }
 
 @media (max-width: 768px) {
@@ -1028,6 +1032,58 @@ tr.is-demo-row td { opacity: .82; }
           </div>
         </div>
 
+        <!-- RAPPORT INDIVIDUEL — RECHERCHE AVANCÉE -->
+        <div class="dash-card" id="indiv-report-card" style="margin-top:16px;">
+          <div class="dash-card-title">🔎 Rapport individuel — Recherche avancée</div>
+          <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+            Retrouvez le dossier-rapport complet d'un acteur sportif réel (nom, GSC-ID, club, statistiques) pour le consulter ou l'imprimer.
+          </p>
+          <div class="grid2" style="margin-bottom:10px;">
+            <div class="field">
+              <label>Nom, club ou GSC-ID</label>
+              <input type="text" id="indiv-report-search" placeholder="Ex. Mboungou, GSC-..., FC Mounana">
+            </div>
+            <div class="field">
+              <label>Catégorie</label>
+              <select id="indiv-report-role">
+                <option value="all">Toutes les catégories</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid2" style="margin-bottom:12px;">
+            <div class="field">
+              <label>Statut</label>
+              <select id="indiv-report-status">
+                <option value="all">Tous statuts</option>
+                <option value="active">Actif</option>
+                <option value="pending">En attente</option>
+                <option value="hidden">Masqué</option>
+              </select>
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end;">
+              <span style="font-size:12px;color:var(--gray-txt);" id="indiv-report-count">0 résultat</span>
+            </div>
+          </div>
+          <div class="users-table-wrap" style="max-height:340px;overflow-y:auto;">
+            <table class="users-table">
+              <thead><tr><th>GSC-ID</th><th>Acteur</th><th>Catégorie</th><th>Statut</th><th></th></tr></thead>
+              <tbody id="indiv-report-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DOSSIER-RAPPORT D'UN ACTEUR — affiché après sélection, imprimable seul -->
+        <div class="dash-card" id="indiv-report-detail" style="margin-top:16px;display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+            <div class="dash-card-title" style="margin-bottom:0;">📄 Dossier-rapport individuel</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-report outline" id="indiv-report-close">✕ Fermer</button>
+              <button class="btn-report primary" id="indiv-report-print">🖨️ Imprimer ce dossier</button>
+            </div>
+          </div>
+          <div id="indiv-report-body"></div>
+        </div>
+
         <!-- OUTILS AVANCÉS -->
         <div class="dash-card" id="advanced-tools-card" style="margin-top:16px;border:1.5px solid var(--danger);">
           <div class="dash-card-title" style="color:var(--danger);">⚠️ Outils avancés — Réinitialisation</div>
@@ -1346,13 +1402,13 @@ tr.is-demo-row td { opacity: .82; }
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', ecole_universite: '🏫 École/Université'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
     organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
-    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04'
+    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', ecole_universite: '#059669'
   };
   const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
 
@@ -1467,6 +1523,135 @@ tr.is-demo-row td { opacity: .82; }
     ).join('');
   }
 
+  /* ── Rapport individuel — recherche avancée (acteurs réels uniquement) ── */
+  let _indivSelectedId = null;
+
+  function getRealActors() {
+    if (typeof window.AdminController_getRealUsers === 'function') return window.AdminController_getRealUsers();
+    const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
+    return real.filter(u => u.status !== 'deleted');
+  }
+  function indivFullName(u) {
+    if (typeof window.AdminController_fullName === 'function') return window.AdminController_fullName(u);
+    return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || 'Sans nom';
+  }
+  function indivGscId(u) {
+    return u.gscId || (window.gscGenerateId ? window.gscGenerateId(u.uid || u.id, u.role || 'joueur') : '—');
+  }
+  const STATUS_LABELS_INDIV = { active: 'Actif', pending: 'En attente', hidden: 'Masqué' };
+
+  function populateIndivRoleSelect() {
+    const sel = document.getElementById('indiv-report-role');
+    if (!sel || sel.dataset.filled) return;
+    Object.keys(ROLE_LABELS).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = ROLE_LABELS[key];
+      sel.appendChild(opt);
+    });
+    sel.dataset.filled = '1';
+  }
+
+  function renderIndivResults() {
+    const tbody = document.getElementById('indiv-report-tbody');
+    const countEl = document.getElementById('indiv-report-count');
+    if (!tbody) return;
+    const q = (document.getElementById('indiv-report-search')?.value || '').trim().toLowerCase();
+    const roleF = document.getElementById('indiv-report-role')?.value || 'all';
+    const statusF = document.getElementById('indiv-report-status')?.value || 'all';
+
+    let list = getRealActors();
+    if (roleF !== 'all') list = list.filter(u => u.role === roleF);
+    if (statusF !== 'all') list = list.filter(u => (u.status || 'active') === statusF);
+    if (q) {
+      list = list.filter(u => {
+        const hay = [indivFullName(u), u.club, u.nomOrganisation, indivGscId(u), u.email].filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    list = list.sort((a, b) => indivFullName(a).localeCompare(indivFullName(b), 'fr'));
+
+    if (countEl) countEl.textContent = `${list.length} résultat${list.length === 1 ? '' : 's'}`;
+
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray-txt)">Aucun acteur réel ne correspond à cette recherche.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.slice(0, 200).map(u => {
+      const statusKey = u.status || 'active';
+      return `<tr style="cursor:pointer" onclick="window.gscOpenIndivReport && window.gscOpenIndivReport('${u.id}')">
+        <td style="font-family:monospace;font-size:12px;">${esc(indivGscId(u))}</td>
+        <td>${esc(indivFullName(u))}</td>
+        <td style="font-size:12px;">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
+        <td style="font-size:12px;">${esc(STATUS_LABELS_INDIV[statusKey] || statusKey)}</td>
+        <td><button class="btn-sm" type="button" onclick="event.stopPropagation();window.gscOpenIndivReport && window.gscOpenIndivReport('${u.id}')">📄 Voir</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderIndivDossier(u) {
+    const body = document.getElementById('indiv-report-body');
+    if (!body) return;
+    const now = new Date();
+    const statusKey = u.status || 'active';
+    body.innerHTML = `
+      <div class="report-meta-line">Émis le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · GSC-ID ${esc(indivGscId(u))}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:1;min-width:220px;">
+          <div style="font-size:18px;font-weight:800;color:var(--navy);">${esc(indivFullName(u))}</div>
+          <div style="font-size:13px;color:var(--gray-txt);margin-bottom:10px;">${esc(ROLE_LABELS[u.role] || u.role || '—')} · ${esc(STATUS_LABELS_INDIV[statusKey] || statusKey)}</div>
+          <table class="users-table">
+            <tbody>
+              <tr><td style="font-weight:700;width:40%">Email</td><td>${esc(u.email || '—')}</td></tr>
+              <tr><td style="font-weight:700">Téléphone</td><td>${esc(u.telephone || u.phone || '—')}</td></tr>
+              <tr><td style="font-weight:700">Club / Organisation</td><td>${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td></tr>
+              <tr><td style="font-weight:700">Inscrit le</td><td>${window.AdminController_fmtDate ? esc(window.AdminController_fmtDate(u.createdAt)) : '—'}</td></tr>
+              <tr><td style="font-weight:700">Taille</td><td>${esc(u.taille || '—')}</td></tr>
+              <tr><td style="font-weight:700">Poids</td><td>${esc(u.poids || '—')}</td></tr>
+              <tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>
+              <tr><td style="font-weight:700">Matchs joués</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
+              <tr><td style="font-weight:700">Buts marqués</td><td>${esc(u.buts || 0)}</td></tr>
+              <tr><td style="font-weight:700">Passes décisives</td><td>${esc(u.passes || 0)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  window.gscOpenIndivReport = function (id) {
+    const list = getRealActors();
+    const u = list.find(x => x.id === id);
+    if (!u) return;
+    _indivSelectedId = id;
+    renderIndivDossier(u);
+    const detail = document.getElementById('indiv-report-detail');
+    if (detail) { detail.style.display = 'block'; detail.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  };
+
+  function wireIndivReport() {
+    populateIndivRoleSelect();
+    const search = document.getElementById('indiv-report-search');
+    if (search) search.addEventListener('input', renderIndivResults);
+    const roleSel = document.getElementById('indiv-report-role');
+    if (roleSel) roleSel.addEventListener('change', renderIndivResults);
+    const statusSel = document.getElementById('indiv-report-status');
+    if (statusSel) statusSel.addEventListener('change', renderIndivResults);
+    const closeBtn = document.getElementById('indiv-report-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      _indivSelectedId = null;
+      const detail = document.getElementById('indiv-report-detail');
+      if (detail) detail.style.display = 'none';
+    });
+    const printBtn = document.getElementById('indiv-report-print');
+    if (printBtn) printBtn.addEventListener('click', () => {
+      if (!_indivSelectedId) return;
+      document.body.classList.add('print-indiv-only');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-indiv-only'), 500);
+    });
+    renderIndivResults();
+  }
+
   function showRapportsSection() {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById('rapports');
@@ -1502,6 +1687,11 @@ tr.is-demo-row td { opacity: .82; }
 
     const refreshBtn = document.getElementById('btn-refresh-rapports');
     if (refreshBtn) refreshBtn.addEventListener('click', renderReports);
+
+    wireIndivReport();
+    if (window.realtimeSync && window.realtimeSync.onUpdate) {
+      window.realtimeSync.onUpdate('users', renderIndivResults);
+    }
   });
 })();
 </script>
@@ -1935,8 +2125,10 @@ tr.is-demo-row td { opacity: .82; }
       const uid = qrScanLastUser.uid || qrScanLastUser.id;
       // Ouvre la fiche complète dans le module Joueurs si la fonction existe déjà
       // dans admin-controller.js (ex: openPlayerModal). Repli : section Joueurs + recherche.
-      if (typeof window.openPlayerModal === 'function') {
-        window.openPlayerModal(uid);
+      if (typeof window.AdminController_openPlayerModal === 'function') {
+        const navJoueurs = document.getElementById('nav-joueurs');
+        if (navJoueurs) navJoueurs.click();
+        window.AdminController_openPlayerModal(uid);
       } else {
         const navJoueurs = document.getElementById('nav-joueurs');
         if (navJoueurs) navJoueurs.click();
