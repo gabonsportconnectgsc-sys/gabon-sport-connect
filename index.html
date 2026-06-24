@@ -135,8 +135,12 @@
     .visitor-banner{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.5px;}
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px;cursor:pointer;transition:background .2s;}
     .user-chip:hover{background:rgba(255,255,255,.14);}
-    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;}
-    .user-avatar img{width:100%;height:100%;object-fit:cover;}
+    .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;border:2.5px solid rgba(255,255,255,.25);transition:border-color .2s;}
+    .user-chip:hover .user-avatar{border-color:rgba(255,255,255,.65);}
+    .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+    /* Pastille verte "en ligne" */
+    .user-chip{position:relative;}
+    .user-chip::after{content:'';position:absolute;bottom:3px;right:3px;width:9px;height:9px;background:#22c55e;border:2px solid var(--navy);border-radius:50%;pointer-events:none;}
     .user-name{display:none;}
     .role-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
     .role-badge.admin{background:var(--yellow);color:var(--navy);}
@@ -3147,10 +3151,16 @@ function renderDashboard(){
   const fullname=[p.prenom,p.nom].filter(Boolean).join(' ')||p.email?.split('@')[0]||'Utilisateur';
   const initial=fullname[0]?.toUpperCase()||'?';
   document.getElementById('nav-username').textContent=fullname;
-  document.getElementById('nav-avatar').textContent=initial;
-  // Photo : priorité Firebase, sinon localStorage (upload admin)
+  // Photo de profil : priorité Firebase, sinon localStorage (upload admin)
   const navPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})();
-  if(navPhotoSrc) document.getElementById('nav-avatar').innerHTML=`<img src="${navPhotoSrc}" alt="av">`;
+  const navAv=document.getElementById('nav-avatar');
+  if(navPhotoSrc){
+    // Afficher la photo — fallback sur initiale si l'image échoue à charger
+    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'">`;
+  } else {
+    // Pas de photo : afficher l'initiale
+    navAv.textContent=initial;
+  }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
   document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
   const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
@@ -3173,6 +3183,25 @@ function renderDashboard(){
   document.getElementById('completion-fill').style.width=pct+'%';
   document.getElementById('completion-label').textContent=pct===100?'✅ Profil complet !':'Profil complété à '+pct+'% — Cliquez pour compléter';
 }
+
+// ── MISE À JOUR AVATAR TOPNAV ──
+// Appelable après upload photo ou changement de profil
+function refreshNavAvatar(){
+  if(!userProfile) return;
+  const fullname=[userProfile.prenom,userProfile.nom].filter(Boolean).join(' ')||userProfile.email?.split('@')[0]||'?';
+  const initial=(fullname[0]||'?').toUpperCase();
+  const photoSrc=userProfile.photoURL||(()=>{
+    try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[userProfile.uid]||null;}}catch(e){}return null;
+  })();
+  const navAv=document.getElementById('nav-avatar');
+  if(!navAv) return;
+  if(photoSrc){
+    navAv.innerHTML=`<img src="${photoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'">`;
+  } else {
+    navAv.textContent=initial;
+  }
+}
+window.refreshNavAvatar=refreshNavAvatar;
 
 // Fallback generateGscId — utilisé si seed-data.js ne définit pas cette fonction.
 // L'algorithme produit un identifiant reproductible basé sur l'uid et le rôle.
