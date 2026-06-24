@@ -786,12 +786,6 @@ tr.is-demo-row td { opacity: .82; }
           </div></div>
         </div>
 
-        <!-- VALIDATION DES PROFILS EN ATTENTE -->
-        <div class="dash-card" id="pending-validation-card" style="margin-top:16px;display:none;border-left:4px solid #f97316;">
-          <div class="dash-card-title">⏳ Profils à valider <span id="pending-validation-count" style="font-weight:700;color:#f97316;"></span></div>
-          <div id="pending-validation-list"></div>
-        </div>
-
         <!-- TUILES DE L'APPLICATION -->
         <div class="app-tiles-section">
           <div class="app-tiles-header">
@@ -1236,10 +1230,6 @@ tr.is-demo-row td { opacity: .82; }
           <div class="field"><label>Inscription</label><div class="val" id="modal-date">—</div></div>
           <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="pending">⏳ En attente</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
         </div>
-        <div id="modal-ownership-row" style="display:none;margin-top:10px;padding:10px 12px;background:#fff7ed;border:1.5px solid #fdba74;border-radius:8px;font-size:12px;color:#9a3412;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <span id="modal-ownership-text">🔒 Fiche verrouillée — en attente de revendication par un club/organisation.</span>
-          <button class="btn-sm" id="modal-btn-manage-owner" type="button">🏢 Gérer</button>
-        </div>
         <div class="field" style="margin-top:10px;">
           <label>Titre / rôle personnalisé</label>
           <input type="text" id="modal-titre-perso" placeholder="Ex : Président, Arbitre vidéo (VAR), Organisateur principal…">
@@ -1281,35 +1271,6 @@ tr.is-demo-row td { opacity: .82; }
       <div class="modal-actions">
         <button class="btn btn-primary">💾 Enregistrer</button>
         <button class="btn btn-secondary">Fermer</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL VALIDATION & PROPRIÉTÉ -->
-<div id="validation-modal" class="modal-overlay">
-  <div class="modal" style="max-width:480px;">
-    <div class="modal-header">
-      <div><div class="modal-title">✅ Valider le profil</div><div class="modal-subtitle" id="validation-player-role"></div></div>
-      <button class="modal-close">✕</button>
-    </div>
-    <div class="modal-content">
-      <div class="msection">
-        <div class="field"><label>Profil</label><div class="val" id="validation-player-name" style="font-weight:700;">—</div></div>
-      </div>
-      <div class="msection" id="validation-owner-section" style="display:none;">
-        <div class="msection-title" id="validation-owner-title">🏢 Propriétaire / Club</div>
-        <div class="field">
-          <label>Assigner / confirmer un propriétaire</label>
-          <select id="validation-owner-select"></select>
-        </div>
-        <div style="font-size:11px;color:var(--gray-txt);margin-top:6px;" id="validation-owner-hint"></div>
-        <button class="btn-sm" id="btn-assign-owner-only" type="button" style="margin-top:8px;">🏢 Assigner sans valider</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="btn-validate-actor">✅ Valider le profil</button>
-        <button class="btn btn-danger" id="btn-reject-actor" type="button">🚫 Refuser</button>
-        <button class="btn btn-secondary">Annuler</button>
       </div>
     </div>
   </div>
@@ -2119,9 +2080,12 @@ tr.is-demo-row td { opacity: .82; }
         if(nameEl) nameEl.textContent=adminName;
         if(avatarEl) avatarEl.textContent=avatarLetter;
       }
-      // Vérification rôle admin avant accès
+      // Pont Firebase Auth avant verifyAdminRole
+      try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('[GSC Admin] Pont login:', e.message||e); }
+      // Vérification rôle admin
       const uid = data&&data.user ? data.user.id : null;
       if(uid){
+        btn.textContent='Vérification…';
         const isAdmin = await verifyAdminRole(uid);
         if(!isAdmin){
           await sb.auth.signOut();
@@ -2187,12 +2151,44 @@ tr.is-demo-row td { opacity: .82; }
   });
 
   // Vérifie dans Firestore que l'uid a bien role === 'admin'
+  // Stratégie : 1) SDK Firebase après pont auth, 2) fallback API REST Firestore
   async function verifyAdminRole(uid){
+    // Tentative 1 : SDK Firebase (après pont Supabase→Firebase Auth)
+    if(window.firebase && firebase.firestore){
+      try{
+        if(typeof window.ensureFirebaseAuthViaSupabase === 'function'){
+          await window.ensureFirebaseAuthViaSupabase();
+        }
+        const snap = await firebase.firestore().collection('users').doc(uid).get();
+        if(snap.exists){
+          const role = snap.data().role;
+          console.log('[GSC Admin] verifyAdminRole SDK — role:', role);
+          return role === 'admin';
+        }
+      }catch(e){
+        console.warn('[GSC Admin] verifyAdminRole SDK échoué, fallback REST:', e.message||e);
+      }
+    }
+    // Tentative 2 : API REST Firestore publique
     try{
-      if(!window.firebase||!firebase.firestore) return false;
-      const snap=await firebase.firestore().collection('users').doc(uid).get();
-      return snap.exists && snap.data().role==='admin';
-    }catch(e){ console.warn('[GSC Admin] verifyAdminRole:',e); return false; }
+      const projectId = (window.firebase && firebase.apps.length)
+        ? firebase.app().options.projectId
+        : (window.GSC_CONFIG?.firebaseProjectId || 'gabon-sport-connect');
+      const sessionData = sb ? (await sb.auth.getSession()).data?.session : null;
+      const token = sessionData?.access_token || null;
+      const headers = { 'Content-Type': 'application/json' };
+      if(token) headers['Authorization'] = 'Bearer ' + token;
+      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
+      const res = await fetch(url, { headers });
+      if(!res.ok) throw new Error('REST HTTP ' + res.status);
+      const json = await res.json();
+      const role = json.fields?.role?.stringValue || '';
+      console.log('[GSC Admin] verifyAdminRole REST — role:', role);
+      return role === 'admin';
+    }catch(e2){
+      console.warn('[GSC Admin] verifyAdminRole REST échoué:', e2.message||e2);
+    }
+    return false;
   }
 
   // Vérifie si une session admin existe déjà (rafraîchissement de page)
