@@ -78,7 +78,7 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;}
     .topnav-logo{font-family:var(--font-display);font-size:0;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:pointer;position:relative;}
     .topnav-logo img{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;}
     .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1;}
@@ -103,7 +103,7 @@
     .user-name{max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);font-size:13px;font-weight:500;}
     .btn-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--white);font-size:18px;cursor:pointer;border-radius:8px;transition:all .2s;flex-shrink:0;}
     .btn-icon:hover{background:rgba(255,255,255,.1);}
-    .btn-hamburger{display:none;}
+    .btn-hamburger{}
     .hamburger-lines{display:flex;flex-direction:column;gap:5px;}
     .hamburger-lines span{width:20px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
     @media (max-width:640px){
@@ -940,7 +940,7 @@
       <div class="user-name" id="nav-username">…</div>
     </div>
     <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code" style="display:none;">📷</button>
-    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter" style="display:none;font-size:18px;">👤</button>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter" style="display:none;">👤</button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
     </button>
