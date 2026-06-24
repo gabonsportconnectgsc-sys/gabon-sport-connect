@@ -2429,7 +2429,7 @@ tr.is-demo-row td { opacity: .82; }
     const resp = await fetch(GSC_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supabaseToken })
+      body: JSON.stringify({ supabaseAccessToken: supabaseToken })
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');
