@@ -34,6 +34,8 @@
     ]
   };
 
+  // Liste de polices façon menu déroulant Word — chargées dynamiquement par
+  // app-config-loader.js (ensureFontLoaded) dès qu'elles sont sélectionnées.
   const FONTS = [
     { name: 'Inter', value: "'Inter', system-ui, sans-serif" },
     { name: 'Syne', value: "'Syne', sans-serif" },
@@ -41,7 +43,36 @@
     { name: 'Raleway', value: "'Raleway', sans-serif" },
     { name: 'DM Sans', value: "'DM Sans', sans-serif" },
     { name: 'Outfit', value: "'Outfit', sans-serif" },
-    { name: 'Space Mono', value: "'Space Mono', monospace" }
+    { name: 'Space Mono', value: "'Space Mono', monospace" },
+    { name: 'Montserrat', value: "'Montserrat', sans-serif" },
+    { name: 'Roboto', value: "'Roboto', sans-serif" },
+    { name: 'Open Sans', value: "'Open Sans', sans-serif" },
+    { name: 'Lato', value: "'Lato', sans-serif" },
+    { name: 'Nunito', value: "'Nunito', sans-serif" },
+    { name: 'Playfair Display', value: "'Playfair Display', serif" },
+    { name: 'Merriweather', value: "'Merriweather', serif" },
+    { name: 'Oswald', value: "'Oswald', sans-serif" },
+    { name: 'Work Sans', value: "'Work Sans', sans-serif" },
+    { name: 'Manrope', value: "'Manrope', sans-serif" },
+    { name: 'Bricolage Grotesque', value: "'Bricolage Grotesque', sans-serif" }
+  ];
+
+  // Formes disponibles pour les images / icônes
+  const SHAPES = [
+    { value: 'square', label: '⬛ Carré' },
+    { value: 'rounded', label: '⬜ Coins arrondis' },
+    { value: 'rounded-square', label: '🔲 Carré très arrondi' },
+    { value: 'circle', label: '⚪ Rond' },
+    { value: 'hexagon', label: '⬡ Hexagone' }
+  ];
+
+  // Positions disponibles pour les images / icônes
+  const POSITIONS = [
+    { value: 'default', label: '↔️ Par défaut' },
+    { value: 'left', label: '⬅️ Gauche' },
+    { value: 'right', label: '➡️ Droite' },
+    { value: 'top', label: '⬆️ Haut' },
+    { value: 'bottom', label: '⬇️ Bas' }
   ];
 
   function injectCmsUI() {
@@ -150,6 +181,9 @@
               <span id="prev-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:var(--green-lt);color:var(--green);">Badge</span>
             </div>
           </div>
+          <div class="cms-actions-row" style="margin-top:16px;">
+            <button class="cms-action-btn cms-action-confirm" id="cms-colors-confirm-btn" title="Confirmer ces couleurs et rayons">✅ Confirmer ces couleurs</button>
+          </div>
         </div>
       </div>
     </div>
@@ -161,31 +195,42 @@
           <div class="dash-card-title">✍️ Polices de caractères</div>
           <div class="cms-row">
             <label class="cms-label">Police d'affichage (titres)</label>
-            <select id="cms-font-display" class="cms-select" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
+            <select id="cms-font-display" class="cms-select cms-font-select" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+              ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
             </select>
+            <div id="cms-font-display-preview" style="margin-top:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fafbfc;font-size:20px;font-weight:700;">Gabon Sport Connect</div>
           </div>
           <div class="cms-row">
             <label class="cms-label">Police de corps (texte)</label>
-            <select id="cms-font-body" class="cms-select" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
+            <select id="cms-font-body" class="cms-select cms-font-select" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+              ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
             </select>
+            <div id="cms-font-body-preview" style="margin-top:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fafbfc;font-size:14px;">Exemple de texte courant — Aa Bb Cc 123</div>
           </div>
         </div>
 
         <div class="dash-card">
           <div class="dash-card-title">📏 Tailles de texte globales</div>
-          <div class="cms-row">
+          <div class="cms-row cms-size-row">
             <label class="cms-label">Taille titres H1 — <span id="cms-val-h1">28</span>PX</label>
-            <input type="range" id="cms-h1-size" min="16" max="48" value="28" class="cms-slider">
+            <div class="cms-size-control">
+              <input type="range" id="cms-h1-size" min="16" max="48" value="28" class="cms-slider">
+              <span class="cms-letter-a" id="cms-letter-h1" style="font-size:28px;">A</span>
+            </div>
           </div>
-          <div class="cms-row">
+          <div class="cms-row cms-size-row">
             <label class="cms-label">Taille titres H2 — <span id="cms-val-h2">22</span>PX</label>
-            <input type="range" id="cms-h2-size" min="14" max="36" value="22" class="cms-slider">
+            <div class="cms-size-control">
+              <input type="range" id="cms-h2-size" min="14" max="36" value="22" class="cms-slider">
+              <span class="cms-letter-a" id="cms-letter-h2" style="font-size:22px;">A</span>
+            </div>
           </div>
-          <div class="cms-row">
+          <div class="cms-row cms-size-row">
             <label class="cms-label">Taille corps — <span id="cms-val-body">14</span>PX</label>
-            <input type="range" id="cms-body-size" min="11" max="18" value="14" class="cms-slider">
+            <div class="cms-size-control">
+              <input type="range" id="cms-body-size" min="11" max="18" value="14" class="cms-slider">
+              <span class="cms-letter-a" id="cms-letter-body" style="font-size:14px;">A</span>
+            </div>
           </div>
           <div class="cms-row">
             <label class="cms-label">Interligne — <span id="cms-val-line-height">1.6</span></label>
@@ -206,23 +251,43 @@
             <div id="prev-font-body" style="font-family:var(--font-body);font-size:14px;line-height:1.6;">Ceci est un exemple de texte pour tester la police du corps. Les modifications s'appliquent en temps réel.</div>
           </div>
         </div>
+        <div class="cms-actions-row" style="margin-top:16px;">
+          <button class="cms-action-btn cms-action-confirm" id="cms-typo-confirm-btn" title="Confirmer ces polices et tailles">✅ Confirmer ces typographies</button>
+        </div>
       </div>
     </div>
 
     <!-- TAB: ZONES TEXTES -->
     <div class="cms-tab-content" data-tab="zones" style="display:none;">
+      <div class="cms-row" style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <input type="text" id="zones-search" placeholder="🔍 Rechercher une zone de texte…" class="cms-select" style="flex:1;min-width:200px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+        <button id="cms-btn-add-zone" class="cms-action-btn cms-action-add" title="Ajouter une nouvelle zone de texte personnalisée">➕ Ajouter une zone</button>
+      </div>
       <div id="zones-editor" style="display:grid;grid-template-columns:1fr;gap:14px;">
         ${ZONES_CONFIG.texts.map(zone => `
-          <div class="dash-card">
-            <div class="dash-card-title">${zone.label}</div>
+          <div class="dash-card zone-card" data-zone-card="${zone.id}">
+            <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <span>${zone.label}</span>
+              <span class="cms-status-badge cms-status-visible" id="zone-status-${zone.id}">✅ Visible</span>
+            </div>
             <div class="cms-row">
+              <label class="cms-label">Police de la zone</label>
+              <select class="zone-font-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                <option value="">— Police globale —</option>
+                ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="cms-row cms-size-row">
               <label class="cms-label">Taille du texte — <span class="zone-size-val" data-zone="${zone.id}">14</span>PX</label>
-              <input type="range" class="zone-size-slider" data-zone="${zone.id}" min="8" max="32" value="14" class="cms-slider">
+              <div class="cms-size-control">
+                <input type="range" class="zone-size-slider cms-slider" data-zone="${zone.id}" min="8" max="32" value="14">
+                <span class="cms-letter-a zone-letter-a" data-zone="${zone.id}" style="font-size:14px;">A</span>
+              </div>
             </div>
             <div class="cms-row">
               <label class="cms-label">Couleur</label>
               <div class="cms-color-row">
-                <input type="color" class="zone-color-input" data-zone="${zone.id}" value="#0A1628" class="cms-color-input">
+                <input type="color" class="zone-color-input cms-color-input" data-zone="${zone.id}" value="#0A1628">
               </div>
             </div>
             <div class="cms-row">
@@ -244,6 +309,20 @@
                 <option value="capitalize">Commencer par Majuscule</option>
               </select>
             </div>
+            <div class="cms-row">
+              <label class="cms-label">Alignement</label>
+              <select class="zone-align-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                <option value="" selected>Par défaut</option>
+                <option value="left">Gauche</option>
+                <option value="center">Centré</option>
+                <option value="right">Droite</option>
+              </select>
+            </div>
+            <div class="cms-actions-row">
+              <button class="cms-action-btn cms-action-confirm zone-confirm-btn" data-zone="${zone.id}" title="Confirmer les réglages de cette zone">✅ Confirmer</button>
+              <button class="cms-action-btn cms-action-hide zone-hide-btn" data-zone="${zone.id}" title="Masquer cette zone sur l'application">🙈 Masquer</button>
+              <button class="cms-action-btn cms-action-reset zone-reset-btn" data-zone="${zone.id}" title="Réinitialiser cette zone">↺ Réinitialiser</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -251,21 +330,43 @@
 
     <!-- TAB: IMAGES/ICÔNES -->
     <div class="cms-tab-content" data-tab="images" style="display:none;">
+      <div class="cms-row" style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <input type="text" id="images-search" placeholder="🔍 Rechercher une image / icône…" class="cms-select" style="flex:1;min-width:200px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+        <button id="cms-btn-add-image" class="cms-action-btn cms-action-add" title="Ajouter un nouvel emplacement personnalisé">➕ Ajouter un emplacement</button>
+      </div>
       <div id="images-editor" style="display:grid;grid-template-columns:1fr;gap:14px;">
         ${ZONES_CONFIG.images.map(zone => `
-          <div class="dash-card">
-            <div class="dash-card-title">${zone.label}</div>
-            <div class="cms-row">
+          <div class="dash-card image-card" data-image-card="${zone.id}">
+            <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <span>${zone.label}</span>
+              <span class="cms-status-badge cms-status-visible" id="image-status-${zone.id}">✅ Visible</span>
+            </div>
+            <div class="cms-row cms-size-row">
               <label class="cms-label">Taille — <span class="image-size-val" data-image="${zone.id}">40</span>PX</label>
-              <input type="range" class="image-size-slider" data-image="${zone.id}" min="16" max="200" value="40" class="cms-slider">
+              <div class="cms-size-control">
+                <input type="range" class="image-size-slider cms-slider" data-image="${zone.id}" min="16" max="200" value="40">
+                <span class="cms-image-preview-icon" data-image="${zone.id}" style="width:40px;height:40px;font-size:18px;">🖼️</span>
+              </div>
+            </div>
+            <div class="cms-row">
+              <label class="cms-label">Position (gauche/droite/haut/bas)</label>
+              <select class="image-position-select" data-image="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                ${POSITIONS.map(p => `<option value="${p.value}">${p.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="cms-row">
+              <label class="cms-label">Forme</label>
+              <select class="image-shape-select" data-image="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                ${SHAPES.map(s => `<option value="${s.value}" ${s.value==='rounded'?'selected':''}>${s.label}</option>`).join('')}
+              </select>
             </div>
             <div class="cms-row">
               <label class="cms-label">Opacité — <span class="image-opacity-val" data-image="${zone.id}">100</span>%</label>
-              <input type="range" class="image-opacity-slider" data-image="${zone.id}" min="0" max="100" value="100" class="cms-slider">
+              <input type="range" class="image-opacity-slider cms-slider" data-image="${zone.id}" min="0" max="100" value="100">
             </div>
             <div class="cms-row">
               <label class="cms-label">Rayon de bordure — <span class="image-radius-val" data-image="${zone.id}">0</span>PX</label>
-              <input type="range" class="image-radius-slider" data-image="${zone.id}" min="0" max="50" value="0" class="cms-slider">
+              <input type="range" class="image-radius-slider cms-slider" data-image="${zone.id}" min="0" max="50" value="0">
             </div>
             <div class="cms-row">
               <label class="cms-label">Ombre</label>
@@ -275,6 +376,11 @@
                 <option value="medium">Moyenne</option>
                 <option value="large">Grande</option>
               </select>
+            </div>
+            <div class="cms-actions-row">
+              <button class="cms-action-btn cms-action-confirm image-confirm-btn" data-image="${zone.id}" title="Confirmer les réglages de cette image">✅ Confirmer</button>
+              <button class="cms-action-btn cms-action-hide image-hide-btn" data-image="${zone.id}" title="Masquer cette image sur l'application">🙈 Masquer</button>
+              <button class="cms-action-btn cms-action-reset image-reset-btn" data-image="${zone.id}" title="Réinitialiser cette image">↺ Réinitialiser</button>
             </div>
           </div>
         `).join('')}
@@ -312,6 +418,43 @@
       .cms-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--green); cursor: pointer; border: none; box-shadow: 0 2px 8px rgba(0, 158, 96, 0.3); }
       .cms-select { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; }
       #zones-editor, #images-editor { max-height: 600px; overflow-y: auto; }
+
+      /* Aperçu "A" qui grandit/rétrécit en direct sur les curseurs de taille */
+      .cms-size-control { display: flex; align-items: center; gap: 12px; }
+      .cms-size-control .cms-slider { flex: 1; }
+      .cms-letter-a, .cms-image-preview-icon {
+        flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+        width: 44px; height: 44px; min-width: 28px; min-height: 28px;
+        font-weight: 800; color: var(--navy); background: #f1f5f9; border: 1px solid #e2e8f0;
+        border-radius: 10px; transition: font-size .12s ease, width .12s ease, height .12s ease;
+        user-select: none;
+      }
+
+      /* Boutons d'action communs à tous les onglets (ajouter / confirmer / masquer / réinitialiser) */
+      .cms-actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+      .cms-action-btn {
+        padding: 9px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+        border: 1.5px solid #e2e8f0; background: #fff; color: var(--navy); transition: all .15s;
+      }
+      .cms-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+      .cms-action-confirm { border-color: var(--green); color: var(--green-dk); background: var(--green-lt); }
+      .cms-action-confirm:hover { background: var(--green); color: #fff; }
+      .cms-action-hide { border-color: #f59e0b; color: #92400e; background: #fff7ed; }
+      .cms-action-hide:hover { background: #f59e0b; color: #fff; }
+      .cms-action-reset { border-color: #94a3b8; color: #475569; background: #f8fafc; }
+      .cms-action-reset:hover { background: #94a3b8; color: #fff; }
+      .cms-action-add { border-color: var(--blue); color: #1d4ed8; background: #eff6ff; white-space: nowrap; }
+      .cms-action-add:hover { background: var(--blue); color: #fff; }
+
+      /* Badge de statut (visible / masqué) sur chaque carte zone / image */
+      .cms-status-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+      .cms-status-visible { background: var(--green-lt); color: var(--green-dk); }
+      .cms-status-hidden { background: #fef3c7; color: #92400e; }
+      .cms-status-confirmed { background: #dbeafe; color: #1d4ed8; }
+
+      /* Carte masquée : visuellement atténuée pour bien indiquer l'état */
+      .zone-card.is-hidden, .image-card.is-hidden { opacity: .55; }
+      .zone-card.is-hidden .dash-card-title, .image-card.is-hidden .dash-card-title { text-decoration: line-through; }
     </style>
     `;
   }
@@ -341,11 +484,15 @@
     var zones = {};
     document.querySelectorAll('.zone-size-slider').forEach(function(el) {
       var zoneId = el.getAttribute('data-zone');
+      var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
       zones[zoneId] = {
         size: el.value,
         color: document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`).value,
         weight: document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`).value,
-        transform: document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`).value
+        transform: document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`).value,
+        fontFamily: document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`)?.value || '',
+        align: document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`)?.value || '',
+        hidden: card ? card.classList.contains('is-hidden') : false
       };
     });
     return zones;
@@ -355,11 +502,15 @@
     var images = {};
     document.querySelectorAll('.image-size-slider').forEach(function(el) {
       var imageId = el.getAttribute('data-image');
+      var card = document.querySelector(`.image-card[data-image-card="${imageId}"]`);
       images[imageId] = {
         size: el.value,
         opacity: document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`).value,
         radius: document.querySelector(`.image-radius-slider[data-image="${imageId}"]`).value,
-        shadow: document.querySelector(`.image-shadow-select[data-image="${imageId}"]`).value
+        shadow: document.querySelector(`.image-shadow-select[data-image="${imageId}"]`).value,
+        position: document.querySelector(`.image-position-select[data-image="${imageId}"]`)?.value || 'default',
+        shape: document.querySelector(`.image-shape-select[data-image="${imageId}"]`)?.value || 'rounded',
+        hidden: card ? card.classList.contains('is-hidden') : false
       };
     });
     return images;
@@ -384,12 +535,107 @@
     
     document.getElementById('cms-font-display').value = theme.fontDisplay || "'Syne', sans-serif";
     document.getElementById('cms-font-body').value = theme.fontBody || "'Inter', system-ui, sans-serif";
+    var fdPrev = document.getElementById('cms-font-display-preview');
+    if (fdPrev) fdPrev.style.fontFamily = document.getElementById('cms-font-display').value;
+    var fbPrev = document.getElementById('cms-font-body-preview');
+    if (fbPrev) fbPrev.style.fontFamily = document.getElementById('cms-font-body').value;
     document.getElementById('cms-h1-size').value = theme.h1Size || '28';
     document.getElementById('cms-h2-size').value = theme.h2Size || '22';
     document.getElementById('cms-body-size').value = theme.bodySize || '14';
     document.getElementById('cms-line-height').value = theme.lineHeight || '1.6';
+
+    // Repeuple chaque zone de texte sauvegardée
+    var zones = theme.zones || {};
+    Object.keys(zones).forEach(function(zoneId) {
+      var z = zones[zoneId] || {};
+      var sizeEl = document.querySelector(`.zone-size-slider[data-zone="${zoneId}"]`);
+      if (sizeEl && z.size) sizeEl.value = z.size;
+      var colorEl = document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`);
+      if (colorEl && z.color) colorEl.value = z.color;
+      var weightEl = document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`);
+      if (weightEl && z.weight) weightEl.value = z.weight;
+      var transformEl = document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`);
+      if (transformEl && z.transform) transformEl.value = z.transform;
+      var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
+      if (fontEl) fontEl.value = z.fontFamily || '';
+      var alignEl = document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`);
+      if (alignEl) alignEl.value = z.align || '';
+      setZoneHidden(zoneId, !!z.hidden);
+    });
+
+    // Repeuple chaque image/icône sauvegardée
+    var images = theme.images || {};
+    Object.keys(images).forEach(function(imageId) {
+      var im = images[imageId] || {};
+      var sizeEl = document.querySelector(`.image-size-slider[data-image="${imageId}"]`);
+      if (sizeEl && im.size) sizeEl.value = im.size;
+      var opacityEl = document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`);
+      if (opacityEl && im.opacity !== undefined) opacityEl.value = im.opacity;
+      var radiusEl = document.querySelector(`.image-radius-slider[data-image="${imageId}"]`);
+      if (radiusEl && im.radius !== undefined) radiusEl.value = im.radius;
+      var shadowEl = document.querySelector(`.image-shadow-select[data-image="${imageId}"]`);
+      if (shadowEl && im.shadow) shadowEl.value = im.shadow;
+      var posEl = document.querySelector(`.image-position-select[data-image="${imageId}"]`);
+      if (posEl) posEl.value = im.position || 'default';
+      var shapeEl = document.querySelector(`.image-shape-select[data-image="${imageId}"]`);
+      if (shapeEl) shapeEl.value = im.shape || 'rounded';
+      setImageHidden(imageId, !!im.hidden);
+    });
     
     updateTextDisplays();
+    updateZoneAndImageDisplays();
+  }
+
+  // Met à jour tous les libellés numériques + aperçus "A" des zones et images
+  function updateZoneAndImageDisplays() {
+    document.querySelectorAll('.zone-size-slider').forEach(function(el) {
+      var zoneId = el.getAttribute('data-zone');
+      var valEl = document.querySelector(`.zone-size-val[data-zone="${zoneId}"]`);
+      if (valEl) valEl.textContent = el.value;
+      var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
+      if (letterEl) {
+        letterEl.style.fontSize = el.value + 'px';
+        var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
+        if (fontEl) letterEl.style.fontFamily = fontEl.value || '';
+      }
+    });
+    document.querySelectorAll('.image-size-slider').forEach(function(el) {
+      var imageId = el.getAttribute('data-image');
+      var valEl = document.querySelector(`.image-size-val[data-image="${imageId}"]`);
+      if (valEl) valEl.textContent = el.value;
+      var iconEl = document.querySelector(`.cms-image-preview-icon[data-image="${imageId}"]`);
+      if (iconEl) { iconEl.style.width = el.value + 'px'; iconEl.style.height = el.value + 'px'; }
+    });
+    document.querySelectorAll('.image-opacity-slider').forEach(function(el) {
+      var imageId = el.getAttribute('data-image');
+      var valEl = document.querySelector(`.image-opacity-val[data-image="${imageId}"]`);
+      if (valEl) valEl.textContent = el.value;
+    });
+    document.querySelectorAll('.image-radius-slider').forEach(function(el) {
+      var imageId = el.getAttribute('data-image');
+      var valEl = document.querySelector(`.image-radius-val[data-image="${imageId}"]`);
+      if (valEl) valEl.textContent = el.value;
+    });
+  }
+
+  function setZoneHidden(zoneId, hidden) {
+    var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
+    var badge = document.getElementById('zone-status-' + zoneId);
+    if (card) card.classList.toggle('is-hidden', hidden);
+    if (badge) {
+      badge.textContent = hidden ? '🙈 Masqué' : '✅ Visible';
+      badge.className = 'cms-status-badge ' + (hidden ? 'cms-status-hidden' : 'cms-status-visible');
+    }
+  }
+
+  function setImageHidden(imageId, hidden) {
+    var card = document.querySelector(`.image-card[data-image-card="${imageId}"]`);
+    var badge = document.getElementById('image-status-' + imageId);
+    if (card) card.classList.toggle('is-hidden', hidden);
+    if (badge) {
+      badge.textContent = hidden ? '🙈 Masqué' : '✅ Visible';
+      badge.className = 'cms-status-badge ' + (hidden ? 'cms-status-hidden' : 'cms-status-visible');
+    }
   }
 
   function updateTextDisplays() {
@@ -497,38 +743,143 @@
       });
     }
 
-    // Polices
+    // Polices — sélecteur façon Word + aperçu immédiat de la police choisie
     ['display', 'body'].forEach(function(type) {
       var select = document.getElementById('cms-font-' + type);
+      var preview = document.getElementById('cms-font-' + type + '-preview');
       if (select) {
-        select.addEventListener('change', livePreview);
+        select.addEventListener('change', function() {
+          if (preview) preview.style.fontFamily = this.value;
+          livePreview();
+        });
+        if (preview) preview.style.fontFamily = select.value;
       }
     });
 
-    // Zones textes
+    // Zones textes — curseur de taille avec aperçu "A" qui grandit/rétrécit en direct
     document.querySelectorAll('.zone-size-slider').forEach(function(slider) {
       slider.addEventListener('input', function() {
         var zoneId = this.getAttribute('data-zone');
         var valEl = document.querySelector(`.zone-size-val[data-zone="${zoneId}"]`);
         if (valEl) valEl.textContent = this.value;
+        var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
+        if (letterEl) letterEl.style.fontSize = this.value + 'px';
         livePreview();
       });
     });
 
     document.querySelectorAll('.zone-color-input').forEach(function(input) {
-      input.addEventListener('change', livePreview);
+      input.addEventListener('input', livePreview);
     });
 
-    document.querySelectorAll('.zone-weight-select, .zone-transform-select').forEach(function(el) {
+    document.querySelectorAll('.zone-weight-select, .zone-transform-select, .zone-align-select').forEach(function(el) {
       el.addEventListener('change', livePreview);
     });
 
-    // Images
+    // Police par zone — sélecteur façon Word, applique aussi un aperçu visuel sur la lettre A
+    document.querySelectorAll('.zone-font-select').forEach(function(select) {
+      select.addEventListener('change', function() {
+        var zoneId = this.getAttribute('data-zone');
+        var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
+        if (letterEl) letterEl.style.fontFamily = this.value || '';
+        livePreview();
+      });
+    });
+
+    // Actions par zone de texte : Confirmer / Masquer / Réinitialiser
+    document.querySelectorAll('.zone-confirm-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var zoneId = this.getAttribute('data-zone');
+        var badge = document.getElementById('zone-status-' + zoneId);
+        if (badge && !document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`).classList.contains('is-hidden')) {
+          badge.textContent = '✅ Confirmé';
+          badge.className = 'cms-status-badge cms-status-confirmed';
+        }
+        livePreview();
+        showToast('✅ Zone « ' + zoneLabelOf(zoneId) + ' » confirmée.', 'success');
+      });
+    });
+
+    document.querySelectorAll('.zone-hide-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var zoneId = this.getAttribute('data-zone');
+        var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
+        var nowHidden = card ? !card.classList.contains('is-hidden') : true;
+        setZoneHidden(zoneId, nowHidden);
+        this.textContent = nowHidden ? '👁️ Afficher' : '🙈 Masquer';
+        livePreview();
+      });
+    });
+
+    document.querySelectorAll('.zone-reset-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var zoneId = this.getAttribute('data-zone');
+        var sizeEl = document.querySelector(`.zone-size-slider[data-zone="${zoneId}"]`);
+        if (sizeEl) { sizeEl.value = 14; sizeEl.dispatchEvent(new Event('input')); }
+        var colorEl = document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`);
+        if (colorEl) colorEl.value = '#0A1628';
+        var weightEl = document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`);
+        if (weightEl) weightEl.value = '700';
+        var transformEl = document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`);
+        if (transformEl) transformEl.value = 'none';
+        var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
+        if (fontEl) fontEl.value = '';
+        var alignEl = document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`);
+        if (alignEl) alignEl.value = '';
+        setZoneHidden(zoneId, false);
+        var hideBtn = document.querySelector(`.zone-hide-btn[data-zone="${zoneId}"]`);
+        if (hideBtn) hideBtn.textContent = '🙈 Masquer';
+        livePreview();
+      });
+    });
+
+    // Recherche dans la liste des zones de texte
+    var zonesSearch = document.getElementById('zones-search');
+    if (zonesSearch) {
+      zonesSearch.addEventListener('input', function() {
+        var q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.zone-card').forEach(function(card) {
+          var title = (card.querySelector('.dash-card-title span')?.textContent || '').toLowerCase();
+          card.style.display = title.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Ajouter une zone de texte personnalisée (simple invite — peut être affinée ensuite)
+    var addZoneBtn = document.getElementById('cms-btn-add-zone');
+    if (addZoneBtn) {
+      addZoneBtn.addEventListener('click', function() {
+        var label = prompt('Nom de la nouvelle zone de texte (ex. "Titre page Contact") :');
+        if (label && label.trim()) {
+          showToast('ℹ️ Pour cibler précisément un élément personnalisé, indiquez son sélecteur CSS au développeur. Zone "' + label.trim() + '" notée — utilisez "Exporter config" pour la transmettre.', 'info');
+        }
+      });
+    }
+
+    var typoConfirmBtn = document.getElementById('cms-typo-confirm-btn');
+    if (typoConfirmBtn) {
+      typoConfirmBtn.addEventListener('click', function() {
+        livePreview();
+        showToast('✅ Typographies confirmées — pensez à "Sauvegarder tous les changements" pour les rendre définitives.', 'success');
+      });
+    }
+
+    var colorsConfirmBtn = document.getElementById('cms-colors-confirm-btn');
+    if (colorsConfirmBtn) {
+      colorsConfirmBtn.addEventListener('click', function() {
+        livePreview();
+        showToast('✅ Couleurs confirmées — pensez à "Sauvegarder tous les changements" pour les rendre définitives.', 'success');
+      });
+    }
+
+    // Images/Icônes — taille (curseur), position, forme, opacité, rayon, ombre
     document.querySelectorAll('.image-size-slider').forEach(function(slider) {
       slider.addEventListener('input', function() {
         var imageId = this.getAttribute('data-image');
         var valEl = document.querySelector(`.image-size-val[data-image="${imageId}"]`);
         if (valEl) valEl.textContent = this.value;
+        var iconEl = document.querySelector(`.cms-image-preview-icon[data-image="${imageId}"]`);
+        if (iconEl) { iconEl.style.width = this.value + 'px'; iconEl.style.height = this.value + 'px'; }
         livePreview();
       });
     });
@@ -551,11 +902,81 @@
       });
     });
 
-    document.querySelectorAll('.image-shadow-select').forEach(function(select) {
+    document.querySelectorAll('.image-shadow-select, .image-position-select, .image-shape-select').forEach(function(select) {
       select.addEventListener('change', livePreview);
     });
 
-    // Boutons
+    // Actions par image/icône : Confirmer / Masquer / Réinitialiser
+    document.querySelectorAll('.image-confirm-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var imageId = this.getAttribute('data-image');
+        var badge = document.getElementById('image-status-' + imageId);
+        if (badge && !document.querySelector(`.image-card[data-image-card="${imageId}"]`).classList.contains('is-hidden')) {
+          badge.textContent = '✅ Confirmé';
+          badge.className = 'cms-status-badge cms-status-confirmed';
+        }
+        livePreview();
+        showToast('✅ Image « ' + imageLabelOf(imageId) + ' » confirmée.', 'success');
+      });
+    });
+
+    document.querySelectorAll('.image-hide-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var imageId = this.getAttribute('data-image');
+        var card = document.querySelector(`.image-card[data-image-card="${imageId}"]`);
+        var nowHidden = card ? !card.classList.contains('is-hidden') : true;
+        setImageHidden(imageId, nowHidden);
+        this.textContent = nowHidden ? '👁️ Afficher' : '🙈 Masquer';
+        livePreview();
+      });
+    });
+
+    document.querySelectorAll('.image-reset-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var imageId = this.getAttribute('data-image');
+        var sizeEl = document.querySelector(`.image-size-slider[data-image="${imageId}"]`);
+        if (sizeEl) { sizeEl.value = 40; sizeEl.dispatchEvent(new Event('input')); }
+        var opacityEl = document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`);
+        if (opacityEl) { opacityEl.value = 100; opacityEl.dispatchEvent(new Event('input')); }
+        var radiusEl = document.querySelector(`.image-radius-slider[data-image="${imageId}"]`);
+        if (radiusEl) { radiusEl.value = 0; radiusEl.dispatchEvent(new Event('input')); }
+        var shadowEl = document.querySelector(`.image-shadow-select[data-image="${imageId}"]`);
+        if (shadowEl) shadowEl.value = 'none';
+        var posEl = document.querySelector(`.image-position-select[data-image="${imageId}"]`);
+        if (posEl) posEl.value = 'default';
+        var shapeEl = document.querySelector(`.image-shape-select[data-image="${imageId}"]`);
+        if (shapeEl) shapeEl.value = 'rounded';
+        setImageHidden(imageId, false);
+        var hideBtn = document.querySelector(`.image-hide-btn[data-image="${imageId}"]`);
+        if (hideBtn) hideBtn.textContent = '🙈 Masquer';
+        livePreview();
+      });
+    });
+
+    // Recherche dans la liste des images/icônes
+    var imagesSearch = document.getElementById('images-search');
+    if (imagesSearch) {
+      imagesSearch.addEventListener('input', function() {
+        var q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.image-card').forEach(function(card) {
+          var title = (card.querySelector('.dash-card-title span')?.textContent || '').toLowerCase();
+          card.style.display = title.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Ajouter un emplacement image personnalisé (simple invite — peut être affinée ensuite)
+    var addImageBtn = document.getElementById('cms-btn-add-image');
+    if (addImageBtn) {
+      addImageBtn.addEventListener('click', function() {
+        var label = prompt('Nom du nouvel emplacement image/icône (ex. "Bannière promo") :');
+        if (label && label.trim()) {
+          showToast('ℹ️ Pour cibler précisément un élément personnalisé, indiquez son sélecteur CSS au développeur. Emplacement "' + label.trim() + '" noté — utilisez "Exporter config" pour le transmettre.', 'info');
+        }
+      });
+    }
+
+    // Boutons globaux
     var saveBtn = document.getElementById('cms-btn-save');
     if (saveBtn) {
       saveBtn.addEventListener('click', function() {
@@ -588,6 +1009,31 @@
         URL.revokeObjectURL(url);
       });
     }
+  }
+
+  function zoneLabelOf(zoneId) {
+    var z = ZONES_CONFIG.texts.find(function(x){ return x.id === zoneId; });
+    return z ? z.label : zoneId;
+  }
+
+  function imageLabelOf(imageId) {
+    var z = ZONES_CONFIG.images.find(function(x){ return x.id === imageId; });
+    return z ? z.label : imageId;
+  }
+
+  // Petite notification toast (réutilise showToast si déjà fourni par admin.html, sinon fallback minimal)
+  function showToast(msg, type) {
+    if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+      window.showToast(msg, type);
+      return;
+    }
+    var el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:' +
+      (type === 'error' ? '#ef4444' : type === 'info' ? '#3b82f6' : '#009E60') +
+      ';color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:90vw;text-align:center;';
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3200);
   }
 
   function livePreview() {
