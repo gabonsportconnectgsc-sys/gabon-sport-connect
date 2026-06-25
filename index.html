@@ -184,13 +184,14 @@
     .side-menu-brand{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--white);display:flex;align-items:center;gap:8px;}
     .side-menu-header .btn-icon{background:rgba(255,255,255,.12);}
     .side-menu-nav,.side-menu-section,.side-menu-footer{padding:10px 10px;}
-    .side-menu-nav{flex:1;overflow-y:auto;}
+    .side-menu-nav{flex:1;overflow-y:auto;overflow-x:hidden;}
     .side-menu-item{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:none;border:none;padding:13px 12px;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14.5px;font-weight:600;color:var(--navy);cursor:pointer;transition:background .2s,color .2s;}
     .side-menu-item .smi-ico{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
     .side-menu-item:hover{background:var(--green-lt);color:var(--green-dk);}
     .side-menu-divider{height:1px;background:var(--gray-bd);margin:4px 16px;flex-shrink:0;}
-    .side-menu-footer{border-top:1px solid var(--gray-bd);flex-shrink:0;}
+    .side-menu-footer{border-top:1px solid var(--gray-bd);flex-shrink:0;padding:10px;}
     .side-menu-account{color:var(--green-dk);}
+    .side-menu-section-title{font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.7px;padding:8px 12px 4px;}
     #side-menu-notif.notif-active{color:var(--green-dk);}
     #side-menu-notif.notif-active .smi-ico{filter:none;}
     @media (min-width:760px){.side-menu{width:320px;}}
@@ -365,6 +366,11 @@
     .chip{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.15);color:var(--white);}
     .profile-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .form-group{margin-bottom:14px;}
+    .pwd-wrap{position:relative;display:flex;align-items:center;}
+    .pwd-wrap input{flex:1;padding-right:42px;}
+    .pwd-eye{position:absolute;right:10px;background:none;border:none;cursor:pointer;font-size:17px;padding:4px;line-height:1;opacity:.5;transition:opacity .2s;}
+    .pwd-eye:hover{opacity:1;}
+    .pwd-eye.visible{opacity:1;}
     .form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
     .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;color:var(--navy);background:var(--white);transition:border-color .2s,box-shadow .2s;outline:none;}
     .form-group textarea{resize:vertical;min-height:80px;}
@@ -983,17 +989,26 @@
       <button class="btn-icon" onclick="closeMenu()" title="Fermer">✕</button>
     </div>
     <nav class="side-menu-nav">
-      <button class="side-menu-item" onclick="showView('dashboard');closeMenu()"><span class="smi-ico">🏠</span>Tableau de bord</button>
+
+      <!-- NAVIGATION PRINCIPALE -->
+      <div class="side-menu-section-title">📱 Navigation</div>
+      <button class="side-menu-item" onclick="showView('dashboard');closeMenu()"><span class="smi-ico">🏠</span>Accueil / Tableau de bord</button>
       <button class="side-menu-item" onclick="showView('annuaire');closeMenu()"><span class="smi-ico">📋</span>Annuaire des acteurs</button>
       <button class="side-menu-item" onclick="showView('sport');closeMenu()"><span class="smi-ico">⚽</span>Sport Gabon</button>
       <button class="side-menu-item" onclick="showView('stades');closeMenu()"><span class="smi-ico">🗺️</span>Carte sportive</button>
       <button class="side-menu-item" onclick="showView('actualites');closeMenu()"><span class="smi-ico">📰</span>Actualités</button>
+
+      <!-- MON COMPTE -->
+      <div class="side-menu-divider" style="margin:6px 0;"></div>
+      <div class="side-menu-section-title">👤 Mon compte</div>
       <button class="side-menu-item" id="side-menu-profil" onclick="showView('profil');closeMenu()" style="display:none;"><span class="smi-ico">👤</span>Mon profil</button>
       <button class="side-menu-item" id="side-menu-admin" onclick="showView('admin');closeMenu()" style="display:none;"><span class="smi-ico">⚙️</span>Administration</button>
-      <button class="side-menu-item" onclick="showView('legal');closeMenu()"><span class="smi-ico">📜</span>Mentions légales & CGU</button>
-    </nav>
-    <div class="side-menu-divider"></div>
-    <div class="side-menu-section">
+      <button class="side-menu-item" id="side-menu-notif" onclick="togglePushNotifications()">
+        <span class="smi-ico">🔔</span><span id="notif-label">Activer les notifications</span>
+      </button>
+
+      <!-- HISTORIQUE -->
+      <div class="side-menu-divider" style="margin:6px 0;"></div>
       <div class="login-history-header">
         <span>🕓 Historique de connexion</span>
         <button class="login-history-seeall" onclick="openLoginHistoryModal()">Tout voir</button>
@@ -1001,15 +1016,20 @@
       <div class="login-history-list" id="side-menu-login-history">
         <div class="login-history-empty">Aucune connexion enregistrée.</div>
       </div>
-    </div>
-    <div class="side-menu-divider"></div>
-    <div class="side-menu-section">
-      <button class="side-menu-item" id="side-menu-notif" onclick="togglePushNotifications()">
-        <span class="smi-ico">🔔</span><span id="notif-label">Activer les notifications</span>
-      </button>
-    </div>
+
+      <!-- INFORMATIONS -->
+      <div class="side-menu-divider" style="margin:6px 0;"></div>
+      <div class="side-menu-section-title">ℹ️ Informations</div>
+      <button class="side-menu-item" onclick="showView('legal');switchLegalTab('roles',{target:document.querySelector('.legal-tab')});closeMenu()"><span class="smi-ico">🎭</span>Rôles et accès</button>
+      <button class="side-menu-item" onclick="showView('legal');switchLegalTab('donnees',{target:document.querySelector('.legal-tab:nth-child(2)')});closeMenu()"><span class="smi-ico">🔒</span>Données & confidentialité</button>
+      <button class="side-menu-item" onclick="showView('legal');switchLegalTab('contact',{target:document.querySelector('.legal-tab:nth-child(3)')});closeMenu()"><span class="smi-ico">📞</span>Contact & équipe</button>
+      <button class="side-menu-item" onclick="showView('legal');switchLegalTab('legal',{target:document.querySelector('.legal-tab:nth-child(4)')});closeMenu()"><span class="smi-ico">📜</span>Mentions légales & CGU</button>
+
+    </nav>
+
+    <!-- PIED DU MENU : connexion -->
     <div class="side-menu-footer">
-      <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth()"><span class="smi-ico">🔑</span><span id="side-menu-account-label">Se connecter</span></button>
+      <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth();closeMenu()"><span class="smi-ico">🔑</span><span id="side-menu-account-label">Se connecter</span></button>
     </div>
   </aside>
 
@@ -1039,7 +1059,7 @@
       <div id="auth-view-login">
         <div class="modal-title" style="margin-bottom:14px;">🔑 Connexion</div>
         <div class="form-group"><label>Email</label><input type="email" id="auth-login-email" placeholder="votre@email.com" autocomplete="username"></div>
-        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-login-password" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="form-group"><label>Mot de passe</label><div class="pwd-wrap"><input type="password" id="auth-login-password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-login-password',this)" title="Afficher/masquer">👁️</button></div></div>
         <button class="btn-sm" id="auth-login-submit" onclick="handleSupabaseLogin()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Se connecter</button>
         <div style="text-align:center;margin-top:14px;">
           <a onclick="switchAuthTab('forgot')" style="font-size:12.5px;color:var(--gray-txt);cursor:pointer;text-decoration:underline;">Mot de passe oublié ?</a>
@@ -1104,10 +1124,52 @@
             <option value="professionnel">⭐ Professionnel</option>
           </select>
         </div>
-        <div class="form-group"><label>Employeur / Club actuel</label><input type="text" id="auth-register-employeur" placeholder="Nom du club, fédération, école..."></div>
+        <div class="form-group"><label>Employeur / Club actuel</label>
+          <select id="auth-register-employeur">
+            <option value="">-- Sélectionner ou saisir --</option>
+            <optgroup label="🏛️ Fédérations">
+              <option value="FEGAFOOT">FEGAFOOT – Fédération Gabonaise de Football</option>
+              <option value="FEGABASKET">FEGABASKET – Basketball</option>
+              <option value="FEGAHAND">Fédération de Handball</option>
+              <option value="FEGAVOLLEY">Fédération de Volleyball</option>
+              <option value="FEGAATHL">Fédération d'Athlétisme</option>
+              <option value="FEGABOXE">Fédération de Boxe</option>
+              <option value="FEGANAT">Fédération de Natation</option>
+              <option value="FEGAJUDO">Fédération de Judo</option>
+            </optgroup>
+            <optgroup label="⚽ Clubs Football">
+              <option value="FC 105 Libreville">FC 105 Libreville</option>
+              <option value="AS Mangasport">AS Mangasport</option>
+              <option value="Club Olympique de Libreville">Club Olympique de Libreville</option>
+              <option value="AS Sogara">AS Sogara</option>
+              <option value="CF Mounana">CF Mounana</option>
+              <option value="AS Stade Migovéen">AS Stade Migovéen</option>
+              <option value="Missiles FC">Missiles FC</option>
+              <option value="Bouenguidi Sports">Bouenguidi Sports</option>
+              <option value="Téléstar FC">Téléstar FC</option>
+              <option value="Akanda FC">Akanda FC</option>
+            </optgroup>
+            <optgroup label="🏟️ Associations / Clubs autres sports">
+              <option value="BC Libreville">BC Libreville (Basketball)</option>
+              <option value="Patronage Sainte-Marie">Patronage Sainte-Marie</option>
+              <option value="ASPTT Libreville">ASPTT Libreville</option>
+            </optgroup>
+            <optgroup label="🎓 Écoles / Universités">
+              <option value="Université Omar Bongo">Université Omar Bongo</option>
+              <option value="INSG">INSG</option>
+              <option value="ISTA">ISTA</option>
+              <option value="Lycée National Léon Mba">Lycée National Léon Mba</option>
+            </optgroup>
+            <optgroup label="🏃 Indépendant">
+              <option value="Indépendant">Indépendant (sans club)</option>
+              <option value="Auto-entrepreneur">Auto-entrepreneur sportif</option>
+            </optgroup>
+            <option value="Autre">🌍 Autre (préciser dans le profil)</option>
+          </select>
+        </div>
 
         <!-- Mot de passe -->
-        <div class="form-group"><label>Mot de passe *</label><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+        <div class="form-group"><label>Mot de passe *</label><div class="pwd-wrap"><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-register-password',this)" title="Afficher/masquer">👁️</button></div></div>
 
         <button class="btn-sm" id="auth-register-submit" onclick="handleSupabaseRegister()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Créer mon compte</button>
         <div id="auth-register-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
@@ -1129,7 +1191,7 @@
       <!-- Vue: NOUVEAU MOT DE PASSE (après clic sur le lien reçu par email) -->
       <div id="auth-view-reset" style="display:none;">
         <div class="modal-title" style="margin-bottom:14px;">🔐 Nouveau mot de passe</div>
-        <div class="form-group"><label>Nouveau mot de passe</label><input type="password" id="auth-reset-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+        <div class="form-group"><label>Nouveau mot de passe</label><div class="pwd-wrap"><input type="password" id="auth-reset-password" placeholder="6 caractères minimum" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-reset-password',this)" title="Afficher/masquer">👁️</button></div></div>
         <button class="btn-sm" id="auth-reset-submit" onclick="handleSupabaseResetPassword()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Mettre à jour le mot de passe</button>
         <div id="auth-reset-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
