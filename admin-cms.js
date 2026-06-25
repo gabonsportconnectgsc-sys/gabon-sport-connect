@@ -16,8 +16,19 @@
      par un catch générique).
   ────────────────────────────────────────────────────────────────────────── */
   async function withAuth(fn) {
+    // Guard : n'appelle le pont Auth que si firebase.auth est bien disponible.
+    // Sans firebase-auth-compat.js chargé, firebase.auth n'est pas une fonction
+    // et l'appel planterait avec "firebase.auth is not a function".
     if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
-      await window.ensureFirebaseAuthViaSupabase();
+      if (window.firebase && typeof window.firebase.auth === 'function') {
+        try {
+          await window.ensureFirebaseAuthViaSupabase();
+        } catch (e) {
+          console.warn('[GSC CMS] withAuth — pont Auth ignoré (non critique) :', e && e.message || e);
+        }
+      } else {
+        console.warn('[GSC CMS] withAuth — firebase.auth non disponible, tentative Firestore sans renouvellement du token.');
+      }
     }
     return fn();
   }
@@ -840,6 +851,12 @@
   // ────────────────────────────────────────────────────────────────────────────
 
   function loadFromFirestore() {
+    // Guard : vérifie que firebase et firestore sont disponibles avant d'appeler
+    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
+      console.warn('[GSC CMS] loadFromFirestore — Firebase non prêt, nouvelle tentative dans 1 s.');
+      setTimeout(loadFromFirestore, 1000);
+      return;
+    }
     withAuth(function() {
       var database = firebase.firestore();
       if (!database) return Promise.reject(new Error('Firestore non disponible.'));
@@ -854,6 +871,10 @@
   }
 
   function saveToFirestore(theme) {
+    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
+      showToast('❌ Firebase non disponible — sauvegarde impossible.', 'error');
+      return;
+    }
     var btn = document.getElementById('cms-btn-save');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; }
 
