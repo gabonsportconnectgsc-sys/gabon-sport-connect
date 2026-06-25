@@ -695,6 +695,24 @@ tr.is-demo-row td { opacity: .82; }
     </div>
     <button id="admin-login-submit" onclick="handleAdminLogin()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;">Se connecter</button>
     <div id="admin-login-error" style="color:var(--danger);font-size:12.5px;margin-top:12px;text-align:center;display:none;"></div>
+    <div style="text-align:center;margin-top:14px;"><button onclick="showForgotPassword()" style="background:none;border:none;color:var(--gray-txt);font-size:12px;cursor:pointer;text-decoration:underline;">Mot de passe oublié ?</button></div>
+  </div>
+</div>
+<!-- ══ MODAL MOT DE PASSE OUBLIÉ ══ -->
+<div id="forgot-password-screen" style="display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:20px;">
+  <div style="width:100%;max-width:360px;background:#fff;border-radius:var(--radius-lg);padding:28px 24px;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;margin-bottom:8px;">🔑</div>
+      <div style="font-family:var(--font-display);font-weight:800;font-size:18px;color:var(--navy);">Réinitialisation</div>
+      <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">Un lien vous sera envoyé par email</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">Email</label>
+      <input type="email" id="forgot-email" placeholder="gabonsportconnectgsc@gmail.com" style="width:100%;padding:11px 12px;border:1.5px solid var(--gray-bd);border-radius:10px;font-size:14px;">
+    </div>
+    <div id="forgot-msg" style="font-size:12px;margin-bottom:10px;text-align:center;display:none;"></div>
+    <button id="forgot-submit-btn" onclick="handleForgotPassword()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">Envoyer le lien</button>
+    <div style="text-align:center;margin-top:12px;"><button onclick="hideForgotPassword()" style="background:none;border:none;color:var(--gray-txt);font-size:12px;cursor:pointer;text-decoration:underline;">← Retour à la connexion</button></div>
   </div>
 </div>
 
@@ -2299,6 +2317,41 @@ tr.is-demo-row td { opacity: .82; }
     }
   }
   window.handleAdminLogin = handleAdminLogin;
+
+  // ── MOT DE PASSE OUBLIÉ ──────────────────────────────────────────────────
+  window.showForgotPassword = function(){
+    document.getElementById("admin-login-screen").style.display = "none";
+    const fp = document.getElementById("forgot-password-screen");
+    fp.style.display = "flex";
+    const emailInput = document.getElementById("admin-login-email");
+    const forgotEmail = document.getElementById("forgot-email");
+    if(emailInput && forgotEmail && emailInput.value) forgotEmail.value = emailInput.value;
+    const msg = document.getElementById("forgot-msg");
+    if(msg){ msg.style.display = "none"; msg.textContent = ""; }
+  };
+
+  window.hideForgotPassword = function(){
+    document.getElementById("forgot-password-screen").style.display = "none";
+    document.getElementById("admin-login-screen").style.display = "flex";
+  };
+
+  window.handleForgotPassword = async function(){
+    const email = (document.getElementById("forgot-email")?.value || "").trim();
+    const msg = document.getElementById("forgot-msg");
+    const btn = document.getElementById("forgot-submit-btn");
+    if(!email){ if(msg){ msg.textContent = "Veuillez saisir votre email."; msg.style.color = "var(--danger)"; msg.style.display = "block"; } return; }
+    if(!sb){ if(msg){ msg.textContent = "Service indisponible."; msg.style.color = "var(--danger)"; msg.style.display = "block"; } return; }
+    btn.disabled = true; btn.textContent = "Envoi en cours…";
+    try{
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/admin.html" });
+      if(error) throw error;
+      if(msg){ msg.textContent = "✅ Lien envoyé ! Vérifiez votre boîte mail."; msg.style.color = "var(--green)"; msg.style.display = "block"; }
+      btn.textContent = "Lien envoyé ✓";
+    }catch(e){
+      if(msg){ msg.textContent = (e.message || "Erreur lors de lu0027envoi."); msg.style.color = "var(--danger)"; msg.style.display = "block"; }
+      btn.disabled = false; btn.textContent = "Envoyer le lien";
+    }
+  };
 
   // Fix #13 — définitions de secours pour gscGoToFiltered et gscGoToMatches.
   // Ces fonctions doivent normalement être fournies par admin-controller.js.
