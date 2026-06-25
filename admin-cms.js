@@ -163,723 +163,483 @@
         <div class="dash-card">
           <div class="dash-card-title">🔲 Bordures arrondies</div>
           <div class="cms-row">
-            <label class="cms-label">PETIT RAYON — <span id="cms-val-sm">8</span>PX</label>
-            <input type="range" id="cms-radius-sm" min="0" max="24" value="8" class="cms-slider">
+            <label class="cms-label">Bordure légère (cartes)</label>
+            <input type="range" id="cms-radius-light" min="0" max="20" value="8" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-radius-light-val">8px</span>
           </div>
           <div class="cms-row">
-            <label class="cms-label">RAYON MOYEN — <span id="cms-val-md">14</span>PX</label>
-            <input type="range" id="cms-radius-md" min="0" max="32" value="14" class="cms-slider">
+            <label class="cms-label">Bordure normale (boutons)</label>
+            <input type="range" id="cms-radius-normal" min="0" max="20" value="10" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-radius-normal-val">10px</span>
           </div>
           <div class="cms-row">
-            <label class="cms-label">GRAND RAYON — <span id="cms-val-lg">22</span>PX</label>
-            <input type="range" id="cms-radius-lg" min="0" max="48" value="22" class="cms-slider">
-          </div>
-          <div style="margin-top:20px;">
-            <div class="dash-card-title">👁️ Prévisualisation</div>
-            <div id="cms-preview" style="display:flex;flex-direction:column;gap:10px;">
-              <button id="prev-primary" style="padding:9px 18px;border:none;border-radius:var(--radius);font-weight:700;font-size:13px;cursor:default;background:var(--green);color:#fff;">Bouton primaire</button>
-              <span id="prev-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:var(--green-lt);color:var(--green);">Badge</span>
-            </div>
-          </div>
-          <div class="cms-actions-row" style="margin-top:16px;">
-            <button class="cms-action-btn cms-action-confirm" id="cms-colors-confirm-btn" title="Confirmer ces couleurs et rayons">✅ Confirmer ces couleurs</button>
+            <label class="cms-label">Bordure forte (images)</label>
+            <input type="range" id="cms-radius-strong" min="0" max="20" value="12" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-radius-strong-val">12px</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- TAB: TYPOGRAPHIES -->
-    <div class="cms-tab-content" data-tab="typography" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="cms-grid">
+    <div class="cms-tab-content" data-tab="typography">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;" class="cms-grid">
         <div class="dash-card">
-          <div class="dash-card-title">✍️ Polices de caractères</div>
+          <div class="dash-card-title">✍️ Polices par zone</div>
           <div class="cms-row">
-            <label class="cms-label">Police d'affichage (titres)</label>
-            <select id="cms-font-display" class="cms-select cms-font-select" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
-              ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
+            <label class="cms-label">En-têtes (h1, h2, h3)</label>
+            <select id="cms-font-heading" class="cms-select">
+              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
             </select>
-            <div id="cms-font-display-preview" style="margin-top:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fafbfc;font-size:20px;font-weight:700;">Gabon Sport Connect</div>
           </div>
           <div class="cms-row">
-            <label class="cms-label">Police de corps (texte)</label>
-            <select id="cms-font-body" class="cms-select cms-font-select" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
-              ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
+            <label class="cms-label">Corps (paragraphes, corps)</label>
+            <select id="cms-font-body" class="cms-select">
+              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
             </select>
-            <div id="cms-font-body-preview" style="margin-top:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fafbfc;font-size:14px;">Exemple de texte courant — Aa Bb Cc 123</div>
+          </div>
+          <div class="cms-row">
+            <label class="cms-label">Boutons &amp; étiquettes</label>
+            <select id="cms-font-buttons" class="cms-select">
+              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="cms-row">
+            <label class="cms-label">Code/monospace</label>
+            <select id="cms-font-mono" class="cms-select">
+              ${FONTS.map(f => `<option value="${f.value}">${f.name}</option>`).join('')}
+            </select>
           </div>
         </div>
 
         <div class="dash-card">
-          <div class="dash-card-title">📏 Tailles de texte globales</div>
-          <div class="cms-row cms-size-row">
-            <label class="cms-label">Taille titres H1 — <span id="cms-val-h1">28</span>PX</label>
-            <div class="cms-size-control">
-              <input type="range" id="cms-h1-size" min="16" max="48" value="28" class="cms-slider">
-              <span class="cms-letter-a" id="cms-letter-h1" style="font-size:28px;">A</span>
-            </div>
-          </div>
-          <div class="cms-row cms-size-row">
-            <label class="cms-label">Taille titres H2 — <span id="cms-val-h2">22</span>PX</label>
-            <div class="cms-size-control">
-              <input type="range" id="cms-h2-size" min="14" max="36" value="22" class="cms-slider">
-              <span class="cms-letter-a" id="cms-letter-h2" style="font-size:22px;">A</span>
-            </div>
-          </div>
-          <div class="cms-row cms-size-row">
-            <label class="cms-label">Taille corps — <span id="cms-val-body">14</span>PX</label>
-            <div class="cms-size-control">
-              <input type="range" id="cms-body-size" min="11" max="18" value="14" class="cms-slider">
-              <span class="cms-letter-a" id="cms-letter-body" style="font-size:14px;">A</span>
-            </div>
+          <div class="dash-card-title">📏 Tailles de typographies</div>
+          <div class="cms-row">
+            <label class="cms-label">Titre principal (h1)</label>
+            <input type="range" id="cms-size-h1" min="20" max="60" value="40" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-size-h1-val">40px</span>
           </div>
           <div class="cms-row">
-            <label class="cms-label">Interligne — <span id="cms-val-line-height">1.6</span></label>
-            <input type="range" id="cms-line-height" min="1" max="2.5" step="0.1" value="1.6" class="cms-slider">
+            <label class="cms-label">Titre secondaire (h2)</label>
+            <input type="range" id="cms-size-h2" min="16" max="40" value="28" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-size-h2-val">28px</span>
           </div>
-        </div>
-      </div>
-
-      <div class="dash-card" style="margin-top:16px;">
-        <div class="dash-card-title">📊 Prévisualisation des polices</div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Affichage (H1)</div>
-            <div id="prev-font-display" style="font-family:var(--font-display);font-size:28px;font-weight:700;">Gabon Sport Connect</div>
+          <div class="cms-row">
+            <label class="cms-label">Corps (p)</label>
+            <input type="range" id="cms-size-body" min="12" max="20" value="16" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-size-body-val">16px</span>
           </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Corps de texte</div>
-            <div id="prev-font-body" style="font-family:var(--font-body);font-size:14px;line-height:1.6;">Ceci est un exemple de texte pour tester la police du corps. Les modifications s'appliquent en temps réel.</div>
+          <div class="cms-row">
+            <label class="cms-label">Petit texte (small)</label>
+            <input type="range" id="cms-size-small" min="10" max="14" value="12" class="cms-slider" style="width:100%;margin:8px 0;">
+            <span class="cms-value-label" id="cms-size-small-val">12px</span>
           </div>
-        </div>
-        <div class="cms-actions-row" style="margin-top:16px;">
-          <button class="cms-action-btn cms-action-confirm" id="cms-typo-confirm-btn" title="Confirmer ces polices et tailles">✅ Confirmer ces typographies</button>
         </div>
       </div>
     </div>
 
     <!-- TAB: ZONES TEXTES -->
-    <div class="cms-tab-content" data-tab="zones" style="display:none;">
-      <div class="cms-row" style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-        <input type="text" id="zones-search" placeholder="🔍 Rechercher une zone de texte…" class="cms-select" style="flex:1;min-width:200px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-        <button id="cms-btn-add-zone" class="cms-action-btn cms-action-add" title="Ajouter une nouvelle zone de texte personnalisée">➕ Ajouter une zone</button>
-      </div>
-      <div id="zones-editor" style="display:grid;grid-template-columns:1fr;gap:14px;">
-        ${ZONES_CONFIG.texts.map(zone => `
-          <div class="dash-card zone-card" data-zone-card="${zone.id}">
-            <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <span>${zone.label}</span>
-              <span class="cms-status-badge cms-status-visible" id="zone-status-${zone.id}">✅ Visible</span>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Police de la zone</label>
-              <select class="zone-font-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                <option value="">— Police globale —</option>
-                ${FONTS.map(f => `<option value="${f.value}" style="font-family:${f.value};">${f.name}</option>`).join('')}
-              </select>
-            </div>
-            <div class="cms-row cms-size-row">
-              <label class="cms-label">Taille du texte — <span class="zone-size-val" data-zone="${zone.id}">14</span>PX</label>
-              <div class="cms-size-control">
-                <input type="range" class="zone-size-slider cms-slider" data-zone="${zone.id}" min="8" max="32" value="14">
-                <span class="cms-letter-a zone-letter-a" data-zone="${zone.id}" style="font-size:14px;">A</span>
-              </div>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Couleur</label>
-              <div class="cms-color-row">
-                <input type="color" class="zone-color-input cms-color-input" data-zone="${zone.id}" value="#0A1628">
-              </div>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Graisse (weight)</label>
-              <select class="zone-weight-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                <option value="400">Normal (400)</option>
-                <option value="500">Moyen (500)</option>
-                <option value="600">Semi-gras (600)</option>
-                <option value="700" selected>Gras (700)</option>
-                <option value="800">Extra-gras (800)</option>
-              </select>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Casse</label>
-              <select class="zone-transform-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                <option value="none" selected>Normal</option>
-                <option value="uppercase">MAJUSCULES</option>
-                <option value="lowercase">minuscules</option>
-                <option value="capitalize">Commencer par Majuscule</option>
-              </select>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Alignement</label>
-              <select class="zone-align-select" data-zone="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                <option value="" selected>Par défaut</option>
-                <option value="left">Gauche</option>
-                <option value="center">Centré</option>
-                <option value="right">Droite</option>
-              </select>
-            </div>
-            <div class="cms-actions-row">
-              <button class="cms-action-btn cms-action-confirm zone-confirm-btn" data-zone="${zone.id}" title="Confirmer les réglages de cette zone">✅ Confirmer</button>
-              <button class="cms-action-btn cms-action-hide zone-hide-btn" data-zone="${zone.id}" title="Masquer cette zone sur l'application">🙈 Masquer</button>
-              <button class="cms-action-btn cms-action-reset zone-reset-btn" data-zone="${zone.id}" title="Réinitialiser cette zone">↺ Réinitialiser</button>
-            </div>
-          </div>
-        `).join('')}
+    <div class="cms-tab-content" data-tab="zones">
+      <div class="dash-card">
+        <div class="dash-card-title">🖼️ Éditer zones de texte</div>
+        <input type="text" id="zones-search" placeholder="Rechercher une zone…" class="cms-search-input" style="width:100%;padding:10px;margin-bottom:16px;border:1px solid #cbd5e1;border-radius:8px;">
+        <div id="cms-zones-container" style="display:grid;gap:12px;">
+          <!-- Sera généré par JavaScript -->
+        </div>
       </div>
     </div>
 
     <!-- TAB: IMAGES/ICÔNES -->
-    <div class="cms-tab-content" data-tab="images" style="display:none;">
-      <div class="cms-row" style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-        <input type="text" id="images-search" placeholder="🔍 Rechercher une image / icône…" class="cms-select" style="flex:1;min-width:200px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-        <button id="cms-btn-add-image" class="cms-action-btn cms-action-add" title="Ajouter un nouvel emplacement personnalisé">➕ Ajouter un emplacement</button>
-      </div>
-      <div id="images-editor" style="display:grid;grid-template-columns:1fr;gap:14px;">
-        ${ZONES_CONFIG.images.map(zone => `
-          <div class="dash-card image-card" data-image-card="${zone.id}">
-            <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <span>${zone.label}</span>
-              <span class="cms-status-badge cms-status-visible" id="image-status-${zone.id}">✅ Visible</span>
-            </div>
-            <div class="cms-row cms-size-row">
-              <label class="cms-label">Taille — <span class="image-size-val" data-image="${zone.id}">40</span>PX</label>
-              <div class="cms-size-control">
-                <input type="range" class="image-size-slider cms-slider" data-image="${zone.id}" min="16" max="200" value="40">
-                <span class="cms-image-preview-icon" data-image="${zone.id}" style="width:40px;height:40px;font-size:18px;">🖼️</span>
-              </div>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Position (gauche/droite/haut/bas)</label>
-              <select class="image-position-select" data-image="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                ${POSITIONS.map(p => `<option value="${p.value}">${p.label}</option>`).join('')}
-              </select>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Forme</label>
-              <select class="image-shape-select" data-image="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                ${SHAPES.map(s => `<option value="${s.value}" ${s.value==='rounded'?'selected':''}>${s.label}</option>`).join('')}
-              </select>
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Opacité — <span class="image-opacity-val" data-image="${zone.id}">100</span>%</label>
-              <input type="range" class="image-opacity-slider cms-slider" data-image="${zone.id}" min="0" max="100" value="100">
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Rayon de bordure — <span class="image-radius-val" data-image="${zone.id}">0</span>PX</label>
-              <input type="range" class="image-radius-slider cms-slider" data-image="${zone.id}" min="0" max="50" value="0">
-            </div>
-            <div class="cms-row">
-              <label class="cms-label">Ombre</label>
-              <select class="image-shadow-select" data-image="${zone.id}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
-                <option value="none" selected>Aucune</option>
-                <option value="small">Petite</option>
-                <option value="medium">Moyenne</option>
-                <option value="large">Grande</option>
-              </select>
-            </div>
-            <div class="cms-actions-row">
-              <button class="cms-action-btn cms-action-confirm image-confirm-btn" data-image="${zone.id}" title="Confirmer les réglages de cette image">✅ Confirmer</button>
-              <button class="cms-action-btn cms-action-hide image-hide-btn" data-image="${zone.id}" title="Masquer cette image sur l'application">🙈 Masquer</button>
-              <button class="cms-action-btn cms-action-reset image-reset-btn" data-image="${zone.id}" title="Réinitialiser cette image">↺ Réinitialiser</button>
-            </div>
-          </div>
-        `).join('')}
+    <div class="cms-tab-content" data-tab="images">
+      <div class="dash-card">
+        <div class="dash-card-title">📷 Éditer images &amp; icônes</div>
+        <input type="text" id="images-search" placeholder="Rechercher une image…" class="cms-search-input" style="width:100%;padding:10px;margin-bottom:16px;border:1px solid #cbd5e1;border-radius:8px;">
+        <div id="cms-images-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+          <!-- Sera généré par JavaScript -->
+        </div>
+        <button id="cms-btn-add-image" style="margin-top:16px;padding:10px 16px;background:#009E60;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">➕ Ajouter une image personnalisée</button>
       </div>
     </div>
 
-    <!-- Boutons d'action -->
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
-      <button id="cms-btn-save" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;border:none;border-radius:var(--radius);font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-width:200px;">
-        💾 Sauvegarder tous les changements
-      </button>
-      <button id="cms-btn-reset" style="padding:14px 20px;background:#fff;border:1.5px solid #e2e8f0;color:var(--navy);border-radius:var(--radius);font-weight:700;font-size:13px;cursor:pointer;">
-        ↩️ Réinitialiser
-      </button>
-      <button id="cms-btn-export" style="padding:14px 20px;background:#fff;border:1.5px solid #e2e8f0;color:var(--navy);border-radius:var(--radius);font-weight:700;font-size:13px;cursor:pointer;">
-        📥 Exporter config
-      </button>
+    <!-- Boutons globaux en bas -->
+    <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;justify-content:flex-end;">
+      <button id="cms-btn-reset" style="padding:10px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;cursor:pointer;font-weight:600;color:#64748b;">↺ Réinitialiser aux défauts</button>
+      <button id="cms-btn-export" style="padding:10px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;cursor:pointer;font-weight:600;color:#64748b;">⬇️ Exporter config</button>
+      <button id="cms-btn-save" style="padding:10px 16px;background:#009E60;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">💾 Sauvegarder tous les changements</button>
     </div>
-
-    <style>
-      .cms-tabs { display: flex; }
-      .cms-tab { padding: 12px 16px; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #64748b; font-weight: 600; font-size: 14px; transition: 0.2s; }
-      .cms-tab.active { color: var(--navy); border-bottom-color: var(--green); }
-      .cms-tab-content { display: none; }
-      .cms-tab-content.active { display: block; }
-      .cms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      @media(max-width:640px){ .cms-grid { grid-template-columns: 1fr !important; } }
-      .cms-row { margin-bottom: 14px; }
-      .cms-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #64748b; margin-bottom: 6px; }
-      .cms-color-row { display: flex; align-items: center; gap: 10px; }
-      .cms-color-input { width: 50px; height: 40px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; }
-      .cms-hex-input { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: monospace; }
-      .cms-slider { width: 100%; height: 6px; border-radius: 3px; background: #e2e8f0; outline: none; -webkit-appearance: none; appearance: none; }
-      .cms-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--green); cursor: pointer; box-shadow: 0 2px 8px rgba(0, 158, 96, 0.3); }
-      .cms-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--green); cursor: pointer; border: none; box-shadow: 0 2px 8px rgba(0, 158, 96, 0.3); }
-      .cms-select { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; }
-      #zones-editor, #images-editor { max-height: 600px; overflow-y: auto; }
-
-      /* Aperçu "A" qui grandit/rétrécit en direct sur les curseurs de taille */
-      .cms-size-control { display: flex; align-items: center; gap: 12px; }
-      .cms-size-control .cms-slider { flex: 1; }
-      .cms-letter-a, .cms-image-preview-icon {
-        flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-        width: 44px; height: 44px; min-width: 28px; min-height: 28px;
-        font-weight: 800; color: var(--navy); background: #f1f5f9; border: 1px solid #e2e8f0;
-        border-radius: 10px; transition: font-size .12s ease, width .12s ease, height .12s ease;
-        user-select: none;
-      }
-
-      /* Boutons d'action communs à tous les onglets (ajouter / confirmer / masquer / réinitialiser) */
-      .cms-actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
-      .cms-action-btn {
-        padding: 9px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
-        border: 1.5px solid #e2e8f0; background: #fff; color: var(--navy); transition: all .15s;
-      }
-      .cms-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-      .cms-action-confirm { border-color: var(--green); color: var(--green-dk); background: var(--green-lt); }
-      .cms-action-confirm:hover { background: var(--green); color: #fff; }
-      .cms-action-hide { border-color: #f59e0b; color: #92400e; background: #fff7ed; }
-      .cms-action-hide:hover { background: #f59e0b; color: #fff; }
-      .cms-action-reset { border-color: #94a3b8; color: #475569; background: #f8fafc; }
-      .cms-action-reset:hover { background: #94a3b8; color: #fff; }
-      .cms-action-add { border-color: var(--blue); color: #1d4ed8; background: #eff6ff; white-space: nowrap; }
-      .cms-action-add:hover { background: var(--blue); color: #fff; }
-
-      /* Badge de statut (visible / masqué) sur chaque carte zone / image */
-      .cms-status-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
-      .cms-status-visible { background: var(--green-lt); color: var(--green-dk); }
-      .cms-status-hidden { background: #fef3c7; color: #92400e; }
-      .cms-status-confirmed { background: #dbeafe; color: #1d4ed8; }
-
-      /* Carte masquée : visuellement atténuée pour bien indiquer l'état */
-      .zone-card.is-hidden, .image-card.is-hidden { opacity: .55; }
-      .zone-card.is-hidden .dash-card-title, .image-card.is-hidden .dash-card-title { text-decoration: line-through; }
-    </style>
     `;
   }
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // COLLECTE & CHARGEMENT THÈME
+  // ────────────────────────────────────────────────────────────────────────────
+
   function collectTheme() {
-    return {
-      colorPrimary: document.getElementById('cms-color-primary').value,
-      colorAccent: document.getElementById('cms-color-accent').value,
-      colorNavy: document.getElementById('cms-color-navy').value,
-      colorDanger: document.getElementById('cms-color-danger').value,
-      colorBg: document.getElementById('cms-color-bg').value,
-      radiusSm: document.getElementById('cms-radius-sm').value,
-      radiusMd: document.getElementById('cms-radius-md').value,
-      radiusLg: document.getElementById('cms-radius-lg').value,
-      fontDisplay: document.getElementById('cms-font-display').value,
-      fontBody: document.getElementById('cms-font-body').value,
-      h1Size: document.getElementById('cms-h1-size').value,
-      h2Size: document.getElementById('cms-h2-size').value,
-      bodySize: document.getElementById('cms-body-size').value,
-      lineHeight: document.getElementById('cms-line-height').value,
-      zones: collectZonesData(),
-      images: collectImagesData()
-    };
-  }
-
-  function collectZonesData() {
-    var zones = {};
-    document.querySelectorAll('.zone-size-slider').forEach(function(el) {
-      var zoneId = el.getAttribute('data-zone');
-      var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
-      zones[zoneId] = {
-        size: el.value,
-        color: document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`).value,
-        weight: document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`).value,
-        transform: document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`).value,
-        fontFamily: document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`)?.value || '',
-        align: document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`)?.value || '',
-        hidden: card ? card.classList.contains('is-hidden') : false
-      };
+    var theme = {};
+    // Couleurs
+    theme.colorPrimary = document.getElementById('cms-hex-primary')?.value || '#009E60';
+    theme.colorAccent = document.getElementById('cms-hex-accent')?.value || '#FFD700';
+    theme.colorNavy = document.getElementById('cms-hex-navy')?.value || '#0A1628';
+    theme.colorDanger = document.getElementById('cms-hex-danger')?.value || '#ef4444';
+    theme.colorBg = document.getElementById('cms-hex-bg')?.value || '#F0F2F5';
+    theme.radiusLight = (document.getElementById('cms-radius-light')?.value || 8) + 'px';
+    theme.radiusNormal = (document.getElementById('cms-radius-normal')?.value || 10) + 'px';
+    theme.radiusStrong = (document.getElementById('cms-radius-strong')?.value || 12) + 'px';
+    // Typographies
+    theme.fontHeading = document.getElementById('cms-font-heading')?.value || "'Inter', system-ui, sans-serif";
+    theme.fontBody = document.getElementById('cms-font-body')?.value || "'Inter', system-ui, sans-serif";
+    theme.fontButtons = document.getElementById('cms-font-buttons')?.value || "'Inter', system-ui, sans-serif";
+    theme.fontMono = document.getElementById('cms-font-mono')?.value || "'Space Mono', monospace";
+    theme.sizeH1 = (document.getElementById('cms-size-h1')?.value || 40) + 'px';
+    theme.sizeH2 = (document.getElementById('cms-size-h2')?.value || 28) + 'px';
+    theme.sizeBody = (document.getElementById('cms-size-body')?.value || 16) + 'px';
+    theme.sizeSmall = (document.getElementById('cms-size-small')?.value || 12) + 'px';
+    // Zones textes
+    theme.zones = {};
+    document.querySelectorAll('.cms-zone-input').forEach(function(inp) {
+      var zoneId = inp.getAttribute('data-zone');
+      if (zoneId) theme.zones[zoneId] = inp.value;
     });
-    return zones;
-  }
-
-  function collectImagesData() {
-    var images = {};
-    document.querySelectorAll('.image-size-slider').forEach(function(el) {
-      var imageId = el.getAttribute('data-image');
-      var card = document.querySelector(`.image-card[data-image-card="${imageId}"]`);
-      images[imageId] = {
-        size: el.value,
-        opacity: document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`).value,
-        radius: document.querySelector(`.image-radius-slider[data-image="${imageId}"]`).value,
-        shadow: document.querySelector(`.image-shadow-select[data-image="${imageId}"]`).value,
-        position: document.querySelector(`.image-position-select[data-image="${imageId}"]`)?.value || 'default',
-        shape: document.querySelector(`.image-shape-select[data-image="${imageId}"]`)?.value || 'rounded',
-        hidden: card ? card.classList.contains('is-hidden') : false
-      };
+    // Images
+    theme.images = {};
+    document.querySelectorAll('.image-upload-input').forEach(function(inp) {
+      var imageId = inp.getAttribute('data-image');
+      if (imageId) {
+        theme.images[imageId] = {
+          src: inp.getAttribute('data-src') || '',
+          size: (document.querySelector(`.image-size-slider[data-image="${imageId}"]`)?.value || 40) + '%',
+          opacity: (document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`)?.value || 100) + '%',
+          radius: (document.querySelector(`.image-radius-slider[data-image="${imageId}"]`)?.value || 0) + 'px',
+          shadow: document.querySelector(`.image-shadow-select[data-image="${imageId}"]`)?.value || 'none',
+          position: document.querySelector(`.image-position-select[data-image="${imageId}"]`)?.value || 'default',
+          shape: document.querySelector(`.image-shape-select[data-image="${imageId}"]`)?.value || 'rounded',
+          hidden: (document.querySelector(`.image-card[data-image-card="${imageId}"]`)?.classList.contains('is-hidden') || false)
+        };
+      }
     });
-    return images;
+    return theme;
   }
 
   function populateInputs(theme) {
-    theme = theme || {};
-    document.getElementById('cms-color-primary').value = theme.colorPrimary || '#009E60';
-    document.getElementById('cms-hex-primary').value = theme.colorPrimary || '#009E60';
-    document.getElementById('cms-color-accent').value = theme.colorAccent || '#FFD700';
-    document.getElementById('cms-hex-accent').value = theme.colorAccent || '#FFD700';
-    document.getElementById('cms-color-navy').value = theme.colorNavy || '#0A1628';
-    document.getElementById('cms-hex-navy').value = theme.colorNavy || '#0A1628';
-    document.getElementById('cms-color-danger').value = theme.colorDanger || '#ef4444';
-    document.getElementById('cms-hex-danger').value = theme.colorDanger || '#ef4444';
-    document.getElementById('cms-color-bg').value = theme.colorBg || '#F0F2F5';
-    document.getElementById('cms-hex-bg').value = theme.colorBg || '#F0F2F5';
-    
-    document.getElementById('cms-radius-sm').value = theme.radiusSm || '8';
-    document.getElementById('cms-radius-md').value = theme.radiusMd || '14';
-    document.getElementById('cms-radius-lg').value = theme.radiusLg || '22';
-    
-    document.getElementById('cms-font-display').value = theme.fontDisplay || "'Syne', sans-serif";
-    document.getElementById('cms-font-body').value = theme.fontBody || "'Inter', system-ui, sans-serif";
-    var fdPrev = document.getElementById('cms-font-display-preview');
-    if (fdPrev) fdPrev.style.fontFamily = document.getElementById('cms-font-display').value;
-    var fbPrev = document.getElementById('cms-font-body-preview');
-    if (fbPrev) fbPrev.style.fontFamily = document.getElementById('cms-font-body').value;
-    document.getElementById('cms-h1-size').value = theme.h1Size || '28';
-    document.getElementById('cms-h2-size').value = theme.h2Size || '22';
-    document.getElementById('cms-body-size').value = theme.bodySize || '14';
-    document.getElementById('cms-line-height').value = theme.lineHeight || '1.6';
-
-    // Repeuple chaque zone de texte sauvegardée
-    var zones = theme.zones || {};
-    Object.keys(zones).forEach(function(zoneId) {
-      var z = zones[zoneId] || {};
-      var sizeEl = document.querySelector(`.zone-size-slider[data-zone="${zoneId}"]`);
-      if (sizeEl && z.size) sizeEl.value = z.size;
-      var colorEl = document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`);
-      if (colorEl && z.color) colorEl.value = z.color;
-      var weightEl = document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`);
-      if (weightEl && z.weight) weightEl.value = z.weight;
-      var transformEl = document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`);
-      if (transformEl && z.transform) transformEl.value = z.transform;
-      var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
-      if (fontEl) fontEl.value = z.fontFamily || '';
-      var alignEl = document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`);
-      if (alignEl) alignEl.value = z.align || '';
-      setZoneHidden(zoneId, !!z.hidden);
-    });
-
-    // Repeuple chaque image/icône sauvegardée
-    var images = theme.images || {};
-    Object.keys(images).forEach(function(imageId) {
-      var im = images[imageId] || {};
-      var sizeEl = document.querySelector(`.image-size-slider[data-image="${imageId}"]`);
-      if (sizeEl && im.size) sizeEl.value = im.size;
-      var opacityEl = document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`);
-      if (opacityEl && im.opacity !== undefined) opacityEl.value = im.opacity;
-      var radiusEl = document.querySelector(`.image-radius-slider[data-image="${imageId}"]`);
-      if (radiusEl && im.radius !== undefined) radiusEl.value = im.radius;
-      var shadowEl = document.querySelector(`.image-shadow-select[data-image="${imageId}"]`);
-      if (shadowEl && im.shadow) shadowEl.value = im.shadow;
-      var posEl = document.querySelector(`.image-position-select[data-image="${imageId}"]`);
-      if (posEl) posEl.value = im.position || 'default';
-      var shapeEl = document.querySelector(`.image-shape-select[data-image="${imageId}"]`);
-      if (shapeEl) shapeEl.value = im.shape || 'rounded';
-      setImageHidden(imageId, !!im.hidden);
-    });
-    
-    updateTextDisplays();
-    updateZoneAndImageDisplays();
-  }
-
-  // Met à jour tous les libellés numériques + aperçus "A" des zones et images
-  function updateZoneAndImageDisplays() {
-    document.querySelectorAll('.zone-size-slider').forEach(function(el) {
-      var zoneId = el.getAttribute('data-zone');
-      var valEl = document.querySelector(`.zone-size-val[data-zone="${zoneId}"]`);
-      if (valEl) valEl.textContent = el.value;
-      var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
-      if (letterEl) {
-        letterEl.style.fontSize = el.value + 'px';
-        var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
-        if (fontEl) letterEl.style.fontFamily = fontEl.value || '';
-      }
-    });
-    document.querySelectorAll('.image-size-slider').forEach(function(el) {
-      var imageId = el.getAttribute('data-image');
-      var valEl = document.querySelector(`.image-size-val[data-image="${imageId}"]`);
-      if (valEl) valEl.textContent = el.value;
-      var iconEl = document.querySelector(`.cms-image-preview-icon[data-image="${imageId}"]`);
-      if (iconEl) { iconEl.style.width = el.value + 'px'; iconEl.style.height = el.value + 'px'; }
-    });
-    document.querySelectorAll('.image-opacity-slider').forEach(function(el) {
-      var imageId = el.getAttribute('data-image');
-      var valEl = document.querySelector(`.image-opacity-val[data-image="${imageId}"]`);
-      if (valEl) valEl.textContent = el.value;
-    });
-    document.querySelectorAll('.image-radius-slider').forEach(function(el) {
-      var imageId = el.getAttribute('data-image');
-      var valEl = document.querySelector(`.image-radius-val[data-image="${imageId}"]`);
-      if (valEl) valEl.textContent = el.value;
-    });
-  }
-
-  function setZoneHidden(zoneId, hidden) {
-    var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
-    var badge = document.getElementById('zone-status-' + zoneId);
-    if (card) card.classList.toggle('is-hidden', hidden);
-    if (badge) {
-      badge.textContent = hidden ? '🙈 Masqué' : '✅ Visible';
-      badge.className = 'cms-status-badge ' + (hidden ? 'cms-status-hidden' : 'cms-status-visible');
+    if (!theme) theme = {};
+    // Couleurs
+    if (theme.colorPrimary) {
+      var primEl = document.getElementById('cms-color-primary');
+      var primHex = document.getElementById('cms-hex-primary');
+      if (primEl) primEl.value = theme.colorPrimary;
+      if (primHex) primHex.value = theme.colorPrimary;
+    }
+    if (theme.colorAccent) {
+      var accentEl = document.getElementById('cms-color-accent');
+      var accentHex = document.getElementById('cms-hex-accent');
+      if (accentEl) accentEl.value = theme.colorAccent;
+      if (accentHex) accentHex.value = theme.colorAccent;
+    }
+    if (theme.colorNavy) {
+      var navyEl = document.getElementById('cms-color-navy');
+      var navyHex = document.getElementById('cms-hex-navy');
+      if (navyEl) navyEl.value = theme.colorNavy;
+      if (navyHex) navyHex.value = theme.colorNavy;
+    }
+    if (theme.colorDanger) {
+      var dangerEl = document.getElementById('cms-color-danger');
+      var dangerHex = document.getElementById('cms-hex-danger');
+      if (dangerEl) dangerEl.value = theme.colorDanger;
+      if (dangerHex) dangerHex.value = theme.colorDanger;
+    }
+    if (theme.colorBg) {
+      var bgEl = document.getElementById('cms-color-bg');
+      var bgHex = document.getElementById('cms-hex-bg');
+      if (bgEl) bgEl.value = theme.colorBg;
+      if (bgHex) bgHex.value = theme.colorBg;
+    }
+    // Radius
+    if (theme.radiusLight) {
+      var rl = document.getElementById('cms-radius-light');
+      if (rl) rl.value = parseInt(theme.radiusLight) || 8;
+    }
+    if (theme.radiusNormal) {
+      var rn = document.getElementById('cms-radius-normal');
+      if (rn) rn.value = parseInt(theme.radiusNormal) || 10;
+    }
+    if (theme.radiusStrong) {
+      var rs = document.getElementById('cms-radius-strong');
+      if (rs) rs.value = parseInt(theme.radiusStrong) || 12;
+    }
+    // Polices
+    if (theme.fontHeading) {
+      var fh = document.getElementById('cms-font-heading');
+      if (fh) fh.value = theme.fontHeading;
+    }
+    if (theme.fontBody) {
+      var fb = document.getElementById('cms-font-body');
+      if (fb) fb.value = theme.fontBody;
+    }
+    if (theme.fontButtons) {
+      var fbtn = document.getElementById('cms-font-buttons');
+      if (fbtn) fbtn.value = theme.fontButtons;
+    }
+    if (theme.fontMono) {
+      var fm = document.getElementById('cms-font-mono');
+      if (fm) fm.value = theme.fontMono;
+    }
+    // Tailles
+    if (theme.sizeH1) {
+      var sh1 = document.getElementById('cms-size-h1');
+      if (sh1) sh1.value = parseInt(theme.sizeH1) || 40;
+    }
+    if (theme.sizeH2) {
+      var sh2 = document.getElementById('cms-size-h2');
+      if (sh2) sh2.value = parseInt(theme.sizeH2) || 28;
+    }
+    if (theme.sizeBody) {
+      var sb = document.getElementById('cms-size-body');
+      if (sb) sb.value = parseInt(theme.sizeBody) || 16;
+    }
+    if (theme.sizeSmall) {
+      var ss = document.getElementById('cms-size-small');
+      if (ss) ss.value = parseInt(theme.sizeSmall) || 12;
+    }
+    // Zones
+    if (theme.zones) {
+      Object.keys(theme.zones).forEach(function(zoneId) {
+        var inp = document.querySelector(`.cms-zone-input[data-zone="${zoneId}"]`);
+        if (inp) inp.value = theme.zones[zoneId];
+      });
+    }
+    // Images
+    if (theme.images) {
+      Object.keys(theme.images).forEach(function(imageId) {
+        var imgData = theme.images[imageId];
+        var sizeSlider = document.querySelector(`.image-size-slider[data-image="${imageId}"]`);
+        var opacitySlider = document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`);
+        var radiusSlider = document.querySelector(`.image-radius-slider[data-image="${imageId}"]`);
+        var shadowSel = document.querySelector(`.image-shadow-select[data-image="${imageId}"]`);
+        var posSel = document.querySelector(`.image-position-select[data-image="${imageId}"]`);
+        var shapeSel = document.querySelector(`.image-shape-select[data-image="${imageId}"]`);
+        if (sizeSlider) sizeSlider.value = parseInt(imgData.size) || 40;
+        if (opacitySlider) opacitySlider.value = parseInt(imgData.opacity) || 100;
+        if (radiusSlider) radiusSlider.value = parseInt(imgData.radius) || 0;
+        if (shadowSel) shadowSel.value = imgData.shadow || 'none';
+        if (posSel) posSel.value = imgData.position || 'default';
+        if (shapeSel) shapeSel.value = imgData.shape || 'rounded';
+        if (imgData.hidden) setImageHidden(imageId, true);
+      });
     }
   }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // INTERFACE CONSTRUCTION
+  // ────────────────────────────────────────────────────────────────────────────
+
+  function buildZonesUI() {
+    var container = document.getElementById('cms-zones-container');
+    if (!container) return;
+    container.innerHTML = '';
+    ZONES_CONFIG.texts.forEach(function(zone) {
+      var card = document.createElement('div');
+      card.className = 'dash-card cms-zone-card';
+      card.innerHTML = `
+        <div class="dash-card-title" style="margin-bottom:8px;"><span>${zone.label}</span></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="cms-zone-input" data-zone="${zone.id}" placeholder="Entrez le texte…" style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+          <button class="cms-zone-reset-btn" data-zone="${zone.id}" style="padding:8px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:#64748b;">↺</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function buildImagesUI() {
+    var container = document.getElementById('cms-images-container');
+    if (!container) return;
+    container.innerHTML = '';
+    ZONES_CONFIG.images.forEach(function(img) {
+      var card = document.createElement('div');
+      card.className = 'dash-card image-card';
+      card.setAttribute('data-image-card', img.id);
+      card.innerHTML = `
+        <div class="dash-card-title" style="margin-bottom:12px;"><span>${img.label}</span></div>
+        <div style="background:#f8f9fa;padding:12px;border-radius:8px;margin-bottom:12px;text-align:center;min-height:100px;display:flex;align-items:center;justify-content:center;">
+          <img class="image-preview-thumb" data-image="${img.id}" src="" alt="${img.label}" style="max-width:100%;max-height:100%;display:none;">
+          <span class="image-no-preview" data-image="${img.id}">📷 Aucune image</span>
+        </div>
+        <input type="file" class="image-upload-input" data-image="${img.id}" accept="image/*" style="width:100%;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="image-confirm-btn" data-image="${img.id}" style="flex:1;padding:8px 12px;background:#009E60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">✓ Confirmer</button>
+          <button class="image-hide-btn" data-image="${img.id}" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">🙈 Masquer</button>
+          <button class="image-reset-btn" data-image="${img.id}" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">↺ Réinit</button>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:8px;font-weight:600;">Taille:</div>
+        <input type="range" class="image-size-slider" data-image="${img.id}" min="10" max="100" value="40" style="width:100%;margin-bottom:4px;">
+        <span class="cms-value-label" style="font-size:11px;">40%</span>
+        <div style="font-size:11px;color:#64748b;margin:12px 0 8px 0;font-weight:600;">Opacité:</div>
+        <input type="range" class="image-opacity-slider" data-image="${img.id}" min="0" max="100" value="100" style="width:100%;margin-bottom:4px;">
+        <span class="cms-value-label" style="font-size:11px;">100%</span>
+        <div style="font-size:11px;color:#64748b;margin:12px 0 8px 0;font-weight:600;">Arrondi:</div>
+        <input type="range" class="image-radius-slider" data-image="${img.id}" min="0" max="50" value="0" style="width:100%;margin-bottom:4px;">
+        <span class="cms-value-label" style="font-size:11px;">0px</span>
+        <div style="font-size:11px;color:#64748b;margin:12px 0 8px 0;font-weight:600;">Ombre:</div>
+        <select class="image-shadow-select" data-image="${img.id}" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+          <option value="none">Aucune</option>
+          <option value="sm">Légère</option>
+          <option value="md">Normale</option>
+          <option value="lg">Forte</option>
+        </select>
+        <div style="font-size:11px;color:#64748b;margin:12px 0 8px 0;font-weight:600;">Position:</div>
+        <select class="image-position-select" data-image="${img.id}" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+          ${POSITIONS.map(p => `<option value="${p.value}">${p.label}</option>`).join('')}
+        </select>
+        <div style="font-size:11px;color:#64748b;margin:12px 0 8px 0;font-weight:600;">Forme:</div>
+        <select class="image-shape-select" data-image="${img.id}" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+          ${SHAPES.map(s => `<option value="${s.value}">${s.label}</option>`).join('')}
+        </select>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;">
+          <span class="cms-status-badge" id="image-status-${img.id}" style="display:inline-block;padding:4px 8px;background:#f1f5f9;border-radius:4px;font-size:11px;color:#64748b;font-weight:600;">⏳ En attente</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // GESTION IMAGES
+  // ────────────────────────────────────────────────────────────────────────────
 
   function setImageHidden(imageId, hidden) {
     var card = document.querySelector(`.image-card[data-image-card="${imageId}"]`);
-    var badge = document.getElementById('image-status-' + imageId);
-    if (card) card.classList.toggle('is-hidden', hidden);
-    if (badge) {
-      badge.textContent = hidden ? '🙈 Masqué' : '✅ Visible';
-      badge.className = 'cms-status-badge ' + (hidden ? 'cms-status-hidden' : 'cms-status-visible');
+    if (!card) return;
+    if (hidden) {
+      card.classList.add('is-hidden');
+      card.style.opacity = '0.5';
+    } else {
+      card.classList.remove('is-hidden');
+      card.style.opacity = '1';
     }
-  }
-
-  function updateTextDisplays() {
-    setText('cms-val-sm', document.getElementById('cms-radius-sm').value);
-    setText('cms-val-md', document.getElementById('cms-radius-md').value);
-    setText('cms-val-lg', document.getElementById('cms-radius-lg').value);
-    setText('cms-val-h1', document.getElementById('cms-h1-size').value);
-    setText('cms-val-h2', document.getElementById('cms-h2-size').value);
-    setText('cms-val-body', document.getElementById('cms-body-size').value);
-    setText('cms-val-line-height', document.getElementById('cms-line-height').value);
-  }
-
-  function setText(id, v) {
-    var el = document.getElementById(id);
-    if (el && v !== undefined) el.textContent = v;
-  }
-
-  function loadFromFirestore() {
-    var database = getDb();
-    if (!database) return;
-    database.collection('app_config').doc('theme').get().then(function(snap) {
-      var theme = snap.exists ? snap.data() : {};
-      populateInputs(theme);
-    }).catch(function(e) {
-      console.warn('[GSC CMS] Erreur Firestore :', e);
-    });
-  }
-
-  function saveToFirestore(theme) {
-    var database = getDb();
-    if (!database) {
-      showToast('❌ Firestore non disponible.', 'error');
-      return;
-    }
-    var btn = document.getElementById('cms-btn-save');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; }
-
-    database.collection('app_config').doc('theme').set(theme, { merge: true }).then(function() {
-      showToast('✅ Configuration sauvegardée et appliquée !', 'success');
-      if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
-    }).catch(function(e) {
-      console.error('[GSC CMS] Erreur :', e);
-      showToast('❌ Erreur : ' + (e.message || e), 'error');
-      if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
-    });
   }
 
   function wireEvents() {
+    buildZonesUI();
+    buildImagesUI();
+
+    // Couleurs - sync color input <-> hex input
+    ['primary', 'accent', 'navy', 'danger', 'bg'].forEach(function(c) {
+      var colorEl = document.getElementById('cms-color-' + c);
+      var hexEl = document.getElementById('cms-hex-' + c);
+      if (colorEl) {
+        colorEl.addEventListener('input', function() {
+          if (hexEl) hexEl.value = this.value;
+          livePreview();
+        });
+      }
+      if (hexEl) {
+        hexEl.addEventListener('input', function() {
+          if (colorEl) colorEl.value = this.value;
+          livePreview();
+        });
+      }
+    });
+
+    // Radius sliders
+    ['light', 'normal', 'strong'].forEach(function(r) {
+      var slider = document.getElementById('cms-radius-' + r);
+      if (slider) {
+        slider.addEventListener('input', function() {
+          var valEl = document.getElementById('cms-radius-' + r + '-val');
+          if (valEl) valEl.textContent = this.value + 'px';
+          livePreview();
+        });
+      }
+    });
+
+    // Font selects
+    ['heading', 'body', 'buttons', 'mono'].forEach(function(f) {
+      var sel = document.getElementById('cms-font-' + f);
+      if (sel) {
+        sel.addEventListener('change', function() {
+          if (window.gscThemeLoader) window.gscThemeLoader.ensureFontLoaded(this.options[this.selectedIndex].text);
+          livePreview();
+        });
+      }
+    });
+
+    // Size sliders
+    ['h1', 'h2', 'body', 'small'].forEach(function(s) {
+      var slider = document.getElementById('cms-size-' + s);
+      if (slider) {
+        slider.addEventListener('input', function() {
+          var valEl = document.getElementById('cms-size-' + s + '-val');
+          if (valEl) valEl.textContent = this.value + 'px';
+          livePreview();
+        });
+      }
+    });
+
+    // Zones de texte
+    document.querySelectorAll('.cms-zone-input').forEach(function(inp) {
+      inp.addEventListener('input', livePreview);
+    });
+
+    document.querySelectorAll('.cms-zone-reset-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var zoneId = this.getAttribute('data-zone');
+        var inp = document.querySelector(`.cms-zone-input[data-zone="${zoneId}"]`);
+        if (inp) inp.value = '';
+        livePreview();
+      });
+    });
+
     // Onglets
     document.querySelectorAll('.cms-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
-        var tabName = this.getAttribute('data-tab');
-        document.querySelectorAll('.cms-tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.cms-tab-content').forEach(function(c) { c.classList.remove('active'); });
+        var activeTab = this.getAttribute('data-tab');
+        document.querySelectorAll('.cms-tab').forEach(function(t){ t.classList.remove('active'); });
+        document.querySelectorAll('.cms-tab-content').forEach(function(c){ c.classList.remove('active'); });
         this.classList.add('active');
-        document.querySelector(`.cms-tab-content[data-tab="${tabName}"]`).classList.add('active');
-      });
-    });
-
-    // Couleurs
-    ['primary', 'accent', 'navy', 'danger', 'bg'].forEach(function(color) {
-      var picker = document.getElementById('cms-color-' + color);
-      var hex = document.getElementById('cms-hex-' + color);
-      if (!picker || !hex) return;
-      picker.addEventListener('input', function() {
-        hex.value = picker.value;
-        livePreview();
-      });
-      hex.addEventListener('input', function() {
-        var v = this.value.trim();
-        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-          picker.value = v;
-          livePreview();
-        }
-      });
-    });
-
-    // Sliders rayon
-    ['sm', 'md', 'lg'].forEach(function(size) {
-      var slider = document.getElementById('cms-radius-' + size);
-      if (slider) {
-        slider.addEventListener('input', function() {
-          setText('cms-val-' + size, this.value);
-          livePreview();
-        });
-      }
-    });
-
-    // Sliders tailles
-    ['h1', 'h2', 'body'].forEach(function(type) {
-      var slider = document.getElementById('cms-' + type + '-size');
-      if (slider) {
-        slider.addEventListener('input', function() {
-          setText('cms-val-' + type, this.value);
-          livePreview();
-        });
-      }
-    });
-
-    var lineHeightSlider = document.getElementById('cms-line-height');
-    if (lineHeightSlider) {
-      lineHeightSlider.addEventListener('input', function() {
-        setText('cms-val-line-height', this.value);
-        livePreview();
-      });
-    }
-
-    // Polices — sélecteur façon Word + aperçu immédiat de la police choisie
-    ['display', 'body'].forEach(function(type) {
-      var select = document.getElementById('cms-font-' + type);
-      var preview = document.getElementById('cms-font-' + type + '-preview');
-      if (select) {
-        select.addEventListener('change', function() {
-          if (preview) preview.style.fontFamily = this.value;
-          livePreview();
-        });
-        if (preview) preview.style.fontFamily = select.value;
-      }
-    });
-
-    // Zones textes — curseur de taille avec aperçu "A" qui grandit/rétrécit en direct
-    document.querySelectorAll('.zone-size-slider').forEach(function(slider) {
-      slider.addEventListener('input', function() {
-        var zoneId = this.getAttribute('data-zone');
-        var valEl = document.querySelector(`.zone-size-val[data-zone="${zoneId}"]`);
-        if (valEl) valEl.textContent = this.value;
-        var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
-        if (letterEl) letterEl.style.fontSize = this.value + 'px';
-        livePreview();
-      });
-    });
-
-    document.querySelectorAll('.zone-color-input').forEach(function(input) {
-      input.addEventListener('input', livePreview);
-    });
-
-    document.querySelectorAll('.zone-weight-select, .zone-transform-select, .zone-align-select').forEach(function(el) {
-      el.addEventListener('change', livePreview);
-    });
-
-    // Police par zone — sélecteur façon Word, applique aussi un aperçu visuel sur la lettre A
-    document.querySelectorAll('.zone-font-select').forEach(function(select) {
-      select.addEventListener('change', function() {
-        var zoneId = this.getAttribute('data-zone');
-        var letterEl = document.querySelector(`.zone-letter-a[data-zone="${zoneId}"]`);
-        if (letterEl) letterEl.style.fontFamily = this.value || '';
-        livePreview();
-      });
-    });
-
-    // Actions par zone de texte : Confirmer / Masquer / Réinitialiser
-    document.querySelectorAll('.zone-confirm-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var zoneId = this.getAttribute('data-zone');
-        var badge = document.getElementById('zone-status-' + zoneId);
-        if (badge && !document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`).classList.contains('is-hidden')) {
-          badge.textContent = '✅ Confirmé';
-          badge.className = 'cms-status-badge cms-status-confirmed';
-        }
-        livePreview();
-        showToast('✅ Zone « ' + zoneLabelOf(zoneId) + ' » confirmée.', 'success');
-      });
-    });
-
-    document.querySelectorAll('.zone-hide-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var zoneId = this.getAttribute('data-zone');
-        var card = document.querySelector(`.zone-card[data-zone-card="${zoneId}"]`);
-        var nowHidden = card ? !card.classList.contains('is-hidden') : true;
-        setZoneHidden(zoneId, nowHidden);
-        this.textContent = nowHidden ? '👁️ Afficher' : '🙈 Masquer';
-        livePreview();
-      });
-    });
-
-    document.querySelectorAll('.zone-reset-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var zoneId = this.getAttribute('data-zone');
-        var sizeEl = document.querySelector(`.zone-size-slider[data-zone="${zoneId}"]`);
-        if (sizeEl) { sizeEl.value = 14; sizeEl.dispatchEvent(new Event('input')); }
-        var colorEl = document.querySelector(`.zone-color-input[data-zone="${zoneId}"]`);
-        if (colorEl) colorEl.value = '#0A1628';
-        var weightEl = document.querySelector(`.zone-weight-select[data-zone="${zoneId}"]`);
-        if (weightEl) weightEl.value = '700';
-        var transformEl = document.querySelector(`.zone-transform-select[data-zone="${zoneId}"]`);
-        if (transformEl) transformEl.value = 'none';
-        var fontEl = document.querySelector(`.zone-font-select[data-zone="${zoneId}"]`);
-        if (fontEl) fontEl.value = '';
-        var alignEl = document.querySelector(`.zone-align-select[data-zone="${zoneId}"]`);
-        if (alignEl) alignEl.value = '';
-        setZoneHidden(zoneId, false);
-        var hideBtn = document.querySelector(`.zone-hide-btn[data-zone="${zoneId}"]`);
-        if (hideBtn) hideBtn.textContent = '🙈 Masquer';
-        livePreview();
-      });
-    });
-
-    // Recherche dans la liste des zones de texte
-    var zonesSearch = document.getElementById('zones-search');
-    if (zonesSearch) {
-      zonesSearch.addEventListener('input', function() {
-        var q = this.value.trim().toLowerCase();
-        document.querySelectorAll('.zone-card').forEach(function(card) {
-          var title = (card.querySelector('.dash-card-title span')?.textContent || '').toLowerCase();
-          card.style.display = title.includes(q) ? '' : 'none';
+        document.querySelector(`.cms-tab-content[data-tab="${activeTab}"]`)?.classList.add('active');
+        // Update active tab indicator
+        document.querySelectorAll('.cms-tab').forEach(function(t) {
+          var isActive = t === tab;
+          t.style.borderBottomColor = isActive ? 'var(--green)' : 'transparent';
+          t.style.color = isActive ? 'var(--navy)' : '#64748b';
         });
       });
-    }
+    });
 
-    // Ajouter une zone de texte personnalisée (simple invite — peut être affinée ensuite)
-    var addZoneBtn = document.getElementById('cms-btn-add-zone');
-    if (addZoneBtn) {
-      addZoneBtn.addEventListener('click', function() {
-        var label = prompt('Nom de la nouvelle zone de texte (ex. "Titre page Contact") :');
-        if (label && label.trim()) {
-          showToast('ℹ️ Pour cibler précisément un élément personnalisé, indiquez son sélecteur CSS au développeur. Zone "' + label.trim() + '" notée — utilisez "Exporter config" pour la transmettre.', 'info');
-        }
+    // Images: Upload
+    document.querySelectorAll('.image-upload-input').forEach(function(inp) {
+      inp.addEventListener('change', function() {
+        var imageId = this.getAttribute('data-image');
+        var file = this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var src = e.target.result;
+          var inp = document.querySelector(`.image-upload-input[data-image="${imageId}"]`);
+          if (inp) inp.setAttribute('data-src', src);
+          var thumb = document.querySelector(`.image-preview-thumb[data-image="${imageId}"]`);
+          var noPreview = document.querySelector(`.image-no-preview[data-image="${imageId}"]`);
+          if (thumb) {
+            thumb.src = src;
+            thumb.style.display = 'block';
+          }
+          if (noPreview) noPreview.style.display = 'none';
+          var badge = document.getElementById('image-status-' + imageId);
+          if (badge) {
+            badge.textContent = '⏳ En attente';
+            badge.className = 'cms-status-badge cms-status-pending';
+          }
+        };
+        reader.readAsDataURL(file);
       });
-    }
+    });
 
-    var typoConfirmBtn = document.getElementById('cms-typo-confirm-btn');
-    if (typoConfirmBtn) {
-      typoConfirmBtn.addEventListener('click', function() {
-        livePreview();
-        showToast('✅ Typographies confirmées — pensez à "Sauvegarder tous les changements" pour les rendre définitives.', 'success');
-      });
-    }
-
-    var colorsConfirmBtn = document.getElementById('cms-colors-confirm-btn');
-    if (colorsConfirmBtn) {
-      colorsConfirmBtn.addEventListener('click', function() {
-        livePreview();
-        showToast('✅ Couleurs confirmées — pensez à "Sauvegarder tous les changements" pour les rendre définitives.', 'success');
-      });
-    }
-
-    // Images/Icônes — taille (curseur), position, forme, opacité, rayon, ombre
+    // Images: Slider events
     document.querySelectorAll('.image-size-slider').forEach(function(slider) {
       slider.addEventListener('input', function() {
         var imageId = this.getAttribute('data-image');
-        var valEl = document.querySelector(`.image-size-val[data-image="${imageId}"]`);
-        if (valEl) valEl.textContent = this.value;
-        var iconEl = document.querySelector(`.cms-image-preview-icon[data-image="${imageId}"]`);
-        if (iconEl) { iconEl.style.width = this.value + 'px'; iconEl.style.height = this.value + 'px'; }
+        var label = this.parentElement.querySelector('.cms-value-label');
+        if (label) label.textContent = this.value + '%';
         livePreview();
       });
     });
@@ -887,8 +647,8 @@
     document.querySelectorAll('.image-opacity-slider').forEach(function(slider) {
       slider.addEventListener('input', function() {
         var imageId = this.getAttribute('data-image');
-        var valEl = document.querySelector(`.image-opacity-val[data-image="${imageId}"]`);
-        if (valEl) valEl.textContent = this.value;
+        var label = this.parentElement.querySelector('.cms-value-label');
+        if (label) label.textContent = this.value + '%';
         livePreview();
       });
     });
@@ -896,17 +656,18 @@
     document.querySelectorAll('.image-radius-slider').forEach(function(slider) {
       slider.addEventListener('input', function() {
         var imageId = this.getAttribute('data-image');
-        var valEl = document.querySelector(`.image-radius-val[data-image="${imageId}"]`);
-        if (valEl) valEl.textContent = this.value;
+        var label = this.parentElement.querySelector('.cms-value-label');
+        if (label) label.textContent = this.value + 'px';
         livePreview();
       });
     });
 
-    document.querySelectorAll('.image-shadow-select, .image-position-select, .image-shape-select').forEach(function(select) {
-      select.addEventListener('change', livePreview);
+    // Images: Select events
+    document.querySelectorAll('.image-shadow-select, .image-position-select, .image-shape-select').forEach(function(sel) {
+      sel.addEventListener('change', livePreview);
     });
 
-    // Actions par image/icône : Confirmer / Masquer / Réinitialiser
+    // Images: Confirm
     document.querySelectorAll('.image-confirm-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var imageId = this.getAttribute('data-image');
@@ -1058,6 +819,40 @@
 
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     loadFromFirestore();
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // FIRESTORE (CORRECTED BUG 1)
+  // ────────────────────────────────────────────────────────────────────────────
+
+  function loadFromFirestore() {
+    var database = firebase.firestore();
+    if (!database) return;
+    database.collection('app_config').doc('theme').get().then(function(snap) {
+      var theme = snap.exists ? snap.data() : {};
+      populateInputs(theme);
+    }).catch(function(e) {
+      console.warn('[GSC CMS] Erreur Firestore :', e);
+    });
+  }
+
+  function saveToFirestore(theme) {
+    var database = firebase.firestore();
+    if (!database) {
+      showToast('❌ Firestore non disponible.', 'error');
+      return;
+    }
+    var btn = document.getElementById('cms-btn-save');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; }
+
+    database.collection('app_config').doc('theme').set(theme, { merge: true }).then(function() {
+      showToast('✅ Configuration sauvegardée et appliquée !', 'success');
+      if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
+    }).catch(function(e) {
+      console.error('[GSC CMS] Erreur :', e);
+      showToast('❌ Erreur lors de la sauvegarde.', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
+    });
   }
 
   function init() {
