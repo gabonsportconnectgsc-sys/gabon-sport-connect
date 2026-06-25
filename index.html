@@ -962,7 +962,7 @@
       </div>
       <div class="nav-menu-dropdown" id="nav-menu-dropdown">
         <a href="index.html" class="nav-menu-item"><span class="icon">🏠</span>Application</a>
-        <a href="admin.html" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
+        <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
         <div class="nav-menu-divider"></div>
         <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
       </div>
@@ -1862,7 +1862,14 @@
       <div class="admin-header fade-up">
         <div class="admin-title">⚙️ Administration — GSC</div>
         <div class="admin-sub">Panneau de contrôle général</div>
-        <button onclick="(function(){const url=location.origin+location.pathname+'?admin=1';navigator.clipboard?.writeText(url).then(()=>toast('🔗 Lien admin copié !','success')).catch(()=>toast(url,'info'));})()" style="margin-top:12px;padding:6px 14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;color:rgba(255,255,255,.85);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" title="Copier le lien d'accès direct admin">🔗 Copier le lien direct admin</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+          <button onclick="(function(){const url=location.origin+location.pathname+'?admin=1';navigator.clipboard?.writeText(url).then(()=>toast('🔗 Lien admin copié !','success')).catch(()=>toast(url,'info'));})()" style="padding:6px 14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;color:rgba(255,255,255,.85);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" title="Copier le lien d'accès direct admin">🔗 Copier le lien direct admin</button>
+          <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" style="padding:6px 14px;background:rgba(0,158,96,.25);border:1px solid rgba(0,158,96,.5);border-radius:20px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:5px;" title="Ouvrir la console d'administration complète (admin.html)">🚀 Console Admin complète</a>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#00e08a;display:inline-block;box-shadow:0 0 6px #00e08a;"></span>
+          Données synchronisées en temps réel avec la Console Admin complète (même base Firebase)
+        </div>
       </div>
       <div class="admin-stats fade-up" id="admin-global-stats">
         <div class="admin-stat"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
