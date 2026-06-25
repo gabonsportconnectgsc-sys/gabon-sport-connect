@@ -78,7 +78,7 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;}
     /* Icônes visibles en permanence - mode adaptatif */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge, .topnav .user-chip {
       flex-shrink:0;
@@ -91,10 +91,10 @@
       visibility:hidden;
       opacity:0;
     }
-    .topnav-logo{font-family:var(--font-display);font-size:0;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;}
-    .topnav-logo img{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
-    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.1;}
-    .topnav-logo-text span{font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
+    .topnav-logo{font-family:var(--font-display);font-size:0;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;position:relative;}
+    .topnav-logo img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
+    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;}
+    .topnav-logo-text span{font-size:15px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
     .topnav-logo-text .l-gabon{color:#009E60;}
     .topnav-logo-text .l-sport{color:#FFD100;}
     .topnav-logo-text .l-connect{color:#009FCA;}
@@ -107,9 +107,16 @@
     .nav-menu-item:last-child{border-radius:0 0 var(--radius-md) var(--radius-md);}
     .nav-menu-item .icon{font-size:16px;flex-shrink:0;}
     .nav-menu-divider{height:1px;background:var(--gray-bd);margin:4px 0;}
-    .topnav-spacer{flex:1;min-width:4px;max-width:40px;}
+    .topnav-spacer{flex:1 1 auto;min-width:4px;}
     .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
-    .visitor-banner{display:inline-flex;align-items:center;padding:6px 12px;background:rgba(0,158,96,.15);color:var(--green);border:1px solid rgba(0,158,96,.3);border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+    /* Bannière visiteur réduite : icône œil seule, pas de texte */
+    .visitor-banner{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:34px;height:34px;padding:0;
+      background:rgba(255,215,0,.14);border:1px solid rgba(255,215,0,.35);
+      border-radius:50%;font-size:16px;line-height:1;color:var(--yellow);
+      cursor:pointer;flex-shrink:0;
+    }
     .user-chip{display:flex;align-items:center;gap:8px;min-width:0;}
     .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
     .user-name{max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);font-size:13px;font-weight:500;}
@@ -118,33 +125,39 @@
     .btn-hamburger{}
     .hamburger-lines{display:flex;flex-direction:column;gap:5px;}
     .hamburger-lines span{width:20px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
+    /* ── Mode bureau (≥901px) : en-tête centrée, logo plus grand ── */
+    @media (min-width:901px){
+      .topnav{justify-content:center;gap:18px;}
+      .topnav-logo img{width:56px;height:56px;}
+      .topnav-logo-text span{font-size:16px;letter-spacing:.8px;}
+      .topnav-spacer{flex:0 0 32px;max-width:32px;}
+    }
     @media (max-width:640px){
       .topnav{padding:0 10px;gap:6px;}
       .topnav-logo img{width:42px;height:42px;}
-      .topnav-logo-text span{font-size:10px;}
-      .visitor-banner{padding:4px 8px;font-size:10px;}
+      .topnav-logo-text span{font-size:11px;}
+      .visitor-banner{width:30px;height:30px;font-size:14px;}
       .user-chip{max-width:40px;}
       .btn-icon{width:32px;height:32px;font-size:15px;}
     }
     @media (max-width:480px){
-      .topnav{padding:0 8px;gap:5px;}
+      .topnav{padding:0 8px;gap:4px;}
       .topnav-logo img{width:38px;height:38px;}
-      .topnav-logo-text span{font-size:8px;letter-spacing:.2px;}
-      .visitor-banner{padding:4px 8px;font-size:9px;letter-spacing:0;}
+      .topnav-logo-text span{font-size:9px;letter-spacing:.2px;}
+      .visitor-banner{width:28px;height:28px;font-size:13px;}
       #nav-rolebadge{font-size:10px;}
       .user-chip{max-width:40px;}
       .btn-icon{width:30px;height:30px;font-size:14px;}
       .btn-hamburger{display:flex;}
     }
     @media (max-width:360px){
-      .topnav{padding:0 6px;gap:4px;}
+      .topnav{padding:0 6px;gap:3px;}
       .topnav-logo img{width:34px;height:34px;}
-      .topnav-logo-text span{font-size:7px;letter-spacing:.1px;}
-      .visitor-banner{padding:3px 6px;font-size:8px;}
+      .topnav-logo-text span{font-size:8px;letter-spacing:.1px;}
+      .visitor-banner{width:26px;height:26px;font-size:12px;}
       .user-chip{padding:4px;}
       .btn-icon{width:28px;height:28px;font-size:13px;}
     }
-    .visitor-banner{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.5px;}
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px;cursor:pointer;transition:background .2s;}
     .user-chip:hover{background:rgba(255,255,255,.14);}
     .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;border:2.5px solid rgba(255,255,255,.25);transition:border-color .2s;}
@@ -720,11 +733,11 @@
       display:flex;align-items:center;justify-content:center;gap:8px;
       padding-top:8px;border-top:1px solid rgba(255,255,255,.1);
     }
-    .weather-icon{font-size:24px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(0,158,96,.2);border-radius:12px;}
-    .weather-details{text-align:left;flex:1;}
-    .weather-temp{font-size:13px;font-weight:700;margin-bottom:1px;}
-    .weather-desc{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.3px;}
-    .weather-loading{font-size:10px;color:rgba(255,255,255,.6);font-style:italic;}
+    .weather-icon{font-size:24px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(0,158,96,.2);border-radius:12px;flex-shrink:0;}
+    .weather-details{text-align:center;flex:0 1 auto;}
+    .weather-temp{font-size:13px;font-weight:700;margin-bottom:1px;text-align:center;}
+    .weather-desc{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.3px;text-align:center;}
+    .weather-loading{font-size:10px;color:rgba(255,255,255,.6);font-style:italic;text-align:center;}
 
     /* ── MENTIONS LÉGALES FOOTER ── */
     .legal-footer{
@@ -968,7 +981,7 @@
       </div>
     </div>
     <div class="topnav-spacer"></div>
-    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Se connecter" style="cursor:pointer;">👁️ VISITEUR</div>
+    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
     <div id="nav-rolebadge"></div>
     <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()">
       <div class="user-avatar" id="nav-avatar">?</div>
@@ -1879,6 +1892,7 @@
       </div>
       <div class="admin-tabs fade-up">
         <button class="admin-tab active" onclick="switchAdminTab('users')">👥 Utilisateurs</button>
+        <button class="admin-tab" onclick="switchAdminTab('acteurs')">🏅 Acteurs</button>
         <button class="admin-tab" onclick="switchAdminTab('sites')">📍 Sites</button>
         <button class="admin-tab" onclick="switchAdminTab('news')">📰 Actualités</button>
         <button class="admin-tab" onclick="switchAdminTab('import')">🗺️ Import sites</button>
@@ -1954,6 +1968,105 @@
           </div>
         </div>
       </div>
+      <div class="admin-section" id="admin-section-acteurs">
+
+        <!-- Tuiles cliquables par catégorie d'acteur sportif -->
+        <div class="card fade-up" style="margin-bottom:14px;">
+          <div class="card-header">
+            <div class="card-title">🏅 Acteurs sportifs <span id="admin-acteurs-total-badge" style="font-size:13px;color:var(--gray-txt);font-weight:500;"></span></div>
+            <button class="btn-sm" onclick="loadAdminActorsTab()">↺ Actualiser</button>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:10px;">
+              <button class="stat-card" onclick="adminFilterActorsTile('tous')" style="background:linear-gradient(135deg,#1a2d4a,#0A1628);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏟️</span>
+                <div class="stat-val" id="admin-acr-tous" style="font-size:22px;">—</div>
+                <div class="stat-lbl">Tous les acteurs</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('joueur')" style="background:linear-gradient(135deg,#009E60,#007a47);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">⚽</span>
+                <div class="stat-val" id="admin-acr-joueur" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#FFD700;">Joueurs / Athlètes</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('club')" style="background:linear-gradient(135deg,#f97316,#c2410c);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏟️</span>
+                <div class="stat-val" id="admin-acr-club" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#ffe9c2;">Clubs</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('arbitre')" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🟨</span>
+                <div class="stat-val" id="admin-acr-arbitre" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#e9d8ff;">Arbitres</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('entraineur')" style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">📋</span>
+                <div class="stat-val" id="admin-acr-entraineur" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#c9fff0;">Entraîneurs</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('federation')" style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏛️</span>
+                <div class="stat-val" id="admin-acr-federation" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#7dd3fc;">Fédérations</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('organisateur')" style="background:linear-gradient(135deg,#b45309,#92400e);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🎯</span>
+                <div class="stat-val" id="admin-acr-organisateur" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#ffd9a0;">Organisateurs</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('independant')" style="background:linear-gradient(135deg,#0369a1,#075985);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏃</span>
+                <div class="stat-val" id="admin-acr-independant" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#bae6fd;">Indépendants</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('eleve_etudiant')" style="background:linear-gradient(135deg,#6366f1,#4338ca);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🎓</span>
+                <div class="stat-val" id="admin-acr-eleve_etudiant" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#e0e7ff;">Élèves / Étudiants</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('sportif_etranger')" style="background:linear-gradient(135deg,#ca8a04,#92660a);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🌍</span>
+                <div class="stat-val" id="admin-acr-sportif_etranger" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#1a2d4a;text-shadow:none;">Sportifs étrangers</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('supporter')" style="background:linear-gradient(135deg,#db2777,#9d174d);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">💗</span>
+                <div class="stat-val" id="admin-acr-supporter" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#fce7f3;">Supporters</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres compacts (identiques à l'annuaire de l'application) -->
+        <div class="search-panel fade-up">
+          <h3>🔍 Filtrer les acteurs</h3>
+          <div class="search-grid">
+            <input class="search-input" id="admin-acteurs-search" placeholder="🔍 Nom, sport, ville…" oninput="adminSearchActors()">
+            <select class="search-input" id="admin-acteurs-sport" onchange="adminSearchActors()">
+              <option value="">Tous sports</option>
+              <option>Football</option><option>Basketball</option><option>Handball</option>
+              <option>Volleyball</option><option>Athlétisme</option><option>Natation</option>
+              <option>Boxe</option><option>Judo</option><option>Tennis</option><option>Rugby</option>
+              <option>Taekwondo</option><option>Cyclisme</option><option>Lutte</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="search-btn" onclick="adminSearchActors()">🔍 Rechercher</button>
+            <button class="search-btn" onclick="adminResetActorsSearch()" style="background:var(--gray-txt);flex:0 0 auto;padding:12px 20px;">↺ Réinitialiser</button>
+          </div>
+        </div>
+
+        <!-- Liste compacte (mode identique à l'annuaire public, avec QR Code par acteur) -->
+        <div class="card fade-up">
+          <div class="card-header">
+            <div class="card-title">📋 Liste des acteurs <span id="admin-acteurs-count" style="font-size:13px;color:var(--gray-txt);font-weight:500;"></span></div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="actors-grid" id="admin-actors-grid" style="padding:10px;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="admin-section" id="admin-section-sites">
         <div class="card fade-up">
           <div class="card-header">
@@ -2621,7 +2734,7 @@ function enterAsVisitor(silent=false){
   const visitorBanner = document.getElementById('nav-visitor-banner');
   if(visitorBanner) {
     visitorBanner.style.display = '';
-    visitorBanner.textContent = '👁️ VISITEUR';
+    visitorBanner.textContent = '👁️';
     visitorBanner.style.opacity = '1';
   }
   const loginBtn = document.getElementById('nav-login-btn');
@@ -2694,6 +2807,19 @@ function switchAuthTab(tab){
   }
 }
 window.switchAuthTab=switchAuthTab;
+
+// Affiche/masque le mot de passe au clic sur l'icône œil (👁️ ↔ 🙈)
+function togglePwd(inputId, btn){
+  const input=document.getElementById(inputId);
+  if(!input) return;
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  if(btn){
+    btn.textContent = isHidden ? '🙈' : '👁️';
+    btn.classList.toggle('visible', isHidden);
+  }
+}
+window.togglePwd=togglePwd;
 
 async function handleSupabaseLogin(){
   const errEl=document.getElementById('auth-login-error');
@@ -4694,7 +4820,7 @@ function showView(name){
       refreshOnlineNews();
     });
   }
-  if(name==='admin'){loadAdminUsers();loadAdminStats();}
+  if(name==='admin'){loadAdminUsers();loadAdminStats();loadAdminActorsTab();}
 }
 
 function switchLegalTab(tab,e){
@@ -4713,10 +4839,133 @@ function switchAdminTab(tab,btn){
   else document.querySelector(`.admin-tab[onclick*="'${tab}'"]`)?.classList.add('active');
   window.scrollTo({top:0,left:0,behavior:'auto'});
   if(tab==='sites') loadAdminSites();
+  if(tab==='acteurs') loadAdminActorsTab();
   if(tab==='news') renderNews();
   if(tab==='import') setTimeout(()=>initOsmMap(),200);
   if(tab==='reports') renderAdminReports();
 }
+
+// ── ONGLET "ACTEURS" DU PANNEAU ADMIN INTÉGRÉ ──
+// Réutilise allActors (déjà chargé par l'app) — pas de double appel Firestore.
+var adminActorsType = 'tous';
+
+function loadAdminActorsTab(){
+  // S'assure que allActors est disponible ; sinon le redessine dès qu'il l'est.
+  if(!allActors || !allActors.length){
+    setTimeout(()=>{ if(allActors && allActors.length) loadAdminActorsTab(); }, 600);
+  }
+  updateAdminActorTiles();
+  adminSearchActors();
+}
+window.loadAdminActorsTab=loadAdminActorsTab;
+
+function updateAdminActorTiles(){
+  const counts={tous:allActors.length, joueur:0, club:0, arbitre:0, entraineur:0, federation:0,
+    organisateur:0, independant:0, eleve_etudiant:0, sportif_etranger:0, supporter:0};
+  allActors.forEach(a=>{
+    const r=a.role;
+    if(r==='club'||r==='association') counts.club++;
+    else if(counts.hasOwnProperty(r)) counts[r]++;
+    if(a.isSupporter===true) counts.supporter++;
+  });
+  Object.keys(counts).forEach(k=>{
+    const el=document.getElementById('admin-acr-'+k);
+    if(el) el.textContent=counts[k];
+  });
+  const badge=document.getElementById('admin-acteurs-total-badge');
+  if(badge) badge.textContent=`(${allActors.length})`;
+}
+
+function adminFilterActorsTile(type){
+  adminActorsType=type;
+  adminSearchActors();
+}
+window.adminFilterActorsTile=adminFilterActorsTile;
+
+function adminSearchActors(){
+  const q=(document.getElementById('admin-acteurs-search')?.value||'').toLowerCase();
+  const sport=document.getElementById('admin-acteurs-sport')?.value||'';
+  let filtered=allActors||[];
+  if(adminActorsType!=='tous'){
+    if(adminActorsType==='club') filtered=filtered.filter(u=>['club','association'].includes(u.role));
+    else if(adminActorsType==='supporter') filtered=filtered.filter(u=>u.isSupporter===true||u.role==='supporter');
+    else filtered=filtered.filter(u=>u.role===adminActorsType);
+  }
+  if(q) filtered=filtered.filter(u=>{
+    const name=([u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')).toLowerCase();
+    return name.includes(q)||(u.ville||'').toLowerCase().includes(q)||(u.sport||'').toLowerCase().includes(q);
+  });
+  if(sport) filtered=filtered.filter(u=>u.sport===sport||(u.sports||[]).includes(sport));
+  renderActorsAdmin(filtered);
+  const countEl=document.getElementById('admin-acteurs-count');
+  if(countEl) countEl.textContent=`(${filtered.length})`;
+}
+window.adminSearchActors=adminSearchActors;
+
+function adminResetActorsSearch(){
+  adminActorsType='tous';
+  const s=document.getElementById('admin-acteurs-search'); if(s) s.value='';
+  const sp=document.getElementById('admin-acteurs-sport'); if(sp) sp.value='';
+  adminSearchActors();
+}
+window.adminResetActorsSearch=adminResetActorsSearch;
+
+// Rendu compact (liste) avec QR Code — même logique visuelle que l'annuaire public,
+// mais ciblée sur #admin-actors-grid pour ne jamais interférer avec la vue Annuaire.
+function renderActorsAdmin(actors){
+  const grid=document.getElementById('admin-actors-grid');
+  if(!grid) return;
+  if(!actors.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="es-icon">🔍</div><h3>Aucun acteur trouvé</h3><p>Essayez d'autres filtres.</p></div>`;
+    return;
+  }
+  let localPhotos={};
+  try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
+
+  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍'};
+  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger'};
+
+  const renderRow=(a,idx)=>{
+    const id=a.uid||a.id;
+    const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+    const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
+    const roleKey=a.role||'joueur';
+    const roleShort=ROLE_SHORT[roleKey]||roleKey;
+    const roleIcon=ROLE_ICONS_MAP[roleKey]||'👤';
+    const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
+    const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
+    const meta=[gscId,roleShort,clubOrg].filter(Boolean).join(' · ');
+    const avatarHtml=photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
+    const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;">DÉMO</span>`:'';
+    return `<div class="actor-compact-row" onclick="openActorDetail('${id}')">
+      <div class="acr-avatar">${avatarHtml}</div>
+      <div class="acr-info">
+        <div class="acr-name">${name}${demoTag}</div>
+        <div class="acr-meta">${meta}</div>
+      </div>
+      <span class="acr-badge ${roleKey}">${roleShort}</span>
+      <div class="acr-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="admin-qr-mini-${idx}">
+        <canvas id="admin-qr-canvas-mini-${idx}" width="28" height="28"></canvas>
+      </div>
+    </div>`;
+  };
+
+  grid.style.display='block';
+  grid.innerHTML=`<div class="actors-compact-list">`+actors.map((a,idx)=>renderRow(a,idx)).join('')+`</div>`;
+
+  // Génère les mini QR codes après insertion dans le DOM
+  const canvases=document.querySelectorAll('#admin-actors-grid canvas[id^="admin-qr-canvas-mini-"]');
+  canvases.forEach(canvas=>{
+    const rowEl=canvas.closest('.actor-compact-row');
+    const onclickAttr=rowEl?.getAttribute('onclick')||'';
+    const m=onclickAttr.match(/openActorDetail\('([^']+)'\)/);
+    const id=m?m[1]:null;
+    if(!id) return;
+    const url=location.origin+location.pathname+'?actor='+encodeURIComponent(id);
+    if(typeof drawQrOnCanvas==='function') drawQrOnCanvas(canvas, url, 28);
+  });
+}
+window.renderActorsAdmin=renderActorsAdmin;
 
 async function loadAdminStats(){
   if(!db || typeof collection !== 'function'){ return; }
