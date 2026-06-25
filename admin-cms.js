@@ -8,6 +8,20 @@
 (function () {
   'use strict';
 
+  /* ── Pont d'authentification Firebase ──────────────────────────────────────
+     Comme dans admin-controller.js : toute écriture/lecture Firestore doit
+     passer par withAuth() pour garantir que le token Firebase Auth (obtenu via
+     Supabase + Cloudflare Worker) est encore valide. Sans ça, le token expire
+     après ~1h et Firestore rejette en permission-denied (capté en silence
+     par un catch générique).
+  ────────────────────────────────────────────────────────────────────────── */
+  async function withAuth(fn) {
+    if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+      await window.ensureFirebaseAuthViaSupabase();
+    }
+    return fn();
+  }
+
   const ZONES_CONFIG = {
     texts: [
       { id: 'topnav-logo-text', label: 'Logo - Texte (Gabon Sport Connect)', type: 'text', selector: '.topnav-logo-text' },
@@ -826,31 +840,36 @@
   // ────────────────────────────────────────────────────────────────────────────
 
   function loadFromFirestore() {
-    var database = firebase.firestore();
-    if (!database) return;
-    database.collection('app_config').doc('theme').get().then(function(snap) {
+    withAuth(function() {
+      var database = firebase.firestore();
+      if (!database) return Promise.reject(new Error('Firestore non disponible.'));
+      return database.collection('app_config').doc('theme').get();
+    }).then(function(snap) {
       var theme = snap.exists ? snap.data() : {};
       populateInputs(theme);
     }).catch(function(e) {
       console.warn('[GSC CMS] Erreur Firestore :', e);
+      showToast('❌ Chargement impossible : ' + (e && e.message ? e.message : e), 'error');
     });
   }
 
   function saveToFirestore(theme) {
-    var database = firebase.firestore();
-    if (!database) {
-      showToast('❌ Firestore non disponible.', 'error');
-      return;
-    }
     var btn = document.getElementById('cms-btn-save');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; }
 
-    database.collection('app_config').doc('theme').set(theme, { merge: true }).then(function() {
+    withAuth(function() {
+      var database = firebase.firestore();
+      if (!database) return Promise.reject(new Error('Firestore non disponible.'));
+      return database.collection('app_config').doc('theme').set(theme, { merge: true });
+    }).then(function() {
       showToast('✅ Configuration sauvegardée et appliquée !', 'success');
       if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
     }).catch(function(e) {
       console.error('[GSC CMS] Erreur :', e);
-      showToast('❌ Erreur lors de la sauvegarde.', 'error');
+      // On affiche le vrai message (ex: permission-denied, token expiré, etc.)
+      // au lieu d'un message muet, pour pouvoir diagnostiquer en un coup d'œil.
+      var detail = e && e.code ? (e.code + ' — ' + e.message) : (e && e.message ? e.message : String(e));
+      showToast('❌ Erreur lors de la sauvegarde : ' + detail, 'error');
       if (btn) { btn.disabled = false; btn.innerHTML = '💾 Sauvegarder tous les changements'; }
     });
   }
