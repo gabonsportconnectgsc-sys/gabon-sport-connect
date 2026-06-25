@@ -261,11 +261,11 @@
     /* ── STAT CARDS — luxe sportif ── */
     .stat-card{
       position:relative;overflow:hidden;border-radius:var(--radius-md);
-      padding:16px 12px 14px;display:flex;flex-direction:column;gap:4px;
+      padding:14px 10px 12px;display:flex;flex-direction:column;gap:4px;
       cursor:pointer;border:none;text-align:left;width:100%;
       transition:transform .18s ease,box-shadow .18s ease;
       box-shadow:0 4px 18px rgba(0,0,0,.13);
-      min-height:0;
+      min-height:140px;
     }
     .stat-card:hover,.stat-card:active{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,.22);}
     .stat-card::before{
@@ -284,7 +284,7 @@
     .stat-card-4{background:linear-gradient(135deg,#FFD700 0%,#b8960c 100%);}
     .stat-icon{font-size:28px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
     .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35);letter-spacing:.3px;}
-    .stat-lbl{font-family:var(--font-display);font-size:11px;color:rgba(255,255,255,.92);font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-top:4px;line-height:1.3;text-shadow:0 1px 4px rgba(0,0,0,.3);overflow-wrap:break-word;word-break:break-word;white-space:normal;hyphens:auto;}
+    .stat-lbl{font-family:var(--font-display);font-size:10px;color:rgba(255,255,255,.92);font-weight:800;letter-spacing:.2px;text-transform:uppercase;margin-top:4px;line-height:1.35;text-shadow:0 1px 4px rgba(0,0,0,.3);overflow-wrap:normal;word-break:normal;white-space:normal;hyphens:none;}
     .stat-card-4 .stat-val,.stat-card-4 .stat-lbl{color:var(--navy);}
     .stat-card-4 .stat-lbl{color:rgba(10,22,40,.7);}
     .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
@@ -656,7 +656,7 @@
     .actor-filter-btn:hover .real-icon{transform:scale(1.1);}
     .bnav-real-icon{width:22px;height:22px;border-radius:50%;object-fit:cover;filter:grayscale(30%);}
     .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.1);}
-    .stat-real-icon{width:60px;height:60px;border-radius:50%;object-fit:cover;box-shadow:0 4px 14px rgba(0,0,0,.35);margin-bottom:14px;border:3px solid rgba(255,255,255,.55);align-self:flex-end;}
+    .stat-real-icon{width:50px;height:50px;border-radius:50%;object-fit:cover;box-shadow:0 4px 14px rgba(0,0,0,.35);margin-bottom:8px;border:3px solid rgba(255,255,255,.55);align-self:flex-end;}
 
     /* Quick-btn image icons */
     .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);animation:float 3s ease-in-out infinite;}
@@ -1034,10 +1034,65 @@
       <!-- Vue: INSCRIPTION -->
       <div id="auth-view-register" style="display:none;">
         <div class="modal-title" style="margin-bottom:14px;">🆕 Créer un compte</div>
-        <div class="form-group"><label>Prénom</label><input type="text" id="auth-register-prenom" placeholder="Prénom"></div>
-        <div class="form-group"><label>Nom</label><input type="text" id="auth-register-nom" placeholder="Nom"></div>
-        <div class="form-group"><label>Email</label><input type="email" id="auth-register-email" placeholder="votre@email.com" autocomplete="username"></div>
-        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+
+        <!-- Identité de base -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label>Prénom *</label><input type="text" id="auth-register-prenom" placeholder="Prénom"></div>
+          <div class="form-group"><label>Nom *</label><input type="text" id="auth-register-nom" placeholder="Nom"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label>Sexe</label>
+            <select id="auth-register-sexe">
+              <option value="">--</option>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Date de naissance</label><input type="date" id="auth-register-ddn" max="2010-12-31"></div>
+        </div>
+        <div class="form-group"><label>Nationalité</label>
+          <select id="auth-register-nationalite">
+            <option value="Gabonaise">🇬🇦 Gabonaise</option>
+            <option value="Camerounaise">🇨🇲 Camerounaise</option>
+            <option value="Congolaise">🇨🇬 Congolaise</option>
+            <option value="Ivoirienne">🇨🇮 Ivoirienne</option>
+            <option value="Sénégalaise">🇸🇳 Sénégalaise</option>
+            <option value="Française">🇫🇷 Française</option>
+            <option value="Autre">🌍 Autre</option>
+          </select>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group"><label>Email *</label><input type="email" id="auth-register-email" placeholder="votre@email.com" autocomplete="username"></div>
+        <div class="form-group"><label>Téléphone</label><input type="tel" id="auth-register-tel" placeholder="+241 XX XX XX XX"></div>
+
+        <!-- Rôle sportif -->
+        <div class="form-group"><label>Rôle / Poste *</label>
+          <select id="auth-register-role">
+            <option value="joueur">⚽ Joueur / Athlète</option>
+            <option value="entraineur">📋 Entraîneur / Coach</option>
+            <option value="arbitre">🟨 Arbitre</option>
+            <option value="club">🏟️ Club / Association</option>
+            <option value="federation">🏛️ Fédération</option>
+            <option value="organisateur">🎯 Organisateur</option>
+            <option value="independant">🏃 Sportif indépendant</option>
+            <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
+            <option value="sportif_etranger">🌍 Sportif étranger</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="auth-register-statut">
+            <option value="libre">🔓 Libre (sans contrat)</option>
+            <option value="sous_contrat">📝 Sous contrat</option>
+            <option value="amateur">🏅 Amateur</option>
+            <option value="professionnel">⭐ Professionnel</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Employeur / Club actuel</label><input type="text" id="auth-register-employeur" placeholder="Nom du club, fédération, école..."></div>
+
+        <!-- Mot de passe -->
+        <div class="form-group"><label>Mot de passe *</label><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+
         <button class="btn-sm" id="auth-register-submit" onclick="handleSupabaseRegister()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Créer mon compte</button>
         <div id="auth-register-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
@@ -2605,15 +2660,23 @@ async function handleSupabaseRegister(){
   const nom=document.getElementById('auth-register-nom').value.trim();
   const email=document.getElementById('auth-register-email').value.trim();
   const password=document.getElementById('auth-register-password').value;
+  const tel=document.getElementById('auth-register-tel')?.value.trim()||'';
+  const sexe=document.getElementById('auth-register-sexe')?.value||'';
+  const ddn=document.getElementById('auth-register-ddn')?.value||'';
+  const nationalite=document.getElementById('auth-register-nationalite')?.value||'Gabonaise';
+  const role=document.getElementById('auth-register-role')?.value||'joueur';
+  const statut=document.getElementById('auth-register-statut')?.value||'libre';
+  const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
+    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur};
     const {data,error}=await window._sb.auth.signUp({
       email,password,
-      options:{data:{prenom,nom}}
+      options:{data:extraMeta}
     });
     if(error) throw error;
     if(data.user && !data.session){
@@ -2623,7 +2686,7 @@ async function handleSupabaseRegister(){
     }else{
       closeModal('modal-auth');
       toast('Compte créé avec succès !','success');
-      await onSupabaseSignedIn(data.user,{prenom,nom});
+      await onSupabaseSignedIn(data.user,extraMeta);
     }
   }catch(e){
     errEl.textContent = supabaseAuthErrorMessage(e);
