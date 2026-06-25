@@ -1,19 +1,27 @@
-name: Deploy to Firebase Hosting
+name: Déploiement sur Firebase Hosting
 
 on:
   push:
     branches:
-      - main
       - principal
 
 jobs:
-  deploy:
+  déployer:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}'
-          channelId: live
-          projectId: gabon-sport-connect
+          node-version: '22'
+
+      - name: Écrire le fichier service account
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+
+      - name: Installer Firebase Tools
+        run: npm install -g firebase-tools
+
+      - name: Déployer sur Firebase Hosting
+        run: firebase deploy --only hosting --project gabon-sport-connect --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: service-account.json
