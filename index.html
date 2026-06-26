@@ -10,6 +10,7 @@
   <meta name="description" content="Plateforme nationale de gestion du sport au Gabon" />
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
   <script src="app-config-loader.js"></script>
+  <script src="gsc-notifications.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Leaflet pour la carte des sites + Import OSM -->
@@ -139,6 +140,7 @@
       .visitor-banner{width:30px;height:30px;font-size:14px;}
       .user-chip{max-width:40px;}
       .btn-icon{width:32px;height:32px;font-size:15px;}
+      #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
     }
     @media (max-width:480px){
       .topnav{padding:0 8px;gap:4px;}
@@ -149,6 +151,7 @@
       .user-chip{max-width:40px;}
       .btn-icon{width:30px;height:30px;font-size:14px;}
       .btn-hamburger{display:flex;}
+      #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
     }
     @media (max-width:360px){
       .topnav{padding:0 6px;gap:3px;}
@@ -3466,11 +3469,17 @@ function enterApp(){
   if(!allNewsItems.length){ allNewsItems=[...GSC_SEED_NEWS]; renderNewsFiltered(); }
   // loadActors() met à jour stat-total-acteurs et toutes les stats globales avec déduplication correcte
   loadActors();
+  // ── NOTIFICATIONS : connecter l'utilisateur ──
+  if(window.GSCNotif && currentUser?.uid){
+    window.GSCNotif.onLogin(currentUser.uid);
+  }
 }
 
 async function handleLogout(){
   try{ if(window._sb) await window._sb.auth.signOut(); }catch(e){}
   currentUser=null;userProfile=null;_uid=null;
+  // ── NOTIFICATIONS : déconnecter ──
+  if(window.GSCNotif) window.GSCNotif.onLogout();
   toast('Déconnecté.','info');
   enterAsVisitor(true);
 }
@@ -7491,6 +7500,46 @@ window.lookupManualGscId = lookupManualGscId;
   });
   
   observer.observe(document.body, {childList: true, subtree: true});
+})();
+</script>
+
+<!-- ══ INIT SYSTÈME DE NOTIFICATIONS GSC ══ -->
+<script>
+(function(){
+  /* Initialisation au premier chargement — mode visiteur */
+  document.addEventListener('DOMContentLoaded', function(){
+    if(window.GSCNotif){
+      window.GSCNotif.init(null); // démarrage sans utilisateur
+    }
+  });
+
+  /* Écoute les clicks sur notification push (depuis SW) */
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', function(event){
+      if(!event.data) return;
+      if(event.data.type === 'NOTIF_CLICK' && event.data.link){
+        const view = event.data.link.replace('index.html','').replace('#','').replace('/','');
+        if(view && typeof showView === 'function') showView(view);
+      }
+    });
+  }
+
+  /* Notification de bienvenue système au premier lancement */
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      const shown = sessionStorage.getItem('gsc_welcome_notif');
+      if(!shown && window.GSCNotif){
+        sessionStorage.setItem('gsc_welcome_notif','1');
+        window.GSCNotif.push({
+          type:'system',
+          title:'Bienvenue sur Gabon Sport Connect !',
+          body:'Plateforme nationale du sport gabonais. Consultez l\'annuaire, les actualités et plus encore.',
+          recipientId:'all',
+          personal:false,
+        });
+      }
+    }, 2500);
+  });
 })();
 </script>
 </body>
