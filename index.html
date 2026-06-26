@@ -79,7 +79,7 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 10px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;min-width:0;}
     /* Icônes visibles en permanence - mode adaptatif */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge, .topnav .user-chip {
       flex-shrink:0;
@@ -89,9 +89,11 @@
     .topnav .btn-icon[style*="display:none"], 
     .topnav .visitor-banner[style*="display:none"],
     .topnav .user-chip[style*="display:none"] {
-      visibility:hidden;
-      opacity:0;
+      display:none !important;
     }
+    /* Logo compressible : cache le texte quand l'espace manque */
+    .topnav-logo{min-width:0;overflow:hidden;}
+    .topnav-logo-text{transition:max-width .2s ease, opacity .2s ease;max-width:120px;overflow:hidden;}
     .topnav-logo{font-family:var(--font-display);font-size:0;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;position:relative;}
     .topnav-logo img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
     .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;}
@@ -108,7 +110,7 @@
     .nav-menu-item:last-child{border-radius:0 0 var(--radius-md) var(--radius-md);}
     .nav-menu-item .icon{font-size:16px;flex-shrink:0;}
     .nav-menu-divider{height:1px;background:var(--gray-bd);margin:4px 0;}
-    .topnav-spacer{flex:1 1 auto;min-width:4px;}
+    .topnav-spacer{flex:1 1 0;min-width:2px;max-width:40px;}
     .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
     /* Bannière visiteur réduite : icône œil seule, pas de texte */
     .visitor-banner{
@@ -128,37 +130,39 @@
     .hamburger-lines span{width:20px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
     /* ── Mode bureau (≥901px) : en-tête centrée, logo plus grand ── */
     @media (min-width:901px){
-      .topnav{justify-content:center;gap:18px;}
+      .topnav{justify-content:center;gap:18px;padding:0 18px;}
       .topnav-logo img{width:56px;height:56px;}
       .topnav-logo-text span{font-size:16px;letter-spacing:.8px;}
       .topnav-spacer{flex:0 0 32px;max-width:32px;}
     }
     @media (max-width:640px){
-      .topnav{padding:0 10px;gap:6px;}
-      .topnav-logo img{width:42px;height:42px;}
-      .topnav-logo-text span{font-size:11px;}
+      .topnav{padding:0 8px;gap:5px;}
+      .topnav-logo img{width:40px;height:40px;}
+      .topnav-logo-text span{font-size:10px;}
       .visitor-banner{width:30px;height:30px;font-size:14px;}
       .user-chip{max-width:40px;}
       .btn-icon{width:32px;height:32px;font-size:15px;}
       #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
+      #nav-rolebadge{font-size:9px;padding:2px 5px;}
     }
     @media (max-width:480px){
-      .topnav{padding:0 8px;gap:4px;}
-      .topnav-logo img{width:38px;height:38px;}
-      .topnav-logo-text span{font-size:9px;letter-spacing:.2px;}
+      .topnav{padding:0 6px;gap:4px;}
+      .topnav-logo img{width:36px;height:36px;}
+      .topnav-logo-text{max-width:0;opacity:0;pointer-events:none;}
       .visitor-banner{width:28px;height:28px;font-size:13px;}
-      #nav-rolebadge{font-size:10px;}
-      .user-chip{max-width:40px;}
+      #nav-rolebadge{font-size:9px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+      .user-chip{max-width:36px;padding:3px;}
       .btn-icon{width:30px;height:30px;font-size:14px;}
       .btn-hamburger{display:flex;}
       #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
     }
     @media (max-width:360px){
-      .topnav{padding:0 6px;gap:3px;}
-      .topnav-logo img{width:34px;height:34px;}
-      .topnav-logo-text span{font-size:8px;letter-spacing:.1px;}
+      .topnav{padding:0 4px;gap:3px;}
+      .topnav-logo img{width:32px;height:32px;}
+      .topnav-logo-text{max-width:0;opacity:0;pointer-events:none;}
       .visitor-banner{width:26px;height:26px;font-size:12px;}
-      .user-chip{padding:4px;}
+      #nav-rolebadge{display:none;}
+      .user-chip{padding:3px;}
       .btn-icon{width:28px;height:28px;font-size:13px;}
     }
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px;cursor:pointer;transition:background .2s;}
@@ -7048,6 +7052,9 @@ function openProfileQrModal(){
   const url = buildQrUrl(uid);
   drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
   drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
+  // Propriétaire voit toujours ses boutons Imprimer/Télécharger
+  const actEl = document.querySelector('.qr-profile-actions');
+  if(actEl) actEl.style.display = '';
   document.getElementById('qr-profile-modal').classList.add('open');
 }
 function closeProfileQrModal(){
@@ -7117,9 +7124,22 @@ function openActorQrZoom(uid, role){
   const url = buildQrUrl(uid);
   drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
   drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
-  // Masquer les boutons Télécharger et Imprimer pour les visiteurs
+  // Afficher les boutons Imprimer/Télécharger uniquement pour : propriétaire, employeur (club/asso/fédé) ou admin
   const actionsEl = document.querySelector('.qr-profile-actions');
-  if(actionsEl) actionsEl.style.display = isVisitor ? 'none' : '';
+  if(actionsEl){
+    const isQrOwner = currentUser && currentUser.uid === uid;
+    const isAdminUser = userProfile && userProfile.role === 'admin';
+    const isEmployerOfActor = userProfile
+      && ['club','association','federation'].includes(userProfile.role)
+      && (() => {
+          const targetActor = allActors.find(a=>(a.id||a.uid)===uid)||{};
+          const clubName = (userProfile.nomOrganisation||'').trim().toLowerCase();
+          const actorClub = (targetActor.club||'').trim().toLowerCase();
+          return clubName && actorClub && actorClub === clubName;
+        })();
+    const canSeeQrActions = isQrOwner || isAdminUser || isEmployerOfActor;
+    actionsEl.style.display = canSeeQrActions ? '' : 'none';
+  }
   document.getElementById('qr-profile-modal').classList.add('open');
 }
 
@@ -7500,6 +7520,51 @@ window.lookupManualGscId = lookupManualGscId;
   });
   
   observer.observe(document.body, {childList: true, subtree: true});
+})();
+</script>
+
+<!-- ══ TOPNAV ADAPTIVE LAYOUT — prevent icon overflow ══ -->
+<script>
+(function(){
+  function adaptTopnav(){
+    const nav = document.querySelector('.topnav');
+    const logoText = document.querySelector('.topnav-logo-text');
+    if(!nav) return;
+    // Measure total natural width of all flex children except the spacer
+    const spacer = nav.querySelector('.topnav-spacer');
+    let used = 0;
+    nav.querySelectorAll('.topnav > *:not(.topnav-spacer)').forEach(el=>{
+      if(el.offsetWidth) used += el.offsetWidth + parseInt(getComputedStyle(nav).gap||'0');
+    });
+    const available = nav.offsetWidth;
+    // If items overflow, collapse logo text first
+    if(logoText){
+      if(available - used < 40){
+        logoText.style.maxWidth = '0';
+        logoText.style.opacity = '0';
+        logoText.style.overflow = 'hidden';
+      } else {
+        logoText.style.maxWidth = '';
+        logoText.style.opacity = '';
+        logoText.style.overflow = '';
+      }
+    }
+  }
+  window.addEventListener('resize', adaptTopnav);
+  document.addEventListener('DOMContentLoaded', adaptTopnav);
+  // Re-run after auth state changes (icons toggle visibility)
+  const _origUpdateNav = window.updateNavUI;
+  window.updateNavUI = function(){
+    if(_origUpdateNav) _origUpdateNav.apply(this, arguments);
+    setTimeout(adaptTopnav, 50);
+  };
+  // Also observe topnav for child changes (icons shown/hidden)
+  const navObserver = new MutationObserver(()=>setTimeout(adaptTopnav,30));
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const nav = document.querySelector('.topnav');
+    if(nav) navObserver.observe(nav, {attributes:true, subtree:true, childList:true, attributeFilter:['style','class']});
+    adaptTopnav();
+  });
 })();
 </script>
 
