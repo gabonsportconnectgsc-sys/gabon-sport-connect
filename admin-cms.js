@@ -101,31 +101,19 @@
   ];
 
   function injectCmsUI() {
-    if (document.getElementById('nav-cms')) return;
-    
-    var navLabel = document.querySelector('.sidebar-nav .nav-label:last-of-type');
-    var navBtn = document.createElement('button');
-    navBtn.className = 'nav-item';
-    navBtn.id = 'nav-cms';
-    navBtn.innerHTML = '<span class="nav-icon">🎨</span><span>CMS &amp; Apparence</span>';
-    
-    var openAppBtn = document.getElementById('nav-open-app');
-    if (openAppBtn && openAppBtn.parentNode) {
-      openAppBtn.parentNode.insertBefore(navBtn, openAppBtn);
-    } else if (navLabel && navLabel.parentNode) {
-      navLabel.parentNode.appendChild(navBtn);
-    }
+    // Guard: ne ré-injecter que la section div#cms si elle est absente.
+    // Les boutons #nav-cms et #mnav-cms sont déjà présents dans le HTML statique —
+    // inutile de les recréer ici.
+    if (document.getElementById('cms')) return;
 
-    if (!document.getElementById('cms')) {
-      var mainContent = document.querySelector('.main-content');
-      if (!mainContent) return;
-      
-      var section = document.createElement('div');
-      section.id = 'cms';
-      section.className = 'section';
-      section.innerHTML = buildCmsHTML();
-      mainContent.appendChild(section);
-    }
+    var mainContent = document.querySelector('.main-content');
+    if (!mainContent) return;
+
+    var section = document.createElement('div');
+    section.id = 'cms';
+    section.className = 'section';
+    section.innerHTML = buildCmsHTML();
+    mainContent.appendChild(section);
   }
 
   function buildCmsHTML() {
@@ -898,8 +886,12 @@
   function init() {
     injectCmsUI();
     wireEvents();
+    // Brancher les deux boutons de navigation (desktop + mobile) sur showCmsSection.
+    // admin-controller.wireNav() ne doit PAS inclure 'cms' pour éviter le double conflit.
     var navBtn = document.getElementById('nav-cms');
     if (navBtn) navBtn.addEventListener('click', showCmsSection);
+    var mnavBtn = document.getElementById('mnav-cms');
+    if (mnavBtn) mnavBtn.addEventListener('click', showCmsSection);
   }
 
   if (document.readyState === 'loading') {

@@ -155,7 +155,7 @@
   }
 
   function wireNav() {
-    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents', 'sites', 'actualites', 'qrscan', 'verification', 'rapports', 'cms'].forEach(name => {
+    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents', 'sites', 'actualites', 'qrscan', 'verification', 'rapports'].forEach(name => {
       document.getElementById('nav-' + name)?.addEventListener('click', () => switchSection(name));
       document.getElementById('mnav-' + name)?.addEventListener('click', () => switchSection(name));
     });
