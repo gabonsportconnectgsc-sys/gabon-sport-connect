@@ -139,7 +139,7 @@
 
     const titleEl = document.getElementById('topbar-title');
     if (titleEl && titleEl.firstChild) {
-      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents', verification: 'Vérification', sites: 'Sites sportifs', actualites: 'Actualités', carte: 'Carte des sites' };
+      const labels = { dashboard: 'Dashboard', joueurs: 'Joueurs', photos: 'Photos & Logos', matchs: 'Matchs', rapports: 'Rapports', documents: 'Documents', verification: 'Vérification', sites: 'Sites sportifs', actualites: 'Actualités', carte: 'Carte des sites', cms: 'CMS' };
       titleEl.firstChild.textContent = labels[name] || name;
     }
     document.getElementById('sidebar')?.classList.remove('open');
@@ -155,7 +155,7 @@
   }
 
   function wireNav() {
-    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents', 'sites', 'actualites'].forEach(name => {
+    ['dashboard', 'joueurs', 'photos', 'matchs', 'documents', 'sites', 'actualites', 'qrscan', 'verification', 'rapports', 'cms'].forEach(name => {
       document.getElementById('nav-' + name)?.addEventListener('click', () => switchSection(name));
       document.getElementById('mnav-' + name)?.addEventListener('click', () => switchSection(name));
     });
