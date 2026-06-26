@@ -30,7 +30,8 @@
     supporter: '💗 Supporter',
     eleve_etudiant: '🎓 Élève / Étudiant',
     sportif_etranger: '🌍 Sportif étranger',
-    ecole_universite: '🏫 École/Université'
+    ecole_universite: '🏫 École/Université',
+    handisport: '🦾 Sportif handisport'
   };
   const ROLE_COLORS = {
     joueur: '#009E60',
@@ -44,17 +45,18 @@
     supporter: '#ec4899',
     eleve_etudiant: '#6366f1',
     sportif_etranger: '#ca8a04',
-    ecole_universite: '#059669'
+    ecole_universite: '#059669',
+    handisport: '#7c3aed'
   };
   const DASH_ROLES = [
     'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'supporter', 'independant', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite'
+    'sportif_etranger', 'ecole_universite', 'handisport'
   ];
   const GROUP_ORDER = [
     'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'independant', 'supporter', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite'
+    'sportif_etranger', 'ecole_universite', 'handisport'
   ];
   const NIVEAU_ORDER = ['International', 'National', 'Regional', 'Amateur'];
   const SECONDARY_GROUP_CONFIG = {
@@ -68,6 +70,7 @@
     federation: { getKey: a => a.niveau || 'National', label: v => '🏛️ ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
     eleve_etudiant: { getKey: a => a.etablissement, label: v => '🎓 ' + v, fallback: 'Établissement non précisé' },
     sportif_etranger: { getKey: a => a.nationalite, label: v => '🌍 ' + v, fallback: 'Nationalité non précisée' },
+    handisport: { getKey: a => a.disciplineParaSport, label: v => '🦾 ' + v, fallback: 'Discipline non précisée' },
     supporter: { getKey: a => a.club || a.ville, label: v => '💗 ' + v, fallback: 'Non précisé' }
   };
 
@@ -579,6 +582,28 @@
     document.getElementById('modal-club').value = u.club || u.nomOrganisation || u.nomEtablissement || '';
     document.getElementById('modal-titre-perso').value = u.titrePersonnalise || '';
 
+    const hsSection = document.getElementById('modal-handisport-section');
+    if (hsSection) {
+      const isHandisport = u.role === 'handisport';
+      hsSection.style.display = isHandisport ? 'block' : 'none';
+      if (isHandisport) {
+        document.getElementById('modal-hs-categorie').value = u.handicapCategorie || '';
+        document.getElementById('modal-hs-precision').value = u.handicapPrecision || '';
+        document.getElementById('modal-hs-classe').value = u.classeSportive || '';
+        document.getElementById('modal-hs-classificateur').value = u.organismeClassificateur || '';
+        document.getElementById('modal-hs-discipline').value = u.disciplineParaSport || '';
+        document.getElementById('modal-hs-niveau').value = u.niveauParaSport || '';
+        document.getElementById('modal-hs-cadre').value = u.cadrePratique || 'federation';
+        document.getElementById('modal-hs-licence-num').value = u.licenceFegoph || '';
+        document.getElementById('modal-hs-carte').value = u.carteInvalidite ? 'oui' : 'non';
+        document.getElementById('modal-hs-guide').value = u.besoinGuide ? 'oui' : 'non';
+        document.getElementById('modal-hs-guide-nom').value = u.nomGuide || '';
+        const equipSel = document.getElementById('modal-hs-equipement');
+        const equipVals = Array.isArray(u.equipementsAdaptes) ? u.equipementsAdaptes : [];
+        Array.from(equipSel.options).forEach(o => { o.selected = equipVals.includes(o.value); });
+      }
+    }
+
     const ownershipRow = document.getElementById('modal-ownership-row');
     if (ownershipRow) {
       if (u.editLocked) {
@@ -631,6 +656,22 @@
       club: document.getElementById('modal-club').value || null,
       titrePersonnalise: document.getElementById('modal-titre-perso').value || null
     };
+    if (u.role === 'handisport') {
+      Object.assign(updates, {
+        handicapCategorie: document.getElementById('modal-hs-categorie').value || null,
+        handicapPrecision: document.getElementById('modal-hs-precision').value || null,
+        classeSportive: document.getElementById('modal-hs-classe').value || null,
+        organismeClassificateur: document.getElementById('modal-hs-classificateur').value || null,
+        disciplineParaSport: document.getElementById('modal-hs-discipline').value || null,
+        niveauParaSport: document.getElementById('modal-hs-niveau').value || null,
+        cadrePratique: document.getElementById('modal-hs-cadre').value || null,
+        licenceFegoph: document.getElementById('modal-hs-licence-num').value || null,
+        carteInvalidite: document.getElementById('modal-hs-carte').value === 'oui',
+        besoinGuide: document.getElementById('modal-hs-guide').value === 'oui',
+        nomGuide: document.getElementById('modal-hs-guide-nom').value || null,
+        equipementsAdaptes: Array.from(document.getElementById('modal-hs-equipement').selectedOptions).map(o => o.value)
+      });
+    }
     try {
       await withAuth(() => window.db.collection('users').doc(id).update(updates));
       toast('Acteur mis à jour', 'success');

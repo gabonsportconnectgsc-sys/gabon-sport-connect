@@ -923,6 +923,11 @@ tr.is-demo-row td { opacity: .82; }
                 <div class="tile-count" id="rc-ecole-universite">—</div>
                 <div class="tile-name">Écoles/Univ.</div>
               </div>
+              <div class="role-tile clickable" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" onclick="window.gscGoToFiltered({roles:'handisport', title:'Sportifs handisport'})">
+                <div class="tile-icon">🦾</div>
+                <div class="tile-count" id="rc-handisport">—</div>
+                <div class="tile-name">Handisport</div>
+              </div>
             </div>
           </div>
         </div>
@@ -944,6 +949,7 @@ tr.is-demo-row td { opacity: .82; }
           <button class="filter-btn role-independant">🚴 Indépendants</button>
           <button class="filter-btn role-eleve_etudiant">🎓 Élèves/Étudiants</button>
           <button class="filter-btn role-sportif_etranger">🌍 Sportifs étrangers</button>
+          <button class="filter-btn role-handisport">🦾 Handisport</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
         </div>
         <div class="users-table-wrap">
@@ -1343,6 +1349,80 @@ tr.is-demo-row td { opacity: .82; }
           <div class="field"><label>Club</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
         </div>
       </div>
+      <div class="msection" id="modal-handisport-section" style="display:none;">
+        <div class="msection-title">♿ Profil sportif handisport</div>
+        <div class="grid2">
+          <div class="field"><label>Type de déficience</label>
+            <select id="modal-hs-categorie">
+              <option value="">—</option>
+              <option value="visuelle">👁️ Déficience visuelle</option>
+              <option value="auditive">👂 Déficience auditive</option>
+              <option value="motrice_amputation">🦵 Amputation / déficience des membres</option>
+              <option value="motrice_paralysie">🧠 Paralysie cérébrale / lésion cérébrale</option>
+              <option value="motrice_moelle">🦽 Lésion médullaire</option>
+              <option value="motrice_autre">🚶 Autre déficience motrice</option>
+              <option value="intellectuelle">🧩 Déficience intellectuelle</option>
+              <option value="multiple">➕ Déficiences multiples</option>
+              <option value="autre">📋 Autre</option>
+            </select>
+          </div>
+          <div class="field"><label>Précision</label><input type="text" id="modal-hs-precision" placeholder="ex: amputation tibiale droite…"></div>
+          <div class="field"><label>Classe sportive</label><input type="text" id="modal-hs-classe" placeholder="ex: T44, S9, BC3…"></div>
+          <div class="field"><label>Organisme classificateur</label>
+            <select id="modal-hs-classificateur">
+              <option value="">—</option>
+              <option>Fégoph (Fédération Gabonaise Omnisports pour Personnes Handicapées)</option>
+              <option>Comité Paralympique Gabonais</option>
+              <option>Fédération internationale du sport (IPC / IBSA / ICSD…)</option>
+              <option>Non classifié(e) à ce jour</option>
+            </select>
+          </div>
+          <div class="field"><label>Discipline para-sportive</label>
+            <select id="modal-hs-discipline">
+              <option value="">—</option>
+              <option>Para-athlétisme</option><option>Para-natation</option><option>Basketball fauteuil</option>
+              <option>Volleyball assis</option><option>Goalball (cécité)</option><option>Cécifoot (football à 5)</option>
+              <option>Boccia</option><option>Para-judo (déficients visuels)</option><option>Para-taekwondo</option>
+              <option>Para-cyclisme</option><option>Tennis de table adapté</option><option>Football amputés</option>
+              <option>Rugby fauteuil</option><option>Para-tir sportif</option><option>Autre</option>
+            </select>
+          </div>
+          <div class="field"><label>Niveau de pratique</label>
+            <select id="modal-hs-niveau">
+              <option value="">—</option>
+              <option>Loisir / Initiation</option><option>Amateur / Club</option><option>National</option><option>International / Paralympique</option>
+            </select>
+          </div>
+          <div class="field"><label>Cadre de pratique</label>
+            <select id="modal-hs-cadre">
+              <option value="federation">Fégoph / Comité Paralympique Gabonais</option>
+              <option value="club_ordinaire">Club ordinaire, section adaptée</option>
+              <option value="independant">Indépendant, hors structure fédérale</option>
+              <option value="etablissement">Établissement spécialisé / centre de rééducation</option>
+            </select>
+          </div>
+          <div class="field"><label>N° Licence Fégoph</label><input type="text" id="modal-hs-licence-num" placeholder="N° de licence"></div>
+          <div class="field"><label>Carte d'invalidité reconnue</label>
+            <select id="modal-hs-carte"><option value="non">Non / pas encore</option><option value="oui">Oui</option></select>
+          </div>
+          <div class="field"><label>Besoin guide / accompagnateur</label>
+            <select id="modal-hs-guide"><option value="non">Non</option><option value="oui">Oui</option></select>
+          </div>
+          <div class="field"><label>Nom du guide</label><input type="text" id="modal-hs-guide-nom" placeholder="Si applicable"></div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Équipements adaptés utilisés</label>
+          <select id="modal-hs-equipement" multiple style="min-height:84px;width:100%;">
+            <option>Fauteuil roulant de sport</option>
+            <option>Prothèse de course / sportive</option>
+            <option>Canne / appui de marche</option>
+            <option>Guide / accompagnateur sportif (cécité)</option>
+            <option>Aide auditive (hors compétition selon règlement)</option>
+            <option>Casque de protection adapté</option>
+            <option>Aucun équipement spécifique</option>
+          </select>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="btn btn-primary">💾 Enregistrer</button>
         <button class="btn btn-secondary">Fermer</button>
@@ -1613,6 +1693,8 @@ tr.is-demo-row td { opacity: .82; }
     if (!body) return;
     const now = new Date();
     const statusKey = u.status || 'active';
+    const HS_CAT_LABELS_RPT = {visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
+    const isHandisportRpt = u.role === 'handisport';
     body.innerHTML = `
       <div class="report-meta-line">Émis le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · GSC-ID ${esc(indivGscId(u))}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;">
@@ -1625,12 +1707,22 @@ tr.is-demo-row td { opacity: .82; }
               <tr><td style="font-weight:700">Téléphone</td><td>${esc(u.telephone || u.phone || '—')}</td></tr>
               <tr><td style="font-weight:700">Club / Organisation</td><td>${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td></tr>
               <tr><td style="font-weight:700">Inscrit le</td><td>${window.AdminController_fmtDate ? esc(window.AdminController_fmtDate(u.createdAt)) : '—'}</td></tr>
+              ${isHandisportRpt ? `
+              <tr><td style="font-weight:700">Type de déficience</td><td>${esc(HS_CAT_LABELS_RPT[u.handicapCategorie] || u.handicapCategorie || '—')}</td></tr>
+              <tr><td style="font-weight:700">Classe sportive</td><td>${esc(u.classeSportive || '—')}${u.organismeClassificateur ? ' — ' + esc(u.organismeClassificateur) : ''}</td></tr>
+              <tr><td style="font-weight:700">Discipline para-sportive</td><td>${esc(u.disciplineParaSport || '—')}</td></tr>
+              <tr><td style="font-weight:700">Niveau</td><td>${esc(u.niveauParaSport || '—')}</td></tr>
+              <tr><td style="font-weight:700">Guide / accompagnateur</td><td>${u.besoinGuide ? '✅ ' + esc(u.nomGuide || 'Oui') : 'Non'}</td></tr>
+              <tr><td style="font-weight:700">Équipements adaptés</td><td>${esc((u.equipementsAdaptes||[]).join(', ') || '—')}</td></tr>
+              <tr><td style="font-weight:700">Carte d'invalidité</td><td>${u.carteInvalidite ? '✅ Reconnue' : 'Non renseignée'}</td></tr>
+              ` : `
               <tr><td style="font-weight:700">Taille</td><td>${esc(u.taille || '—')}</td></tr>
               <tr><td style="font-weight:700">Poids</td><td>${esc(u.poids || '—')}</td></tr>
               <tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>
               <tr><td style="font-weight:700">Matchs joués</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
               <tr><td style="font-weight:700">Buts marqués</td><td>${esc(u.buts || 0)}</td></tr>
               <tr><td style="font-weight:700">Passes décisives</td><td>${esc(u.passes || 0)}</td></tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -2231,6 +2323,7 @@ tr.is-demo-row td { opacity: .82; }
       setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
       setText('rc-sportif-etranger',countRole('sportif_etranger'));
       setText('rc-ecole-universite',countRole('ecole_universite'));
+      setText('rc-handisport',countRole('handisport'));
       // Tuile acteurs réels (non-démo)
       const reelEl=document.getElementById('rc-reels');
       if(reelEl) reelEl.textContent=snap.docs.filter(d=>!d.data().isDemo).length;

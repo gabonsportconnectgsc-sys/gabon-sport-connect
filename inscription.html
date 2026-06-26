@@ -380,6 +380,7 @@
           <div class="role-tile" data-role="independant" onclick="pickRole('independant',this)"><div class="rt-icon">🧍</div><div class="rt-label">Indépendant</div><div class="rt-desc">Sportif sans structure</div></div>
           <div class="role-tile" data-role="association" onclick="pickRole('association',this)"><div class="rt-icon">🤝</div><div class="rt-label">Association</div><div class="rt-desc">Organisation sportive</div></div>
           <div class="role-tile" data-role="eleve_etudiant" onclick="pickRole('eleve_etudiant',this)"><div class="rt-icon">🎓</div><div class="rt-label">Élève / Étudiant</div><div class="rt-desc">Espoir sportif</div></div>
+          <div class="role-tile" data-role="handisport" onclick="pickRole('handisport',this)"><div class="rt-icon">🦾</div><div class="rt-label">Sportif handisport</div><div class="rt-desc">Para-sport, en fédération ou indépendant</div></div>
         </div>
         <div id="a-role-err" class="err-msg" style="margin-top:8px;"></div>
         <div style="margin-top:14px;"><button class="btn-p" onclick="goToActeurForm()">Continuer →</button></div>
@@ -410,6 +411,12 @@
         </div>
         <div class="fg"><label>Email *</label><div class="fg-icon"><span class="fi">✉️</span><input type="email" id="a-email" placeholder="votre@email.com" autocomplete="email"/></div></div>
         <div class="fg"><label>Téléphone</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <div class="form-row">
+          <div class="fg"><label>Sexe *</label>
+            <select id="a-sexe"><option value="">—</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+          </div>
+          <div class="fg"><label>Date de naissance</label><input type="date" id="a-ddn" max="2010-12-31"/></div>
+        </div>
         <div class="fg"><label>Mot de passe *</label><div class="fg-icon"><span class="fi">🔒</span><input type="password" id="a-pw" placeholder="6 caractères minimum" autocomplete="new-password"/></div></div>
         <div class="section-sep">Informations sportives</div>
         <div class="fg">
@@ -583,6 +590,116 @@
             <select id="a-licence"><option value="">Niveau</option><option>Régional</option><option>National</option><option>International</option><option>CAF</option><option>FIFA / Fédération internationale</option></select>
           </div>
         </div>
+        <!-- Champs sportif en situation de handicap (para-sport / handisport) -->
+        <div class="extra" id="ex-handisport">
+          <div class="notice" style="background:#eef2ff;border-color:rgba(99,102,241,.25);color:#3730a3;">
+            <span>♿</span><span>Ces informations permettent d'adapter votre fiche, votre classification sportive et l'accompagnement proposé. Elles restent confidentielles et ne sont visibles que par vous et l'administration GSC.</span>
+          </div>
+
+          <!-- TYPE DE DÉFICIENCE -->
+          <div class="subsection">🩺 Type de déficience (catégories du Comité Paralympique International)</div>
+          <div class="fg">
+            <label>Catégorie principale *</label>
+            <select id="a-hs-categorie" onchange="onHandisportCategorieChange()">
+              <option value="">Sélectionner…</option>
+              <option value="visuelle">👁️ Déficience visuelle (basse vision / cécité)</option>
+              <option value="auditive">👂 Déficience auditive (surdité / malentendance)</option>
+              <option value="motrice_amputation">🦵 Amputation / déficience des membres</option>
+              <option value="motrice_paralysie">🧠 Paralysie cérébrale / lésion cérébrale</option>
+              <option value="motrice_moelle">🦽 Lésion médullaire (paraplégie / tétraplégie)</option>
+              <option value="motrice_autre">🚶 Autre déficience motrice (force musculaire, amplitude articulaire, stature)</option>
+              <option value="intellectuelle">🧩 Déficience intellectuelle</option>
+              <option value="multiple">➕ Déficiences multiples / polyhandicap</option>
+              <option value="autre">📋 Autre (à préciser)</option>
+            </select>
+          </div>
+          <div class="fg" id="hs-precision-wrap" style="display:none;">
+            <label>Précision sur la déficience</label>
+            <input type="text" id="a-hs-precision" placeholder="ex: amputation tibiale droite, surdité bilatérale…"/>
+          </div>
+
+          <!-- CLASSIFICATION SPORTIVE -->
+          <div class="subsection">🏷️ Classification sportive officielle</div>
+          <div class="form-row">
+            <div class="fg"><label>Classe / Catégorie de compétition</label>
+              <input type="text" id="a-hs-classe" placeholder="ex: T44, S9, BC3, F40, B2…"/>
+              <div class="form-hint">Selon le système de classification de votre discipline (athlétisme, natation, boccia, etc.). Laissez vide si non classifié(e).</div>
+            </div>
+            <div class="fg"><label>Organisme classificateur</label>
+              <select id="a-hs-classificateur">
+                <option value="">—</option>
+                <option>Fégoph (Fédération Gabonaise Omnisports pour Personnes Handicapées)</option>
+                <option>Comité Paralympique Gabonais</option>
+                <option>Fédération internationale du sport (IPC / IBSA / ICSD…)</option>
+                <option>Non classifié(e) à ce jour</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CADRE DE PRATIQUE -->
+          <div class="subsection">🏛️ Cadre de pratique</div>
+          <div class="fg">
+            <label>Vous pratiquez…</label>
+            <select id="a-hs-cadre">
+              <option value="federation">Au sein de la Fégoph / Comité Paralympique Gabonais</option>
+              <option value="club_ordinaire">Dans un club ordinaire avec section adaptée</option>
+              <option value="independant">En indépendant, hors structure fédérale</option>
+              <option value="etablissement">Dans un établissement spécialisé / centre de rééducation</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Discipline para-sportive</label>
+              <select id="a-hs-discipline">
+                <option value="">Choisir…</option>
+                <option>Para-athlétisme</option><option>Para-natation</option><option>Basketball fauteuil</option>
+                <option>Volleyball assis</option><option>Goalball (cécité)</option><option>Cécifoot (football à 5)</option>
+                <option>Boccia</option><option>Para-judo (déficients visuels)</option><option>Para-taekwondo</option>
+                <option>Para-cyclisme</option><option>Tennis de table adapté</option><option>Football amputés</option>
+                <option>Rugby fauteuil</option><option>Para-tir sportif</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="fg"><label>Niveau de pratique</label>
+              <select id="a-hs-niveau"><option value="">Niveau</option><option>Loisir / Initiation</option><option>Amateur / Club</option><option>National</option><option>International / Paralympique</option></select>
+            </div>
+          </div>
+          <div class="fg"><label>Club / Structure d'accueil</label><input type="text" id="a-hs-club" placeholder="Nom du club ou de la structure"/></div>
+
+          <!-- AIDES TECHNIQUES & ACCOMPAGNEMENT -->
+          <div class="subsection">🦽 Aides techniques & accompagnement</div>
+          <div class="fg">
+            <label>Équipement(s) utilisé(s) en pratique sportive</label>
+            <select id="a-hs-equipement" multiple style="min-height:84px;">
+              <option>Fauteuil roulant de sport</option>
+              <option>Prothèse de course / sportive</option>
+              <option>Canne / appui de marche</option>
+              <option>Guide / accompagnateur sportif (cécité)</option>
+              <option>Aide auditive (hors compétition selon règlement)</option>
+              <option>Casque de protection adapté</option>
+              <option>Aucun équipement spécifique</option>
+            </select>
+            <div class="form-hint">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs options.</div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Besoin d'un(e) guide / accompagnateur sportif ?</label>
+              <select id="a-hs-guide"><option value="non">Non</option><option value="oui">Oui</option></select>
+            </div>
+            <div class="fg"><label>Nom du guide / accompagnateur (optionnel)</label><input type="text" id="a-hs-guide-nom" placeholder="Si applicable"/></div>
+          </div>
+
+          <!-- LICENCE & SUIVI MÉDICAL -->
+          <div class="subsection">🪪 Licence & suivi</div>
+          <div class="form-row">
+            <div class="fg"><label>Licence Fégoph / fédération sportive</label><input type="text" id="a-hs-licence-num" placeholder="N° de licence (si applicable)"/></div>
+            <div class="fg"><label>Carte d'invalidité / reconnaissance officielle</label>
+              <select id="a-hs-carte"><option value="">—</option><option value="oui">Oui, je possède une carte officielle</option><option value="non">Non / pas encore</option></select>
+            </div>
+          </div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours sportif (optionnel)</label><textarea id="a-hs-bio" placeholder="Votre parcours, vos ambitions, vos performances…"></textarea></div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-hs-palmares" placeholder="ex: Médaillé Jeux Africains 2023, Sélection paralympique…"></textarea></div>
+        </div>
         <div class="cb-row"><input type="checkbox" id="a-cgu" checked/><label for="a-cgu">J'accepte les <a style="color:var(--green-dk);font-weight:600;">Conditions Générales</a> et la <a style="color:var(--green-dk);font-weight:600;">Politique de confidentialité</a>.</label></div>
         <div class="cb-row"><input type="checkbox" id="a-exact"/><label for="a-exact">Je certifie que les informations fournies sont exactes et me concernent personnellement.</label></div>
         <div id="a-err" class="err-msg"></div>
@@ -708,7 +825,7 @@
     joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
     association:'ASS', federation:'FED', independant:'IND',
     admin:'ADM', supporter:'SUP', organisateur:'ORG',
-    eleve_etudiant:'ELE', sportif_etranger:'ETR'
+    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
   };
 
   function generateGscId(uid, role) {
@@ -726,7 +843,8 @@
   const ROLE_LABELS = {
     joueur:'⚽ Joueur / Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
-    association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant'
+    association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
+    handisport:'🦾 Sportif handisport'
   };
 
   let selectedRole = null;
@@ -767,8 +885,16 @@
     document.getElementById('ex-joueur').classList.toggle('show', ['joueur','independant','eleve_etudiant'].includes(selectedRole));
     document.getElementById('ex-org').classList.toggle('show', ['club','federation','association'].includes(selectedRole));
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
+    document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
     show('s2a');
   }
+
+  function onHandisportCategorieChange() {
+    const cat = document.getElementById('a-hs-categorie')?.value || '';
+    const wrap = document.getElementById('hs-precision-wrap');
+    if (wrap) wrap.style.display = cat ? 'block' : 'none';
+  }
+  window.onHandisportCategorieChange = onHandisportCategorieChange;
 
   function toast(msg, type='success') {
     const t = document.getElementById('toast');
@@ -846,6 +972,8 @@
     const nom    = document.getElementById('a-nom').value.trim();
     const email  = document.getElementById('a-email').value.trim();
     const tel    = document.getElementById('a-tel').value.trim();
+    const sexe   = document.getElementById('a-sexe')?.value || '';
+    const ddn    = document.getElementById('a-ddn')?.value || '';
     const pw     = document.getElementById('a-pw').value;
     const sport  = document.getElementById('a-sport').value;
     const ville  = document.getElementById('a-ville').value;
@@ -875,6 +1003,23 @@
     const agent        = isJoueurRole ? (document.getElementById('a-agent')?.value?.trim() || '') : '';
     const bio          = isJoueurRole ? (document.getElementById('a-bio')?.value?.trim() || '').slice(0,500) : '';
     const palmares     = isJoueurRole ? (document.getElementById('a-palmares')?.value?.trim() || '') : '';
+    // Champs enrichis sportif handisport
+    const isHandisportRole = selectedRole === 'handisport';
+    const hsCategorie     = isHandisportRole ? (document.getElementById('a-hs-categorie')?.value || '') : '';
+    const hsPrecision     = isHandisportRole ? (document.getElementById('a-hs-precision')?.value?.trim() || '') : '';
+    const hsClasse        = isHandisportRole ? (document.getElementById('a-hs-classe')?.value?.trim() || '') : '';
+    const hsClassificateur= isHandisportRole ? (document.getElementById('a-hs-classificateur')?.value || '') : '';
+    const hsCadre         = isHandisportRole ? (document.getElementById('a-hs-cadre')?.value || '') : '';
+    const hsDiscipline    = isHandisportRole ? (document.getElementById('a-hs-discipline')?.value || '') : '';
+    const hsNiveau        = isHandisportRole ? (document.getElementById('a-hs-niveau')?.value || '') : '';
+    const hsClub          = isHandisportRole ? (document.getElementById('a-hs-club')?.value?.trim() || '') : '';
+    const hsEquipement     = isHandisportRole ? Array.from(document.getElementById('a-hs-equipement')?.selectedOptions || []).map(o => o.value) : [];
+    const hsGuide          = isHandisportRole ? (document.getElementById('a-hs-guide')?.value || 'non') : 'non';
+    const hsGuideNom       = isHandisportRole ? (document.getElementById('a-hs-guide-nom')?.value?.trim() || '') : '';
+    const hsLicenceNum     = isHandisportRole ? (document.getElementById('a-hs-licence-num')?.value?.trim() || '') : '';
+    const hsCarte          = isHandisportRole ? (document.getElementById('a-hs-carte')?.value || '') : '';
+    const hsBio            = isHandisportRole ? (document.getElementById('a-hs-bio')?.value?.trim() || '').slice(0,500) : '';
+    const hsPalmares       = isHandisportRole ? (document.getElementById('a-hs-palmares')?.value?.trim() || '') : '';
     // Droits & propriété
     const ownershipChoice   = document.querySelector('input[name="ownership"]:checked')?.value || 'free_agent';
     const employerEmail     = document.getElementById('a-employer-email')?.value?.trim() || '';
@@ -890,6 +1035,8 @@
     if (!ville)          { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
     if (['club','federation','association'].includes(selectedRole) && !org) {
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
+    if (isHandisportRole && !hsCategorie) {
+                           errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
     if (!cgu)            { errMsg('a-err','Vous devez accepter les conditions d\'utilisation.'); return; }
     if (!exact)          { errMsg('a-err','Veuillez certifier l\'exactitude de vos informations.'); return; }
     if (!_sb)            { errMsg('a-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
@@ -918,7 +1065,7 @@
 
         const profile = {
           prenom, nom, role: selectedRole, accountType: 'acteur',
-          sport, ville, telephone: tel,
+          sport, ville, telephone: tel, sexe, dateNaissance: ddn,
           poste, niveau, nomOrganisation: org, anneeCreation: annee, licence,
           // Champs enrichis joueur/athlète (vides pour les autres rôles)
           ...(isJoueurRole && {
@@ -926,6 +1073,16 @@
             physique, technique, carriere,
             contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
             bio, palmares
+          }),
+          // Champs enrichis sportif en situation de handicap (vides pour les autres rôles)
+          ...(isHandisportRole && {
+            handicapCategorie: hsCategorie, handicapPrecision: hsPrecision,
+            classeSportive: hsClasse, organismeClassificateur: hsClassificateur,
+            cadrePratique: hsCadre, disciplineParaSport: hsDiscipline, niveauParaSport: hsNiveau,
+            club: hsClub, equipementsAdaptes: hsEquipement,
+            besoinGuide: hsGuide === 'oui', nomGuide: hsGuideNom,
+            licenceFegoph: hsLicenceNum, carteInvalidite: hsCarte === 'oui',
+            bio: hsBio, palmares: hsPalmares
           }),
           gscId,          // stocké dès l'inscription pour cohérence admin ↔ public
           status: 'pending', // en attente de validation par l'admin (createdAt posé par saveProfile — référence pour le délai 24h)
