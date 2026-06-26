@@ -87,6 +87,10 @@
       visibility:visible !important;
       display:flex !important;
     }
+    /* Masquer le bouton login si user-chip est affiché (utilisateur connecté) */
+    .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn {
+      display:none !important;
+    }
     .topnav .btn-icon[style*="display:none"], 
     .topnav .visitor-banner[style*="display:none"],
     .topnav .user-chip[style*="display:none"] {
@@ -2447,7 +2451,6 @@
       <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>👤</span>'">Profil
     </button>
     <button class="bnav-item" id="bnav-admin" onclick="showView('admin')" style="display:none;"><span class="bnav-icon">⚙️</span>Admin</button>
-    <button class="bnav-item" id="bnav-cms" onclick="location.href='admin.html'" title="CMS & Apparences"><span class="bnav-icon">🎨</span>CMS</button>
     <button class="bnav-item" id="bnav-legal" onclick="showView('legal')">
       <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>📋</span>'">Infos
     </button>
