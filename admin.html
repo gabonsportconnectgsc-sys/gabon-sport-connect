@@ -2492,82 +2492,60 @@ tr.is-demo-row td { opacity: .82; }
   });
 
   // Vérifie que le compte connecté a bien role === 'admin'
-  // 3 niveaux de protection pour éviter les faux "Accès refusé" :
-  //   Niveau 1 — Firebase Auth SDK (lecture authentifiée, pas de quota)
-  //   Niveau 2 — REST Firestore avec retry ×3 + délai croissant
-  //   Niveau 3 — Fallback app_metadata Supabase (si SQL UPDATE exécuté)
-  //   Niveau 4 — Email de secours (filet ultime pour le compte admin connu)
   async function verifyAdminRole(uid){
     const FIREBASE_API_KEY = 'AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM';
     const PROJECT_ID       = 'gabon-sport-connect';
     const ADMIN_EMAIL      = 'gabonsportconnectgsc@gmail.com';
+    const ADMIN_UIDS       = ['iFuq1ziDpDheqvYMacnGEXAxwzK2','PZZICAtfQuQ0vlT3d0iKpGaBTKt1','4fec97e4-c6ed-49e0-83c6-ab702779c836'];
 
-    // ── Niveau 1 : Firebase Auth SDK (token authentifié, sans quota) ──────────
+    // ── Niveau 0 : UID connu ─────────────────────────────────────────────────
+    if(uid && ADMIN_UIDS.includes(uid)){
+      console.log('[GSC Admin] Niveau 0 — UID admin reconnu:', uid);
+      return true;
+    }
+
+    // ── Niveau 1 : Firebase Auth SDK ────────────────────────────────────────
     try{
       if(window.firebase && firebase.firestore){
         const doc = await firebase.firestore().collection('users').doc(uid).get();
         if(doc.exists){
           const role = doc.data()?.role || '';
-          console.log('[GSC Admin] verifyAdminRole Niveau 1 SDK — role:', role);
+          console.log('[GSC Admin] Niveau 1 SDK — role:', role);
           if(role) return role === 'admin';
         }
       }
-    }catch(e){ console.warn('[GSC Admin] Niveau 1 SDK échoué:', e.message||e); }
+    }catch(e){ console.warn('[GSC Admin] Niveau 1 échoué:', e.message||e); }
 
-    // ── Niveau 2 : REST Firestore avec retry ×3 ───────────────────────────────
+    // ── Niveau 2 : REST Firestore retry ×3 ──────────────────────────────────
     const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}?key=${FIREBASE_API_KEY}`;
     for(let attempt=1; attempt<=3; attempt++){
       try{
-        if(attempt > 1) await new Promise(r => setTimeout(r, attempt * 600)); // 600ms, 1200ms
+        if(attempt > 1) await new Promise(r => setTimeout(r, attempt * 600));
         const res = await fetch(url);
-        if(res.status === 429 || res.status >= 500){
-          console.warn(`[GSC Admin] Niveau 2 HTTP ${res.status} — tentative ${attempt}/3`);
-          continue;
-        }
-        if(!res.ok){ console.warn('[GSC Admin] Niveau 2 HTTP', res.status); break; }
+        if(res.status === 429 || res.status >= 500){ continue; }
+        if(!res.ok) break;
         const json = await res.json();
         const role = json.fields?.role?.stringValue || '';
-        console.log('[GSC Admin] verifyAdminRole Niveau 2 REST — uid:', uid, '| role:', role);
+        console.log('[GSC Admin] Niveau 2 REST — role:', role);
         if(role) return role === 'admin';
-        // Document existe mais pas de champ role → passer aux niveaux suivants
         break;
-      }catch(e){ console.warn(`[GSC Admin] Niveau 2 tentative ${attempt} échouée:`, e.message||e); }
+      }catch(e){ console.warn(`[GSC Admin] Niveau 2 tentative ${attempt}:`, e.message||e); }
     }
 
-    // ── Niveau 3 : Fallback app_metadata Supabase ─────────────────────────────
-    try{
-      if(sb){
-        const { data:{ session } } = await sb.auth.getSession();
-        if(session?.user){
-          const appMeta = session.user.app_metadata || {};
-          const role = appMeta.role || '';
-          console.log('[GSC Admin] verifyAdminRole Niveau 3 Supabase app_metadata — role:', role);
-          if(role) return role === 'admin';
-          // Vérifier aussi l'email connu directement
-          const email = session.user.email || '';
-          if(email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-            console.warn('[GSC Admin] Niveau 3 — email admin reconnu, accès accordé par email de secours.');
-            return true;
-          }
-        }
-      }
-    }catch(e){ console.warn('[GSC Admin] Niveau 3 Supabase échoué:', e.message||e); }
-
-    // ── Niveau 4 : Filet ultime — email Supabase de la session en cours ───────
-    // Utilisé uniquement si Firestore ET app_metadata sont tous les deux inaccessibles.
-    // Ce niveau doit être supprimé une fois que Firestore contient bien role='admin'.
+    // ── Niveau 3 : Email Supabase session (permanent) ───────────────────────
     try{
       if(sb){
         const { data:{ session } } = await sb.auth.getSession();
         const email = session?.user?.email || '';
+        console.log('[GSC Admin] Niveau 3 — email session:', email);
         if(email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-          console.warn('[GSC Admin] Niveau 4 email filet — Firestore inaccessible, accès accordé temporairement.');
+          console.log('[GSC Admin] Niveau 3 — email admin reconnu, accès accordé.');
           return true;
         }
       }
-    }catch(e){ console.warn('[GSC Admin] Niveau 4 échoué:', e.message||e); }
+    }catch(e){ console.warn('[GSC Admin] Niveau 3 échoué:', e.message||e); }
 
-    console.error('[GSC Admin] verifyAdminRole — tous les niveaux ont échoué pour uid:', uid);
+    console.error('[GSC Admin] Tous les niveaux ont échoué pour uid:', uid);
     return false;
   }
 
