@@ -99,6 +99,14 @@
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
       flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex !important;
     }
+    /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
+    .topnav .btn-icon,
+    .topnav .visitor-banner,
+    .topnav .user-avatar,
+    .topnav .user-chip,
+    .topnav-logo img {
+      border-radius:50% !important;
+    }
     .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn{display:none !important;}
     .topnav .btn-icon[style*="display:none"],.topnav .visitor-banner[style*="display:none"],.topnav .user-chip[style*="display:none"]{display:none !important;}
     /* Logo compressible */
