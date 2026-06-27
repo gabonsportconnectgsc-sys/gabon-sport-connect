@@ -3032,6 +3032,13 @@ async function handleSupabaseRegister(){
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  // Vérification doublon téléphone
+  if(tel && db && typeof getDocs==='function'){
+    try{
+      const telSnap=await getDocs(query(collection(db,'users'),where('telephone','==',tel)));
+      if(!telSnap.empty){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
+    }catch(e){ console.warn('Vérification téléphone:',e); }
+  }
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
@@ -3182,7 +3189,18 @@ async function onSupabaseSignedIn(user, extra){
     const prenom = extra?.prenom || user.user_metadata?.prenom || '';
     const nom = extra?.nom || user.user_metadata?.nom || '';
     delete userProfile._isNew;
-    userProfile.prenom = prenom; userProfile.nom = nom;
+    userProfile.prenom = prenom;
+    userProfile.nom = nom;
+    // Persiste tous les champs collectés à l'inscription (role, telephone, sexe, ddn, nationalite…)
+    if(extra?.role) userProfile.role = extra.role;
+    if(extra?.tel) userProfile.telephone = extra.tel;
+    if(extra?.sexe) userProfile.sexe = extra.sexe;
+    if(extra?.ddn) userProfile.dateNaissance = extra.ddn;
+    if(extra?.nationalite) userProfile.nationalite = extra.nationalite;
+    if(extra?.statut) userProfile.statut = extra.statut;
+    if(extra?.employeur) userProfile.employeur = extra.employeur;
+    if(!userProfile.status) userProfile.status = 'active';
+    userProfile.createdAt = new Date();
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
