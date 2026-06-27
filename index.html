@@ -1226,11 +1226,12 @@
 
         <!-- Rôle sportif -->
         <div class="form-group"><label>Rôle / Poste *</label>
-          <select id="auth-register-role">
+          <select id="auth-register-role" onchange="toggleSupporterOptIn()">
             <option value="joueur">⚽ Joueur / Athlète</option>
             <option value="entraineur">📋 Entraîneur / Coach</option>
             <option value="arbitre">🟨 Arbitre</option>
-            <option value="club">🏟️ Club / Association</option>
+            <option value="club">🏟️ Club sportif</option>
+            <option value="association">🤝 Association sportive</option>
             <option value="federation">🏛️ Fédération</option>
             <option value="organisateur">🎯 Organisateur</option>
             <option value="independant">🏃 Sportif indépendant</option>
@@ -1238,6 +1239,13 @@
             <option value="sportif_etranger">🌍 Sportif étranger</option>
             <option value="handisport">🦾 Sportif handisport</option>
           </select>
+        </div>
+        <div class="form-group" id="auth-register-supporter-wrap" style="display:none;">
+          <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="auth-register-supporter" style="width:18px;height:18px;accent-color:var(--green);" onchange="document.getElementById('auth-register-club-supporte').style.display=this.checked?'':'none';">
+            💗 Je suis aussi supporter d'un club
+          </label>
+          <input type="text" id="auth-register-club-supporte" placeholder="Nom du club que vous supportez" style="margin-top:8px;display:none;">
         </div>
         <div class="form-group"><label>Statut</label>
           <select id="auth-register-statut">
@@ -1887,6 +1895,14 @@
         <div class="card-body" id="club-info-display"></div>
       </div>
 
+      <!-- Devenir supporter (shown for individual roles, when not yet isSupporter) -->
+      <div class="card mb-16 fade-up" id="prof-become-supporter-card" style="display:none;">
+        <div class="card-body" style="text-align:center;padding:18px;">
+          <div style="font-size:13px;color:var(--gray-txt);margin-bottom:10px;">Vous suivez un club avec passion ?</div>
+          <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;padding:10px 20px;" onclick="openBecomeSupporterModal()">💗 Devenir supporter</button>
+        </div>
+      </div>
+
       <!-- Supporter card (shown when role=joueur and isSupporter) -->
       <div class="supporter-card fade-up" id="prof-supporter-card" style="display:none;">
         <div class="supporter-header">
@@ -1899,6 +1915,18 @@
           <div class="supporter-stat"><div class="supporter-stat-val" id="prof-supporter-abonnement" style="font-size:13px;">—</div><div class="supporter-stat-lbl">Abonnement</div></div>
         </div>
       </div>
+
+      <!-- Modal "Devenir supporter" -->
+      <div class="modal" id="modal-become-supporter" onclick="if(event.target===this)closeModal('modal-become-supporter')">
+        <div class="modal-card" style="max-width:380px;">
+          <button class="modal-close-x" onclick="closeModal('modal-become-supporter')">✕</button>
+          <h3 style="margin-bottom:14px;">💗 Devenir supporter</h3>
+          <div class="form-group"><label>Club que vous supportez *</label><input type="text" id="become-supporter-club" placeholder="ex: FC 105 (FC Canon Libreville)"></div>
+          <button class="btn-save" onclick="handleBecomeSupporter()" id="become-supporter-submit">Confirmer</button>
+          <div id="become-supporter-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+        </div>
+      </div>
+
 
       <!-- Photo gallery -->
       <div class="card mb-16 fade-up" id="prof-gallery-card" style="display:none;">
@@ -2046,7 +2074,11 @@
               <option value="club">Club</option>
               <option value="association">Association</option>
               <option value="federation">Fédération</option>
+              <option value="organisateur">Organisateur</option>
               <option value="independant">Sportif indépendant</option>
+              <option value="eleve_etudiant">Élève / Étudiant</option>
+              <option value="sportif_etranger">Sportif étranger</option>
+              <option value="handisport">Sportif handisport</option>
               <option value="admin">Admin</option>
               <option value="supporter">💗 Supporters</option>
             </select>
@@ -2606,9 +2638,11 @@
         <option value="joueur">⚽ Joueur / Athlète</option>
         <option value="arbitre">🟨 Arbitre</option>
         <option value="entraineur">📋 Entraîneur</option>
-        <option value="club">🏟️ Club / Association</option>
+        <option value="club">🏟️ Club sportif</option>
+        <option value="association">🤝 Association sportive</option>
         <option value="independant">🧍 Sportif indépendant</option>
         <option value="federation">🏛️ Fédération</option>
+        <option value="organisateur">🎯 Organisateur</option>
         <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
         <option value="sportif_etranger">🌍 Sportif étranger</option>
         <option value="handisport">🦾 Sportif handisport</option>
@@ -2971,6 +3005,7 @@ function switchAuthTab(tab){
     if(tab==='login'){ tl.style.background='var(--green-lt)';tl.style.color='var(--green-dk)';tr.style.background='#fff';tr.style.color='var(--gray-txt)'; }
     else if(tab==='register'){ tr.style.background='var(--green-lt)';tr.style.color='var(--green-dk)';tl.style.background='#fff';tl.style.color='var(--gray-txt)'; }
   }
+  if(tab==='register' && typeof toggleSupporterOptIn==='function') toggleSupporterOptIn();
 }
 window.switchAuthTab=switchAuthTab;
 
@@ -3030,6 +3065,21 @@ async function handleResendConfirmation(email){
 }
 window.handleResendConfirmation=handleResendConfirmation;
 
+// Affiche l'option "Je suis aussi supporter d'un club" uniquement pour les rôles individuels
+// (n'a pas de sens pour un club/association/fédération/organisateur qui s'inscrit lui-même)
+function toggleSupporterOptIn(){
+  const role=document.getElementById('auth-register-role')?.value;
+  const wrap=document.getElementById('auth-register-supporter-wrap');
+  if(!wrap) return;
+  const ORG_ROLES=['club','association','federation','organisateur'];
+  wrap.style.display=ORG_ROLES.includes(role)?'none':'';
+  if(ORG_ROLES.includes(role)){
+    document.getElementById('auth-register-supporter').checked=false;
+    document.getElementById('auth-register-club-supporte').style.display='none';
+  }
+}
+window.toggleSupporterOptIn=toggleSupporterOptIn;
+
 async function handleSupabaseRegister(){
   const errEl=document.getElementById('auth-register-error');
   errEl.style.display='none';
@@ -3044,6 +3094,9 @@ async function handleSupabaseRegister(){
   const role=document.getElementById('auth-register-role')?.value||'joueur';
   const statut=document.getElementById('auth-register-statut')?.value||'libre';
   const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
+  const ORG_ROLES_REG=['club','association','federation','organisateur'];
+  const isSupporterOptIn=!ORG_ROLES_REG.includes(role)&&!!document.getElementById('auth-register-supporter')?.checked;
+  const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
@@ -3057,7 +3110,7 @@ async function handleSupabaseRegister(){
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
-    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur};
+    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur,isSupporter:isSupporterOptIn,clubSupporte:clubSupporteOptIn};
     const {data,error}=await window._sb.auth.signUp({
       email,password,
       options:{data:extraMeta}
@@ -3218,6 +3271,8 @@ async function onSupabaseSignedIn(user, extra){
       statut:     extra?.statut     || user.user_metadata?.statut     || 'libre',
       employeur:  extra?.employeur  || user.user_metadata?.employeur  || '',
       sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
+      isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
+      clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
       status:     'active',
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
@@ -4319,6 +4374,9 @@ function renderProfile(){
       document.getElementById('prof-supporter-abonnement').textContent=p.supporterAbonnement||'—';
     }
   }
+  // Devenir supporter (proposé uniquement aux rôles individuels qui ne le sont pas déjà)
+  const becomeSuppCard=document.getElementById('prof-become-supporter-card');
+  if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
   // Gallery card
   const gallCard=document.getElementById('prof-gallery-card');
@@ -5641,6 +5699,40 @@ async function adminToggleSupporter(uid,current){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 window.adminToggleSupporter=adminToggleSupporter;
+
+// ── DEVENIR SUPPORTER (auto-déclaration depuis le profil) ──
+function openBecomeSupporterModal(){
+  document.getElementById('become-supporter-error').style.display='none';
+  document.getElementById('become-supporter-club').value=userProfile?.clubSupporte||'';
+  document.getElementById('modal-become-supporter').classList.add('open');
+}
+window.openBecomeSupporterModal=openBecomeSupporterModal;
+
+async function handleBecomeSupporter(){
+  const errEl=document.getElementById('become-supporter-error');
+  errEl.style.display='none';
+  const club=document.getElementById('become-supporter-club').value.trim();
+  if(!club){ errEl.textContent='Merci d\'indiquer le club que vous supportez.'; errEl.style.display='block'; return; }
+  if(!db || typeof updateDoc!=='function' || !userProfile?.uid){ errEl.textContent='Service indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('become-supporter-submit');
+  btn.disabled=true; btn.textContent='Enregistrement…';
+  try{
+    await updateDoc(doc(db,'users',userProfile.uid),{isSupporter:true,clubSupporte:club,supporterSaisons:1,supporterMatchs:0,supporterAbonnement:'Nouveau supporter',updatedAt:serverTimestamp()});
+    userProfile.isSupporter=true;
+    userProfile.clubSupporte=club;
+    userProfile.supporterSaisons=1;
+    userProfile.supporterMatchs=0;
+    userProfile.supporterAbonnement='Nouveau supporter';
+    closeModal('modal-become-supporter');
+    toast('💗 Vous êtes maintenant supporter de '+club+' !','success');
+    renderProfile();
+  }catch(e){
+    errEl.textContent='Erreur : '+e.message; errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Confirmer';
+  }
+}
+window.handleBecomeSupporter=handleBecomeSupporter;
 
 // ── PHOTO GALLERY ──
 function renderGallery(photos=[]){
