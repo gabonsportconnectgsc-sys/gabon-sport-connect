@@ -102,9 +102,9 @@
     }
     /* Groupe droite : toutes les icônes sauf le logo */
     .topnav-icons{display:flex;align-items:center;gap:7px;flex-shrink:0;position:relative;z-index:1;}
-    /* Toutes les icônes visibles */
+    /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
-      flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex !important;
+      flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
     }
     /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
     .topnav .btn-icon,
@@ -115,7 +115,7 @@
       border-radius:50% !important;
     }
     .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn{display:none !important;}
-    .topnav .btn-icon[style*="display:none"],.topnav .visitor-banner[style*="display:none"],.topnav .user-chip[style*="display:none"]{display:none !important;}
+    .topnav .btn-icon[style*="display: none"],.topnav .btn-icon[style*="display:none"],.topnav .visitor-banner[style*="display: none"],.topnav .visitor-banner[style*="display:none"],.topnav .user-chip[style*="display: none"],.topnav .user-chip[style*="display:none"]{display:none !important;}
     /* Logo compressible */
     .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;z-index:1;}
     .topnav-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
