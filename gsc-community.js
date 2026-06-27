@@ -39,19 +39,22 @@
      Permet de cibler précisément qui une publication concerne (ex: un message pour les
      Arbitres, les Clubs, les Sportifs handisport, etc.) afin que les notifications de
      mention/ciblage ("X a publié sur vous") restent précises. */
+  /* Couleurs alignées sur les tuiles "Acteurs sportifs" de la page d'accueil
+     (dégradés stat-card dans index.html), une couleur unique par rôle pour
+     une reconnaissance visuelle immédiate et cohérente dans toute l'app. */
   const ROLE_CATS = [
-    { key: 'joueur', icon: '⚽', label: 'Joueurs' },
-    { key: 'arbitre', icon: '🟨', label: 'Arbitres' },
-    { key: 'entraineur', icon: '📋', label: 'Entraîneurs' },
-    { key: 'club', icon: '🏟️', label: 'Clubs' },
-    { key: 'association', icon: '🤝', label: 'Associations' },
-    { key: 'federation', icon: '🏛️', label: 'Fédérations' },
-    { key: 'organisateur', icon: '🎪', label: 'Organisateurs' },
-    { key: 'supporter', icon: '💗', label: 'Supporters' },
-    { key: 'independant', icon: '🧍', label: 'Indépendants' },
-    { key: 'eleve_etudiant', icon: '🎓', label: 'Élèves/Étudiants' },
-    { key: 'sportif_etranger', icon: '🌍', label: 'Sportifs étrangers' },
-    { key: 'handisport', icon: '🦾', label: 'Sportifs handisport' }
+    { key: 'joueur', icon: '⚽', label: 'Joueurs', color: '#009E60', colorDk: '#007a47' },
+    { key: 'arbitre', icon: '🟨', label: 'Arbitres', color: '#f59e0b', colorDk: '#d97706' },
+    { key: 'entraineur', icon: '📋', label: 'Entraîneurs', color: '#0d9488', colorDk: '#0f766e' },
+    { key: 'club', icon: '🏟️', label: 'Clubs', color: '#f97316', colorDk: '#c2410c' },
+    { key: 'association', icon: '🤝', label: 'Associations', color: '#8b5cf6', colorDk: '#6d28d9' },
+    { key: 'federation', icon: '🏛️', label: 'Fédérations', color: '#1a2d4a', colorDk: '#0f3460' },
+    { key: 'organisateur', icon: '🎪', label: 'Organisateurs', color: '#b45309', colorDk: '#92400e' },
+    { key: 'supporter', icon: '💗', label: 'Supporters', color: '#ec4899', colorDk: '#db2777' },
+    { key: 'independant', icon: '🧍', label: 'Indépendants', color: '#0ea5e9', colorDk: '#0284c7' },
+    { key: 'eleve_etudiant', icon: '🎓', label: 'Élèves/Étudiants', color: '#6366f1', colorDk: '#4338ca' },
+    { key: 'sportif_etranger', icon: '🌍', label: 'Sportifs étrangers', color: '#ca8a04', colorDk: '#92660a' },
+    { key: 'handisport', icon: '🦾', label: 'Sportifs handisport', color: '#7c3aed', colorDk: '#5b21b6' }
   ];
 
   const REPORT_REASONS = [
@@ -235,8 +238,8 @@
 #gsc-community-root{margin-top:0;}
 #gsc-feed-tabs{overflow:visible !important;}
 #gsc-feed-tabs .card{overflow:visible;}
-.gsc-cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;padding:0 4px;}
-.gsc-cat-row .news-filter-btn{flex:0 0 auto;font-size:11.5px;padding:6px 12px;}
+.gsc-cat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:6px;margin-bottom:12px;padding:0 4px;}
+.gsc-cat-row .news-filter-btn{font-size:11.5px;padding:6px 8px;white-space:normal;line-height:1.25;text-align:center;}
 .gsc-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex-shrink:0;overflow:hidden;font-family:var(--font-display);}
 .gsc-avatar img{width:100%;height:100%;object-fit:cover;}
 .gsc-avatar.sm{width:30px;height:30px;font-size:11px;}
@@ -244,11 +247,12 @@
 .gsc-composer-head{display:flex;gap:10px;align-items:flex-start;}
 .gsc-composer textarea{flex:1;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:10px 12px;font-family:var(--font-body);font-size:13.5px;resize:vertical;min-height:54px;outline:none;transition:border-color .2s;}
 .gsc-composer textarea:focus{border-color:var(--green);}
-.gsc-composer-foot{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.gsc-composer-cat{border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);background:var(--white);}
+.gsc-composer-selects{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.gsc-composer-cat,.gsc-composer-target{border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:7px 8px;font-size:11.5px;font-weight:600;color:var(--navy);background:var(--white);width:100%;min-width:0;}
+.gsc-composer-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;}
 .gsc-composer-imgbtn{border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-weight:600;background:var(--white);color:var(--gray-txt);cursor:pointer;}
 .gsc-composer-imgbtn:hover{border-color:var(--green);color:var(--green);}
-.gsc-composer-publish{margin-left:auto;background:var(--green);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
+.gsc-composer-publish{background:var(--green);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
 .gsc-composer-publish:hover{background:var(--green-dk);}
 .gsc-composer-publish:disabled{opacity:.6;cursor:default;}
 .gsc-composer-preview{position:relative;margin-top:10px;display:inline-block;}
@@ -315,12 +319,17 @@
 .gsc-mention{color:var(--green-dk);font-weight:700;cursor:pointer;}
 .gsc-mention:hover{text-decoration:underline;}
 /* Rangée secondaire : filtre par type d'acteur */
-.gsc-role-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;padding:0 4px;}
-.gsc-role-row .news-filter-btn{flex:0 0 auto;font-size:11px;padding:5px 10px;opacity:.85;}
-.gsc-role-row-label{width:100%;text-align:center;font-size:11px;color:var(--gray-txt);font-weight:700;margin-bottom:2px;}
-.gsc-post-target-tag{background:#eef2ff;color:#3730a3;border-radius:10px;padding:1px 8px;font-weight:700;}
-/* Sélecteur de cible (rôle) dans le composer */
-.gsc-composer-target{border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);background:var(--white);}
+.gsc-role-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-bottom:12px;padding:0 4px;}
+.gsc-role-row .news-filter-btn{font-size:11px;padding:6px 8px;white-space:normal;line-height:1.25;text-align:center;}
+.gsc-role-row-label{grid-column:1 / -1;text-align:center;font-size:11px;color:var(--gray-txt);font-weight:700;margin-bottom:2px;}
+/* Boutons de filtre par type d'acteur — couleur unique par rôle, alignée
+   sur les tuiles "Acteurs sportifs" de la page d'accueil */
+.gsc-role-btn{border-color:var(--role-color, var(--gray-bd))!important;color:var(--role-color-dk, var(--gray-txt))!important;background:color-mix(in srgb, var(--role-color, #fff) 10%, #fff)!important;}
+.gsc-role-btn:hover{background:color-mix(in srgb, var(--role-color, #fff) 18%, #fff)!important;}
+.gsc-role-btn.active{background:linear-gradient(135deg, var(--role-color, var(--navy)), var(--role-color-dk, var(--navy-md)))!important;color:#fff!important;border-color:transparent!important;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.gsc-role-btn[data-role="all"]{border-color:var(--navy)!important;color:var(--navy)!important;background:#fff!important;}
+.gsc-role-btn[data-role="all"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md))!important;color:#fff!important;}
+.gsc-post-target-tag{border-radius:10px;padding:1px 8px;font-weight:700;}
 /* Autocomplete @mention */
 .gsc-mention-pop{position:absolute;z-index:30;background:#fff;border:1px solid var(--gray-bd);border-radius:10px;box-shadow:var(--shadow-md);max-height:220px;overflow-y:auto;min-width:200px;display:none;}
 .gsc-mention-pop.open{display:block;}
@@ -362,8 +371,8 @@
       </div>
       <div class="gsc-role-row" id="gsc-role-row">
         <div class="gsc-role-row-label">🎯 Filtrer par type d'acteur</div>
-        <button class="news-filter-btn active" data-role="all" type="button">👥 Tous les acteurs</button>
-        ${ROLE_CATS.map(c => `<button class="news-filter-btn" data-role="${c.key}" type="button">${c.icon} ${esc(c.label)}</button>`).join('')}
+        <button class="news-filter-btn gsc-role-btn active" data-role="all" type="button">👥 Tous les acteurs</button>
+        ${ROLE_CATS.map(c => `<button class="news-filter-btn gsc-role-btn" data-role="${c.key}" type="button" style="--role-color:${c.color};--role-color-dk:${c.colorDk};">${c.icon} ${esc(c.label)}</button>`).join('')}
       </div>
       <div id="gsc-composer-zone"></div>
       <div id="gsc-feed-list"></div>`;
@@ -464,14 +473,16 @@
           <div class="gsc-mention-pop" id="gsc-composer-mention-pop"></div>
         </div>
         <div id="gsc-composer-preview-zone"></div>
-        <div class="gsc-composer-foot">
+        <div class="gsc-composer-selects">
           <select class="gsc-composer-cat" id="gsc-composer-cat">
             ${CATS.filter(c => c.key !== 'all').map(c => `<option value="${c.key}">${c.icon} ${esc(c.label)}</option>`).join('')}
           </select>
           <select class="gsc-composer-target" id="gsc-composer-target">
-            <option value="">🎯 Cibler un type d'acteur (optionnel)</option>
+            <option value="">🎯 Cible (optionnel)</option>
             ${ROLE_CATS.map(c => `<option value="${c.key}">${c.icon} ${esc(c.label)}</option>`).join('')}
           </select>
+        </div>
+        <div class="gsc-composer-foot">
           <label class="gsc-composer-imgbtn">📷 Photo<input type="file" accept="image/*" id="gsc-composer-file" style="display:none;"></label>
           <button class="gsc-composer-publish" id="gsc-composer-publish" type="button">Publier</button>
         </div>
@@ -804,7 +815,7 @@
           <div class="gsc-post-sub">
             <span>🕐 ${timeAgo(post.createdAt)}</span>
             ${catInfo ? `<span class="gsc-post-cat-tag">${catInfo.icon} ${esc(catInfo.label)}</span>` : ''}
-            ${targetInfo ? `<span class="gsc-post-target-tag" title="Publication ciblée">🎯 ${targetInfo.icon} ${esc(targetInfo.label)}</span>` : ''}
+            ${targetInfo ? `<span class="gsc-post-target-tag" title="Publication ciblée" style="background:color-mix(in srgb, ${targetInfo.color} 16%, #fff);color:${targetInfo.colorDk};">🎯 ${targetInfo.icon} ${esc(targetInfo.label)}</span>` : ''}
             ${flagged ? `<span class="gsc-flag-tag">⚠️ En attente de modération</span>` : ''}
           </div>
         </div>
