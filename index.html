@@ -8,6 +8,11 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#009E60" />
   <meta name="description" content="Plateforme nationale de gestion du sport au Gabon" />
+  <!-- PWA iOS (Safari iPhone/iPad) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GSC">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
   <script src="app-config-loader.js"></script>
   <script src="gsc-notifications.js"></script>
@@ -1349,6 +1354,12 @@
           <span>·</span>
           <span id="hero-email-label" style="opacity:.5;font-size:11px;">—</span>
         </div>
+      </div>
+
+      <!-- ══ BOUTONS RAPIDES : Mode d'emploi + Installer GSC ══ -->
+      <div style="display:flex;justify-content:center;gap:10px;margin:0 0 14px 0;">
+        <button onclick="showView('legal')" style="flex:1;max-width:160px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:700;border:1.5px solid #0A1628;background:#fff;color:#0A1628;border-radius:20px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);white-space:nowrap;">📖 Mode d'emploi</button>
+        <button onclick="installGSC()" id="btn-install-gsc" style="flex:1;max-width:160px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:700;border:none;background:linear-gradient(135deg,#009E60,#007a47);color:#fff;border-radius:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,158,96,.3);white-space:nowrap;">📲 Installer GSC</button>
       </div>
 
       <div class="profile-completion fade-up" id="profile-completion-bar" onclick="handleCompletionClick()" style="display:none;">
@@ -7732,5 +7743,42 @@ window.lookupManualGscId = lookupManualGscId;
 })();
 </script>
 <script src="gsc-community.js"></script>
+
+<!-- ══ PWA INSTALL — Bouton "Installer GSC" ══ -->
+<script>
+(function(){
+  let deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    // Rendre le bouton plus visible si l'app est installable
+    const btn = document.getElementById('btn-install-gsc');
+    if(btn){ btn.style.boxShadow = '0 2px 12px rgba(0,158,96,.5)'; }
+  });
+
+  window.installGSC = function(){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result){
+        if(result.outcome === 'accepted'){
+          const btn = document.getElementById('btn-install-gsc');
+          if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; }
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      // Fallback : instructions manuelles
+      alert('📲 Pour installer Gabon Sport Connect :\n\nSur Android Chrome :\nMenu ⋮ → "Ajouter à l\'écran d\'accueil"\n\nSur iPhone Safari :\nBouton Partager → "Sur l\'écran d\'accueil"');
+    }
+  };
+
+  // Si déjà installée, adapter le bouton
+  window.addEventListener('appinstalled', function(){
+    const btn = document.getElementById('btn-install-gsc');
+    if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; btn.style.opacity = '.7'; }
+  });
+})();
+</script>
 </body>
 </html>
