@@ -124,17 +124,11 @@
     .topnav-spacer{flex:1 1 0;min-width:2px;max-width:40px;}
     .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
     /* Bannière visiteur réduite : icône œil seule, pas de texte */
-    .visitor-banner{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:34px;height:34px;padding:0;
-      background:rgba(255,215,0,.14);border:1px solid rgba(255,215,0,.35);
-      border-radius:50%;font-size:16px;line-height:1;color:var(--yellow);
-      cursor:pointer;flex-shrink:0;
-    }
+    .visitor-banner{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;background:rgba(255,215,0,.14);border:2px solid rgba(255,215,0,.35);border-radius:50%;font-size:18px;line-height:1;color:var(--yellow);cursor:pointer;flex-shrink:0;box-sizing:border-box;}
     .user-chip{display:flex;align-items:center;gap:8px;min-width:0;}
-    .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+    .user-avatar{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;overflow:hidden;transition:all .2s;box-sizing:border-box;}
     .user-name{max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);font-size:13px;font-weight:500;}
-    .btn-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--white);font-size:18px;cursor:pointer;border-radius:8px;transition:all .2s;flex-shrink:0;}
+    .btn-icon{width:40px;height:40px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;border-radius:50%;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
     .btn-icon:hover{background:rgba(255,255,255,.1);}
     .btn-hamburger{}
     .hamburger-lines{display:flex;flex-direction:column;gap:5px;}
@@ -150,9 +144,10 @@
       .topnav{padding:0 8px;gap:5px;}
       .topnav-logo img{width:40px;height:40px;}
       .topnav-logo-text span{font-size:10px;}
-      .visitor-banner{width:30px;height:30px;font-size:14px;}
-      .user-chip{max-width:40px;}
-      .btn-icon{width:32px;height:32px;font-size:15px;}
+      .visitor-banner{width:36px;height:36px;min-width:36px;min-height:36px;font-size:16px;}
+      .user-chip{max-width:36px;}
+      .btn-icon{width:36px;height:36px;min-width:36px;min-height:36px;font-size:16px;}
+      .user-avatar{width:36px;height:36px;min-width:36px;min-height:36px;font-size:16px;}
       #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
       #nav-rolebadge{font-size:9px;padding:2px 5px;}
     }
@@ -161,10 +156,11 @@
       .topnav-logo img{width:36px;height:36px;}
       .topnav-logo-text{max-width:80px;opacity:1;}
       .topnav-logo-text span{font-size:8px;letter-spacing:.3px;}
-      .visitor-banner{width:28px;height:28px;font-size:13px;}
+      .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:15px;}
       #nav-rolebadge{font-size:9px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-      .user-chip{max-width:36px;padding:3px;}
-      .btn-icon{width:30px;height:30px;font-size:14px;}
+      .user-chip{max-width:34px;}
+      .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:15px;}
+      .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:15px;}
       .btn-hamburger{display:flex;}
       #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
     }
@@ -173,14 +169,15 @@
       .topnav-logo img{width:32px;height:32px;}
       .topnav-logo-text{max-width:70px;opacity:1;}
       .topnav-logo-text span{font-size:7px;letter-spacing:.2px;}
-      .visitor-banner{width:26px;height:26px;font-size:12px;}
+      .visitor-banner{width:32px;height:32px;min-width:32px;min-height:32px;font-size:14px;}
       #nav-rolebadge{display:none;}
-      .user-chip{padding:3px;}
-      .btn-icon{width:28px;height:28px;font-size:13px;}
+      .user-chip{max-width:32px;}
+      .btn-icon{width:32px;height:32px;min-width:32px;min-height:32px;font-size:14px;}
+      .user-avatar{width:32px;height:32px;min-width:32px;min-height:32px;font-size:14px;}
     }
-    .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px;cursor:pointer;transition:background .2s;}
+    .user-chip{display:flex;align-items:center;gap:8px;background:transparent;border-radius:40px;padding:0;cursor:pointer;transition:background .2s;}
     .user-chip:hover{background:rgba(255,255,255,.14);}
-    .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;border:2.5px solid rgba(255,255,255,.25);transition:border-color .2s;}
+    .user-avatar{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;transition:all .2s;box-sizing:border-box;}
     .user-chip:hover .user-avatar{border-color:rgba(255,255,255,.65);}
     .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
     /* Pastille verte "en ligne" */
@@ -200,7 +197,7 @@
     .role-badge.eleve_etudiant{background:#6366f1;color:white;}
     .role-badge.sportif_etranger{background:#ca8a04;color:white;}
     .role-badge.handisport{background:#7c3aed;color:white;}
-    .btn-icon{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
+    .btn-icon{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
     .btn-icon:hover{background:rgba(255,255,255,.16);}
     /* ── HAMBURGER (bord droit du header) ── */
     .btn-hamburger{margin-left:2px;}
@@ -1080,7 +1077,7 @@
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
     <div id="nav-rolebadge"></div>
     <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()">
-      <div class="user-avatar" id="nav-avatar">?</div>
+      <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
     <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
@@ -3668,10 +3665,15 @@ function renderDashboard(){
   const navAv=document.getElementById('nav-avatar');
   if(navPhotoSrc){
     // Afficher la photo — fallback sur initiale si l'image échoue à charger
-    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'">`;
+    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    navAv.style.borderColor='rgba(0,200,100,.7)';
+    navAv.style.fontSize='';
   } else {
-    // Pas de photo : afficher l'initiale
+    // Pas de photo : initiale sur fond vert
     navAv.textContent=initial;
+    navAv.style.background='linear-gradient(135deg,var(--green),#007a47)';
+    navAv.style.borderColor='rgba(255,255,255,.35)';
+    navAv.style.fontSize='16px';
   }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
   document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
