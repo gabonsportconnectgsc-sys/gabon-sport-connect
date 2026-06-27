@@ -776,11 +776,11 @@
   try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { _sb = null; }
 
   // ── FIREBASE FIRESTORE (pour sauvegarder le profil) ──
-  let db = null, _setDoc, _doc, _collection, _query, _where, _getDocs;
+  let db = null, _setDoc, _doc, _collection, _query, _where, _getDocs, _serverTimestamp;
   (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-      const { getFirestore, doc, setDoc, collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { getFirestore, doc, setDoc, collection, query, where, getDocs, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       const app = initializeApp({
         apiKey:"AIzaSyDYvkHiYd2c3XtBiPh9L1Ixu0Kx3RiKfQo",
         authDomain:"gabon-sport-connect.firebaseapp.com",
@@ -789,6 +789,7 @@
       db = getFirestore(app);
       _doc = doc; _setDoc = setDoc;
       _collection = collection; _query = query; _where = where; _getDocs = getDocs;
+      _serverTimestamp = serverTimestamp;
     } catch(e) { console.warn("Firestore non disponible:", e); }
   })();
 
@@ -921,7 +922,7 @@
 
   async function saveProfile(uid, email, profile) {
     if (!db || !_setDoc || !_doc) return;
-    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: new Date().toISOString() }); }
+    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() }); }
     catch(e) { console.warn('Firestore save failed:', e); }
   }
 
@@ -1041,6 +1042,14 @@
     if (!exact)          { errMsg('a-err','Veuillez certifier l\'exactitude de vos informations.'); return; }
     if (!_sb)            { errMsg('a-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
 
+    // Vérification doublon téléphone
+    if (tel && db && _getDocs && _query && _collection && _where) {
+      try {
+        const telSnap = await _getDocs(_query(_collection(db,'users'), _where('telephone','==',tel)));
+        if (!telSnap.empty) { errMsg('a-err','Ce numéro de téléphone est déjà utilisé par un autre compte.'); return; }
+      } catch(e) { console.warn('Vérification téléphone:', e); }
+    }
+
     const btn = document.getElementById('a-btn');
     btn.disabled = true; btn.textContent = 'Création en cours…';
     try {
@@ -1085,6 +1094,7 @@
             bio: hsBio, palmares: hsPalmares
           }),
           gscId,          // stocké dès l'inscription pour cohérence admin ↔ public
+          club: clubActuel || '',  // dupliqué à la racine pour la recherche annuaire
           status: 'pending', // en attente de validation par l'admin (createdAt posé par saveProfile — référence pour le délai 24h)
           // ── DROITS & PROPRIÉTÉ ──
           editLocked,       // true = fiche en lecture seule (contrat pro + club_manage)
