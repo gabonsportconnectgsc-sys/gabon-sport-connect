@@ -106,21 +106,43 @@
   function getAllActors() { return (window.allActors && window.allActors.length) ? window.allActors : []; }
   function findActorById(id) {
     if (!id) return null;
-    return getAllActors().find(a => (a.uid || a.id) === id) || null;
+    return getAllActors().find(a => (a.uid || a.id) === id)
+      || (window.allAdminUsers || []).find(a => (a.uid || a.id) === id)
+      || null;
   }
   function roleLabel(roleKey) {
     const r = ROLE_CATS.find(c => c.key === roleKey);
     return r ? `${r.icon} ${r.label}` : (window.ROLE_LABELS && window.ROLE_LABELS[roleKey]) || roleKey || '';
   }
 
-  /* ── Ouvrir le profil d'un membre (nom ou avatar cliqué) ── */
-  function openMemberProfile(uid) {
+  /* ── Ouvrir le profil d'un membre (nom ou avatar cliqué) ──
+     window.allActors peut ne pas encore être chargé (ou pas rafraîchi) au moment
+     où le fil communautaire s'affiche : on ne se fie donc pas qu'au cache local.
+     Si l'acteur n'y est pas, on va le chercher directement dans Firestore avant
+     de renoncer. */
+  async function openMemberProfile(uid) {
     if (!uid) return;
-    if (typeof window.openActorDetail === 'function' && findActorById(uid)) {
-      window.openActorDetail(uid);
-    } else {
+    if (typeof window.openActorDetail !== 'function') {
       toastMsg('Profil indisponible pour ce membre.', 'info');
+      return;
     }
+    if (findActorById(uid)) {
+      window.openActorDetail(uid);
+      return;
+    }
+    /* Fallback : récupérer le document utilisateur directement dans Firestore */
+    if (window.db && typeof window.doc === 'function' && typeof window.getDoc === 'function') {
+      try {
+        const snap = await withAuth(() => window.getDoc(window.doc(window.db, 'users', uid)));
+        if (snap && snap.exists && snap.exists()) {
+          const actor = { id: uid, uid, ...snap.data() };
+          window.allActors = [...(window.allActors || []), actor];
+          window.openActorDetail(uid);
+          return;
+        }
+      } catch (e) { /* silencieux — on retombe sur le message d'indisponibilité */ }
+    }
+    toastMsg('Profil indisponible pour ce membre.', 'info');
   }
 
   /* ── Ouvrir une photo de profil en plein écran ── */
@@ -328,13 +350,12 @@
     tabsWrap.id = 'gsc-feed-tabs';
     tabsWrap.innerHTML = `
       <div style="display:flex;gap:8px;padding:12px 14px;justify-content:center;align-items:center;flex-wrap:nowrap;">
-        <button class="news-filter-btn active" id="gsc-tab-actu" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📰 Actualités officielles</button>
-        <button class="news-filter-btn" id="gsc-tab-community" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;">💬 Fil communautaire</button>
+        <button class="news-filter-btn active" id="gsc-tab-community" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;">💬 Fil communautaire</button>
+        <button class="news-filter-btn" id="gsc-tab-actu" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📰 Actualités officielles</button>
       </div>`;
 
     const communityPane = document.createElement('div');
     communityPane.id = 'gsc-community-root';
-    communityPane.style.display = 'none';
     communityPane.innerHTML = `
       <div class="gsc-cat-row" id="gsc-cat-row">
         ${CATS.map(c => `<button class="news-filter-btn${c.key === 'all' ? ' active' : ''}" data-cat="${c.key}" type="button">${c.icon} ${esc(c.label)}</button>`).join('')}
@@ -346,6 +367,9 @@
       </div>
       <div id="gsc-composer-zone"></div>
       <div id="gsc-feed-list"></div>`;
+
+    /* Fil communautaire affiché par défaut — Actualités officielles masquées au départ */
+    actuWrap.style.display = 'none';
 
     view.appendChild(tabsWrap);
     view.appendChild(actuWrap);
@@ -386,6 +410,9 @@
     communityPane.querySelector('#gsc-feed-list').addEventListener('click', onFeedClick);
 
     mountReportModal();
+
+    /* Le fil communautaire étant affiché par défaut, on s'abonne immédiatement */
+    ensureSubscribed();
   }
 
   function mountReportModal() {
@@ -766,7 +793,7 @@
     const menuOpen = _openMenus.has(post.id);
     const commentsOpen = _openComments.has(post.id);
     const commentsCount = post.commentsCount || 0;
-    const hasProfile = !!findActorById(post.authorId);
+    const hasProfile = !!post.authorId;
 
     return `
     <div class="gsc-post${flagged ? ' gsc-flagged' : ''}" data-post-id="${post.id}">
@@ -813,7 +840,7 @@
         ? `<div style="font-size:12px;color:var(--gray-txt);padding:6px 0;">Aucun commentaire. Soyez le premier à répondre !</div>`
         : list.map(c => {
           const canDelete = isAdmin || (window.currentUser && c.authorId === window.currentUser.uid);
-          const cHasProfile = !!findActorById(c.authorId);
+          const cHasProfile = !!c.authorId;
           return `
           <div class="gsc-comment" data-comment-id="${c.id}">
             <div class="gsc-avatar sm${cHasProfile ? ' clickable' : ''}" data-action="${c.authorPhoto ? 'view-photo' : 'view-profile'}" data-uid="${esc(c.authorId || '')}" data-photo="${esc(c.authorPhoto || '')}">${c.authorPhoto ? `<img src="${esc(c.authorPhoto)}" alt="">` : esc(initials(c.authorName))}</div>
