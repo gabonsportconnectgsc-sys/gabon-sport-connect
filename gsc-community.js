@@ -35,6 +35,25 @@
     { key: 'Gabon', icon: '🇬🇦', label: 'Gabon' }
   ];
 
+  /* Catégories par TYPE D'ACTEUR (rôle GSC) — distinctes des catégories sport ci-dessus.
+     Permet de cibler précisément qui une publication concerne (ex: un message pour les
+     Arbitres, les Clubs, les Sportifs handisport, etc.) afin que les notifications de
+     mention/ciblage ("X a publié sur vous") restent précises. */
+  const ROLE_CATS = [
+    { key: 'joueur', icon: '⚽', label: 'Joueurs' },
+    { key: 'arbitre', icon: '🟨', label: 'Arbitres' },
+    { key: 'entraineur', icon: '📋', label: 'Entraîneurs' },
+    { key: 'club', icon: '🏟️', label: 'Clubs' },
+    { key: 'association', icon: '🤝', label: 'Associations' },
+    { key: 'federation', icon: '🏛️', label: 'Fédérations' },
+    { key: 'organisateur', icon: '🎪', label: 'Organisateurs' },
+    { key: 'supporter', icon: '💗', label: 'Supporters' },
+    { key: 'independant', icon: '🧍', label: 'Indépendants' },
+    { key: 'eleve_etudiant', icon: '🎓', label: 'Élèves/Étudiants' },
+    { key: 'sportif_etranger', icon: '🌍', label: 'Sportifs étrangers' },
+    { key: 'handisport', icon: '🦾', label: 'Sportifs handisport' }
+  ];
+
   const REPORT_REASONS = [
     { key: 'spam', label: 'Spam / publicité' },
     { key: 'haine', label: 'Propos haineux ou injurieux' },
@@ -47,6 +66,7 @@
   let _posts = [];
   let _blockedIds = new Set();
   let _currentCat = 'all';
+  let _currentRoleCat = 'all'; // filtre secondaire par type d'acteur
   let _unsub = null;
   let _subscribed = false;
   let _openComments = new Set();
@@ -55,6 +75,7 @@
   let _extraFns = null;
   let _composerImage = null;
   let _reportCtx = null;
+  let _mentionState = null; // { scope:'composer'|'comment', postId, start, query }
 
   /* ── Utilitaires ── */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -79,6 +100,92 @@
   function authorName(profile) {
     return [profile?.prenom, profile?.nom].filter(Boolean).join(' ').trim()
       || profile?.nomOrganisation || profile?.email?.split('@')[0] || 'Membre GSC';
+  }
+
+  /* ── Accès à l'annuaire réel des acteurs (alimenté par index.html) ── */
+  function getAllActors() { return (window.allActors && window.allActors.length) ? window.allActors : []; }
+  function findActorById(id) {
+    if (!id) return null;
+    return getAllActors().find(a => (a.uid || a.id) === id) || null;
+  }
+  function roleLabel(roleKey) {
+    const r = ROLE_CATS.find(c => c.key === roleKey);
+    return r ? `${r.icon} ${r.label}` : (window.ROLE_LABELS && window.ROLE_LABELS[roleKey]) || roleKey || '';
+  }
+
+  /* ── Ouvrir le profil d'un membre (nom ou avatar cliqué) ── */
+  function openMemberProfile(uid) {
+    if (!uid) return;
+    if (typeof window.openActorDetail === 'function' && findActorById(uid)) {
+      window.openActorDetail(uid);
+    } else {
+      toastMsg('Profil indisponible pour ce membre.', 'info');
+    }
+  }
+
+  /* ── Ouvrir une photo de profil en plein écran ── */
+  function openPhotoFullscreen(url) {
+    if (!url) return;
+    if (typeof window.openGalleryModal === 'function') window.openGalleryModal(url);
+  }
+
+  /* ── MENTIONS @Nom ── */
+  /* Recherche d'acteurs par préfixe de nom pour l'autocomplétion @mention */
+  function searchActorsForMention(prefix) {
+    const q = (prefix || '').trim().toLowerCase();
+    const list = getAllActors();
+    const scored = list
+      .map(a => ({ a, name: authorName({ prenom: a.prenom, nom: a.nom, nomOrganisation: a.nomOrganisation, email: a.email }) }))
+      .filter(({ name }) => !q || name.toLowerCase().includes(q));
+    return scored.slice(0, 6).map(({ a, name }) => ({ id: a.uid || a.id, name, role: a.role || 'joueur' }));
+  }
+
+  /* Extrait les mentions @Nom présentes dans un texte, en se basant sur la liste
+     d'acteurs réels (pour résoudre le nom complet vers un uid précis). Retourne
+     un tableau d'objets { id, name } dédupliqué. */
+  function extractMentions(text) {
+    if (!text) return [];
+    const list = getAllActors().map(a => ({ id: a.uid || a.id, name: authorName({ prenom: a.prenom, nom: a.nom, nomOrganisation: a.nomOrganisation, email: a.email }) })).filter(a => a.id && a.name);
+    /* Trier par longueur de nom décroissante pour matcher les noms composés en priorité */
+    list.sort((x, y) => y.name.length - x.name.length);
+    const found = new Map();
+    list.forEach(({ id, name }) => {
+      if (!name) return;
+      const re = new RegExp('@' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      if (re.test(text)) found.set(id, name);
+    });
+    return [...found.entries()].map(([id, name]) => ({ id, name }));
+  }
+
+  /* Transforme le texte brut en HTML avec les @mentions mises en évidence (et déjà échappé) */
+  function renderTextWithMentions(text) {
+    const escaped = nl2br(text);
+    const mentions = extractMentions(text);
+    if (!mentions.length) return escaped;
+    let out = escaped;
+    mentions.forEach(({ id, name }) => {
+      const safeName = esc(name);
+      const re = new RegExp('@' + safeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      out = out.replace(re, `<span class="gsc-mention" data-action="view-profile" data-uid="${esc(id)}">@${safeName}</span>`);
+    });
+    return out;
+  }
+
+  /* Notifie chaque membre mentionné dans un post ou un commentaire :
+     "X a publié/commenté sur vous" — une seule notification par mention, via pushNotif
+     (qui retombe lui-même sur Firestore si GSCNotif n'est pas chargé). */
+  function notifyMentions(text, { authorProfile, action, excludeUid }) {
+    const mentions = extractMentions(text);
+    const verb = action === 'comment' ? 'a commenté sur vous' : 'a publié sur vous';
+    mentions.forEach(({ id }) => {
+      if (!id || id === excludeUid) return;
+      pushNotif({
+        type: 'mention', recipientId: id, personal: true,
+        title: `${authorName(authorProfile)} ${verb}`,
+        body: (text || '').slice(0, 100),
+        link: 'index.html#actualites'
+      });
+    });
   }
 
   async function withAuth(fn) {
@@ -177,6 +284,29 @@
 .gsc-report-btns .gsc-btn-submit{background:var(--danger);border:none;color:#fff;}
 .gsc-empty{text-align:center;padding:40px 16px;color:var(--gray-txt);}
 .gsc-empty .e-icon{font-size:42px;margin-bottom:10px;}
+/* Profils & photos cliquables */
+.gsc-avatar.clickable{cursor:pointer;}
+.gsc-post-name.clickable,.gsc-comment-name.clickable{cursor:pointer;}
+.gsc-post-name.clickable:hover,.gsc-comment-name.clickable:hover{text-decoration:underline;color:var(--green-dk);}
+.gsc-post-img{cursor:zoom-in;}
+/* Mentions @Nom dans le texte */
+.gsc-mention{color:var(--green-dk);font-weight:700;cursor:pointer;}
+.gsc-mention:hover{text-decoration:underline;}
+/* Rangée secondaire : filtre par type d'acteur */
+.gsc-role-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;padding:0 4px;}
+.gsc-role-row .news-filter-btn{flex:0 0 auto;font-size:11px;padding:5px 10px;opacity:.85;}
+.gsc-role-row-label{width:100%;text-align:center;font-size:11px;color:var(--gray-txt);font-weight:700;margin-bottom:2px;}
+.gsc-post-target-tag{background:#eef2ff;color:#3730a3;border-radius:10px;padding:1px 8px;font-weight:700;}
+/* Sélecteur de cible (rôle) dans le composer */
+.gsc-composer-target{border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);background:var(--white);}
+/* Autocomplete @mention */
+.gsc-mention-pop{position:absolute;z-index:30;background:#fff;border:1px solid var(--gray-bd);border-radius:10px;box-shadow:var(--shadow-md);max-height:220px;overflow-y:auto;min-width:200px;display:none;}
+.gsc-mention-pop.open{display:block;}
+.gsc-mention-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;font-size:12.5px;color:var(--navy);}
+.gsc-mention-item:hover,.gsc-mention-item.active{background:var(--gray-bg);}
+.gsc-mention-item .gsc-avatar{width:24px;height:24px;font-size:10px;}
+.gsc-mention-item small{color:var(--gray-txt);font-weight:600;margin-left:auto;}
+.gsc-composer-head,.gsc-comment-composer{position:relative;}
 `;
     document.head.appendChild(s);
   }
@@ -209,6 +339,11 @@
       <div class="gsc-cat-row" id="gsc-cat-row">
         ${CATS.map(c => `<button class="news-filter-btn${c.key === 'all' ? ' active' : ''}" data-cat="${c.key}" type="button">${c.icon} ${esc(c.label)}</button>`).join('')}
       </div>
+      <div class="gsc-role-row" id="gsc-role-row">
+        <div class="gsc-role-row-label">🎯 Filtrer par type d'acteur</div>
+        <button class="news-filter-btn active" data-role="all" type="button">👥 Tous les acteurs</button>
+        ${ROLE_CATS.map(c => `<button class="news-filter-btn" data-role="${c.key}" type="button">${c.icon} ${esc(c.label)}</button>`).join('')}
+      </div>
       <div id="gsc-composer-zone"></div>
       <div id="gsc-feed-list"></div>`;
 
@@ -235,6 +370,15 @@
       if (!btn) return;
       _currentCat = btn.dataset.cat;
       communityPane.querySelectorAll('#gsc-cat-row .news-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderFeed();
+    });
+
+    communityPane.querySelector('#gsc-role-row').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-role]');
+      if (!btn) return;
+      _currentRoleCat = btn.dataset.role;
+      communityPane.querySelectorAll('#gsc-role-row .news-filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderFeed();
     });
@@ -288,20 +432,28 @@
     zone.innerHTML = `
       <div class="gsc-composer">
         <div class="gsc-composer-head">
-          <div class="gsc-avatar">${photo ? `<img src="${esc(photo)}" alt="">` : esc(initials(authorName(profile)))}</div>
-          <textarea id="gsc-composer-text" placeholder="Partagez une actualité, un résultat, une question avec la communauté…" maxlength="1000"></textarea>
+          <div class="gsc-avatar clickable" id="gsc-composer-avatar">${photo ? `<img src="${esc(photo)}" alt="">` : esc(initials(authorName(profile)))}</div>
+          <textarea id="gsc-composer-text" placeholder="Partagez une actualité, un résultat, une question avec la communauté… (utilisez @Nom pour mentionner quelqu'un)" maxlength="1000"></textarea>
+          <div class="gsc-mention-pop" id="gsc-composer-mention-pop"></div>
         </div>
         <div id="gsc-composer-preview-zone"></div>
         <div class="gsc-composer-foot">
           <select class="gsc-composer-cat" id="gsc-composer-cat">
             ${CATS.filter(c => c.key !== 'all').map(c => `<option value="${c.key}">${c.icon} ${esc(c.label)}</option>`).join('')}
           </select>
+          <select class="gsc-composer-target" id="gsc-composer-target">
+            <option value="">🎯 Cibler un type d'acteur (optionnel)</option>
+            ${ROLE_CATS.map(c => `<option value="${c.key}">${c.icon} ${esc(c.label)}</option>`).join('')}
+          </select>
           <label class="gsc-composer-imgbtn">📷 Photo<input type="file" accept="image/*" id="gsc-composer-file" style="display:none;"></label>
           <button class="gsc-composer-publish" id="gsc-composer-publish" type="button">Publier</button>
         </div>
       </div>`;
+    zone.querySelector('#gsc-composer-avatar').addEventListener('click', () => { if (photo) openPhotoFullscreen(photo); });
     zone.querySelector('#gsc-composer-file').addEventListener('change', onComposerFile);
     zone.querySelector('#gsc-composer-publish').addEventListener('click', createPost);
+    zone.querySelector('#gsc-composer-text').addEventListener('input', (e) => onMentionInput(e, 'composer'));
+    zone.querySelector('#gsc-composer-text').addEventListener('keydown', (e) => onMentionKeydown(e, 'composer'));
   }
 
   function onComposerFile(e) {
@@ -384,6 +536,92 @@
     });
   }
 
+  /* ═══ AUTOCOMPLETE @MENTION ═══ */
+  function getMentionTarget(scope, postId) {
+    if (scope === 'composer') return document.getElementById('gsc-composer-text');
+    return document.getElementById('gsc-comment-input-' + postId);
+  }
+  function getMentionPopEl(scope, postId) {
+    if (scope === 'composer') return document.getElementById('gsc-composer-mention-pop');
+    return document.getElementById('gsc-mention-pop-' + postId);
+  }
+
+  function onMentionInput(e, scope, postId) {
+    const input = e.target;
+    const pop = getMentionPopEl(scope, postId);
+    if (!pop) return;
+    const caret = input.selectionStart;
+    const value = input.value.slice(0, caret);
+    const match = value.match(/@([^\s@]{0,30})$/);
+    if (!match) { closeMentionPop(scope, postId); return; }
+    const results = searchActorsForMention(match[1]);
+    if (!results.length) { closeMentionPop(scope, postId); return; }
+    _mentionState = { scope, postId, start: caret - match[0].length, query: match[1] };
+    pop.innerHTML = results.map((r, i) => `
+      <div class="gsc-mention-item${i === 0 ? ' active' : ''}" data-idx="${i}" data-id="${r.id}" data-name="${esc(r.name)}">
+        <div class="gsc-avatar">${esc(initials(r.name))}</div>
+        <span>${esc(r.name)}</span>
+        <small>${esc(roleLabel(r.role))}</small>
+      </div>`).join('');
+    pop.classList.add('open');
+    pop.querySelectorAll('.gsc-mention-item').forEach(item => {
+      item.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+        applyMention(scope, postId, item.dataset.name);
+      });
+    });
+  }
+
+  function onMentionKeydown(e, scope, postId) {
+    const pop = getMentionPopEl(scope, postId);
+    if (!pop || !pop.classList.contains('open')) return;
+    const items = [...pop.querySelectorAll('.gsc-mention-item')];
+    if (!items.length) return;
+    let activeIdx = items.findIndex(i => i.classList.contains('active'));
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('active');
+      activeIdx = (activeIdx + 1) % items.length;
+      items[activeIdx].classList.add('active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('active');
+      activeIdx = (activeIdx - 1 + items.length) % items.length;
+      items[activeIdx].classList.add('active');
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      applyMention(scope, postId, items[activeIdx]?.dataset.name);
+    } else if (e.key === 'Escape') {
+      closeMentionPop(scope, postId);
+    }
+  }
+
+  function applyMention(scope, postId, name) {
+    if (!_mentionState || !name) return;
+    const input = getMentionTarget(scope, postId);
+    if (!input) return;
+    const before = input.value.slice(0, _mentionState.start);
+    const after = input.value.slice(input.selectionStart);
+    const insert = '@' + name + ' ';
+    input.value = before + insert + after;
+    const newCaret = (before + insert).length;
+    input.focus();
+    input.setSelectionRange(newCaret, newCaret);
+    closeMentionPop(scope, postId);
+  }
+
+  function closeMentionPop(scope, postId) {
+    const pop = getMentionPopEl(scope, postId);
+    if (pop) { pop.classList.remove('open'); pop.innerHTML = ''; }
+    _mentionState = null;
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.gsc-mention-pop') && !e.target.closest('textarea, input[type="text"]')) {
+      document.querySelectorAll('.gsc-mention-pop.open').forEach(p => { p.classList.remove('open'); p.innerHTML = ''; });
+    }
+  });
+
   function setPublishBtnState(label, disabled) {
     const btn = document.getElementById('gsc-composer-publish');
     if (!btn) return;
@@ -396,6 +634,7 @@
     const ta = document.getElementById('gsc-composer-text');
     const text = (ta?.value || '').trim();
     const cat = document.getElementById('gsc-composer-cat')?.value || 'general';
+    const targetRole = document.getElementById('gsc-composer-target')?.value || null;
     if (!text && !_composerImage) { toastMsg('Écrivez un message ou ajoutez une image.', 'info'); return; }
 
     setPublishBtnState('Publication…', true);
@@ -427,6 +666,7 @@
         text,
         imageURL,
         category: cat,
+        targetRole: targetRole || null,
         reactions: {},
         reportsCount: 0,
         commentsCount: 0,
@@ -435,8 +675,13 @@
         createdAt: window.serverTimestamp()
       }));
 
+      /* Notifier les membres mentionnés via @Nom : "X a publié sur vous" */
+      notifyMentions(text, { authorProfile: profile, action: 'post', excludeUid: window.currentUser.uid });
+
       if (ta) ta.value = '';
       clearComposerImage();
+      const targetSel = document.getElementById('gsc-composer-target');
+      if (targetSel) targetSel.value = '';
       toastMsg('✅ Publication envoyée.', 'success');
 
     } catch (e) {
@@ -486,6 +731,7 @@
     let visible = _posts.filter(p => p.status !== 'removed' && !_blockedIds.has(p.authorId));
     visible = visible.filter(p => (p.status !== 'hidden') || isAdmin);
     if (_currentCat !== 'all') visible = visible.filter(p => (p.category || 'general') === _currentCat);
+    if (_currentRoleCat !== 'all') visible = visible.filter(p => p.targetRole === _currentRoleCat);
 
     if (!ready()) {
       list.innerHTML = `<div class="gsc-empty"><div class="e-icon">📡</div>Fil communautaire indisponible hors connexion.</div>`;
@@ -516,19 +762,22 @@
     const isAdmin = window.userProfile?.role === 'admin';
     const flagged = post.status === 'hidden';
     const catInfo = CATS.find(c => c.key === (post.category || 'general'));
+    const targetInfo = post.targetRole ? ROLE_CATS.find(c => c.key === post.targetRole) : null;
     const menuOpen = _openMenus.has(post.id);
     const commentsOpen = _openComments.has(post.id);
     const commentsCount = post.commentsCount || 0;
+    const hasProfile = !!findActorById(post.authorId);
 
     return `
     <div class="gsc-post${flagged ? ' gsc-flagged' : ''}" data-post-id="${post.id}">
       <div class="gsc-post-head">
-        <div class="gsc-avatar">${post.authorPhoto ? `<img src="${esc(post.authorPhoto)}" alt="">` : esc(initials(post.authorName))}</div>
+        <div class="gsc-avatar${hasProfile ? ' clickable' : ''}" data-action="${post.authorPhoto ? 'view-photo' : 'view-profile'}" data-uid="${esc(post.authorId || '')}" data-photo="${esc(post.authorPhoto || '')}">${post.authorPhoto ? `<img src="${esc(post.authorPhoto)}" alt="">` : esc(initials(post.authorName))}</div>
         <div class="gsc-post-meta">
-          <div class="gsc-post-name">${esc(post.authorName || 'Membre GSC')}</div>
+          <div class="gsc-post-name${hasProfile ? ' clickable' : ''}" data-action="view-profile" data-uid="${esc(post.authorId || '')}">${esc(post.authorName || 'Membre GSC')}</div>
           <div class="gsc-post-sub">
             <span>🕐 ${timeAgo(post.createdAt)}</span>
             ${catInfo ? `<span class="gsc-post-cat-tag">${catInfo.icon} ${esc(catInfo.label)}</span>` : ''}
+            ${targetInfo ? `<span class="gsc-post-target-tag" title="Publication ciblée">🎯 ${targetInfo.icon} ${esc(targetInfo.label)}</span>` : ''}
             ${flagged ? `<span class="gsc-flag-tag">⚠️ En attente de modération</span>` : ''}
           </div>
         </div>
@@ -542,8 +791,8 @@
           </div>
         </div>
       </div>
-      ${post.text ? `<div class="gsc-post-text">${nl2br(post.text)}</div>` : ''}
-      ${post.imageURL ? `<img class="gsc-post-img" src="${esc(post.imageURL)}" alt="" loading="lazy">` : ''}
+      ${post.text ? `<div class="gsc-post-text">${renderTextWithMentions(post.text)}</div>` : ''}
+      ${post.imageURL ? `<img class="gsc-post-img" src="${esc(post.imageURL)}" alt="" loading="lazy" data-action="view-photo" data-photo="${esc(post.imageURL)}">` : ''}
       <div class="gsc-react-row">
         ${REACTIONS.map(r => `<button class="gsc-react-btn${mine === r.key ? ' mine' : ''}" data-action="react" data-key="${r.key}" type="button">${r.icon}${counts[r.key] ? ` ${counts[r.key]}` : ''}</button>`).join('')}
       </div>
@@ -564,12 +813,13 @@
         ? `<div style="font-size:12px;color:var(--gray-txt);padding:6px 0;">Aucun commentaire. Soyez le premier à répondre !</div>`
         : list.map(c => {
           const canDelete = isAdmin || (window.currentUser && c.authorId === window.currentUser.uid);
+          const cHasProfile = !!findActorById(c.authorId);
           return `
           <div class="gsc-comment" data-comment-id="${c.id}">
-            <div class="gsc-avatar sm">${c.authorPhoto ? `<img src="${esc(c.authorPhoto)}" alt="">` : esc(initials(c.authorName))}</div>
+            <div class="gsc-avatar sm${cHasProfile ? ' clickable' : ''}" data-action="${c.authorPhoto ? 'view-photo' : 'view-profile'}" data-uid="${esc(c.authorId || '')}" data-photo="${esc(c.authorPhoto || '')}">${c.authorPhoto ? `<img src="${esc(c.authorPhoto)}" alt="">` : esc(initials(c.authorName))}</div>
             <div class="gsc-comment-body">
-              <div class="gsc-comment-name">${esc(c.authorName || 'Membre GSC')}</div>
-              <div class="gsc-comment-text">${nl2br(c.text || '')}</div>
+              <div class="gsc-comment-name${cHasProfile ? ' clickable' : ''}" data-action="view-profile" data-uid="${esc(c.authorId || '')}">${esc(c.authorName || 'Membre GSC')}</div>
+              <div class="gsc-comment-text">${renderTextWithMentions(c.text || '')}</div>
               <div class="gsc-comment-time">${timeAgo(c.createdAt)}</div>
             </div>
             ${canDelete ? `<button class="gsc-comment-del" data-action="delete-comment" data-comment-id="${c.id}" type="button">🗑️</button>` : `<button class="gsc-comment-del" data-action="report-comment" data-comment-id="${c.id}" type="button" title="Signaler">🚩</button>`}
@@ -581,8 +831,9 @@
         ${itemsHtml}
         ${isLogged() ? `
         <div class="gsc-comment-composer">
-          <input type="text" id="gsc-comment-input-${post.id}" maxlength="500" placeholder="Écrire un commentaire…">
+          <input type="text" id="gsc-comment-input-${post.id}" maxlength="500" placeholder="Écrire un commentaire… (@Nom pour mentionner)">
           <button data-action="send-comment" type="button">➤</button>
+          <div class="gsc-mention-pop" id="gsc-mention-pop-${post.id}"></div>
         </div>` : ''}
       </div>`;
   }
@@ -608,8 +859,20 @@
       case 'delete-post': deletePost(postId); break;
       case 'send-comment': sendComment(postId); break;
       case 'delete-comment': deleteComment(postId, btn.dataset.commentId); break;
+      case 'view-profile': openMemberProfile(btn.dataset.uid); break;
+      case 'view-photo': openPhotoFullscreen(btn.dataset.photo); break;
     }
   }
+
+  /* Brancher l'autocomplete @mention sur les champs de commentaire (créés dynamiquement) */
+  document.addEventListener('focusin', (e) => {
+    const input = e.target.closest('[id^="gsc-comment-input-"]');
+    if (!input || input._gscMentionBound) return;
+    input._gscMentionBound = true;
+    const postId = input.id.replace('gsc-comment-input-', '');
+    input.addEventListener('input', (ev) => onMentionInput(ev, 'comment', postId));
+    input.addEventListener('keydown', (ev) => onMentionKeydown(ev, 'comment', postId));
+  });
 
   /* Fermer les menus "⋯" au clic ailleurs */
   document.addEventListener('click', (e) => {
@@ -685,6 +948,8 @@
           link: 'index.html#actualites'
         });
       }
+      /* Notifier les membres mentionnés via @Nom : "X a commenté sur vous" */
+      notifyMentions(text, { authorProfile: profile, action: 'comment', excludeUid: window.currentUser.uid });
     } catch (e) { toastMsg('Erreur lors de l\'envoi du commentaire.', 'error'); }
   }
 

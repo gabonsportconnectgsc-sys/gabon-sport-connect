@@ -340,7 +340,7 @@
       <tr data-id="${p.id}">
         <td data-label="Auteur">${esc(p.authorName || '—')}</td>
         <td data-label="Contenu"><div class="gac-snippet">${esc((p.text || '(image seule)').slice(0, 100))}</div></td>
-        <td data-label="Catégorie">${esc(p.category || 'general')}</td>
+        <td data-label="Catégorie">${esc(p.category || 'general')}${p.targetRole ? ` <span class="gac-badge">🎯 ${esc(p.targetRole)}</span>` : ''}</td>
         <td data-label="Réactions">${reactCount}</td>
         <td data-label="Comm.">${p.commentsCount || 0}</td>
         <td data-label="Signal."><span class="gac-badge ${p.reportsCount ? 'warn' : ''}">${p.reportsCount || 0}</span></td>
