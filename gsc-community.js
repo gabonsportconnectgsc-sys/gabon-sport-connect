@@ -325,61 +325,169 @@
     if (fi) fi.value = '';
   }
 
+  /* ═══ COMPRESSION IMAGE (identique au système admin) ═══ */
+  function compressImageToBlob(file, maxPx, quality) {
+    return new Promise((resolve) => {
+      if (!file || !file.type.startsWith('image/')) { resolve(file); return; }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > maxPx || h > maxPx) {
+          const ratio = Math.min(maxPx / w, maxPx / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality || 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+
+  function compressImageToDataURL(file, maxPx, quality) {
+    return new Promise((resolve) => {
+      if (!file || !file.type.startsWith('image/')) { const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file); return; }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > maxPx || h > maxPx) {
+          const ratio = Math.min(maxPx / w, maxPx / h);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality || 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+
+  function setPublishBtnState(label, disabled) {
+    const btn = document.getElementById('gsc-composer-publish');
+    if (!btn) return;
+    btn.textContent = label;
+    btn.disabled = !!disabled;
+  }
+
+  /* Upload via SDK modulaire (window.uploadBytesResumable ou window.uploadBytes) */
+  async function uploadToStorage(blob, path) {
+    const storageInst = window.storage;
+    const refFn = window.sRef;
+    if (!storageInst || !refFn) throw new Error('Storage non initialisé');
+    const fileRef = refFn(storageInst, path);
+
+    /* Préférer uploadBytesResumable (progress + retry) */
+    if (window.uploadBytesResumable) {
+      return new Promise((resolve, reject) => {
+        const task = window.uploadBytesResumable(fileRef, blob, { contentType: 'image/jpeg' });
+        task.on('state_changed',
+          (snap) => {
+            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+            setPublishBtnState(`⬆️ ${pct}%…`, true);
+          },
+          (err) => reject(err),
+          async () => {
+            try { const url = await window.getDownloadURL(task.snapshot.ref); resolve(url); }
+            catch (e) { reject(e); }
+          }
+        );
+      });
+    }
+    /* Fallback : uploadBytes simple */
+    if (window.uploadBytes && window.getDownloadURL) {
+      const snap = await window.uploadBytes(fileRef, blob);
+      return await window.getDownloadURL(snap.ref);
+    }
+    throw new Error('Aucune méthode uploadBytes disponible');
+  }
+
   async function createPost() {
     if (!isLogged()) { toastMsg('Connectez-vous pour publier.', 'info'); return; }
     const ta = document.getElementById('gsc-composer-text');
     const text = (ta?.value || '').trim();
     const cat = document.getElementById('gsc-composer-cat')?.value || 'general';
     if (!text && !_composerImage) { toastMsg('Écrivez un message ou ajoutez une image.', 'info'); return; }
-    const btn = document.getElementById('gsc-composer-publish');
-    if (btn) { btn.disabled = true; btn.textContent = 'Publication…'; }
+
+    setPublishBtnState('Publication…', true);
+
     try {
       let imageURL = null;
-      if (_composerImage) {
-        // Essayer Firebase Storage d'abord
-        if (window.storage && window.sRef && window.uploadBytes && window.getDownloadURL) {
+
+      if (_composerImage && _composerImage.file) {
+        /* ── Étape 1 : compression de l'image (max 1200px, qualité 0.82) ── */
+        setPublishBtnState('⚙️ Compression…', true);
+        const compressed = await compressImageToBlob(_composerImage.file, 1200, 0.82);
+
+        /* ── Étape 2 : upload Firebase Storage ── */
+        const path = `community/${window.currentUser.uid}/${Date.now()}.jpg`;
+        let uploadOk = false;
+
+        if (window.storage && window.sRef) {
           try {
-            const path = `community/${window.currentUser.uid}/${Date.now()}_${_composerImage.file.name}`;
-            const ref = window.sRef(window.storage, path);
-            await window.uploadBytes(ref, _composerImage.file);
-            imageURL = await window.getDownloadURL(ref);
-          } catch(storErr) {
-            // Fallback : stocker en base64 (limité à ~900KB pour Firestore)
-            console.warn('GSC Community: Storage indisponible, fallback base64', storErr);
-            if (_composerImage.dataUrl && _composerImage.dataUrl.length < 900000) {
-              imageURL = _composerImage.dataUrl;
-            } else {
-              toastMsg('⚠️ Image trop lourde pour le stockage de secours. Publiez sans image ou réduisez la taille.', 'warn');
-              imageURL = null;
+            setPublishBtnState('⬆️ 0%…', true);
+            imageURL = await uploadToStorage(compressed, path);
+            uploadOk = true;
+          } catch (storErr) {
+            console.warn('GSC Community: Storage upload échoué —', storErr.code || storErr.message || storErr);
+            /* Diagnostic message */
+            if (storErr.code === 'storage/unauthorized') {
+              toastMsg('⚠️ Règles Firebase Storage : autorisez la collection community dans la console Firebase.', 'warn');
             }
           }
-        } else if (_composerImage.dataUrl && _composerImage.dataUrl.length < 900000) {
-          // Pas de Storage configuré — base64
-          imageURL = _composerImage.dataUrl;
+        }
+
+        /* ── Étape 3 : fallback base64 compressé si Storage indisponible ── */
+        if (!uploadOk) {
+          setPublishBtnState('⚙️ Stockage local…', true);
+          const dataUrl = await compressImageToDataURL(_composerImage.file, 900, 0.75);
+          if (dataUrl && dataUrl.length < 800000) {
+            imageURL = dataUrl;
+          } else {
+            toastMsg('⚠️ Image trop lourde. Publiez sans image ou réduisez la taille.', 'warn');
+            imageURL = null;
+          }
         }
       }
+
+      /* ── Étape 4 : écriture Firestore ── */
+      setPublishBtnState('💾 Enregistrement…', true);
       const profile = window.userProfile || {};
-      const postData = {
+      await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), {
         authorId: window.currentUser.uid,
         authorName: authorName(profile),
         authorRole: profile.role || 'membre',
         authorPhoto: profile.photoURL || null,
-        text, imageURL, category: cat,
-        reactions: {}, reportsCount: 0, commentsCount: 0, sharesCount: 0,
-        status: 'visible', createdAt: window.serverTimestamp()
-      };
-      await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), postData));
+        text,
+        imageURL,
+        category: cat,
+        reactions: {},
+        reportsCount: 0,
+        commentsCount: 0,
+        sharesCount: 0,
+        status: 'visible',
+        createdAt: window.serverTimestamp()
+      }));
+
       if (ta) ta.value = '';
       clearComposerImage();
       toastMsg('✅ Publication envoyée.', 'success');
+
     } catch (e) {
       console.error('GSC Community createPost:', e);
-      toastMsg('Erreur lors de la publication : ' + (e.message || e), 'error');
+      toastMsg('Erreur : ' + (e.message || e), 'error');
     }
-    if (btn) { btn.disabled = false; btn.textContent = 'Publier'; }
-  }
 
-  /* ═══ ABONNEMENT TEMPS RÉEL ═══ */
+    setPublishBtnState('Publier', false);
+  }
   let _retryTimer = null;
   function ensureSubscribed() {
     renderComposer();

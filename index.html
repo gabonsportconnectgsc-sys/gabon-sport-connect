@@ -80,7 +80,7 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 10px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:visible;min-width:0;}
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 10px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;min-width:0;}
     /* Icônes visibles en permanence - mode adaptatif */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge, .topnav .user-chip {
       flex-shrink:0;
@@ -98,10 +98,8 @@
       display:none !important;
     }
     /* Logo compressible : cache le texte quand l'espace manque */
-    .topnav-logo{min-width:0;overflow:visible;}
+    .topnav-logo{min-width:0;overflow:hidden;}
     .topnav-logo-text{transition:max-width .2s ease, opacity .2s ease;max-width:120px;overflow:hidden;}
-    /* BADGES : ne jamais couper le dépassement sur les boutons porteurs de badge */
-    #gsc-notif-bell, .btn-icon, [id^="bnav-"] { overflow: visible !important; }
     .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;position:relative;}
     .topnav-logo img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
     .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;}
@@ -1886,19 +1884,19 @@
     <!-- ── ACTUALITÉS ── -->
     <section class="view" id="view-actualites">
       <div class="card fade-up mb-16">
-        <div class="card-header" style="padding:14px 16px 10px;">
-          <div class="card-title" style="font-size:15px;"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Actualités Sport Gabon</div>
+        <div class="card-header">
+          <div class="card-title"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=80&h=80&fit=crop&auto=format" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;" alt="" onerror="this.style.display='none'">Actualités Sport Gabon</div>
           <button class="btn-sm" onclick="refreshOnlineNews()" id="btn-refresh-news">↺ Actualiser</button>
         </div>
-        <div class="card-body" style="padding:8px 12px 10px;">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;justify-content:center;align-items:center;" id="news-cat-filters">
-            <button class="news-filter-btn active" style="font-size:11.5px;padding:6px 12px;" onclick="filterNews('all',this)">🌍 Tout</button>
-            <button class="news-filter-btn" style="font-size:11.5px;padding:6px 12px;" onclick="filterNews('Football',this)">⚽ Football</button>
-            <button class="news-filter-btn" style="font-size:11.5px;padding:6px 12px;" onclick="filterNews('Basketball',this)">🏀 Basketball</button>
-            <button class="news-filter-btn" style="font-size:11.5px;padding:6px 12px;" onclick="filterNews('Athlétisme',this)">🏃 Athlétisme</button>
-            <button class="news-filter-btn" style="font-size:11.5px;padding:6px 12px;" onclick="filterNews('Gabon',this)">🇬🇦 Gabon</button>
+        <div class="card-body" style="padding-bottom:8px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;" id="news-cat-filters">
+            <button class="news-filter-btn active" onclick="filterNews('all',this)">🌍 Tout</button>
+            <button class="news-filter-btn" onclick="filterNews('Football',this)">⚽ Football</button>
+            <button class="news-filter-btn" onclick="filterNews('Basketball',this)">🏀 Basketball</button>
+            <button class="news-filter-btn" onclick="filterNews('Athlétisme',this)">🏃 Athlétisme</button>
+            <button class="news-filter-btn" onclick="filterNews('Gabon',this)">🇬🇦 Gabon</button>
           </div>
-          <div id="online-news-status" style="font-size:12px;color:var(--gray-txt);margin-bottom:4px;display:none;"></div>
+          <div id="online-news-status" style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;display:none;"></div>
         </div>
       </div>
       <div id="news-list"></div>
@@ -2641,9 +2639,23 @@ const ETABLISSEMENTS_GA=[
       const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
       window.sRef = sm.ref;
       window.uploadBytes = sm.uploadBytes;
+      window.uploadBytesResumable = sm.uploadBytesResumable;
       window.getDownloadURL = sm.getDownloadURL;
       window.storage = sm.getStorage(app);
-    }catch(e){ /* Firebase Storage non disponible — silencieux */ }
+      window._storageReady = true;
+    }catch(e){
+      window._storageReady = false;
+      console.warn('Firebase Storage modulaire indisponible:', e);
+      /* Fallback : tenter le SDK compat si déjà chargé (admin.html) */
+      if(window.firebase && window.firebase.storage){
+        try{
+          const fbSt = window.firebase.storage();
+          window.storage = fbSt;
+          window._storageCompat = true;
+          window._storageReady = true;
+        }catch(e2){}
+      }
+    }
     // ── Pont d'authentification Firebase (corrige "Missing or insufficient permissions") ──
     // L'app utilise Supabase pour le login. Pour que Firestore voie request.auth.uid,
     // on se connecte à Firebase avec un Custom Token (généré par un Cloudflare Worker
@@ -2693,7 +2705,7 @@ const ETABLISSEMENTS_GA=[
 var _idToken=null, _uid=null, currentUser=null, userProfile=null, isVisitor=false;
 var mapInstance=null, mapMarkers=[], allAdminUsers=[], allActors=[], filteredActors=[];
 var newsDb=[], currentActorType='tous';
-var storage=null, sRef=null, uploadBytes=null, getDownloadURL=null;
+var storage=null, sRef=null, uploadBytes=null, uploadBytesResumable=null, getDownloadURL=null;
 var db=null, _fbApp=null;
 // Firestore function stubs — assigned when firebase-ready fires
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
@@ -5792,6 +5804,7 @@ document.addEventListener('firebase-ready', async function(){
   if(window.storage)       storage=window.storage;
   if(window.sRef)          sRef=window.sRef;
   if(window.uploadBytes)   uploadBytes=window.uploadBytes;
+  if(window.uploadBytesResumable) uploadBytesResumable=window.uploadBytesResumable;
   if(window.getDownloadURL) getDownloadURL=window.getDownloadURL;
 
   // If Firebase failed (e.g. file:// protocol), show a warning but keep the UI functional
