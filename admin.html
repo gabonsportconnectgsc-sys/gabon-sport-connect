@@ -921,15 +921,15 @@ tr.is-demo-row td { opacity: .82; }
                 <div class="tile-count" id="rc-sportif-etranger">—</div>
                 <div class="tile-name">Sportifs étrangers</div>
               </div>
-              <div class="role-tile clickable" style="background:linear-gradient(135deg,#059669,#10b981)" onclick="window.gscGoToFiltered({roles:'ecole_universite', title:'Écoles / Universités'})">
-                <div class="tile-icon">🏫</div>
-                <div class="tile-count" id="rc-ecole-universite">—</div>
-                <div class="tile-name">Écoles/Univ.</div>
-              </div>
               <div class="role-tile clickable" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" onclick="window.gscGoToFiltered({roles:'handisport', title:'Sportifs handisport'})">
                 <div class="tile-icon">🦾</div>
                 <div class="tile-count" id="rc-handisport">—</div>
                 <div class="tile-name">Handisport</div>
+              </div>
+              <div class="role-tile clickable" style="background:linear-gradient(135deg,#059669,#10b981)" onclick="window.gscGoToFiltered({roles:'ecole_universite', title:'Écoles / Universités'})">
+                <div class="tile-icon">🏫</div>
+                <div class="tile-count" id="rc-ecole-universite">—</div>
+                <div class="tile-name">Écoles/Univ.</div>
               </div>
             </div>
           </div>
@@ -1505,13 +1505,15 @@ tr.is-demo-row td { opacity: .82; }
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', ecole_universite: '🏫 École/Université'
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
+    ecole_universite: '🏫 École / Université'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
     organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
-    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', ecole_universite: '#059669'
+    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', handisport: '#7c3aed',
+    ecole_universite: '#059669'
   };
   const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
 
@@ -1641,7 +1643,7 @@ tr.is-demo-row td { opacity: .82; }
   function indivGscId(u) {
     return u.gscId || (window.gscGenerateId ? window.gscGenerateId(u.uid || u.id, u.role || 'joueur') : '—');
   }
-  const STATUS_LABELS_INDIV = { active: 'Actif', pending: 'En attente', hidden: 'Masqué' };
+  const STATUS_LABELS_INDIV = { active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' };
 
   function populateIndivRoleSelect() {
     const sel = document.getElementById('indiv-report-role');
@@ -1939,13 +1941,14 @@ tr.is-demo-row td { opacity: .82; }
     joueur: 'JOU', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
     association: 'ASS', federation: 'FED', independant: 'IND',
     admin: 'ADM', supporter: 'SUP', organisateur: 'ORG',
-    eleve_etudiant: 'ELE', sportif_etranger: 'ETR'
+    eleve_etudiant: 'ELE', sportif_etranger: 'ETR', handisport: 'HAN', ecole_universite: 'ECU'
   };
   const ROLE_LABELS_QR = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
+    ecole_universite: '🏫 École / Université'
   };
 
   function generateGscId(uid, role) {
@@ -2326,8 +2329,8 @@ tr.is-demo-row td { opacity: .82; }
       setText('rc-independant',countRole('independant'));
       setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
       setText('rc-sportif-etranger',countRole('sportif_etranger'));
-      setText('rc-ecole-universite',countRole('ecole_universite'));
       setText('rc-handisport',countRole('handisport'));
+      setText('rc-ecole-universite',countRole('ecole_universite'));
       // Tuile acteurs réels (non-démo)
       const reelEl=document.getElementById('rc-reels');
       if(reelEl) reelEl.textContent=snap.docs.filter(d=>!d.data().isDemo).length;
