@@ -318,17 +318,18 @@
 /* Mentions @Nom dans le texte */
 .gsc-mention{color:var(--green-dk);font-weight:700;cursor:pointer;}
 .gsc-mention:hover{text-decoration:underline;}
-/* Rangée secondaire : filtre par type d'acteur */
-.gsc-role-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-bottom:12px;padding:0 4px;}
-.gsc-role-row .news-filter-btn{font-size:11px;padding:6px 8px;white-space:normal;line-height:1.25;text-align:center;}
+/* Rangée secondaire : filtre par type d'acteur — grille 2 colonnes stricte */
+.gsc-role-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;padding:0 4px;align-items:stretch;}
+.gsc-role-row .news-filter-btn{font-size:11px;padding:7px 6px;white-space:normal;line-height:1.3;text-align:center;width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:4px;min-height:36px;border-radius:18px;}
 .gsc-role-row-label{grid-column:1 / -1;text-align:center;font-size:11px;color:var(--gray-txt);font-weight:700;margin-bottom:2px;}
-/* Boutons de filtre par type d'acteur — couleur unique par rôle, alignée
-   sur les tuiles "Acteurs sportifs" de la page d'accueil */
-.gsc-role-btn{border-color:var(--role-color, var(--gray-bd))!important;color:var(--role-color-dk, var(--gray-txt))!important;background:color-mix(in srgb, var(--role-color, #fff) 10%, #fff)!important;}
+/* "Tous les acteurs" occupe toute la largeur, centré */
+.gsc-role-btn-all{grid-column:1 / -1;justify-self:stretch;}
+/* Couleur unique par rôle */
+.gsc-role-btn{border:2px solid var(--role-color, var(--gray-bd))!important;color:var(--role-color-dk, var(--gray-txt))!important;background:color-mix(in srgb, var(--role-color, #fff) 8%, #fff)!important;font-weight:700;}
 .gsc-role-btn:hover{background:color-mix(in srgb, var(--role-color, #fff) 18%, #fff)!important;}
 .gsc-role-btn.active{background:linear-gradient(135deg, var(--role-color, var(--navy)), var(--role-color-dk, var(--navy-md)))!important;color:#fff!important;border-color:transparent!important;box-shadow:0 2px 8px rgba(0,0,0,.18);}
-.gsc-role-btn[data-role="all"]{border-color:var(--navy)!important;color:var(--navy)!important;background:#fff!important;}
-.gsc-role-btn[data-role="all"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md))!important;color:#fff!important;}
+.gsc-role-btn[data-role="all"]{border:2px solid var(--navy)!important;color:var(--navy)!important;background:#fff!important;}
+.gsc-role-btn[data-role="all"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md))!important;color:#fff!important;border-color:transparent!important;}
 .gsc-post-target-tag{border-radius:10px;padding:1px 8px;font-weight:700;}
 /* Autocomplete @mention */
 .gsc-mention-pop{position:absolute;z-index:30;background:#fff;border:1px solid var(--gray-bd);border-radius:10px;box-shadow:var(--shadow-md);max-height:220px;overflow-y:auto;min-width:200px;display:none;}
@@ -371,7 +372,7 @@
       </div>
       <div class="gsc-role-row" id="gsc-role-row">
         <div class="gsc-role-row-label">🎯 Filtrer par type d'acteur</div>
-        <button class="news-filter-btn gsc-role-btn active" data-role="all" type="button">👥 Tous les acteurs</button>
+        <button class="news-filter-btn gsc-role-btn gsc-role-btn-all active" data-role="all" type="button">👥 Tous les acteurs</button>
         ${ROLE_CATS.map(c => `<button class="news-filter-btn gsc-role-btn" data-role="${c.key}" type="button" style="--role-color:${c.color};--role-color-dk:${c.colorDk};">${c.icon} ${esc(c.label)}</button>`).join('')}
       </div>
       <div id="gsc-composer-zone"></div>

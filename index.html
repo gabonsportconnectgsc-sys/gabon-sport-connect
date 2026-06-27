@@ -650,13 +650,16 @@
     .filter-pill:hover .real-icon{transform:scale(1.1);}
 
     /* ── ANNUAIRE FILTER BUTTONS (now uses filter-pill base) ── */
-    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;align-items:center;padding:0 8px;}
+    .actors-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;align-items:stretch;}
     .actor-filter-btn{
-      padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
+      padding:8px 10px;border:2px solid var(--gray-bd);border-radius:20px;
       background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
-      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:6px;
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;justify-content:center;gap:6px;
+      width:100%;box-sizing:border-box;min-height:40px;text-align:center;white-space:normal;line-height:1.3;
     }
-    .actor-filter-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+    /* "Tous" occupe toute la largeur sur la première ligne */
+    .actor-filter-btn[data-type="tous"]{grid-column:1 / -1;}
+    .actor-filter-btn:hover{box-shadow:var(--shadow-sm);background:var(--gray-bg);}
     .actor-filter-btn.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
     .actor-filter-btn[data-type="tous"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md));}
     .actor-filter-btn[data-type="joueur"].active{background:linear-gradient(135deg,#009E60,#007a47);}
@@ -664,8 +667,8 @@
     .actor-filter-btn[data-type="entraineur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
     .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
     .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
-    .actor-filter-btn[data-type="federation"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
-    .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .actor-filter-btn[data-type="federation"].active{background:linear-gradient(135deg,#1a2d4a,#0f3460);}
+    .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#b45309,#92400e);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
     .actor-filter-btn[data-type="eleve_etudiant"].active{background:linear-gradient(135deg,#6366f1,#4338ca);}
