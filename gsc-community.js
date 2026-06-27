@@ -104,7 +104,10 @@
     s.id = 'gsc-community-styles';
     s.textContent = `
 #gsc-community-root{margin-top:0;}
-.gsc-cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;}
+#gsc-feed-tabs{overflow:visible !important;}
+#gsc-feed-tabs .card{overflow:visible;}
+.gsc-cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;padding:0 4px;}
+.gsc-cat-row .news-filter-btn{flex:0 0 auto;font-size:11.5px;padding:6px 12px;}
 .gsc-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex-shrink:0;overflow:hidden;font-family:var(--font-display);}
 .gsc-avatar img{width:100%;height:100%;object-fit:cover;}
 .gsc-avatar.sm{width:30px;height:30px;font-size:11px;}
@@ -194,9 +197,9 @@
     tabsWrap.className = 'card fade-up mb-16';
     tabsWrap.id = 'gsc-feed-tabs';
     tabsWrap.innerHTML = `
-      <div style="display:flex;gap:8px;padding:12px;">
-        <button class="news-filter-btn active" id="gsc-tab-actu" type="button">📰 Actualités officielles</button>
-        <button class="news-filter-btn" id="gsc-tab-community" type="button">💬 Fil communautaire</button>
+      <div style="display:flex;gap:8px;padding:12px 14px;justify-content:center;align-items:center;flex-wrap:nowrap;">
+        <button class="news-filter-btn active" id="gsc-tab-actu" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📰 Actualités officielles</button>
+        <button class="news-filter-btn" id="gsc-tab-community" type="button" style="flex:1;max-width:200px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;">💬 Fil communautaire</button>
       </div>`;
 
     const communityPane = document.createElement('div');
@@ -332,14 +335,31 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Publication…'; }
     try {
       let imageURL = null;
-      if (_composerImage && window.storage && window.sRef && window.uploadBytes && window.getDownloadURL) {
-        const path = `community/${window.currentUser.uid}/${Date.now()}_${_composerImage.file.name}`;
-        const ref = window.sRef(window.storage, path);
-        await window.uploadBytes(ref, _composerImage.file);
-        imageURL = await window.getDownloadURL(ref);
+      if (_composerImage) {
+        // Essayer Firebase Storage d'abord
+        if (window.storage && window.sRef && window.uploadBytes && window.getDownloadURL) {
+          try {
+            const path = `community/${window.currentUser.uid}/${Date.now()}_${_composerImage.file.name}`;
+            const ref = window.sRef(window.storage, path);
+            await window.uploadBytes(ref, _composerImage.file);
+            imageURL = await window.getDownloadURL(ref);
+          } catch(storErr) {
+            // Fallback : stocker en base64 (limité à ~900KB pour Firestore)
+            console.warn('GSC Community: Storage indisponible, fallback base64', storErr);
+            if (_composerImage.dataUrl && _composerImage.dataUrl.length < 900000) {
+              imageURL = _composerImage.dataUrl;
+            } else {
+              toastMsg('⚠️ Image trop lourde pour le stockage de secours. Publiez sans image ou réduisez la taille.', 'warn');
+              imageURL = null;
+            }
+          }
+        } else if (_composerImage.dataUrl && _composerImage.dataUrl.length < 900000) {
+          // Pas de Storage configuré — base64
+          imageURL = _composerImage.dataUrl;
+        }
       }
       const profile = window.userProfile || {};
-      await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), {
+      const postData = {
         authorId: window.currentUser.uid,
         authorName: authorName(profile),
         authorRole: profile.role || 'membre',
@@ -347,18 +367,30 @@
         text, imageURL, category: cat,
         reactions: {}, reportsCount: 0, commentsCount: 0, sharesCount: 0,
         status: 'visible', createdAt: window.serverTimestamp()
-      }));
+      };
+      await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), postData));
       if (ta) ta.value = '';
       clearComposerImage();
       toastMsg('✅ Publication envoyée.', 'success');
-    } catch (e) { toastMsg('Erreur lors de la publication.', 'error'); }
+    } catch (e) {
+      console.error('GSC Community createPost:', e);
+      toastMsg('Erreur lors de la publication : ' + (e.message || e), 'error');
+    }
     if (btn) { btn.disabled = false; btn.textContent = 'Publier'; }
   }
 
   /* ═══ ABONNEMENT TEMPS RÉEL ═══ */
+  let _retryTimer = null;
   function ensureSubscribed() {
     renderComposer();
-    if (_subscribed || !ready()) { renderFeed(); return; }
+    if (_subscribed) { renderFeed(); return; }
+    if (!ready()) {
+      // Firebase pas encore prêt — réessayer dans 800ms
+      clearTimeout(_retryTimer);
+      _retryTimer = setTimeout(ensureSubscribed, 800);
+      renderFeed();
+      return;
+    }
     _subscribed = true;
     loadBlocked().then(() => {
       try {

@@ -62,6 +62,14 @@
   animation: gsc-nb-pop .25s cubic-bezier(.34,1.56,.64,1) both;
   font-family: var(--font-body, sans-serif);
 }
+/* CRITIQUE : les parents du badge ne doivent pas couper le débordement */
+#gsc-notif-bell,
+.btn-icon,
+.bnav-item,
+.gsc-nb-wrap,
+[id^="bnav-"] {
+  overflow: visible !important;
+}
 /* Variante sur fond blanc (bottom-nav) */
 .gsc-nb.light {
   border-color: #fff;
