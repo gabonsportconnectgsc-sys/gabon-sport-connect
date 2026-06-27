@@ -325,33 +325,10 @@
     if (fi) fi.value = '';
   }
 
-  /* ═══ COMPRESSION IMAGE (identique au système admin) ═══ */
+  /* ═══ COMPRESSION IMAGE AVANT UPLOAD ═══ */
   function compressImageToBlob(file, maxPx, quality) {
     return new Promise((resolve) => {
       if (!file || !file.type.startsWith('image/')) { resolve(file); return; }
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > maxPx || h > maxPx) {
-          const ratio = Math.min(maxPx / w, maxPx / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality || 0.82);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-      img.src = url;
-    });
-  }
-
-  function compressImageToDataURL(file, maxPx, quality) {
-    return new Promise((resolve) => {
-      if (!file || !file.type.startsWith('image/')) { const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file); return; }
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
@@ -364,10 +341,46 @@
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality || 0.82));
+        canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality || 0.82);
       };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
       img.src = url;
+    });
+  }
+
+  /* ═══ UPLOAD CLOUDINARY (même config que uploadProfilePhoto dans index.html) ═══ */
+  const GSC_CLOUD_NAME   = 'djvzc3vqp';
+  const GSC_UPLOAD_PRESET = 'gsc_admin_uploads';
+
+  async function uploadImageToCloudinary(file) {
+    /* Compression : max 1200px, qualité 0.82 */
+    const blob = await compressImageToBlob(file, 1200, 0.82);
+    const fd = new FormData();
+    fd.append('file', blob, 'community_' + Date.now() + '.jpg');
+    fd.append('upload_preset', GSC_UPLOAD_PRESET);
+    fd.append('folder', 'community');
+    /* Progress via XHR pour afficher le % */
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${GSC_CLOUD_NAME}/image/upload`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setPublishBtnState(`⬆️ ${pct}%…`, true);
+        }
+      };
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status === 200 && data.secure_url) {
+            resolve(data.secure_url);
+          } else {
+            reject(new Error(data?.error?.message || `Cloudinary HTTP ${xhr.status}`));
+          }
+        } catch (e) { reject(e); }
+      };
+      xhr.onerror = () => reject(new Error('Erreur réseau Cloudinary'));
+      xhr.send(fd);
     });
   }
 
@@ -376,38 +389,6 @@
     if (!btn) return;
     btn.textContent = label;
     btn.disabled = !!disabled;
-  }
-
-  /* Upload via SDK modulaire (window.uploadBytesResumable ou window.uploadBytes) */
-  async function uploadToStorage(blob, path) {
-    const storageInst = window.storage;
-    const refFn = window.sRef;
-    if (!storageInst || !refFn) throw new Error('Storage non initialisé');
-    const fileRef = refFn(storageInst, path);
-
-    /* Préférer uploadBytesResumable (progress + retry) */
-    if (window.uploadBytesResumable) {
-      return new Promise((resolve, reject) => {
-        const task = window.uploadBytesResumable(fileRef, blob, { contentType: 'image/jpeg' });
-        task.on('state_changed',
-          (snap) => {
-            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-            setPublishBtnState(`⬆️ ${pct}%…`, true);
-          },
-          (err) => reject(err),
-          async () => {
-            try { const url = await window.getDownloadURL(task.snapshot.ref); resolve(url); }
-            catch (e) { reject(e); }
-          }
-        );
-      });
-    }
-    /* Fallback : uploadBytes simple */
-    if (window.uploadBytes && window.getDownloadURL) {
-      const snap = await window.uploadBytes(fileRef, blob);
-      return await window.getDownloadURL(snap.ref);
-    }
-    throw new Error('Aucune méthode uploadBytes disponible');
   }
 
   async function createPost() {
@@ -423,42 +404,19 @@
       let imageURL = null;
 
       if (_composerImage && _composerImage.file) {
-        /* ── Étape 1 : compression de l'image (max 1200px, qualité 0.82) ── */
+        /* ── Upload Cloudinary (même système que uploadProfilePhoto) ── */
         setPublishBtnState('⚙️ Compression…', true);
-        const compressed = await compressImageToBlob(_composerImage.file, 1200, 0.82);
-
-        /* ── Étape 2 : upload Firebase Storage ── */
-        const path = `community/${window.currentUser.uid}/${Date.now()}.jpg`;
-        let uploadOk = false;
-
-        if (window.storage && window.sRef) {
-          try {
-            setPublishBtnState('⬆️ 0%…', true);
-            imageURL = await uploadToStorage(compressed, path);
-            uploadOk = true;
-          } catch (storErr) {
-            console.warn('GSC Community: Storage upload échoué —', storErr.code || storErr.message || storErr);
-            /* Diagnostic message */
-            if (storErr.code === 'storage/unauthorized') {
-              toastMsg('⚠️ Règles Firebase Storage : autorisez la collection community dans la console Firebase.', 'warn');
-            }
-          }
-        }
-
-        /* ── Étape 3 : fallback base64 compressé si Storage indisponible ── */
-        if (!uploadOk) {
-          setPublishBtnState('⚙️ Stockage local…', true);
-          const dataUrl = await compressImageToDataURL(_composerImage.file, 900, 0.75);
-          if (dataUrl && dataUrl.length < 800000) {
-            imageURL = dataUrl;
-          } else {
-            toastMsg('⚠️ Image trop lourde. Publiez sans image ou réduisez la taille.', 'warn');
-            imageURL = null;
-          }
+        try {
+          imageURL = await uploadImageToCloudinary(_composerImage.file);
+        } catch (uploadErr) {
+          console.warn('GSC Community: Cloudinary échoué —', uploadErr.message);
+          /* Fallback : base64 compressé si Cloudinary indisponible */
+          toastMsg('⚠️ Upload image échoué — publication sans image.', 'warn');
+          imageURL = null;
         }
       }
 
-      /* ── Étape 4 : écriture Firestore ── */
+      /* ── Écriture Firestore ── */
       setPublishBtnState('💾 Enregistrement…', true);
       const profile = window.userProfile || {};
       await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), {
