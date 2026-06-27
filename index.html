@@ -3187,20 +3187,25 @@ async function onSupabaseSignedIn(user, extra){
   if(userProfile && userProfile._isNew){
     // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
     const prenom = extra?.prenom || user.user_metadata?.prenom || '';
-    const nom = extra?.nom || user.user_metadata?.nom || '';
+    const nom   = extra?.nom   || user.user_metadata?.nom   || '';
     delete userProfile._isNew;
-    userProfile.prenom = prenom;
-    userProfile.nom = nom;
-    // Persiste tous les champs collectés à l'inscription (role, telephone, sexe, ddn, nationalite…)
-    if(extra?.role) userProfile.role = extra.role;
-    if(extra?.tel) userProfile.telephone = extra.tel;
-    if(extra?.sexe) userProfile.sexe = extra.sexe;
-    if(extra?.ddn) userProfile.dateNaissance = extra.ddn;
-    if(extra?.nationalite) userProfile.nationalite = extra.nationalite;
-    if(extra?.statut) userProfile.statut = extra.statut;
-    if(extra?.employeur) userProfile.employeur = extra.employeur;
-    if(!userProfile.status) userProfile.status = 'active';
-    userProfile.createdAt = new Date();
+    // Tous les champs nécessaires à l'annuaire + déduplication téléphone
+    Object.assign(userProfile, {
+      uid:        user.id,
+      email:      user.email || '',
+      prenom,
+      nom,
+      role:       extra?.role       || user.user_metadata?.role       || 'joueur',
+      telephone:  extra?.tel        || user.user_metadata?.tel        || '',
+      sexe:       extra?.sexe       || user.user_metadata?.sexe       || '',
+      dateNaissance: extra?.ddn     || user.user_metadata?.ddn        || '',
+      nationalite: extra?.nationalite || user.user_metadata?.nationalite || 'Gabonaise',
+      statut:     extra?.statut     || user.user_metadata?.statut     || 'libre',
+      employeur:  extra?.employeur  || user.user_metadata?.employeur  || '',
+      sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
+      status:     'active',
+      createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
+    });
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
@@ -3645,9 +3650,9 @@ async function loadUserProfile(uid){
   try{
     const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
+    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }catch(e){
-    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
+    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }
 }
 
@@ -3742,15 +3747,21 @@ async function loadActors(){
   let dbActors = [];
   if(db&&typeof collection==='function'){
     try{
-      const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+      const snap=await getDocs(query(collection(db,'users')));
       dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+      dbActors.sort((a,b)=>{
+        const ta=a.createdAt?.toDate?a.createdAt.toDate():a.createdAt?new Date(a.createdAt):new Date(0);
+        const tb=b.createdAt?.toDate?b.createdAt.toDate():b.createdAt?new Date(b.createdAt):new Date(0);
+        return tb-ta;
+      });
     }catch(e){ console.warn('loadActors DB:',e); }
   }
   // Merge: Firebase first, then seed (avoid duplicates by uid)
   const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
   const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid));
   allActors=[...dbActors,...seedActors];
-  renderActors(allActors);
+  // Respecte le filtre et la recherche actifs
+  searchAnnuaire();
   // Update global stats with merged data
   const activeAll=allActors.filter(u=>u.status==='active'||u.status===undefined);
   const statEl=document.getElementById('stat-total-acteurs');
@@ -5143,7 +5154,7 @@ function showView(name){
   if(ve) ve.scrollTop=0;
   if(name==='profil') renderProfile();
   if(name==='annuaire'){
-    if(!allActors.length) loadActors();
+    loadActors();
   }
   if(name==='stades'){
     initMap();
@@ -5321,8 +5332,9 @@ async function loadAdminStats(){
 async function loadAdminUsers(){
   if(!db || typeof collection !== 'function'){ return; }
   try{
-    const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+    const snap=await getDocs(collection(db,'users'));
     allAdminUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    allAdminUsers.sort((a,b)=>{ const ta=a.createdAt?.toDate?a.createdAt.toDate():new Date(0); const tb=b.createdAt?.toDate?b.createdAt.toDate():new Date(0); return tb-ta; });
     renderAdminUsersTable(allAdminUsers);
     updatePendingBanner();
   }catch(e){
