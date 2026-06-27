@@ -2828,6 +2828,11 @@ function enterAsVisitor(silent=false){
     allNewsItems=[...newsDb,...GSC_SEED_NEWS.filter(s=>!newsDb.find(n=>n.id===s.id))];
     renderNewsFiltered();
   });
+  // ── FIL COMMUNAUTAIRE : réafficher le bandeau "Connectez-vous pour publier…"
+  // immédiatement après une déconnexion, sans attendre un changement d'onglet ──
+  if(window.GSCCommunity && typeof window.GSCCommunity.refreshComposer==='function'){
+    window.GSCCommunity.refreshComposer();
+  }
 }
 
 function goToAuth(tab){
@@ -3503,6 +3508,11 @@ function enterApp(){
   if(window.GSCNavBadges && currentUser?.uid){
     window.GSCNavBadges.init(currentUser.uid);
   }
+  // ── FIL COMMUNAUTAIRE : le bandeau "Connectez-vous pour publier…" doit
+  // disparaître immédiatement, sans attendre un changement d'onglet ──
+  if(window.GSCCommunity && typeof window.GSCCommunity.refreshComposer==='function'){
+    window.GSCCommunity.refreshComposer();
+  }
 }
 
 async function handleLogout(){
@@ -3969,6 +3979,12 @@ function openActorDetail(uid){
   })();
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
   const isOrg=['club','association','federation','organisateur'].includes(a.role);
+  // Accès aux données sensibles (CNI, licence, n° de document) : uniquement le
+  // propriétaire du profil, son club/association employeur, ou l'administrateur.
+  const isProfileOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
+  const isProfileEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
+  const isPlatformAdmin=userProfile?.role==='admin';
+  const canViewSensitive=isProfileOwner||isProfileEmployerOrg||isPlatformAdmin;
   let html='';
   // Infos générales
   html+=`<div class="adm-section"><div class="adm-section-title">📋 Informations générales</div>`;
@@ -4008,8 +4024,8 @@ function openActorDetail(uid){
       });
       html+=`</div>`;
     }
-    // Licence — masqué pour les visiteurs
-    if(a.licenceNumero && !isVisitor){
+    // Licence — donnée sensible : propriétaire, club employeur ou admin uniquement
+    if(a.licenceNumero && canViewSensitive){
       html+=`<div class="adm-section"><div class="adm-section-title">🪪 Licence officielle</div>`;
       html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceNumero}</span></div>`;
       if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${a.licenceExpire}</span></div>`;
@@ -4029,12 +4045,13 @@ function openActorDetail(uid){
     if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${a.filiere}</span></div>`;
     html+=`</div>`;
   }
-  // Sportif étranger — statut & vérification documentaire
+  // Sportif étranger — statut & vérification documentaire (le n° de document exact
+  // reste une donnée sensible réservée au propriétaire, son club employeur ou l'admin)
   if(a.role==='sportif_etranger'){
     html+=`<div class="adm-section"><div class="adm-section-title">🌍 Statut sportif étranger</div>`;
     if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${a.statutPro}</span></div>`;
     if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${a.employeur}</span></div>`;
-    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${a.documentNumero?' n° '+a.documentNumero:''}</span></div>`;
+    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${(a.documentNumero&&canViewSensitive)?' n° '+a.documentNumero:''}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Vérification</span><span class="adm-info-val">${a.documentVerifie?'✅ Vérifié':'⏳ Non vérifié'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 FIFA TMS</a>
@@ -4073,14 +4090,14 @@ function openActorDetail(uid){
   if(a.palmares){
     html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
   }
-  // Documents personnels : masqués pour les visiteurs ; visibles avec actions si on est le propriétaire,
-  // son club/association employeur, ou l'admin. Sinon lecture seule masquée.
+  // Documents personnels : DONNÉES SENSIBLES (CNI, licence, etc.). Visibles et accessibles
+  // uniquement par le propriétaire, son club/association employeur, ou l'administrateur.
+  // Pour tout autre membre connecté, cette section ne doit ni s'afficher ni exposer
+  // le moindre lien de téléchargement — même en lecture seule.
   const docs=Array.isArray(a.documents)?a.documents:[];
-  const isOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
-  const isEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
-  const canManageDocs=isOwner||isEmployerOrg;
-  if(!isVisitor && (docs.length||canManageDocs)){
-    html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?'':' (visibles par l\'intéressé et son club)'}</div>`;
+  const canManageDocs=isProfileOwner||isProfileEmployerOrg;
+  if(canViewSensitive && (docs.length||canManageDocs)){
+    html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?' (visibles par vous et votre club)':' (accès administrateur)'}</div>`;
     if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
     else docs.forEach((d,i)=>{
       html+=`<div class="doc-detail-row">

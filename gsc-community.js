@@ -1100,6 +1100,6 @@
   else document.addEventListener('DOMContentLoaded', init);
   document.addEventListener('firebase-ready', () => { renderComposer(); });
 
-  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed };
+  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed, refreshComposer: renderComposer };
 
 })(window);
