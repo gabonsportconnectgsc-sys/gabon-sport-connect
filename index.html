@@ -11,6 +11,7 @@
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
   <script src="app-config-loader.js"></script>
   <script src="gsc-notifications.js"></script>
+  <script src="gsc-nav-badges.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Leaflet pour la carte des sites + Import OSM -->
@@ -3484,6 +3485,10 @@ function enterApp(){
   if(window.GSCNotif && currentUser?.uid){
     window.GSCNotif.onLogin(currentUser.uid);
   }
+  // ── BADGES NAV : init avec l'uid connecté ──
+  if(window.GSCNavBadges && currentUser?.uid){
+    window.GSCNavBadges.init(currentUser.uid);
+  }
 }
 
 async function handleLogout(){
@@ -3491,6 +3496,8 @@ async function handleLogout(){
   currentUser=null;userProfile=null;_uid=null;
   // ── NOTIFICATIONS : déconnecter ──
   if(window.GSCNotif) window.GSCNotif.onLogout();
+  // ── BADGES NAV : reset ──
+  if(window.GSCNavBadges) window.GSCNavBadges.onLogout();
   toast('Déconnecté.','info');
   enterAsVisitor(true);
 }
