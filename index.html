@@ -369,8 +369,11 @@
     .adm-cover-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,28,54,.30) 0%,rgba(10,28,54,.50) 55%,rgba(8,22,44,.90) 100%);}
     .adm-hero-content{position:relative;z-index:2;}
     .adm-close{position:absolute;top:16px;right:16px;z-index:3;background:rgba(255,255,255,.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .adm-cover-edit-btn{position:absolute;top:16px;left:16px;z-index:3;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);transition:transform .15s,background .15s;}
-    .adm-cover-edit-btn:hover{background:rgba(0,0,0,.55);transform:scale(1.06);}
+    .adm-cover-edit-btn{position:absolute;top:16px;left:16px;z-index:3;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);transition:transform .15s,background .15s;pointer-events:none;}
+    .adm-cover-click-layer{position:absolute;inset:0;z-index:2;cursor:pointer;-webkit-tap-highlight-color:rgba(255,255,255,.15);}
+    .adm-cover-click-layer:active ~ .adm-cover-edit-btn{transform:scale(.94);}
+    .adm-cover-hint{position:absolute;top:16px;left:58px;z-index:3;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);font-size:12px;font-weight:600;padding:6px 12px 6px 10px;border-radius:20px;backdrop-filter:blur(2px);pointer-events:none;white-space:nowrap;animation:fadeIn .25s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:translateY(0);}}
     .adm-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.85);box-shadow:0 2px 12px rgba(0,0,0,.35);margin:0 auto 12px;overflow:hidden;}
     .adm-avatar img{width:100%;height:100%;object-fit:cover;}
     .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);text-shadow:0 1px 4px rgba(0,0,0,.4);}
@@ -2635,7 +2638,9 @@
       <div class="adm-cover-bg" id="adm-cover-bg"></div>
       <div class="adm-cover-overlay"></div>
       <button class="adm-close" onclick="closeActorDetail()">✕</button>
-      <label class="adm-cover-edit-btn" id="adm-cover-edit-btn" for="adm-cover-input" title="Changer la photo de couverture (JPG, PNG, WEBP — max 5 Mo)" style="display:none;" onclick="event.stopPropagation()">📷</label>
+      <label class="adm-cover-click-layer" id="adm-cover-click-layer" for="adm-cover-input" title="Changer la photo de couverture (JPG, PNG, WEBP — max 5 Mo)" style="display:none;"></label>
+      <label class="adm-cover-edit-btn" id="adm-cover-edit-btn" for="adm-cover-input" style="display:none;"><span aria-hidden="true">📷</span></label>
+      <label class="adm-cover-hint" id="adm-cover-hint" for="adm-cover-input" style="display:none;">📷 Couverture</label>
       <input type="file" id="adm-cover-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCoverPhoto(this)">
       <div class="adm-hero-content">
         <div class="adm-avatar" id="adm-avatar">?</div>
@@ -4046,6 +4051,10 @@ function openActorDetail(uid){
   const isOwnerForCover=currentUser&&(a.uid||a.id)===currentUser.uid;
   const coverBtn=document.getElementById('adm-cover-edit-btn');
   if(coverBtn) coverBtn.style.display=isOwnerForCover?'flex':'none';
+  const coverClickLayer=document.getElementById('adm-cover-click-layer');
+  if(coverClickLayer) coverClickLayer.style.display=isOwnerForCover?'block':'none';
+  const coverHint=document.getElementById('adm-cover-hint');
+  if(coverHint) coverHint.style.display=isOwnerForCover?'flex':'none';
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
   // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables (masqué pour visiteurs)
