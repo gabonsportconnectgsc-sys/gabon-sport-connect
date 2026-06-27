@@ -112,8 +112,8 @@
     /* Logo compressible */
     .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;}
     .topnav-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
-    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;}
-    .topnav-logo-text span{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;}
+    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;min-width:0;overflow:hidden;}
+    .topnav-logo-text span{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
     .topnav-logo-text .l-gabon{color:#009E60;}
     .topnav-logo-text .l-sport{color:#FFD100;}
     .topnav-logo-text .l-connect{color:#009FCA;}
@@ -137,10 +137,11 @@
       .topnav-icons{gap:10px;}
       .visitor-banner,.user-avatar,.btn-icon{width:42px;height:42px;min-width:42px;min-height:42px;}
     }
-    /* ── Mobile ≤480px : cacher texte logo ── */
+    /* ── Mobile ≤480px : texte logo réduit (visible, sans déborder) ── */
     @media (max-width:480px){
-      .topnav-logo-text{display:none;}
       .topnav-logo img{width:40px;height:40px;}
+      .topnav-logo-text{display:flex;}
+      .topnav-logo-text span{font-size:9.5px;letter-spacing:.2px;line-height:1.05;}
       .topnav-icons{gap:5px;}
       .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
@@ -149,10 +150,14 @@
       #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
     }
     @media (max-width:360px){
+      .topnav-logo-text span{font-size:8.5px;}
       .topnav-icons{gap:3px;}
       .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
       .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
       .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+    }
+    @media (max-width:320px){
+      .topnav-logo-text{display:none;}
     }
     .nav-menu-dropdown{position:absolute;top:100%;left:0;background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:240px;z-index:1000;display:none;margin-top:8px;}
     .nav-menu-dropdown.open{display:block;}
@@ -7752,32 +7757,14 @@ window.lookupManualGscId = lookupManualGscId;
 })();
 </script>
 
-<!-- ══ TOPNAV ADAPTIVE LAYOUT — prevent icon overflow ══ -->
+<!-- ══ TOPNAV ADAPTIVE LAYOUT — désactivé : le CSS responsive gère déjà la taille du texte du logo sans le masquer ══ -->
 <script>
 (function(){
   function adaptTopnav(){
-    const nav = document.querySelector('.topnav');
-    const logoText = document.querySelector('.topnav-logo-text');
-    if(!nav) return;
-    // Measure total natural width of all flex children except the spacer
-    const spacer = nav.querySelector('.topnav-spacer');
-    let used = 0;
-    nav.querySelectorAll('.topnav > *:not(.topnav-spacer)').forEach(el=>{
-      if(el.offsetWidth) used += el.offsetWidth + parseInt(getComputedStyle(nav).gap||'0');
-    });
-    const available = nav.offsetWidth;
-    // If items overflow, collapse logo text first
-    if(logoText){
-      if(available - used < 40){
-        logoText.style.maxWidth = '0';
-        logoText.style.opacity = '0';
-        logoText.style.overflow = 'hidden';
-      } else {
-        logoText.style.maxWidth = '';
-        logoText.style.opacity = '';
-        logoText.style.overflow = '';
-      }
-    }
+    // Le texte du logo (.topnav-logo-text) reste toujours visible :
+    // sa taille est gérée par les media queries CSS (480px / 360px / 320px),
+    // ce script ne le masque plus dynamiquement (causait une disparition
+    // incohérente entre mode visiteur et mode connecté).
   }
   window.addEventListener('resize', adaptTopnav);
   document.addEventListener('DOMContentLoaded', adaptTopnav);
