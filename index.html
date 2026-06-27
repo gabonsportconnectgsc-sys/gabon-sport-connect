@@ -364,12 +364,17 @@
     .actor-detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
     .actor-detail-modal.open{display:flex;}
     .actor-detail-card{background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
-    .adm-hero{background:linear-gradient(135deg,var(--navy),var(--navy-md));padding:28px 20px 24px;text-align:center;position:relative;}
-    .adm-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .adm-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.25);margin:0 auto 12px;overflow:hidden;}
+    .adm-hero{background:linear-gradient(135deg,var(--navy),var(--navy-md));padding:28px 20px 24px;text-align:center;position:relative;overflow:hidden;min-height:188px;}
+    .adm-cover-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;transition:opacity .25s;}
+    .adm-cover-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,28,54,.30) 0%,rgba(10,28,54,.50) 55%,rgba(8,22,44,.90) 100%);}
+    .adm-hero-content{position:relative;z-index:2;}
+    .adm-close{position:absolute;top:16px;right:16px;z-index:3;background:rgba(255,255,255,.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .adm-cover-edit-btn{position:absolute;top:16px;left:16px;z-index:3;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);transition:transform .15s,background .15s;}
+    .adm-cover-edit-btn:hover{background:rgba(0,0,0,.55);transform:scale(1.06);}
+    .adm-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.85);box-shadow:0 2px 12px rgba(0,0,0,.35);margin:0 auto 12px;overflow:hidden;}
     .adm-avatar img{width:100%;height:100%;object-fit:cover;}
-    .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);}
-    .adm-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:4px;}
+    .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);text-shadow:0 1px 4px rgba(0,0,0,.4);}
+    .adm-sub{font-size:13px;color:rgba(255,255,255,.8);margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
     .adm-gscid-block{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
     .adm-gscid-pill{font-family:monospace;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 14px;letter-spacing:.6px;}
     .adm-qr-mini{width:44px;height:44px;border-radius:8px;background:#fff;border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s;}
@@ -2627,14 +2632,20 @@
 <div class="actor-detail-modal" id="actor-detail-modal" onclick="if(event.target===this)closeActorDetail()">
   <div class="actor-detail-card">
     <div class="adm-hero">
+      <div class="adm-cover-bg" id="adm-cover-bg"></div>
+      <div class="adm-cover-overlay"></div>
       <button class="adm-close" onclick="closeActorDetail()">✕</button>
-      <div class="adm-avatar" id="adm-avatar">?</div>
-      <div class="adm-name" id="adm-name">—</div>
-      <div class="adm-sub" id="adm-sub">—</div>
-      <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
-        <div class="adm-gscid-pill" id="adm-gscid-pill">—</div>
-        <div class="adm-qr-mini" title="QR Code d'identification" id="adm-qr-mini">
-          <canvas id="adm-qr-canvas" width="40" height="40"></canvas>
+      <label class="adm-cover-edit-btn" id="adm-cover-edit-btn" for="adm-cover-input" title="Changer la photo de couverture (JPG, PNG, WEBP — max 5 Mo)" style="display:none;" onclick="event.stopPropagation()">📷</label>
+      <input type="file" id="adm-cover-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCoverPhoto(this)">
+      <div class="adm-hero-content">
+        <div class="adm-avatar" id="adm-avatar">?</div>
+        <div class="adm-name" id="adm-name">—</div>
+        <div class="adm-sub" id="adm-sub">—</div>
+        <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
+          <div class="adm-gscid-pill" id="adm-gscid-pill">—</div>
+          <div class="adm-qr-mini" title="QR Code d'identification" id="adm-qr-mini">
+            <canvas id="adm-qr-canvas" width="40" height="40"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -2645,6 +2656,10 @@
 <!-- GLOBAL FUNCTIONS (non-module) -->
 <script>
 // ── CLÉ API Firebase (partagée avec le bloc module bootstrap) ──
+
+// Garde en mémoire l'UID de l'acteur actuellement affiché dans la modale de détail,
+// utilisé pour rafraîchir l'affichage après upload de la photo de couverture.
+let currentDetailActorUid = null;
 
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
@@ -2813,6 +2828,7 @@ window.saveSite=saveSite;
 window.openAddSiteModal=openAddSiteModal;
 window.closeModal=closeModal;
 window.uploadProfilePhoto=uploadProfilePhoto;
+window.uploadCoverPhoto=uploadCoverPhoto;
 window.switchLegalTab=switchLegalTab;
 window.switchAdminTab=switchAdminTab;
 window.filterAdminUsers=filterAdminUsers;
@@ -4014,6 +4030,7 @@ function renderActors(actors){
 function openActorDetail(uid){
   const a=allActors.find(x=>(x.uid||x.id)===uid)||allAdminUsers.find(x=>(x.uid||x.id)===uid);
   if(!a) return;
+  currentDetailActorUid=uid;
   const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
   const initial=name[0]?.toUpperCase()||'?';
   // Photo : Firebase > admin localStorage > icône
@@ -4023,6 +4040,12 @@ function openActorDetail(uid){
   const el=document.getElementById('adm-avatar');
   if(detailPhotoSrc) el.innerHTML=`<img src="${detailPhotoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   else el.textContent=ROLE_ICONS[a.role]||initial;
+  // Photo de couverture : zone d'arrière-plan derrière logo/nom/QR, modifiable par le propriétaire du profil
+  const coverEl=document.getElementById('adm-cover-bg');
+  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${a.coverURL}')`:'none';
+  const isOwnerForCover=currentUser&&(a.uid||a.id)===currentUser.uid;
+  const coverBtn=document.getElementById('adm-cover-edit-btn');
+  if(coverBtn) coverBtn.style.display=isOwnerForCover?'flex':'none';
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
   // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables (masqué pour visiteurs)
@@ -4191,7 +4214,7 @@ function openActorDetail(uid){
   document.getElementById('adm-body').innerHTML=html;
   document.getElementById('actor-detail-modal').classList.add('open');
 }
-function closeActorDetail(){ document.getElementById('actor-detail-modal').classList.remove('open'); }
+function closeActorDetail(){ document.getElementById('actor-detail-modal').classList.remove('open'); currentDetailActorUid=null; }
 
 // ── PROFIL ──
 function renderProfile(){
@@ -4712,6 +4735,42 @@ async function uploadProfilePhoto(input){
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
     toast('✅ Photo mise à jour !','success');
+  }catch(e){ toast('Erreur upload : '+e.message,'error'); }
+}
+
+// Photo de couverture (bannière) affichée derrière logo/nom/QR dans la modale de
+// détail d'acteur. Modifiable uniquement par le propriétaire du profil concerné.
+async function uploadCoverPhoto(input){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
+  if(!input.files[0]||!currentUser) return;
+  const file=input.files[0];
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
+  if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
+  // Vérification professionnelle minimale (format paysage recommandé pour une bannière)
+  try{
+    const dims=await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>resolve({w:img.width,h:img.height});
+      img.onerror=reject;
+      img.src=URL.createObjectURL(file);
+    });
+    if(dims.w<480||dims.h<160){
+      toast('⚠️ Photo trop petite (min. 480×160 px recommandé pour une couverture professionnelle).','error');
+      return;
+    }
+  }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
+  toast('📤 Upload de la couverture en cours…','info');
+  try{
+    const url=await uploadToCloudinary(file,'image');
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{coverURL:url,updatedAt:serverTimestamp()});
+    userProfile.coverURL=url;
+    // Met à jour le cache local de l'acteur si déjà chargé, puis rafraîchit la modale ouverte
+    const cached=allActors.find(x=>(x.uid||x.id)===currentUser.uid)||allAdminUsers.find(x=>(x.uid||x.id)===currentUser.uid);
+    if(cached) cached.coverURL=url;
+    if(currentDetailActorUid) openActorDetail(currentDetailActorUid);
+    toast('✅ Photo de couverture mise à jour !','success');
   }catch(e){ toast('Erreur upload : '+e.message,'error'); }
 }
 
