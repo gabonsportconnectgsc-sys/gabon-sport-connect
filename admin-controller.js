@@ -992,8 +992,41 @@
   }
 
   function triggerDefaultAvatarUpload(role) {
-    // Import désactivé côté admin — voir triggerActorPhotoUpload ci-dessus pour le contexte.
-    toast('📷 Cette fonctionnalité est temporairement désactivée dans l\'admin.', 'info');
+    if (!role) return;
+    defaultAvatarUploadTargetRole = role;
+    const input = document.getElementById('default-avatar-input');
+    if (!input) { toast('❌ Élément d\'import introuvable.', 'error'); return; }
+    pickAndUpload(input, async (file) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast('❌ Format non autorisé. Utilisez JPG, PNG ou WEBP.', 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast('❌ Photo trop lourde (max 5 Mo).', 'error');
+        return;
+      }
+      photoUploadBusyId = 'default:' + role;
+      renderDefaultAvatars();
+      try {
+        const url = await doUpload(file, 'defaults/avatars/' + role);
+        if (!url) { photoUploadBusyId = null; renderDefaultAvatars(); return; }
+        if (!window.db) { toast('⚠️ Connexion Firebase requise.', 'error'); photoUploadBusyId = null; renderDefaultAvatars(); return; }
+        await withAuth(() => window.db.collection('settings').doc('defaultAvatars').set(
+          { [role]: url },
+          { merge: true }
+        ));
+        defaultAvatars[role] = url;
+        toast('✅ Photo par défaut mise à jour pour « ' + (ROLE_LABELS[role] || role) + ' ».', 'success');
+      } catch (e) {
+        console.error('Erreur sauvegarde photo par défaut :', e);
+        toast('❌ Erreur lors de l\'enregistrement : ' + e.message, 'error');
+      } finally {
+        photoUploadBusyId = null;
+        renderDefaultAvatars();
+        renderPhotos(); // les acteurs sans photo propre utilisent ce fallback
+      }
+    });
   }
 
   window.AdminController_triggerActorPhotoUpload = triggerActorPhotoUpload;
