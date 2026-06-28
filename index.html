@@ -3617,13 +3617,40 @@ async function togglePushNotifications(){
     refreshNotifMenuState();
     if(perm==='granted'){
       toast('🔔 Notifications activées !','success');
-      // Notification de confirmation via le Service Worker
-      if('serviceWorker' in navigator){
-        const reg=await navigator.serviceWorker.ready;
-        reg.showNotification('Gabon Sport Connect',{
-          body:'Les notifications sont activées. Vous recevrez les actualités sportives et mises à jour.',
-          icon:'data:image/png;base64,'+(document.querySelector('.topnav-logo img')?.src.split('base64,')[1]||'')
-        });
+      // Enregistrer l'abonnement push auprès du Worker Cloudflare
+      if('serviceWorker' in navigator && 'PushManager' in window){
+        try{
+          const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+          const reg = await navigator.serviceWorker.ready;
+          // Récupérer clé VAPID publique
+          const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
+          const { publicKey } = await keyResp.json();
+          // S'abonner
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: (function urlB64(b){
+              const pad='='.repeat((4-b.length%4)%4);
+              const base64=(b+pad).replace(/-/g,'+').replace(/_/g,'/');
+              const raw=window.atob(base64);
+              return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+            })(publicKey)
+          });
+          // Envoyer abonnement au Worker
+          const userId = currentUser ? currentUser.uid : 'anonymous';
+          await fetch(WORKER_URL+'/subscribe',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ subscription: sub, userId })
+          });
+          // Notification de confirmation
+          reg.showNotification('Gabon Sport Connect',{
+            body:'Notifications activées ! Vous recevrez les actualités en temps réel.',
+            icon:'icon-192.png',
+            badge:'icon-192.png'
+          });
+        }catch(swErr){
+          console.warn('Push subscribe error:',swErr);
+        }
       }
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
@@ -7398,9 +7425,20 @@ function openProfileQrModal(){
   const url = buildQrUrl(uid);
   drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
   drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
-  // Propriétaire voit toujours ses boutons Imprimer/Télécharger
+  // Boutons visibles : propriétaire, admin, ou employeur (club/asso/fédé)
   const actEl = document.querySelector('.qr-profile-actions');
-  if(actEl) actEl.style.display = '';
+  if(actEl){
+    const isOwner = currentUser && currentUser.uid === uid;
+    const isAdmin = userProfile && userProfile.role === 'admin';
+    const isEmployer = userProfile
+      && ['club','association','federation'].includes(userProfile.role)
+      && (() => {
+          const clubName = (userProfile.nomOrganisation||'').trim().toLowerCase();
+          const actorClub = (p.club||'').trim().toLowerCase();
+          return clubName && actorClub && actorClub === clubName;
+        })();
+    actEl.style.display = (isOwner || isAdmin || isEmployer) ? '' : 'none';
+  }
   document.getElementById('qr-profile-modal').classList.add('open');
 }
 function closeProfileQrModal(){
