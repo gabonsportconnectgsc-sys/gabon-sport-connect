@@ -1,427 +1,511 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   ADMIN-COMMUNITY.JS — Modération du fil communautaire (GSC Admin)
-   Signalements · publications · blocages
-   ─────────────────────────────────────────────────────────────────────────
-   Intégration : ajouter dans admin.html, après admin-controller.js :
-     <script src="admin-community.js"></script>
-   Le module s'auto-injecte (bouton de navigation "Modération" + section)
-   dans le sidebar / mobile-nav / .main-content existants.
-   Collections Firestore (API compat) : signalements, communityPosts,
-   communityPosts/{id}/comments, blocages.
+   ADMIN-COMMUNITY.JS — Système d'Administration et Modération Communautaire
+   Version 1.0 — Gestion des posts, commentaires, signalements, utilisateurs
+   Firebase Firestore v10 Modulaire — Temps réel
    ═══════════════════════════════════════════════════════════════════════════ */
-(function (window) {
+
+(function(window){
   'use strict';
 
-  const POSTS_COL = 'communityPosts';
-  const REPORTS_COL = 'signalements';
-  const BLOCKS_COL = 'blocages';
+  const POSTS_COLLECTION = 'community_posts';
+  const COMMENTS_COLLECTION = 'community_comments';
+  const REACTIONS_COLLECTION = 'community_reactions';
+  const REPORTS_COLLECTION = 'community_reports';
+  const BLOCKS_COLLECTION = 'community_blocks';
 
-  let _reports = [], _posts = [], _blocks = [];
-  let _reportsShowAll = false;
-  let _postsStatusFilter = 'all';
-  let _subTab = 'reports';
-  let _unsubs = [];
-  let _mounted = false;
+  let _posts = {};
+  let _comments = {};
+  let _reactions = {};
+  let _reports = {};
+  let _blocks = {};
+  let _unsubscribers = [];
+  let _filters = { status: 'all', searchTerm: '' };
+  let _stats = { totalPosts: 0, totalComments: 0, totalReports: 0, activeUsers: 0, totalReactions: 0 };
 
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function fmtDate(ts) {
-    try {
-      if (ts && typeof ts.toDate === 'function') return ts.toDate().toLocaleString('fr-FR');
-      if (ts instanceof Date) return ts.toLocaleString('fr-FR');
-      return '—';
-    } catch (e) { return '—'; }
-  }
-  function toast(msg, type) {
-    const el = document.createElement('div');
-    el.className = 'toast ' + (type || 'info');
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3200);
-  }
-  async function withAuth(fn) {
-    if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
-      try { await window.ensureFirebaseAuthViaSupabase(); } catch (e) {}
-    }
-    return fn();
-  }
-  function db() { return window.db; }
-  function ready() { return !!window.db && typeof window.db.collection === 'function'; }
-  function currentAdminUid() {
-    try { return window._fbAuth?.currentUser?.uid || 'admin'; } catch (e) { return 'admin'; }
-  }
-  /* Écrit directement dans la collection 'notifications' (même schéma que GSCNotif
-     côté index.html) afin que l'auteur soit notifié en temps réel des décisions
-     de modération, même si admin.html ne charge pas gsc-notifications.js. */
-  async function notifyUser(recipientId, type, title, body) {
-    if (!recipientId || !ready()) return;
-    try {
-      await withAuth(() => db().collection('notifications').add({
-        type, title, body, recipientId, personal: true, read: false,
-        link: 'index.html#actualites', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }));
-    } catch (e) {}
+  function timeAgo(ts) {
+    if (!ts) return 'À l\'instant';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const diff = Date.now() - date.getTime();
+    const s = Math.floor(diff / 1000);
+    if (s < 60) return 'À l\'instant';
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 30) return `${d}j`;
+    return date.toLocaleDateString('fr-FR');
   }
 
-  const REASON_LABELS = {
-    spam: 'Spam / publicité', haine: 'Propos haineux', violence: 'Violence',
-    inapproprie: 'Contenu inapproprié', fake: 'Fausse information', autre: 'Autre'
-  };
-  const STATUS_LABELS = {
-    pending: '🟡 En attente', reviewed: '✅ Traité', dismissed: '⚪ Rejeté'
-  };
-  const POST_STATUS_LABELS = {
-    visible: '🟢 Visible', hidden: '🟠 Masqué (signalé)', removed: '🔴 Supprimé'
-  };
-
-  /* ═══ STYLES ═══ */
-  function injectStyles() {
-    if (document.getElementById('gsc-admin-community-styles')) return;
-    const s = document.createElement('style');
-    s.id = 'gsc-admin-community-styles';
-    s.textContent = `
-.gac-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
-@media(max-width:760px){.gac-stats{grid-template-columns:repeat(2,1fr);}}
-.gac-stat{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;text-align:center;}
-.gac-stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--navy);}
-.gac-stat-lbl{font-size:11px;color:var(--gray-txt);margin-top:2px;}
-.gac-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.gac-tab{padding:8px 16px;border-radius:18px;border:1.5px solid var(--gray-bd);background:#fff;font-size:12.5px;font-weight:700;color:var(--gray-txt);cursor:pointer;}
-.gac-tab.active{background:var(--green);color:#fff;border-color:var(--green);}
-.gac-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-.gac-filterbar select,.gac-filterbar label{font-size:12px;color:var(--gray-txt);}
-.gac-snippet{max-width:280px;font-size:12px;color:var(--navy);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.gac-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;background:var(--gray-bg);color:var(--navy);}
-.gac-badge.warn{background:#fef3c7;color:#92400e;}
-.gac-badge.danger{background:#fee2e2;color:#991b1b;}
-.gac-actions-cell{display:flex;gap:6px;flex-wrap:wrap;}
-.gac-empty{text-align:center;padding:30px;color:var(--gray-txt);font-size:13px;}
-`;
-    document.head.appendChild(s);
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* ═══ INJECTION NAVIGATION + SECTION ═══ */
-  function mountUI() {
-    if (_mounted) return;
-    if (!document.querySelector('.sidebar-nav') || !document.querySelector('.mobile-nav') || !document.querySelector('.main-content')) return;
-    _mounted = true;
-    injectStyles();
-
-    /* Bouton sidebar */
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    const navBtn = document.createElement('button');
-    navBtn.className = 'nav-item';
-    navBtn.id = 'nav-moderation';
-    navBtn.innerHTML = '<span class="nav-icon">🚩</span><span>Modération</span><span id="gac-nav-badge" style="margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;display:none;align-items:center;justify-content:center;padding:0 4px;"></span>';
-    const appLabel = Array.from(sidebarNav.querySelectorAll('.nav-label')).find(l => l.textContent.trim() === 'Application');
-    if (appLabel) sidebarNav.insertBefore(navBtn, appLabel);
-    else sidebarNav.appendChild(navBtn);
-
-    /* Bouton mobile-nav */
-    const mobileNav = document.querySelector('.mobile-nav');
-    const mnBtn = document.createElement('button');
-    mnBtn.className = 'mn-btn';
-    mnBtn.id = 'mnav-moderation';
-    mnBtn.innerHTML = '<span class="mn-icon">🚩</span><span>Modér.</span><span id="gac-mnav-badge" style="position:absolute;top:2px;right:18%;background:var(--danger);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>';
-    mnBtn.style.position = 'relative';
-    mobileNav.appendChild(mnBtn);
-
-    /* Section de contenu */
-    const main = document.querySelector('.main-content');
-    const section = document.createElement('div');
-    section.id = 'moderation';
-    section.className = 'section';
-    section.innerHTML = buildSectionSkeleton();
-    main.appendChild(section);
-
-    navBtn.addEventListener('click', activateModeration);
-    mnBtn.addEventListener('click', activateModeration);
-
-    section.querySelector('#gac-tabs').addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-subtab]');
-      if (!btn) return;
-      _subTab = btn.dataset.subtab;
-      renderActiveTab();
-    });
-    section.querySelector('#gac-reports-showall')?.addEventListener('change', (e) => {
-      _reportsShowAll = e.target.checked;
-      renderReports();
-    });
-    section.querySelector('#gac-posts-filter')?.addEventListener('change', (e) => {
-      _postsStatusFilter = e.target.value;
-      renderPosts();
-    });
-
-    subscribeAll();
+  function updateStats() {
+    _stats.totalPosts = Object.keys(_posts).length;
+    _stats.totalComments = Object.keys(_comments).length;
+    _stats.totalReactions = Object.keys(_reactions).length;
+    _stats.totalReports = Object.keys(_reports).length;
+    const uniqueAuthors = new Set();
+    Object.values(_posts).forEach(p => uniqueAuthors.add(p.authorId));
+    Object.values(_comments).forEach(c => uniqueAuthors.add(c.authorId));
+    _stats.activeUsers = uniqueAuthors.size;
+    renderStats();
   }
-
-  function buildSectionSkeleton() {
-    return `
-      <div class="admin-header">
-        <div class="admin-header-title">🚩 Modération du fil communautaire</div>
-        <div class="admin-header-sub">Signalements, publications et blocages des membres</div>
-      </div>
-      <div class="gac-stats" id="gac-stats">
-        <div class="gac-stat"><div class="gac-stat-val" id="gac-stat-pending">—</div><div class="gac-stat-lbl">Signalements en attente</div></div>
-        <div class="gac-stat"><div class="gac-stat-val" id="gac-stat-hidden">—</div><div class="gac-stat-lbl">Publications masquées</div></div>
-        <div class="gac-stat"><div class="gac-stat-val" id="gac-stat-posts">—</div><div class="gac-stat-lbl">Publications totales</div></div>
-        <div class="gac-stat"><div class="gac-stat-val" id="gac-stat-blocks">—</div><div class="gac-stat-lbl">Blocages actifs</div></div>
-      </div>
-      <div class="gac-tabs" id="gac-tabs">
-        <button class="gac-tab active" data-subtab="reports" type="button">🚩 Signalements</button>
-        <button class="gac-tab" data-subtab="posts" type="button">📝 Publications</button>
-        <button class="gac-tab" data-subtab="blocks" type="button">🚫 Blocages</button>
-      </div>
-      <div id="gac-pane"></div>`;
-  }
-
-  function activateModeration() {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('moderation')?.classList.add('active');
-    document.querySelectorAll('.nav-item, .mn-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('nav-moderation')?.classList.add('active');
-    document.getElementById('mnav-moderation')?.classList.add('active');
-    const titleEl = document.getElementById('topbar-title');
-    if (titleEl && titleEl.firstChild) titleEl.firstChild.textContent = 'Modération';
-    document.getElementById('sidebar')?.classList.remove('open');
-    document.getElementById('sidebar-overlay')?.classList.remove('open');
-    renderActiveTab();
-  }
-
-  /* ═══ ABONNEMENTS TEMPS RÉEL ═══ */
-  function subscribeAll() {
-    if (!ready()) { setTimeout(subscribeAll, 800); return; }
-    try {
-      _unsubs.push(db().collection(REPORTS_COL).orderBy('createdAt', 'desc').limit(300).onSnapshot(snap => {
-        _reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderStats(); if (_subTab === 'reports' && isActive()) renderReports();
-      }, () => {}));
-      _unsubs.push(db().collection(POSTS_COL).orderBy('createdAt', 'desc').limit(300).onSnapshot(snap => {
-        _posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderStats(); if (_subTab === 'posts' && isActive()) renderPosts();
-      }, () => {}));
-      _unsubs.push(db().collection(BLOCKS_COL).orderBy('createdAt', 'desc').limit(300).onSnapshot(snap => {
-        _blocks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderStats(); if (_subTab === 'blocks' && isActive()) renderBlocks();
-      }, () => {}));
-    } catch (e) { console.warn('Modération GSC :', e); }
-  }
-  function isActive() { return document.getElementById('moderation')?.classList.contains('active'); }
 
   function renderStats() {
-    const pending = _reports.filter(r => r.status === 'pending' || !r.status).length;
-    const hidden = _posts.filter(p => p.status === 'hidden').length;
-    const blocksActive = _blocks.length;
-    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setTxt('gac-stat-pending', pending);
-    setTxt('gac-stat-hidden', hidden);
-    setTxt('gac-stat-posts', _posts.filter(p => p.status !== 'removed').length);
-    setTxt('gac-stat-blocks', blocksActive);
-    [['gac-nav-badge', 'flex'], ['gac-mnav-badge', 'flex']].forEach(([id, disp]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (pending > 0) { el.textContent = pending > 99 ? '99+' : String(pending); el.style.display = disp; }
-      else el.style.display = 'none';
+    const stats = document.getElementById('admin-community-stats');
+    if (!stats) return;
+
+    stats.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px;">📰 Posts</div>
+          <div style="font-size:28px;font-weight:800;color:#009E60;">${_stats.totalPosts}</div>
+        </div>
+        <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px;">💬 Commentaires</div>
+          <div style="font-size:28px;font-weight:800;color:#3b82f6;">${_stats.totalComments}</div>
+        </div>
+        <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px;">👍 Réactions</div>
+          <div style="font-size:28px;font-weight:800;color:#f59e0b;">${_stats.totalReactions}</div>
+        </div>
+        <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px;">👤 Utilisateurs actifs</div>
+          <div style="font-size:28px;font-weight:800;color:#8b5cf6;">${_stats.activeUsers}</div>
+        </div>
+        <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px;">⚠️ Signalements</div>
+          <div style="font-size:28px;font-weight:800;color:#ef4444;">${_stats.totalReports}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPostsTable() {
+    const container = document.getElementById('admin-community-posts-table');
+    if (!container) return;
+
+    const posts = Object.values(_posts).sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt);
+      const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt);
+      return bTime - aTime;
+    });
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><p>Aucun post</p></div>';
+      return;
+    }
+
+    let html = '<div style="overflow-x:auto;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Auteur</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Contenu</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Réactions</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Commentaires</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Signalements</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Date</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    posts.forEach(post => {
+      const reportCount = Object.values(_reports).filter(r => r.postId === post.id).length;
+      const commentCount = Object.values(_comments).filter(c => c.postId === post.id).length;
+      const reactionCount = Object.values(_reactions).filter(r => r.postId === post.id).length;
+      const contentPreview = post.content.substring(0, 50) + (post.content.length > 50 ? '...' : '');
+
+      html += `<tr style="border-bottom:1px solid #e2e8f0;hover:background:#f8fafc;">`;
+      html += `<td style="padding:12px;"><strong>${escapeHtml(post.authorName)}</strong><br><small style="color:#94a3b8;">${post.authorId}</small></td>`;
+      html += `<td style="padding:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(contentPreview)}</td>`;
+      html += `<td style="padding:12px;text-align:center;color:#f59e0b;font-weight:600;">${reactionCount}</td>`;
+      html += `<td style="padding:12px;text-align:center;color:#3b82f6;font-weight:600;">${commentCount}</td>`;
+      html += `<td style="padding:12px;text-align:center;"><span style="background:${reportCount > 0 ? '#fee2e2' : '#e6f7ef'};color:${reportCount > 0 ? '#ef4444' : '#009E60'};padding:4px 8px;border-radius:4px;font-weight:600;">${reportCount}</span></td>`;
+      html += `<td style="padding:12px;color:#94a3b8;">${timeAgo(post.createdAt)}</td>`;
+      html += `<td style="padding:12px;text-align:center;">`;
+      html += `<button class="btn-view-post" data-post-id="${post.id}" style="padding:4px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;font-size:11px;margin-right:4px;">👁️</button>`;
+      if (reportCount > 0) {
+        html += `<button class="btn-view-reports" data-post-id="${post.id}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;margin-right:4px;">📋</button>`;
+      }
+      html += `<button class="btn-delete-post" data-post-id="${post.id}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">🗑️</button>`;
+      html += `</td>`;
+      html += `</tr>`;
+    });
+
+    html += '</tbody></table>';
+    html += '</div>';
+    container.innerHTML = html;
+    attachPostTableListeners();
+  }
+
+  function renderReportsTable() {
+    const container = document.getElementById('admin-community-reports-table');
+    if (!container) return;
+
+    const reports = Object.values(_reports).sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt);
+      const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt);
+      return bTime - aTime;
+    });
+
+    if (reports.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><p>Aucun signalement</p></div>';
+      return;
+    }
+
+    let html = '<div style="overflow-x:auto;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Post ID</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Raison</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Signalé par</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Statut</th>';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Date</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    reports.forEach(report => {
+      const post = _posts[report.postId];
+      const statusBg = report.status === 'pending' ? '#fef3c7' : report.status === 'approved' ? '#dcfce7' : '#fee2e2';
+      const statusColor = report.status === 'pending' ? '#92400e' : report.status === 'approved' ? '#166534' : '#991b1b';
+      const statusLabel = report.status === 'pending' ? 'En attente' : report.status === 'approved' ? 'Approuvé' : 'Rejeté';
+
+      html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
+      html += `<td style="padding:12px;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:3px;font-size:11px;">${report.postId.substring(0, 8)}...</code></td>`;
+      html += `<td style="padding:12px;"><strong>${escapeHtml(report.reason)}</strong></td>`;
+      html += `<td style="padding:12px;font-size:12px;color:#94a3b8;">${report.reportedBy}</td>`;
+      html += `<td style="padding:12px;"><span style="background:${statusBg};color:${statusColor};padding:4px 8px;border-radius:4px;font-weight:600;font-size:11px;">${statusLabel}</span></td>`;
+      html += `<td style="padding:12px;color:#94a3b8;">${timeAgo(report.createdAt)}</td>`;
+      html += `<td style="padding:12px;text-align:center;">`;
+      html += `<button class="btn-view-report-post" data-post-id="${report.postId}" style="padding:4px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;font-size:11px;margin-right:4px;">👁️</button>`;
+      if (report.status === 'pending') {
+        html += `<button class="btn-approve-report" data-report-id="${report.id}" style="padding:4px 8px;background:#dcfce7;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#166534;margin-right:4px;">✓</button>`;
+        html += `<button class="btn-reject-report" data-report-id="${report.id}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">✕</button>`;
+      }
+      html += `</td>`;
+      html += `</tr>`;
+    });
+
+    html += '</tbody></table>';
+    html += '</div>';
+    container.innerHTML = html;
+    attachReportTableListeners();
+  }
+
+  function renderUsersList() {
+    const container = document.getElementById('admin-community-users-list');
+    if (!container) return;
+
+    const userActivity = {};
+    Object.values(_posts).forEach(p => {
+      if (!userActivity[p.authorId]) {
+        userActivity[p.authorId] = { name: p.authorName, posts: 0, comments: 0, avatar: p.authorAvatar };
+      }
+      userActivity[p.authorId].posts++;
+    });
+
+    Object.values(_comments).forEach(c => {
+      if (!userActivity[c.authorId]) {
+        userActivity[c.authorId] = { name: c.authorName, posts: 0, comments: 0, avatar: c.authorAvatar };
+      }
+      userActivity[c.authorId].comments++;
+    });
+
+    const users = Object.entries(userActivity).sort((a, b) => (b[1].posts + b[1].comments) - (a[1].posts + a[1].comments));
+
+    if (users.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><p>Aucun utilisateur</p></div>';
+      return;
+    }
+
+    let html = '<div style="overflow-x:auto;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">';
+    html += '<th style="padding:12px;text-align:left;font-weight:700;color:#0A1628;">Utilisateur</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Posts</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Commentaires</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Activité totale</th>';
+    html += '<th style="padding:12px;text-align:center;font-weight:700;color:#0A1628;">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    users.forEach(([userId, userData]) => {
+      const total = userData.posts + userData.comments;
+      html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
+      html += `<td style="padding:12px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;color:#64748b;font-size:12px;">${userData.avatar ? '<img src="' + userData.avatar + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : userData.name.charAt(0).toUpperCase()}</div><div><strong>${escapeHtml(userData.name)}</strong><br><code style="background:#f1f5f9;padding:2px 4px;border-radius:3px;font-size:10px;color:#94a3b8;">${userId.substring(0, 8)}...</code></div></div></td>`;
+      html += `<td style="padding:12px;text-align:center;color:#3b82f6;font-weight:600;">${userData.posts}</td>`;
+      html += `<td style="padding:12px;text-align:center;color:#3b82f6;font-weight:600;">${userData.comments}</td>`;
+      html += `<td style="padding:12px;text-align:center;font-weight:600;color:#009E60;">${total}</td>`;
+      html += `<td style="padding:12px;text-align:center;">`;
+      html += `<button class="btn-block-user" data-user-id="${userId}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">🔒 Bloquer</button>`;
+      html += `</td>`;
+      html += `</tr>`;
+    });
+
+    html += '</tbody></table>';
+    html += '</div>';
+    container.innerHTML = html;
+    attachUserListListeners();
+  }
+
+  function attachPostTableListeners() {
+    document.querySelectorAll('.btn-delete-post').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        if (confirm('Supprimer ce post ? Cette action est irréversible.')) {
+          deletePost(postId);
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-view-post').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const post = _posts[postId];
+        if (post) showPostDetail(postId, post);
+      });
+    });
+
+    document.querySelectorAll('.btn-view-reports').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const postReports = Object.values(_reports).filter(r => r.postId === postId);
+        showReportsDetail(postReports);
+      });
     });
   }
 
-  function renderActiveTab() {
-    document.querySelectorAll('#gac-tabs .gac-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === _subTab));
-    if (_subTab === 'reports') renderReports();
-    else if (_subTab === 'posts') renderPosts();
-    else renderBlocks();
+  function attachReportTableListeners() {
+    document.querySelectorAll('.btn-approve-report').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const reportId = this.dataset.reportId;
+        updateReportStatus(reportId, 'approved');
+      });
+    });
+
+    document.querySelectorAll('.btn-reject-report').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const reportId = this.dataset.reportId;
+        updateReportStatus(reportId, 'rejected');
+      });
+    });
+
+    document.querySelectorAll('.btn-view-report-post').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const post = _posts[postId];
+        if (post) showPostDetail(postId, post);
+      });
+    });
   }
 
-  /* ═══ SIGNALEMENTS ═══ */
-  function renderReports() {
-    const pane = document.getElementById('gac-pane');
-    if (!pane) return;
-    let list = _reports.slice();
-    if (!_reportsShowAll) list = list.filter(r => r.status === 'pending' || !r.status);
-    pane.innerHTML = `
-      <div class="gac-filterbar">
-        <label><input type="checkbox" id="gac-reports-showall" ${_reportsShowAll ? 'checked' : ''}> Afficher les signalements traités</label>
+  function attachUserListListeners() {
+    document.querySelectorAll('.btn-block-user').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const userId = this.dataset.userId;
+        blockUser(userId);
+      });
+    });
+  }
+
+  async function deletePost(postId) {
+    try {
+      const { doc, deleteDoc } = window;
+      await deleteDoc(doc(window.db, POSTS_COLLECTION, postId));
+      delete _posts[postId];
+      renderPostsTable();
+      updateStats();
+      showToast('Post supprimé', 'success');
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      showToast('Erreur lors de la suppression', 'error');
+    }
+  }
+
+  async function updateReportStatus(reportId, status) {
+    try {
+      const { doc, updateDoc } = window;
+      await updateDoc(doc(window.db, REPORTS_COLLECTION, reportId), { status });
+      _reports[reportId].status = status;
+      renderReportsTable();
+      showToast(`Signalement ${status === 'approved' ? 'approuvé' : 'rejeté'}`, 'success');
+    } catch (error) {
+      console.error('Erreur mise à jour:', error);
+      showToast('Erreur lors de la mise à jour', 'error');
+    }
+  }
+
+  async function blockUser(userId) {
+    try {
+      const { collection, addDoc, serverTimestamp } = window;
+      await addDoc(collection(window.db, BLOCKS_COLLECTION), {
+        blockerId: 'admin',
+        blockedId: userId,
+        createdAt: serverTimestamp()
+      });
+      showToast('Utilisateur bloqué', 'success');
+      renderUsersList();
+    } catch (error) {
+      console.error('Erreur blocage:', error);
+      showToast('Erreur lors du blocage', 'error');
+    }
+  }
+
+  function showPostDetail(postId, post) {
+    const modal = document.createElement('div');
+    const comments = Object.values(_comments).filter(c => c.postId === postId && !c.parentId);
+    const reactions = Object.values(_reactions).filter(r => r.postId === postId);
+
+    modal.innerHTML = `
+      <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);z-index:10001;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="margin:0;font-weight:700;font-size:18px;color:#0A1628;">Détail du post</h3>
+          <button onclick="this.closest('[data-modal]').remove();this.closest('[data-modal]').previousElementSibling.remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+        </div>
+
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:16px;">
+          <div style="margin-bottom:8px;"><strong style="color:#0A1628;">Auteur:</strong> ${escapeHtml(post.authorName)}</div>
+          <div style="margin-bottom:8px;"><strong style="color:#0A1628;">ID:</strong> <code style="background:#fff;padding:2px 6px;border-radius:3px;font-size:12px;">${post.id}</code></div>
+          <div style="margin-bottom:8px;"><strong style="color:#0A1628;">Date:</strong> ${new Date(post.createdAt?.toDate?.() || post.createdAt).toLocaleString('fr-FR')}</div>
+          <div style="margin-bottom:8px;"><strong style="color:#0A1628;">Réactions:</strong> ${reactions.length}</div>
+          <div style="margin-bottom:8px;"><strong style="color:#0A1628;">Commentaires:</strong> ${comments.length}</div>
+        </div>
+
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:16px;">
+          <strong style="color:#0A1628;display:block;margin-bottom:8px;">Contenu:</strong>
+          <p style="margin:0;color:#475569;line-height:1.6;word-break:break-word;">${post.content}</p>
+        </div>
+
+        <button onclick="this.closest('[data-modal]').remove();this.closest('[data-modal]').previousElementSibling.remove()" style="width:100%;padding:10px;background:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Fermer</button>
       </div>
-      ${!list.length ? `<div class="gac-empty">Aucun signalement ${_reportsShowAll ? '' : 'en attente'}.</div>` : `
-      <div class="users-table-wrap">
-        <table class="users-table">
-          <thead><tr><th>Type</th><th>Motif</th><th>Détail</th><th>Signalé par</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody>${list.map(reportRow).join('')}</tbody>
-        </table>
-      </div>`}`;
-    pane.querySelector('#gac-reports-showall')?.addEventListener('change', (e) => { _reportsShowAll = e.target.checked; renderReports(); });
-    pane.querySelectorAll('.gac-act-dismiss').forEach(b => b.addEventListener('click', () => updateReportStatus(b.dataset.id, 'dismissed')));
-    pane.querySelectorAll('.gac-act-resolve').forEach(b => b.addEventListener('click', () => updateReportStatus(b.dataset.id, 'reviewed')));
-    pane.querySelectorAll('.gac-act-remove-content').forEach(b => b.addEventListener('click', () => removeReportedContent(b.dataset.id)));
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;"></div>
+    `;
+    modal.setAttribute('data-modal', '1');
+    document.body.appendChild(modal);
   }
 
-  function reportRow(r) {
-    const post = _posts.find(p => p.id === r.postId);
-    const typeLabel = r.type === 'comment' ? '💬 Commentaire' : '📝 Publication';
-    return `
-      <tr data-id="${r.id}">
-        <td data-label="Type">${typeLabel}${post ? `<div class="gac-snippet">${esc((post.text || '').slice(0, 90))}</div>` : ''}</td>
-        <td data-label="Motif"><span class="gac-badge warn">${esc(REASON_LABELS[r.reason] || r.reason || '—')}</span></td>
-        <td data-label="Détail"><div class="gac-snippet">${esc(r.detail || '—')}</div></td>
-        <td data-label="Signalé par">${esc(r.reporterName || '—')}</td>
-        <td data-label="Date">${fmtDate(r.createdAt)}</td>
-        <td data-label="Statut">${STATUS_LABELS[r.status] || STATUS_LABELS.pending}</td>
-        <td data-label="Actions">
-          <div class="gac-actions-cell">
-            ${(r.status === 'pending' || !r.status) ? `
-              <button class="btn-sm gac-act-resolve" data-id="${r.id}">✅ Traiter</button>
-              <button class="btn-sm gac-act-dismiss" data-id="${r.id}">⚪ Rejeter</button>
-              <button class="btn-sm btn-danger gac-act-remove-content" data-id="${r.id}">🗑️ Supprimer le contenu</button>
-            ` : '—'}
-          </div>
-        </td>
-      </tr>`;
-  }
-
-  async function updateReportStatus(id, status) {
-    try {
-      await withAuth(() => db().collection(REPORTS_COL).doc(id).update({ status, moderatedAt: firebase.firestore.FieldValue.serverTimestamp(), moderatedBy: currentAdminUid() }));
-      toast(status === 'reviewed' ? '✅ Signalement traité.' : '⚪ Signalement rejeté.', 'success');
-    } catch (e) { toast('Erreur lors de la mise à jour.', 'error'); }
-  }
-
-  async function removeReportedContent(reportId) {
-    const r = _reports.find(x => x.id === reportId); if (!r) return;
-    if (!confirm('Supprimer définitivement le contenu signalé ?')) return;
-    try {
-      let authorId = null;
-      if (r.type === 'comment' && r.postId) {
-        await withAuth(() => db().collection(POSTS_COL).doc(r.postId).collection('comments').doc(r.targetId).delete());
-      } else {
-        const post = _posts.find(p => p.id === r.targetId);
-        authorId = post?.authorId || null;
-        await withAuth(() => db().collection(POSTS_COL).doc(r.targetId).update({ status: 'removed', removedAt: firebase.firestore.FieldValue.serverTimestamp(), removedBy: currentAdminUid() }));
-      }
-      await withAuth(() => db().collection(REPORTS_COL).doc(reportId).update({ status: 'reviewed', moderatedAt: firebase.firestore.FieldValue.serverTimestamp(), moderatedBy: currentAdminUid() }));
-      if (authorId) notifyUser(authorId, 'alert', 'Votre publication a été supprimée', 'Un modérateur a supprimé votre publication suite à un signalement justifié.');
-      toast('🗑️ Contenu supprimé et signalement traité.', 'success');
-    } catch (e) { toast('Erreur lors de la suppression.', 'error'); }
-  }
-
-  /* ═══ PUBLICATIONS ═══ */
-  function renderPosts() {
-    const pane = document.getElementById('gac-pane');
-    if (!pane) return;
-    let list = _posts.slice();
-    if (_postsStatusFilter !== 'all') list = list.filter(p => (p.status || 'visible') === _postsStatusFilter);
-    pane.innerHTML = `
-      <div class="gac-filterbar">
-        <label>Statut :
-          <select id="gac-posts-filter">
-            <option value="all" ${_postsStatusFilter === 'all' ? 'selected' : ''}>Tous</option>
-            <option value="visible" ${_postsStatusFilter === 'visible' ? 'selected' : ''}>Visibles</option>
-            <option value="hidden" ${_postsStatusFilter === 'hidden' ? 'selected' : ''}>Masquées (signalées)</option>
-            <option value="removed" ${_postsStatusFilter === 'removed' ? 'selected' : ''}>Supprimées</option>
-          </select>
-        </label>
+  function showReportsDetail(reports) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2);z-index:10001;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+        <h3 style="margin:0 0 16px;font-weight:700;font-size:18px;color:#0A1628;">Signalements (${reports.length})</h3>
+        <div style="max-height:400px;overflow-y:auto;">
+          ${reports.map(r => `
+            <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #ef4444;">
+              <div style="margin-bottom:6px;"><strong>${escapeHtml(r.reason)}</strong></div>
+              <div style="font-size:12px;color:#94a3b8;">Signalé par: ${r.reportedBy}</div>
+              <div style="font-size:12px;color:#94a3b8;">Date: ${timeAgo(r.createdAt)}</div>
+            </div>
+          `).join('')}
+        </div>
+        <button onclick="this.closest('[data-modal]').remove();this.closest('[data-modal]').previousElementSibling.remove()" style="width:100%;padding:10px;margin-top:16px;background:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Fermer</button>
       </div>
-      ${!list.length ? `<div class="gac-empty">Aucune publication.</div>` : `
-      <div class="users-table-wrap">
-        <table class="users-table">
-          <thead><tr><th>Auteur</th><th>Contenu</th><th>Catégorie</th><th>Réactions</th><th>Comm.</th><th>Signal.</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
-          <tbody>${list.map(postRow).join('')}</tbody>
-        </table>
-      </div>`}`;
-    pane.querySelector('#gac-posts-filter')?.addEventListener('change', (e) => { _postsStatusFilter = e.target.value; renderPosts(); });
-    pane.querySelectorAll('.gac-post-restore').forEach(b => b.addEventListener('click', () => restorePost(b.dataset.id)));
-    pane.querySelectorAll('.gac-post-hide').forEach(b => b.addEventListener('click', () => hidePost(b.dataset.id)));
-    pane.querySelectorAll('.gac-post-remove').forEach(b => b.addEventListener('click', () => removePost(b.dataset.id)));
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;"></div>
+    `;
+    modal.setAttribute('data-modal', '1');
+    document.body.appendChild(modal);
   }
 
-  function postRow(p) {
-    const reactCount = p.reactions ? Object.keys(p.reactions).length : 0;
-    const status = p.status || 'visible';
-    const badgeClass = status === 'hidden' ? 'warn' : (status === 'removed' ? 'danger' : '');
-    return `
-      <tr data-id="${p.id}">
-        <td data-label="Auteur">${esc(p.authorName || '—')}</td>
-        <td data-label="Contenu"><div class="gac-snippet">${esc((p.text || '(image seule)').slice(0, 100))}</div></td>
-        <td data-label="Catégorie">${esc(p.category || 'general')}${p.targetRole ? ` <span class="gac-badge">🎯 ${esc(p.targetRole)}</span>` : ''}</td>
-        <td data-label="Réactions">${reactCount}</td>
-        <td data-label="Comm.">${p.commentsCount || 0}</td>
-        <td data-label="Signal."><span class="gac-badge ${p.reportsCount ? 'warn' : ''}">${p.reportsCount || 0}</span></td>
-        <td data-label="Date">${fmtDate(p.createdAt)}</td>
-        <td data-label="Statut"><span class="gac-badge ${badgeClass}">${POST_STATUS_LABELS[status] || status}</span></td>
-        <td data-label="Actions">
-          <div class="gac-actions-cell">
-            ${status !== 'visible' ? `<button class="btn-sm gac-post-restore" data-id="${p.id}">♻️ Restaurer</button>` : ''}
-            ${status === 'visible' ? `<button class="btn-sm gac-post-hide" data-id="${p.id}">🟠 Masquer</button>` : ''}
-            ${status !== 'removed' ? `<button class="btn-sm btn-danger gac-post-remove" data-id="${p.id}">🗑️ Supprimer</button>` : ''}
-          </div>
-        </td>
-      </tr>`;
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;bottom:20px;right:20px;background:${type === 'success' ? '#009E60' : type === 'error' ? '#ef4444' : '#0A1628'};color:#fff;padding:12px 20px;border-radius:8px;z-index:10002;font-weight:600;font-size:14px;`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
 
-  async function restorePost(id) {
-    try {
-      const post = _posts.find(p => p.id === id);
-      await withAuth(() => db().collection(POSTS_COL).doc(id).update({ status: 'visible', reportsCount: 0 }));
-      if (post?.authorId) notifyUser(post.authorId, 'system', 'Votre publication a été restaurée', 'Après vérification, votre publication est de nouveau visible sur le fil communautaire.');
-      toast('♻️ Publication restaurée.', 'success');
-    } catch (e) { toast('Erreur lors de la restauration.', 'error'); }
-  }
-  async function hidePost(id) {
-    if (!confirm('Masquer cette publication du fil public ?')) return;
-    try {
-      const post = _posts.find(p => p.id === id);
-      await withAuth(() => db().collection(POSTS_COL).doc(id).update({ status: 'hidden' }));
-      if (post?.authorId) notifyUser(post.authorId, 'alert', 'Votre publication a été masquée', 'Un modérateur a masqué votre publication du fil communautaire.');
-      toast('🟠 Publication masquée.', 'success');
-    } catch (e) { toast('Erreur lors du masquage.', 'error'); }
-  }
-  async function removePost(id) {
-    if (!confirm('Supprimer définitivement cette publication ?')) return;
-    try {
-      const post = _posts.find(p => p.id === id);
-      await withAuth(() => db().collection(POSTS_COL).doc(id).update({ status: 'removed', removedAt: firebase.firestore.FieldValue.serverTimestamp(), removedBy: currentAdminUid() }));
-      if (post?.authorId) notifyUser(post.authorId, 'alert', 'Votre publication a été supprimée', 'Un modérateur a supprimé cette publication du fil communautaire.');
-      toast('🗑️ Publication supprimée.', 'success');
-    } catch (e) { toast('Erreur lors de la suppression.', 'error'); }
+  function subscribeToPosts() {
+    if (!window.db) return;
+    const { collection, onSnapshot } = window;
+    const unsubscribe = onSnapshot(
+      collection(window.db, POSTS_COLLECTION),
+      (snap) => {
+        _posts = {};
+        snap.docs.forEach(doc => {
+          _posts[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        renderPostsTable();
+        updateStats();
+      },
+      (error) => console.error('Posts sync error:', error)
+    );
+    _unsubscribers.push(unsubscribe);
   }
 
-  /* ═══ BLOCAGES ═══ */
-  function renderBlocks() {
-    const pane = document.getElementById('gac-pane');
-    if (!pane) return;
-    if (!_blocks.length) { pane.innerHTML = `<div class="gac-empty">Aucun blocage enregistré entre membres.</div>`; return; }
-    pane.innerHTML = `
-      <div class="users-table-wrap">
-        <table class="users-table">
-          <thead><tr><th>Membre bloquant</th><th>Membre bloqué</th><th>Date</th><th>Actions</th></tr></thead>
-          <tbody>${_blocks.map(b => `
-            <tr data-id="${b.id}">
-              <td data-label="Bloquant">${esc(b.blockerId || '—')}</td>
-              <td data-label="Bloqué">${esc(b.blockedName || b.blockedId || '—')}</td>
-              <td data-label="Date">${fmtDate(b.createdAt)}</td>
-              <td data-label="Actions"><button class="btn-sm btn-danger gac-unblock" data-id="${b.id}">🔓 Débloquer</button></td>
-            </tr>`).join('')}</tbody>
-        </table>
-      </div>`;
-    pane.querySelectorAll('.gac-unblock').forEach(b => b.addEventListener('click', () => unblock(b.dataset.id)));
+  function subscribeToComments() {
+    if (!window.db) return;
+    const { collection, onSnapshot } = window;
+    const unsubscribe = onSnapshot(
+      collection(window.db, COMMENTS_COLLECTION),
+      (snap) => {
+        _comments = {};
+        snap.docs.forEach(doc => {
+          _comments[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        renderUsersList();
+        updateStats();
+      },
+      (error) => console.error('Comments sync error:', error)
+    );
+    _unsubscribers.push(unsubscribe);
   }
 
-  async function unblock(id) {
-    if (!confirm('Lever ce blocage entre les deux membres ?')) return;
-    try {
-      await withAuth(() => db().collection(BLOCKS_COL).doc(id).delete());
-      toast('🔓 Blocage levé.', 'success');
-    } catch (e) { toast('Erreur lors du déblocage.', 'error'); }
+  function subscribeToReactions() {
+    if (!window.db) return;
+    const { collection, onSnapshot } = window;
+    const unsubscribe = onSnapshot(
+      collection(window.db, REACTIONS_COLLECTION),
+      (snap) => {
+        _reactions = {};
+        snap.docs.forEach(doc => {
+          _reactions[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        updateStats();
+      },
+      (error) => console.error('Reactions sync error:', error)
+    );
+    _unsubscribers.push(unsubscribe);
   }
 
-  /* ═══ INITIALISATION ═══ */
-  function tryMount() {
-    if (_mounted) return;
-    mountUI();
-    if (!_mounted) setTimeout(tryMount, 500);
+  function subscribeToReports() {
+    if (!window.db) return;
+    const { collection, onSnapshot } = window;
+    const unsubscribe = onSnapshot(
+      collection(window.db, REPORTS_COLLECTION),
+      (snap) => {
+        _reports = {};
+        snap.docs.forEach(doc => {
+          _reports[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        renderReportsTable();
+        updateStats();
+      },
+      (error) => console.error('Reports sync error:', error)
+    );
+    _unsubscribers.push(unsubscribe);
   }
 
-  if (window._firebaseReady) tryMount();
-  document.addEventListener('firebase-ready', tryMount);
-  document.addEventListener('DOMContentLoaded', tryMount);
-  setTimeout(tryMount, 1200);
+  function unsubscribeAll() {
+    _unsubscribers.forEach(unsub => unsub());
+    _unsubscribers = [];
+  }
+
+  window.GSCAdminCommunity = {
+    init() {
+      subscribeToPosts();
+      subscribeToComments();
+      subscribeToReactions();
+      subscribeToReports();
+    },
+    renderAll() {
+      renderStats();
+      renderPostsTable();
+      renderReportsTable();
+      renderUsersList();
+    },
+    destroy() {
+      unsubscribeAll();
+    }
+  };
 
 })(window);
