@@ -8,10 +8,15 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#009E60" />
   <meta name="description" content="Plateforme nationale de gestion du sport au Gabon" />
+  <!-- PWA iOS (Safari iPhone/iPad) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GSC">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
   <script src="app-config-loader.js"></script>
   <script src="gsc-notifications.js"></script>
-  <script src="gsc-community.js"></script>
+  <script src="gsc-nav-badges.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Leaflet pour la carte des sites + Import OSM -->
@@ -80,34 +85,89 @@
 
     /* ── APP LAYOUT ── */
     #app-screen{display:none;min-height:100vh;}
-    .topnav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;background:var(--navy);display:flex;align-items:center;padding:0 10px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;min-width:0;}
-    /* Icônes visibles en permanence - mode adaptatif */
-    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge, .topnav .user-chip {
-      flex-shrink:0;
-      opacity:1 !important;
-      visibility:visible !important;
-      display:flex !important;
+    .topnav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      height:64px;
+      background:linear-gradient(160deg,#16243f 0%,var(--navy) 55%,#060d18 100%);
+      display:flex;align-items:center;
+      justify-content:space-between;
+      padding:0 10px 0 10px;
+      box-shadow:0 2px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08);
+      border-bottom:1px solid rgba(255,215,0,.18);
     }
-    /* Masquer le bouton login si user-chip est affiché (utilisateur connecté) */
-    .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn {
-      display:none !important;
+    .topnav::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:50%;
+      background:linear-gradient(180deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 100%);
+      pointer-events:none;
     }
-    .topnav .btn-icon[style*="display:none"], 
-    .topnav .visitor-banner[style*="display:none"],
-    .topnav .user-chip[style*="display:none"] {
-      display:none !important;
+    /* Groupe droite : toutes les icônes sauf le logo */
+    .topnav-icons{display:flex;align-items:center;gap:7px;flex-shrink:0;position:relative;z-index:1;}
+    /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
+    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
+      flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
     }
-    /* Logo compressible : cache le texte quand l'espace manque */
-    .topnav-logo{min-width:0;overflow:hidden;}
-    .topnav-logo-text{transition:max-width .2s ease, opacity .2s ease;max-width:120px;overflow:hidden;}
-    .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;position:relative;}
-    .topnav-logo img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
-    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;}
-    .topnav-logo-text span{font-size:15px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
+    /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
+    .topnav .btn-icon,
+    .topnav .visitor-banner,
+    .topnav .user-avatar,
+    .topnav .user-chip,
+    .topnav-logo img {
+      border-radius:50% !important;
+    }
+    .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn{display:none !important;}
+    .topnav .btn-icon[style*="display: none"],.topnav .btn-icon[style*="display:none"],.topnav .visitor-banner[style*="display: none"],.topnav .visitor-banner[style*="display:none"],.topnav .user-chip[style*="display: none"],.topnav .user-chip[style*="display:none"]{display:none !important;}
+    /* Logo compressible */
+    .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;z-index:1;}
+    .topnav-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
+    .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;min-width:0;overflow:hidden;}
+    .topnav-logo-text span{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
     .topnav-logo-text .l-gabon{color:#009E60;}
     .topnav-logo-text .l-sport{color:#FFD100;}
     .topnav-logo-text .l-connect{color:#009FCA;}
     .topnav-logo:hover{opacity:.85;}
+    .topnav-spacer{display:none;}
+    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
+    /* Icônes */
+    .visitor-banner{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:rgba(255,215,0,.14);border:2px solid rgba(255,215,0,.35);border-radius:50%;font-size:18px;line-height:1;color:var(--yellow);cursor:pointer;flex-shrink:0;box-sizing:border-box;}
+    .user-chip{display:flex;align-items:center;gap:8px;min-width:0;}
+    .user-avatar{width:38px;height:38px;min-width:38px;min-height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;overflow:hidden;transition:all .2s;box-sizing:border-box;}
+    .user-name{max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);font-size:13px;font-weight:500;}
+    .btn-icon{width:38px;height:38px;min-width:38px;min-height:38px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;border-radius:50%;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
+    .btn-icon:hover{background:rgba(255,255,255,.18);}
+    .hamburger-lines{display:flex;flex-direction:column;gap:5px;}
+    .hamburger-lines span{width:18px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
+    /* ── Mode bureau (≥768px) ── */
+    @media (min-width:768px){
+      .topnav{height:72px;padding:0 18px;}
+      .topnav-logo img{width:52px;height:52px;}
+      .topnav-logo-text span{font-size:15px;}
+      .topnav-icons{gap:10px;}
+      .visitor-banner,.user-avatar,.btn-icon{width:42px;height:42px;min-width:42px;min-height:42px;}
+    }
+    /* ── Mobile ≤480px : texte logo réduit (visible, sans déborder) ── */
+    @media (max-width:480px){
+      .topnav{padding:0 14px 0 10px;}
+      .topnav-logo img{width:40px;height:40px;}
+      .topnav-logo-text{display:flex;max-width:72px;}
+      .topnav-logo-text span{font-size:8.5px;letter-spacing:.1px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .topnav-icons{gap:5px;}
+      .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      #nav-rolebadge{display:none;}
+      #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
+    }
+    @media (max-width:360px){
+      .topnav-logo-text{max-width:58px;}
+      .topnav-logo-text span{font-size:7.5px;}
+      .topnav-icons{gap:3px;}
+      .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+    }
+    @media (max-width:320px){
+      .topnav-logo-text{display:none;}
+    }
     .nav-menu-dropdown{position:absolute;top:100%;left:0;background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:240px;z-index:1000;display:none;margin-top:8px;}
     .nav-menu-dropdown.open{display:block;}
     .nav-menu-item{display:flex;align-items:center;gap:8px;padding:12px 16px;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
@@ -116,66 +176,10 @@
     .nav-menu-item:last-child{border-radius:0 0 var(--radius-md) var(--radius-md);}
     .nav-menu-item .icon{font-size:16px;flex-shrink:0;}
     .nav-menu-divider{height:1px;background:var(--gray-bd);margin:4px 0;}
-    .topnav-spacer{flex:1 1 0;min-width:2px;max-width:40px;}
-    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
-    /* Bannière visiteur réduite : icône œil seule, pas de texte */
-    .visitor-banner{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:34px;height:34px;padding:0;
-      background:rgba(255,215,0,.14);border:1px solid rgba(255,215,0,.35);
-      border-radius:50%;font-size:16px;line-height:1;color:var(--yellow);
-      cursor:pointer;flex-shrink:0;
-    }
-    .user-chip{display:flex;align-items:center;gap:8px;min-width:0;}
-    .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
-    .user-name{max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);font-size:13px;font-weight:500;}
-    .btn-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--white);font-size:18px;cursor:pointer;border-radius:8px;transition:all .2s;flex-shrink:0;}
-    .btn-icon:hover{background:rgba(255,255,255,.1);}
-    .btn-hamburger{}
-    .hamburger-lines{display:flex;flex-direction:column;gap:5px;}
-    .hamburger-lines span{width:20px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
-    /* ── Mode bureau (≥901px) : en-tête centrée, logo plus grand ── */
-    @media (min-width:901px){
-      .topnav{justify-content:center;gap:18px;padding:0 18px;}
-      .topnav-logo img{width:56px;height:56px;}
-      .topnav-logo-text span{font-size:16px;letter-spacing:.8px;}
-      .topnav-spacer{flex:0 0 32px;max-width:32px;}
-    }
-    @media (max-width:640px){
-      .topnav{padding:0 8px;gap:5px;}
-      .topnav-logo img{width:40px;height:40px;}
-      .topnav-logo-text span{font-size:10px;}
-      .visitor-banner{width:30px;height:30px;font-size:14px;}
-      .user-chip{max-width:40px;}
-      .btn-icon{width:32px;height:32px;font-size:15px;}
-      #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
-      #nav-rolebadge{font-size:9px;padding:2px 5px;}
-    }
-    @media (max-width:480px){
-      .topnav{padding:0 6px;gap:4px;}
-      .topnav-logo img{width:36px;height:36px;}
-      .topnav-logo-text{max-width:80px;opacity:1;}
-      .topnav-logo-text span{font-size:8px;letter-spacing:.3px;}
-      .visitor-banner{width:28px;height:28px;font-size:13px;}
-      #nav-rolebadge{font-size:9px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-      .user-chip{max-width:36px;padding:3px;}
-      .btn-icon{width:30px;height:30px;font-size:14px;}
-      .btn-hamburger{display:flex;}
-      #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
-    }
-    @media (max-width:360px){
-      .topnav{padding:0 4px;gap:3px;}
-      .topnav-logo img{width:32px;height:32px;}
-      .topnav-logo-text{max-width:70px;opacity:1;}
-      .topnav-logo-text span{font-size:7px;letter-spacing:.2px;}
-      .visitor-banner{width:26px;height:26px;font-size:12px;}
-      #nav-rolebadge{display:none;}
-      .user-chip{padding:3px;}
-      .btn-icon{width:28px;height:28px;font-size:13px;}
-    }
-    .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:40px;padding:5px;cursor:pointer;transition:background .2s;}
+    .topnav-spacer{display:none;}
+    .user-chip{display:flex;align-items:center;gap:8px;background:transparent;border-radius:40px;padding:0;cursor:pointer;transition:background .2s;}
     .user-chip:hover{background:rgba(255,255,255,.14);}
-    .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;border:2.5px solid rgba(255,255,255,.25);transition:border-color .2s;}
+    .user-avatar{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--white);font-family:var(--font-display);flex-shrink:0;overflow:hidden;transition:all .2s;box-sizing:border-box;}
     .user-chip:hover .user-avatar{border-color:rgba(255,255,255,.65);}
     .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
     /* Pastille verte "en ligne" */
@@ -195,7 +199,7 @@
     .role-badge.eleve_etudiant{background:#6366f1;color:white;}
     .role-badge.sportif_etranger{background:#ca8a04;color:white;}
     .role-badge.handisport{background:#7c3aed;color:white;}
-    .btn-icon{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
+    .btn-icon{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
     .btn-icon:hover{background:rgba(255,255,255,.16);}
     /* ── HAMBURGER (bord droit du header) ── */
     .btn-hamburger{margin-left:2px;}
@@ -252,10 +256,21 @@
     .login-history-day-sep{font-size:10.5px;font-weight:700;color:var(--green-dk);text-transform:uppercase;letter-spacing:.6px;padding:14px 4px 6px;border-bottom:2px solid var(--green-lt);}
     .login-history-day-sep:first-child{padding-top:0;}
     .btn-icon:hover{background:rgba(255,255,255,.18);}
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--white);border-top:1px solid var(--gray-bd);display:flex;height:64px;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
-    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--gray-txt);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;}
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;z-index:100;
+      background:linear-gradient(20deg,#16243f 0%,var(--navy) 55%,#060d18 100%);
+      border-top:1px solid rgba(255,215,0,.18);
+      display:flex;height:64px;
+      box-shadow:0 -2px 16px rgba(0,0,0,.4),inset 0 -1px 0 rgba(255,255,255,.06);
+    }
+    .bottom-nav::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:45%;
+      background:linear-gradient(180deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,0) 100%);
+      pointer-events:none;
+    }
+    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.6);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;position:relative;z-index:1;}
     .bnav-item .bnav-icon{font-size:26px;}
-    .bnav-item.active{color:var(--green);}
+    .bnav-item.active{color:#3ddc91;}
     .main-content{padding-top:calc(72px + 12px);padding-bottom:80px;padding-left:10px;padding-right:10px;max-width:100%;margin:0 auto;width:100%;overflow-x:hidden;box-sizing:border-box;}
     .view{display:none;}.view.active{display:block;animation:fadeUp .35s ease;}
     .card{background:var(--white);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--gray-bd);overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;}
@@ -291,11 +306,11 @@
     /* ── STAT CARDS — luxe sportif ── */
     .stat-card{
       position:relative;overflow:hidden;border-radius:var(--radius-md);
-      padding:14px 10px 12px;display:flex;flex-direction:column;gap:4px;
-      cursor:pointer;border:none;text-align:left;width:100%;
+      padding:16px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;
+      cursor:pointer;border:none;text-align:center;width:100%;
       transition:transform .18s ease,box-shadow .18s ease;
       box-shadow:0 4px 18px rgba(0,0,0,.13);
-      min-height:140px;
+      min-height:148px;
     }
     .stat-card:hover,.stat-card:active{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,.22);}
     .stat-card::before{
@@ -313,8 +328,8 @@
     .stat-card-3{background:linear-gradient(135deg,#f97316 0%,#c2410c 100%);}
     .stat-card-4{background:linear-gradient(135deg,#FFD700 0%,#b8960c 100%);}
     .stat-icon{font-size:28px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
-    .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35);letter-spacing:.3px;}
-    .stat-lbl{font-family:var(--font-display);font-size:10px;color:rgba(255,255,255,.92);font-weight:800;letter-spacing:.2px;text-transform:uppercase;margin-top:4px;line-height:1.35;text-shadow:0 1px 4px rgba(0,0,0,.3);overflow-wrap:normal;word-break:normal;white-space:normal;hyphens:none;}
+    .stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35);letter-spacing:.3px;text-align:center;}
+    .stat-lbl{font-family:var(--font-display);font-size:10px;color:rgba(255,255,255,.92);font-weight:800;letter-spacing:.2px;text-transform:uppercase;margin-top:4px;line-height:1.35;text-shadow:0 1px 4px rgba(0,0,0,.3);overflow-wrap:normal;word-break:normal;white-space:normal;hyphens:none;text-align:center;}
     .stat-card-4 .stat-val,.stat-card-4 .stat-lbl{color:var(--navy);}
     .stat-card-4 .stat-lbl{color:rgba(10,22,40,.7);}
     .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
@@ -323,7 +338,6 @@
     .quick-btn .qb-icon{font-size:22px;flex-shrink:0;}
 
     /* ── ANNUAIRE ACTEURS ── */
-    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;align-items:center;padding:0 8px;}
     .actors-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .actor-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);overflow:hidden;cursor:pointer;transition:all .2s;}
     .actor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -360,12 +374,20 @@
     .actor-detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
     .actor-detail-modal.open{display:flex;}
     .actor-detail-card{background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
-    .adm-hero{background:linear-gradient(135deg,var(--navy),var(--navy-md));padding:28px 20px 24px;text-align:center;position:relative;}
-    .adm-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .adm-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.25);margin:0 auto 12px;overflow:hidden;}
+    .adm-hero{background:linear-gradient(135deg,var(--navy),var(--navy-md));padding:28px 20px 24px;text-align:center;position:relative;overflow:hidden;min-height:188px;}
+    .adm-cover-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;transition:opacity .25s;}
+    .adm-cover-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,28,54,.30) 0%,rgba(10,28,54,.50) 55%,rgba(8,22,44,.90) 100%);}
+    .adm-hero-content{position:relative;z-index:2;}
+    .adm-close{position:absolute;top:16px;right:16px;z-index:3;background:rgba(255,255,255,.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .adm-cover-edit-btn{position:absolute;top:16px;left:16px;z-index:3;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);transition:transform .15s,background .15s;pointer-events:none;}
+    .adm-cover-click-layer{position:absolute;inset:0;z-index:2;cursor:pointer;-webkit-tap-highlight-color:rgba(255,255,255,.15);}
+    .adm-cover-click-layer:active ~ .adm-cover-edit-btn{transform:scale(.94);}
+    .adm-cover-hint{position:absolute;top:16px;left:58px;z-index:3;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.45);color:var(--white);font-size:12px;font-weight:600;padding:6px 12px 6px 10px;border-radius:20px;backdrop-filter:blur(2px);pointer-events:none;white-space:nowrap;animation:fadeIn .25s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:translateY(0);}}
+    .adm-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.85);box-shadow:0 2px 12px rgba(0,0,0,.35);margin:0 auto 12px;overflow:hidden;}
     .adm-avatar img{width:100%;height:100%;object-fit:cover;}
-    .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);}
-    .adm-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:4px;}
+    .adm-name{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--white);text-shadow:0 1px 4px rgba(0,0,0,.4);}
+    .adm-sub{font-size:13px;color:rgba(255,255,255,.8);margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
     .adm-gscid-block{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
     .adm-gscid-pill{font-family:monospace;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 14px;letter-spacing:.6px;}
     .adm-qr-mini{width:44px;height:44px;border-radius:8px;background:#fff;border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s;}
@@ -598,9 +620,18 @@
     .admin-site-meta{font-size:12px;color:var(--gray-txt);margin-top:2px;}
 
     /* ── LEGAL ── */
-    .legal-tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;align-items:center;padding:0 8px;}
-    .legal-tab{padding:8px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);background:none;font-size:13px;font-weight:600;color:var(--gray-txt);cursor:pointer;transition:all .2s;}
-    .legal-tab.active{background:var(--navy);color:var(--white);border-color:var(--navy);}
+    .legal-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;padding:0 4px;}
+    .legal-tab{padding:9px 10px;border:2px solid var(--gray-bd);border-radius:20px;background:none;font-size:13px;font-weight:700;color:var(--gray-txt);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;min-height:40px;width:100%;box-sizing:border-box;text-align:center;}
+    /* Couleurs au repos par onglet */
+    .legal-tab:nth-child(1){border-color:#1a2d4a;color:#1a2d4a;background:rgba(26,45,74,.07);}
+    .legal-tab:nth-child(2){border-color:#0d9488;color:#0f766e;background:rgba(13,148,136,.07);}
+    .legal-tab:nth-child(3){border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .legal-tab:nth-child(4){border-color:#8b5cf6;color:#6d28d9;background:rgba(139,92,246,.07);}
+    .legal-tab:hover{filter:brightness(.93);}
+    .legal-tab:nth-child(1).active{background:linear-gradient(135deg,#1a2d4a,#0f3460);color:#fff;border-color:transparent;}
+    .legal-tab:nth-child(2).active{background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;border-color:transparent;}
+    .legal-tab:nth-child(3).active{background:linear-gradient(135deg,#009E60,#007a47);color:#fff;border-color:transparent;}
+    .legal-tab:nth-child(4).active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border-color:transparent;}
     .legal-pane{display:none;font-size:14px;line-height:1.7;color:#374151;}
     .legal-pane.active{display:block;}
     .legal-pane h3{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--navy);margin:16px 0 8px;}
@@ -649,23 +680,40 @@
     .filter-pill .real-icon{transition:transform .2s ease;}
     .filter-pill:hover .real-icon{transform:scale(1.1);}
 
-    /* ── ANNUAIRE FILTER BUTTONS (now uses filter-pill base) ── */
-    .actors-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;align-items:center;padding:0 8px;}
+    /* ── ANNUAIRE FILTER BUTTONS ── */
+    .actors-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;align-items:stretch;}
     .actor-filter-btn{
-      padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;
+      padding:8px 10px;border:2px solid var(--gray-bd);border-radius:20px;
       background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
-      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:6px;
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;justify-content:center;gap:6px;
+      width:100%;box-sizing:border-box;min-height:40px;text-align:center;white-space:normal;line-height:1.3;
     }
-    .actor-filter-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
-    .actor-filter-btn.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
-    .actor-filter-btn[data-type="tous"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md));}
-    .actor-filter-btn[data-type="joueur"].active{background:linear-gradient(135deg,#009E60,#007a47);}
-    .actor-filter-btn[data-type="arbitre"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
+    .actor-filter-btn[data-type="tous"]{grid-column:1 / -1;}
+    /* Couleurs au repos — bordure + texte par rôle */
+    .actor-filter-btn[data-type="joueur"]      {border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .actor-filter-btn[data-type="arbitre"]     {border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);}
+    .actor-filter-btn[data-type="entraineur"]  {border-color:#0d9488;color:#0f766e;background:rgba(13,148,136,.07);}
+    .actor-filter-btn[data-type="club"]        {border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);}
+    .actor-filter-btn[data-type="association"] {border-color:#8b5cf6;color:#6d28d9;background:rgba(139,92,246,.07);}
+    .actor-filter-btn[data-type="federation"]  {border-color:#1a2d4a;color:#1a2d4a;background:rgba(26,45,74,.07);}
+    .actor-filter-btn[data-type="organisateur"]{border-color:#b45309;color:#92400e;background:rgba(180,83,9,.07);}
+    .actor-filter-btn[data-type="supporter"]   {border-color:#ec4899;color:#db2777;background:rgba(236,72,153,.07);}
+    .actor-filter-btn[data-type="independant"] {border-color:#0ea5e9;color:#0284c7;background:rgba(14,165,233,.07);}
+    .actor-filter-btn[data-type="eleve_etudiant"]{border-color:#6366f1;color:#4338ca;background:rgba(99,102,241,.07);}
+    .actor-filter-btn[data-type="sportif_etranger"]{border-color:#ca8a04;color:#92660a;background:rgba(202,138,4,.07);}
+    .actor-filter-btn[data-type="handisport"]  {border-color:#7c3aed;color:#5b21b6;background:rgba(124,58,237,.07);}
+    /* Hover */
+    .actor-filter-btn:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    /* Actif */
+    .actor-filter-btn.active{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .actor-filter-btn[data-type="tous"].active     {background:linear-gradient(135deg,var(--navy),var(--navy-md));}
+    .actor-filter-btn[data-type="joueur"].active   {background:linear-gradient(135deg,#009E60,#007a47);}
+    .actor-filter-btn[data-type="arbitre"].active  {background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
     .actor-filter-btn[data-type="entraineur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
-    .actor-filter-btn[data-type="club"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .actor-filter-btn[data-type="club"].active     {background:linear-gradient(135deg,#f97316,#c2410c);}
     .actor-filter-btn[data-type="association"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
-    .actor-filter-btn[data-type="federation"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
-    .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .actor-filter-btn[data-type="federation"].active{background:linear-gradient(135deg,#1a2d4a,#0f3460);}
+    .actor-filter-btn[data-type="organisateur"].active{background:linear-gradient(135deg,#b45309,#92400e);}
     .actor-filter-btn[data-type="supporter"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
     .actor-filter-btn[data-type="eleve_etudiant"].active{background:linear-gradient(135deg,#6366f1,#4338ca);}
@@ -673,23 +721,34 @@
     .actor-filter-btn[data-type="handisport"].active{background:linear-gradient(135deg,#7c3aed,#5b21b6);}
 
     /* ── CARTE / SITES FILTER BUTTONS ── */
-    .sites-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;}
+    .sites-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:0 4px;align-items:stretch;}
     .site-filter-btn{
-      padding:7px 14px;border:2px solid var(--gray-bd);border-radius:20px;
+      padding:8px 10px;border:2px solid var(--gray-bd);border-radius:20px;
       background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
-      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:5px;white-space:nowrap;
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;justify-content:center;gap:5px;
+      width:100%;box-sizing:border-box;min-height:40px;text-align:center;white-space:normal;line-height:1.3;
     }
-    .site-filter-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
-    .site-filter-btn.active{color:var(--white);border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
-    .site-filter-btn[data-stype="tous"].active{background:linear-gradient(135deg,var(--navy),var(--navy-md));}
-    .site-filter-btn[data-stype="Stade"].active{background:linear-gradient(135deg,#009E60,#007a47);}
+    .site-filter-btn[data-stype="tous"]{grid-column:1 / -1;}
+    /* Couleurs au repos par type de site */
+    .site-filter-btn[data-stype="Stade"]   {border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .site-filter-btn[data-stype="Gymnase"] {border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);}
+    .site-filter-btn[data-stype="Piscine"] {border-color:#3b82f6;color:#1d4ed8;background:rgba(59,130,246,.07);}
+    .site-filter-btn[data-stype="Court"]   {border-color:#8b5cf6;color:#6d28d9;background:rgba(139,92,246,.07);}
+    .site-filter-btn[data-stype="Dojo"]    {border-color:#e11d48;color:#be123c;background:rgba(225,29,72,.07);}
+    .site-filter-btn[data-stype="Salle"]   {border-color:#0d9488;color:#0f766e;background:rgba(13,148,136,.07);}
+    .site-filter-btn[data-stype="Terrain"] {border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);}
+    .site-filter-btn[data-stype="Piste"]   {border-color:#ec4899;color:#db2777;background:rgba(236,72,153,.07);}
+    .site-filter-btn:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    .site-filter-btn.active{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .site-filter-btn[data-stype="tous"].active  {background:linear-gradient(135deg,var(--navy),var(--navy-md));}
+    .site-filter-btn[data-stype="Stade"].active {background:linear-gradient(135deg,#009E60,#007a47);}
     .site-filter-btn[data-stype="Gymnase"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
     .site-filter-btn[data-stype="Piscine"].active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
-    .site-filter-btn[data-stype="Court"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
-    .site-filter-btn[data-stype="Dojo"].active{background:linear-gradient(135deg,#e11d48,#be123c);}
-    .site-filter-btn[data-stype="Salle"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
+    .site-filter-btn[data-stype="Court"].active {background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .site-filter-btn[data-stype="Dojo"].active  {background:linear-gradient(135deg,#e11d48,#be123c);}
+    .site-filter-btn[data-stype="Salle"].active {background:linear-gradient(135deg,#0d9488,#0f766e);}
     .site-filter-btn[data-stype="Terrain"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
-    .site-filter-btn[data-stype="Piste"].active{background:linear-gradient(135deg,#ec4899,#db2777);}
+    .site-filter-btn[data-stype="Piste"].active {background:linear-gradient(135deg,#ec4899,#db2777);}
     .site-icon-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#fff;}
     .site-icon-dot.t-Stade{background:linear-gradient(135deg,#009E60,#007a47);}
     .site-icon-dot.t-Gymnase{background:linear-gradient(135deg,#f97316,#c2410c);}
@@ -703,17 +762,18 @@
 
     /* ── REAL ICON IMAGES ── */
     .real-icon{
-      width:28px;height:28px;border-radius:50%;object-fit:cover;
-      box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;
+      width:32px;height:32px;border-radius:50%;object-fit:cover;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);flex-shrink:0;
+      border:2px solid rgba(255,255,255,.5);
       transition:transform .2s ease;
     }
     .actor-filter-btn:hover .real-icon{transform:scale(1.1);}
-    .bnav-real-icon{width:22px;height:22px;border-radius:50%;object-fit:cover;filter:grayscale(30%);}
-    .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.1);}
-    .stat-real-icon{width:50px;height:50px;border-radius:50%;object-fit:cover;box-shadow:0 4px 14px rgba(0,0,0,.35);margin-bottom:8px;border:3px solid rgba(255,255,255,.55);align-self:flex-end;}
+    .bnav-real-icon{width:26px;height:26px;border-radius:50%;object-fit:cover;filter:grayscale(30%);border:2px solid transparent;transition:all .2s;}
+    .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.12);border-color:var(--green);}
+    .stat-real-icon{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 4px 18px rgba(0,0,0,.40);margin-bottom:10px;border:3px solid rgba(255,255,255,.70);align-self:center;display:block;flex-shrink:0;}
 
     /* Quick-btn image icons */
-    .qb-real-icon{width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);animation:float 3s ease-in-out infinite;}
+    .qb-real-icon{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.22);border:2.5px solid rgba(0,158,96,.25);animation:float 3s ease-in-out infinite;}
     .quick-btn:nth-child(1) .qb-real-icon{animation-delay:0s;}
     .quick-btn:nth-child(2) .qb-real-icon{animation-delay:.4s;}
     .quick-btn:nth-child(3) .qb-real-icon{animation-delay:.8s;}
@@ -752,7 +812,7 @@
       display:flex;align-items:center;justify-content:center;gap:8px;
       padding-top:8px;border-top:1px solid rgba(255,255,255,.1);
     }
-    .weather-icon{font-size:24px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(0,158,96,.2);border-radius:12px;flex-shrink:0;}
+    .weather-icon{font-size:24px;display:flex;align-items:center;justify-content:center;width:40px;height:40px;min-width:40px;background:rgba(0,158,96,.2);border-radius:50%;flex-shrink:0;border:2px solid rgba(0,158,96,.3);}
     .weather-details{text-align:center;flex:0 1 auto;}
     .weather-temp{font-size:13px;font-weight:700;margin-bottom:1px;text-align:center;}
     .weather-desc{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.3px;text-align:center;}
@@ -779,10 +839,29 @@
     .sport-header-content{position:relative;z-index:1;padding:20px 20px;color:white;}
     .sport-header-title{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;}
     .sport-header-sub{font-size:12px;opacity:.8;}
-    .discipline-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-    .disc-tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:20px;border:2px solid var(--gray-bd);background:var(--white);cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-txt);transition:all .2s;white-space:nowrap;}
-    .disc-tab:hover{transform:translateY(-2px);border-color:var(--green);color:var(--green);box-shadow:var(--shadow-sm);}
-    .disc-tab.active{background:var(--navy);color:white;border-color:var(--navy);box-shadow:0 4px 14px rgba(10,22,40,.25);}
+    .discipline-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 4px;}
+    .disc-tab{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border-radius:20px;border:2px solid var(--gray-bd);background:var(--white);cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-txt);transition:all .2s;white-space:normal;line-height:1.3;min-height:40px;width:100%;box-sizing:border-box;}
+    /* Premier élément (Football) pleine largeur */
+    .disc-tab:first-child{grid-column:1 / -1;}
+    /* Couleurs au repos par sport */
+    .disc-tab[data-sport="Football"]    {border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .disc-tab[data-sport="Basketball"]  {border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);}
+    .disc-tab[data-sport="Handball"]    {border-color:#3b82f6;color:#1d4ed8;background:rgba(59,130,246,.07);}
+    .disc-tab[data-sport="Volleyball"]  {border-color:#8b5cf6;color:#6d28d9;background:rgba(139,92,246,.07);}
+    .disc-tab[data-sport="Athlétisme"]  {border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);}
+    .disc-tab[data-sport="Boxe"]        {border-color:#e11d48;color:#be123c;background:rgba(225,29,72,.07);}
+    .disc-tab[data-sport="Judo"]        {border-color:#ec4899;color:#db2777;background:rgba(236,72,153,.07);}
+    .disc-tab[data-sport="Natation"]    {border-color:#0ea5e9;color:#0284c7;background:rgba(14,165,233,.07);}
+    .disc-tab:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    .disc-tab.active{color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(10,22,40,.25);}
+    .disc-tab[data-sport="Football"].active  {background:linear-gradient(135deg,#009E60,#007a47);}
+    .disc-tab[data-sport="Basketball"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .disc-tab[data-sport="Handball"].active  {background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
+    .disc-tab[data-sport="Volleyball"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .disc-tab[data-sport="Athlétisme"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
+    .disc-tab[data-sport="Boxe"].active      {background:linear-gradient(135deg,#e11d48,#be123c);}
+    .disc-tab[data-sport="Judo"].active      {background:linear-gradient(135deg,#ec4899,#db2777);}
+    .disc-tab[data-sport="Natation"].active  {background:linear-gradient(135deg,#0ea5e9,#0284c7);}
     .disc-tab img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2);}
     .fed-card{background:linear-gradient(135deg,var(--navy),var(--navy-md));border-radius:var(--radius-md);padding:18px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;}
     .fed-card-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3);flex-shrink:0;}
@@ -873,10 +952,18 @@
     .supporter-stat-val{font-family:var(--font-display);font-size:18px;font-weight:800;color:#db2777;}
     .supporter-stat-lbl{font-size:10px;color:var(--gray-txt);margin-top:2px;}
     /* ── NEWS FILTER BUTTONS ── */
-    .news-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
-    .news-filter-btn{padding:8px 16px;border:2px solid var(--gray-bd);border-radius:20px;background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);cursor:pointer;transition:all .22s ease;white-space:nowrap;}
-    .news-filter-btn:hover{transform:translateY(-2px);border-color:var(--green);color:var(--green);box-shadow:var(--shadow-sm);}
-    .news-filter-btn.active{background:var(--green);color:var(--white);border-color:var(--green);box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    .news-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;}
+    .news-filter-btn{
+      padding:8px 10px;border:2px solid var(--gray-bd);border-radius:20px;
+      background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;justify-content:center;gap:5px;
+      width:100%;box-sizing:border-box;min-height:38px;text-align:center;white-space:normal;line-height:1.3;
+    }
+    .news-filter-btn:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    .news-filter-btn.active{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);background:var(--green);}
+    /* Actu — inline dans #news-cat-filters : "Tout" pleine largeur */
+    #news-cat-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;}
+    #news-cat-filters .news-filter-btn:first-child{grid-column:1 / -1;}
     /* ── ONLINE NEWS CARD ── */
     .news-online-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;gap:0;}
     .news-online-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
@@ -1001,10 +1088,11 @@
       </div>
     </div>
     <div class="topnav-spacer"></div>
+    <div class="topnav-icons">
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
     <div id="nav-rolebadge"></div>
-    <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()">
-      <div class="user-avatar" id="nav-avatar">?</div>
+    <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
+      <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
     <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
@@ -1012,6 +1100,7 @@
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
     </button>
+    </div>
   </nav>
 
   <!-- ══ MENU LATÉRAL (plan de l'application) ══ -->
@@ -1030,7 +1119,6 @@
       <button class="side-menu-item" onclick="showView('sport');closeMenu()"><span class="smi-ico">⚽</span>Sport Gabon</button>
       <button class="side-menu-item" onclick="showView('stades');closeMenu()"><span class="smi-ico">🗺️</span>Carte sportive</button>
       <button class="side-menu-item" onclick="showView('actualites');closeMenu()"><span class="smi-ico">📰</span>Actualités</button>
-      <button class="side-menu-item" onclick="showView('communaute');closeMenu()"><span class="smi-ico">💬</span>Communauté</button>
 
       <!-- MON COMPTE -->
       <div class="side-menu-divider" style="margin:6px 0;"></div>
@@ -1138,18 +1226,27 @@
 
         <!-- Rôle sportif -->
         <div class="form-group"><label>Rôle / Poste *</label>
-          <select id="auth-register-role">
+          <select id="auth-register-role" onchange="toggleSupporterOptIn()">
             <option value="joueur">⚽ Joueur / Athlète</option>
             <option value="entraineur">📋 Entraîneur / Coach</option>
             <option value="arbitre">🟨 Arbitre</option>
-            <option value="club">🏟️ Club / Association</option>
+            <option value="club">🏟️ Club sportif</option>
+            <option value="association">🤝 Association sportive</option>
             <option value="federation">🏛️ Fédération</option>
             <option value="organisateur">🎯 Organisateur</option>
+            <option value="ecole_universite">🏫 École / Université</option>
             <option value="independant">🏃 Sportif indépendant</option>
             <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
             <option value="sportif_etranger">🌍 Sportif étranger</option>
             <option value="handisport">🦾 Sportif handisport</option>
           </select>
+        </div>
+        <div class="form-group" id="auth-register-supporter-wrap" style="display:none;">
+          <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="auth-register-supporter" style="width:18px;height:18px;accent-color:var(--green);" onchange="document.getElementById('auth-register-club-supporte').style.display=this.checked?'':'none';">
+            💗 Je suis aussi supporter d'un club
+          </label>
+          <input type="text" id="auth-register-club-supporte" placeholder="Nom du club que vous supportez" style="margin-top:8px;display:none;">
         </div>
         <div class="form-group"><label>Statut</label>
           <select id="auth-register-statut">
@@ -1289,6 +1386,12 @@
         </div>
       </div>
 
+      <!-- ══ BOUTONS RAPIDES : Mode d'emploi + Installer GSC ══ -->
+      <div style="display:flex;justify-content:center;gap:10px;margin:0 0 14px 0;">
+        <button onclick="showView('legal')" style="flex:1;max-width:160px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:700;border:1.5px solid #0A1628;background:#fff;color:#0A1628;border-radius:20px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);white-space:nowrap;">📖 Mode d'emploi</button>
+        <button onclick="installGSC()" id="btn-install-gsc" style="flex:1;max-width:160px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:700;border:none;background:linear-gradient(135deg,#009E60,#007a47);color:#fff;border-radius:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,158,96,.3);white-space:nowrap;">📲 Installer GSC</button>
+      </div>
+
       <div class="profile-completion fade-up" id="profile-completion-bar" onclick="handleCompletionClick()" style="display:none;">
         <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=80&h=80&fit=crop&auto=format" style="width:26px;height:26px;border-radius:8px;object-fit:cover;" alt="" onerror="this.style.display='none'">
         <div class="completion-bar-wrap">
@@ -1301,7 +1404,9 @@
       <!-- Tuile résumé total -->
       <div class="stats-grid fade-up" id="dashboard-stats" style="grid-template-columns:1fr;margin-bottom:8px;">
         <button class="stat-card stat-card-1" onclick="showView('annuaire')" style="flex-direction:row;align-items:center;gap:16px;padding:16px 20px;">
-          <svg style="width:40px;height:40px;flex-shrink:0;" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><g id="stairs"><rect x="20" y="240" width="60" height="40" fill="#ddd"/><rect x="90" y="200" width="60" height="80" fill="#e8e8e8"/><rect x="160" y="160" width="60" height="120" fill="#e0e0e0"/><rect x="230" y="120" width="60" height="160" fill="#d8d8d8"/><rect x="300" y="80" width="60" height="200" fill="#d0d0d0"/></g><g id="football-player" transform="translate(50, 180)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1e40af" rx="2"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="15" r="5" fill="#fff"/><ellipse cx="25" cy="15" rx="5" ry="4" fill="none" stroke="#000" stroke-width="1"/></g><g id="referee" transform="translate(120, 140)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1a1a1a" rx="2"/><polygon points="0,-10 -3,-5 3,-5" fill="#dc2626"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><rect x="22" y="0" width="6" height="8" fill="#fbbf24"/></g><g id="basketball-player" transform="translate(190, 100)"><circle cx="0" cy="-25" r="12" fill="#8b4513"/><rect x="-10" y="-10" width="20" height="22" fill="#f97316" rx="2"/><line x1="-10" y1="-5" x2="-22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-20" r="8" fill="#f97316" stroke="#1a1a1a" stroke-width="1.5"/><path d="M -30 -28 Q -30 -12 -30 -28" fill="none" stroke="#1a1a1a" stroke-width="0.8"/><path d="M -38 -20 Q -22 -20 -38 -20" fill="none" stroke="#1a1a1a" stroke-width="0.8"/></g><g id="tennis-player" transform="translate(260, 60)"><circle cx="0" cy="-25" r="12" fill="#f5c4a1"/><path d="M -10 -30 Q -12 -35 0 -37 Q 12 -35 10 -30" fill="#b45309"/><rect x="-10" y="-10" width="20" height="22" fill="#f5f5f5" rx="2"/><circle cx="-7" cy="-6" r="2" fill="#ec4899"/><circle cx="7" cy="-6" r="2" fill="#ec4899"/><line x1="-10" y1="-5" x2="-26" y2="-18" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="8" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-25" r="10" fill="none" stroke="#795548" stroke-width="2"/><line x1="-30" y1="-25" x2="-24" y2="-12" stroke="#795548" stroke-width="2"/><path d="M -30 -25 Q -28 -20 -32 -20" fill="none" stroke="#fbbf24" stroke-width="1.5"/></g><ellipse cx="200" cy="285" rx="180" ry="8" fill="#000000" opacity="0.1"/></svg>
+          <div style="width:56px;height:56px;min-width:56px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.3);">
+          <svg style="width:38px;height:38px;flex-shrink:0;" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><g id="stairs"><rect x="20" y="240" width="60" height="40" fill="#ddd"/><rect x="90" y="200" width="60" height="80" fill="#e8e8e8"/><rect x="160" y="160" width="60" height="120" fill="#e0e0e0"/><rect x="230" y="120" width="60" height="160" fill="#d8d8d8"/><rect x="300" y="80" width="60" height="200" fill="#d0d0d0"/></g><g id="football-player" transform="translate(50, 180)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1e40af" rx="2"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="15" r="5" fill="#fff"/><ellipse cx="25" cy="15" rx="5" ry="4" fill="none" stroke="#000" stroke-width="1"/></g><g id="referee" transform="translate(120, 140)"><circle cx="0" cy="-25" r="12" fill="#d4a574"/><rect x="-10" y="-10" width="20" height="20" fill="#1a1a1a" rx="2"/><polygon points="0,-10 -3,-5 3,-5" fill="#dc2626"/><line x1="-10" y1="-5" x2="-20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="5" stroke="#d4a574" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="10" x2="-8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="10" x2="8" y2="25" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><rect x="22" y="0" width="6" height="8" fill="#fbbf24"/></g><g id="basketball-player" transform="translate(190, 100)"><circle cx="0" cy="-25" r="12" fill="#8b4513"/><rect x="-10" y="-10" width="20" height="22" fill="#f97316" rx="2"/><line x1="-10" y1="-5" x2="-22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="22" y2="-15" stroke="#8b4513" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-20" r="8" fill="#f97316" stroke="#1a1a1a" stroke-width="1.5"/><path d="M -30 -28 Q -30 -12 -30 -28" fill="none" stroke="#1a1a1a" stroke-width="0.8"/><path d="M -38 -20 Q -22 -20 -38 -20" fill="none" stroke="#1a1a1a" stroke-width="0.8"/></g><g id="tennis-player" transform="translate(260, 60)"><circle cx="0" cy="-25" r="12" fill="#f5c4a1"/><path d="M -10 -30 Q -12 -35 0 -37 Q 12 -35 10 -30" fill="#b45309"/><rect x="-10" y="-10" width="20" height="22" fill="#f5f5f5" rx="2"/><circle cx="-7" cy="-6" r="2" fill="#ec4899"/><circle cx="7" cy="-6" r="2" fill="#ec4899"/><line x1="-10" y1="-5" x2="-26" y2="-18" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="10" y1="-5" x2="20" y2="8" stroke="#f5c4a1" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="12" x2="-8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="12" x2="8" y2="28" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><circle cx="-30" cy="-25" r="10" fill="none" stroke="#795548" stroke-width="2"/><line x1="-30" y1="-25" x2="-24" y2="-12" stroke="#795548" stroke-width="2"/><path d="M -30 -25 Q -28 -20 -32 -20" fill="none" stroke="#fbbf24" stroke-width="1.5"/></g><ellipse cx="200" cy="285" rx="180" ry="8" fill="#000000" opacity="0.1"/></svg>
+          </div>
           <div style="flex:1;text-align:left;">
             <div class="stat-val" id="stat-total-acteurs" style="font-size:28px;">—</div>
             <div class="stat-lbl">Total acteurs enregistrés</div>
@@ -1755,7 +1860,7 @@
             <div class="phys-card"><div class="phys-val" id="prof-taille">—</div><div class="phys-lbl">Taille (cm)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-poids">—</div><div class="phys-lbl">Poids (kg)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-age">—</div><div class="phys-lbl">Âge</div></div>
-            <div class="phys-card" id="prof-pied-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
+            <div class="phys-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
           </div>
         </div>
       </div>
@@ -1768,9 +1873,9 @@
         </div>
         <div class="card-body">
           <div class="stats-row" style="margin-bottom:14px;">
-            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl" id="prof-matchs-lbl">Matchs</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl" id="prof-buts-lbl">Buts/Pts</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl" id="prof-passes-lbl">Passes</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl">Matchs</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl">Buts/Pts</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl">Passes</div></div>
           </div>
           <div class="sport-stats-grid" id="sport-stats-display"></div>
         </div>
@@ -1791,6 +1896,14 @@
         <div class="card-body" id="club-info-display"></div>
       </div>
 
+      <!-- Devenir supporter (shown for individual roles, when not yet isSupporter) -->
+      <div class="card mb-16 fade-up" id="prof-become-supporter-card" style="display:none;">
+        <div class="card-body" style="text-align:center;padding:18px;">
+          <div style="font-size:13px;color:var(--gray-txt);margin-bottom:10px;">Vous suivez un club avec passion ?</div>
+          <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;padding:10px 20px;" onclick="openBecomeSupporterModal()">💗 Devenir supporter</button>
+        </div>
+      </div>
+
       <!-- Supporter card (shown when role=joueur and isSupporter) -->
       <div class="supporter-card fade-up" id="prof-supporter-card" style="display:none;">
         <div class="supporter-header">
@@ -1803,6 +1916,18 @@
           <div class="supporter-stat"><div class="supporter-stat-val" id="prof-supporter-abonnement" style="font-size:13px;">—</div><div class="supporter-stat-lbl">Abonnement</div></div>
         </div>
       </div>
+
+      <!-- Modal "Devenir supporter" -->
+      <div class="modal" id="modal-become-supporter" onclick="if(event.target===this)closeModal('modal-become-supporter')">
+        <div class="modal-card" style="max-width:380px;">
+          <button class="modal-close-x" onclick="closeModal('modal-become-supporter')">✕</button>
+          <h3 style="margin-bottom:14px;">💗 Devenir supporter</h3>
+          <div class="form-group"><label>Club que vous supportez *</label><input type="text" id="become-supporter-club" placeholder="ex: FC 105 (FC Canon Libreville)"></div>
+          <button class="btn-save" onclick="handleBecomeSupporter()" id="become-supporter-submit">Confirmer</button>
+          <div id="become-supporter-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+        </div>
+      </div>
+
 
       <!-- Photo gallery -->
       <div class="card mb-16 fade-up" id="prof-gallery-card" style="display:none;">
@@ -1890,45 +2015,17 @@
           <button class="btn-sm" onclick="refreshOnlineNews()" id="btn-refresh-news">↺ Actualiser</button>
         </div>
         <div class="card-body" style="padding-bottom:8px;">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;" id="news-cat-filters">
+          <div id="news-cat-filters">
             <button class="news-filter-btn active" onclick="filterNews('all',this)">🌍 Tout</button>
-            <button class="news-filter-btn" onclick="filterNews('Football',this)">⚽ Football</button>
-            <button class="news-filter-btn" onclick="filterNews('Basketball',this)">🏀 Basketball</button>
-            <button class="news-filter-btn" onclick="filterNews('Athlétisme',this)">🏃 Athlétisme</button>
-            <button class="news-filter-btn" onclick="filterNews('Gabon',this)">🇬🇦 Gabon</button>
+            <button class="news-filter-btn" onclick="filterNews('Football',this)" style="border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);">⚽ Football</button>
+            <button class="news-filter-btn" onclick="filterNews('Basketball',this)" style="border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);">🏀 Basketball</button>
+            <button class="news-filter-btn" onclick="filterNews('Athlétisme',this)" style="border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);">🏃 Athlétisme</button>
+            <button class="news-filter-btn" onclick="filterNews('Gabon',this)" style="border-color:#009E60;color:#007a47;background:rgba(0,158,96,.05);">🇬🇦 Gabon</button>
           </div>
           <div id="online-news-status" style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;display:none;"></div>
         </div>
       </div>
       <div id="news-list"></div>
-    </section>
-
-    <!-- ── COMMUNITY VIEW ── -->
-    <section class="view" id="view-communaute">
-      <div class="community-container">
-        <div class="community-header">
-          <h2>💬 Communauté</h2>
-          <div class="sort-controls">
-            <button class="sort-btn active" onclick="GSCCommunity.setSortOrder('recent');this.classList.add('active');this.nextElementSibling.classList.remove('active');">Plus récents</button>
-            <button class="sort-btn" onclick="GSCCommunity.setSortOrder('oldest');this.classList.add('active');this.previousElementSibling.classList.remove('active');">Plus anciens</button>
-          </div>
-        </div>
-        <div class="post-form" id="community-post-form" style="display:none;">
-          <textarea id="community-post-textarea" placeholder="Partagez vos actualités, questions ou commentaires…" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;min-height:100px;margin-bottom:12px;"></textarea>
-          <div class="post-form-buttons">
-            <button class="btn-secondary" onclick="document.getElementById('community-post-textarea').value='';document.getElementById('community-post-form').style.display='none';">Annuler</button>
-            <button class="btn-primary" onclick="(function(){var t=document.getElementById('community-post-textarea');if(t&&t.value.trim()){GSCCommunity.createPost(t.value);t.value='';document.getElementById('community-post-form').style.display='none';}})()">Publier</button>
-          </div>
-        </div>
-        <div style="margin-bottom:20px;text-align:center;">
-          <button id="btn-new-post" class="btn-primary" onclick="var f=document.getElementById('community-post-form');f.style.display=f.style.display==='none'?'block':'none';" style="display:none;">✏️ Nouveau post</button>
-          <div id="community-not-logged" style="display:none;padding:20px;background:#f0fdf4;border:1px solid #dcfce7;border-radius:12px;text-align:center;color:#166534;">
-            <p style="margin:0;font-weight:600;">Connectez-vous pour participer à la communauté</p>
-            <button onclick="showModal('modal-auth')" style="margin-top:12px;padding:8px 16px;background:#009E60;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Se connecter</button>
-          </div>
-        </div>
-        <div id="community-feed"></div>
-      </div>
     </section>
 
     <!-- ── ADMIN VIEW ── -->
@@ -1978,7 +2075,12 @@
               <option value="club">Club</option>
               <option value="association">Association</option>
               <option value="federation">Fédération</option>
+              <option value="organisateur">Organisateur</option>
+              <option value="ecole_universite">École / Université</option>
               <option value="independant">Sportif indépendant</option>
+              <option value="eleve_etudiant">Élève / Étudiant</option>
+              <option value="sportif_etranger">Sportif étranger</option>
+              <option value="handisport">Sportif handisport</option>
               <option value="admin">Admin</option>
               <option value="supporter">💗 Supporters</option>
             </select>
@@ -2479,9 +2581,6 @@
     <button class="bnav-item" id="bnav-actualites" onclick="showView('actualites')">
       <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>📰</span>'">Actu
     </button>
-    <button class="bnav-item" id="bnav-communaute" onclick="showView('communaute')">
-      <span class="bnav-icon">💬</span>Communauté
-    </button>
     <button class="bnav-item" id="bnav-profil" onclick="showView('profil')" style="display:none;">
       <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>👤</span>'">Profil
     </button>
@@ -2529,6 +2628,19 @@
 </div>
 
 <!-- MODAL: EDIT USER (admin) -->
+<div class="modal" id="modal-pending-detail" onclick="if(event.target===this)closeModal('modal-pending-detail')">
+  <div class="modal-card">
+    <button class="modal-close-x" onclick="closeModal('modal-pending-detail')" aria-label="Fermer">✕</button>
+    <div class="modal-title">👁️ Fiche en attente — Détail</div>
+    <input type="hidden" id="pending-detail-uid">
+    <div id="pending-detail-body" style="margin:14px 0;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-approve" style="flex:1;" onclick="adminApproveUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✅ Valider cette fiche</button>
+      <button class="btn-reject" style="flex:1;" onclick="adminRejectUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✕ Rejeter</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal-edit-user" onclick="if(event.target===this)closeModal('modal-edit-user')">
   <div class="modal-card">
     <button class="modal-close-x" onclick="closeModal('modal-edit-user')" aria-label="Fermer">✕</button>
@@ -2541,9 +2653,12 @@
         <option value="joueur">⚽ Joueur / Athlète</option>
         <option value="arbitre">🟨 Arbitre</option>
         <option value="entraineur">📋 Entraîneur</option>
-        <option value="club">🏟️ Club / Association</option>
+        <option value="club">🏟️ Club sportif</option>
+        <option value="association">🤝 Association sportive</option>
         <option value="independant">🧍 Sportif indépendant</option>
         <option value="federation">🏛️ Fédération</option>
+        <option value="organisateur">🎯 Organisateur</option>
+        <option value="ecole_universite">🏫 École / Université</option>
         <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
         <option value="sportif_etranger">🌍 Sportif étranger</option>
         <option value="handisport">🦾 Sportif handisport</option>
@@ -2585,14 +2700,22 @@
 <div class="actor-detail-modal" id="actor-detail-modal" onclick="if(event.target===this)closeActorDetail()">
   <div class="actor-detail-card">
     <div class="adm-hero">
+      <div class="adm-cover-bg" id="adm-cover-bg"></div>
+      <div class="adm-cover-overlay"></div>
       <button class="adm-close" onclick="closeActorDetail()">✕</button>
-      <div class="adm-avatar" id="adm-avatar">?</div>
-      <div class="adm-name" id="adm-name">—</div>
-      <div class="adm-sub" id="adm-sub">—</div>
-      <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
-        <div class="adm-gscid-pill" id="adm-gscid-pill">—</div>
-        <div class="adm-qr-mini" title="QR Code d'identification" id="adm-qr-mini">
-          <canvas id="adm-qr-canvas" width="40" height="40"></canvas>
+      <label class="adm-cover-click-layer" id="adm-cover-click-layer" for="adm-cover-input" title="Changer la photo de couverture (JPG, PNG, WEBP — max 5 Mo)" style="display:none;"></label>
+      <label class="adm-cover-edit-btn" id="adm-cover-edit-btn" for="adm-cover-input" style="display:none;"><span aria-hidden="true">📷</span></label>
+      <label class="adm-cover-hint" id="adm-cover-hint" for="adm-cover-input" style="display:none;">📷 Couverture</label>
+      <input type="file" id="adm-cover-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCoverPhoto(this)">
+      <div class="adm-hero-content">
+        <div class="adm-avatar" id="adm-avatar">?</div>
+        <div class="adm-name" id="adm-name">—</div>
+        <div class="adm-sub" id="adm-sub">—</div>
+        <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
+          <div class="adm-gscid-pill" id="adm-gscid-pill">—</div>
+          <div class="adm-qr-mini" title="QR Code d'identification" id="adm-qr-mini">
+            <canvas id="adm-qr-canvas" width="40" height="40"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -2604,19 +2727,23 @@
 <script>
 // ── CLÉ API Firebase (partagée avec le bloc module bootstrap) ──
 
+// Garde en mémoire l'UID de l'acteur actuellement affiché dans la modale de détail,
+// utilisé pour rafraîchir l'affichage après upload de la photo de couverture.
+let currentDetailActorUid = null;
+
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
   association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
-  handisport:'🦾 Sportif handisport'
+  handisport:'🦾 Sportif handisport', ecole_universite:'🏫 École / Université'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
   joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍',
-  handisport:'🦾'
+  handisport:'🦾', ecole_universite:'🏫'
 };
 
 // Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
@@ -2671,9 +2798,23 @@ const ETABLISSEMENTS_GA=[
       const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
       window.sRef = sm.ref;
       window.uploadBytes = sm.uploadBytes;
+      window.uploadBytesResumable = sm.uploadBytesResumable;
       window.getDownloadURL = sm.getDownloadURL;
       window.storage = sm.getStorage(app);
-    }catch(e){ /* Firebase Storage non disponible — silencieux */ }
+      window._storageReady = true;
+    }catch(e){
+      window._storageReady = false;
+      console.warn('Firebase Storage modulaire indisponible:', e);
+      /* Fallback : tenter le SDK compat si déjà chargé (admin.html) */
+      if(window.firebase && window.firebase.storage){
+        try{
+          const fbSt = window.firebase.storage();
+          window.storage = fbSt;
+          window._storageCompat = true;
+          window._storageReady = true;
+        }catch(e2){}
+      }
+    }
     // ── Pont d'authentification Firebase (corrige "Missing or insufficient permissions") ──
     // L'app utilise Supabase pour le login. Pour que Firestore voie request.auth.uid,
     // on se connecte à Firebase avec un Custom Token (généré par un Cloudflare Worker
@@ -2723,7 +2864,7 @@ const ETABLISSEMENTS_GA=[
 var _idToken=null, _uid=null, currentUser=null, userProfile=null, isVisitor=false;
 var mapInstance=null, mapMarkers=[], allAdminUsers=[], allActors=[], filteredActors=[];
 var newsDb=[], currentActorType='tous';
-var storage=null, sRef=null, uploadBytes=null, getDownloadURL=null;
+var storage=null, sRef=null, uploadBytes=null, uploadBytesResumable=null, getDownloadURL=null;
 var db=null, _fbApp=null;
 // Firestore function stubs — assigned when firebase-ready fires
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
@@ -2757,6 +2898,7 @@ window.saveSite=saveSite;
 window.openAddSiteModal=openAddSiteModal;
 window.closeModal=closeModal;
 window.uploadProfilePhoto=uploadProfilePhoto;
+window.uploadCoverPhoto=uploadCoverPhoto;
 window.switchLegalTab=switchLegalTab;
 window.switchAdminTab=switchAdminTab;
 window.filterAdminUsers=filterAdminUsers;
@@ -2846,6 +2988,11 @@ function enterAsVisitor(silent=false){
     allNewsItems=[...newsDb,...GSC_SEED_NEWS.filter(s=>!newsDb.find(n=>n.id===s.id))];
     renderNewsFiltered();
   });
+  // ── FIL COMMUNAUTAIRE : réafficher le bandeau "Connectez-vous pour publier…"
+  // immédiatement après une déconnexion, sans attendre un changement d'onglet ──
+  if(window.GSCCommunity && typeof window.GSCCommunity.refreshComposer==='function'){
+    window.GSCCommunity.refreshComposer();
+  }
 }
 
 function goToAuth(tab){
@@ -2874,6 +3021,7 @@ function switchAuthTab(tab){
     if(tab==='login'){ tl.style.background='var(--green-lt)';tl.style.color='var(--green-dk)';tr.style.background='#fff';tr.style.color='var(--gray-txt)'; }
     else if(tab==='register'){ tr.style.background='var(--green-lt)';tr.style.color='var(--green-dk)';tl.style.background='#fff';tl.style.color='var(--gray-txt)'; }
   }
+  if(tab==='register' && typeof toggleSupporterOptIn==='function') toggleSupporterOptIn();
 }
 window.switchAuthTab=switchAuthTab;
 
@@ -2933,6 +3081,21 @@ async function handleResendConfirmation(email){
 }
 window.handleResendConfirmation=handleResendConfirmation;
 
+// Affiche l'option "Je suis aussi supporter d'un club" uniquement pour les rôles individuels
+// (n'a pas de sens pour un club/association/fédération/organisateur qui s'inscrit lui-même)
+function toggleSupporterOptIn(){
+  const role=document.getElementById('auth-register-role')?.value;
+  const wrap=document.getElementById('auth-register-supporter-wrap');
+  if(!wrap) return;
+  const ORG_ROLES=['club','association','federation','organisateur','ecole_universite'];
+  wrap.style.display=ORG_ROLES.includes(role)?'none':'';
+  if(ORG_ROLES.includes(role)){
+    document.getElementById('auth-register-supporter').checked=false;
+    document.getElementById('auth-register-club-supporte').style.display='none';
+  }
+}
+window.toggleSupporterOptIn=toggleSupporterOptIn;
+
 async function handleSupabaseRegister(){
   const errEl=document.getElementById('auth-register-error');
   errEl.style.display='none';
@@ -2947,13 +3110,23 @@ async function handleSupabaseRegister(){
   const role=document.getElementById('auth-register-role')?.value||'joueur';
   const statut=document.getElementById('auth-register-statut')?.value||'libre';
   const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
+  const ORG_ROLES_REG=['club','association','federation','organisateur','ecole_universite'];
+  const isSupporterOptIn=!ORG_ROLES_REG.includes(role)&&!!document.getElementById('auth-register-supporter')?.checked;
+  const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  // Vérification doublon téléphone
+  if(tel && db && typeof getDocs==='function'){
+    try{
+      const telSnap=await getDocs(query(collection(db,'users'),where('telephone','==',tel)));
+      if(!telSnap.empty){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
+    }catch(e){ console.warn('Vérification téléphone:',e); }
+  }
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
-    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur};
+    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur,isSupporter:isSupporterOptIn,clubSupporte:clubSupporteOptIn};
     const {data,error}=await window._sb.auth.signUp({
       email,password,
       options:{data:extraMeta}
@@ -3098,9 +3271,27 @@ async function onSupabaseSignedIn(user, extra){
   if(userProfile && userProfile._isNew){
     // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
     const prenom = extra?.prenom || user.user_metadata?.prenom || '';
-    const nom = extra?.nom || user.user_metadata?.nom || '';
+    const nom   = extra?.nom   || user.user_metadata?.nom   || '';
     delete userProfile._isNew;
-    userProfile.prenom = prenom; userProfile.nom = nom;
+    // Tous les champs nécessaires à l'annuaire + déduplication téléphone
+    Object.assign(userProfile, {
+      uid:        user.id,
+      email:      user.email || '',
+      prenom,
+      nom,
+      role:       extra?.role       || user.user_metadata?.role       || 'joueur',
+      telephone:  extra?.tel        || user.user_metadata?.tel        || '',
+      sexe:       extra?.sexe       || user.user_metadata?.sexe       || '',
+      dateNaissance: extra?.ddn     || user.user_metadata?.ddn        || '',
+      nationalite: extra?.nationalite || user.user_metadata?.nationalite || 'Gabonaise',
+      statut:     extra?.statut     || user.user_metadata?.statut     || 'libre',
+      employeur:  extra?.employeur  || user.user_metadata?.employeur  || '',
+      sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
+      isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
+      clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
+      status:     'pending', // en attente de validation admin — cohérent avec inscription.html
+      createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
+    });
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
@@ -3487,13 +3678,14 @@ function enterApp(){
   }
   const userChip = document.getElementById('nav-user-chip');
   if(userChip) {
+    userChip.classList.add('visible');
     userChip.style.display = ''; // Afficher le chip utilisateur
     userChip.style.opacity = '1';
   }
   const qrBtn = document.getElementById('nav-qr-scan-btn');
   if(qrBtn) {
-    qrBtn.style.display = '';
-    qrBtn.style.opacity = '1'; // QR visible pour utilisateurs connectés
+    qrBtn.classList.add('visible');
+    qrBtn.style.display = ''; // QR visible pour utilisateurs connectés
   }
   document.getElementById('quick-actions-visitor').style.display='none';
   document.getElementById('quick-actions-auth').style.display='grid';
@@ -3517,6 +3709,15 @@ function enterApp(){
   if(window.GSCNotif && currentUser?.uid){
     window.GSCNotif.onLogin(currentUser.uid);
   }
+  // ── BADGES NAV : init avec l'uid connecté ──
+  if(window.GSCNavBadges && currentUser?.uid){
+    window.GSCNavBadges.init(currentUser.uid);
+  }
+  // ── FIL COMMUNAUTAIRE : le bandeau "Connectez-vous pour publier…" doit
+  // disparaître immédiatement, sans attendre un changement d'onglet ──
+  if(window.GSCCommunity && typeof window.GSCCommunity.refreshComposer==='function'){
+    window.GSCCommunity.refreshComposer();
+  }
 }
 
 async function handleLogout(){
@@ -3524,6 +3725,8 @@ async function handleLogout(){
   currentUser=null;userProfile=null;_uid=null;
   // ── NOTIFICATIONS : déconnecter ──
   if(window.GSCNotif) window.GSCNotif.onLogout();
+  // ── BADGES NAV : reset ──
+  if(window.GSCNavBadges) window.GSCNavBadges.onLogout();
   toast('Déconnecté.','info');
   enterAsVisitor(true);
 }
@@ -3534,9 +3737,9 @@ async function loadUserProfile(uid){
   try{
     const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
+    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }catch(e){
-    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',_isNew:true};
+    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }
 }
 
@@ -3552,10 +3755,15 @@ function renderDashboard(){
   const navAv=document.getElementById('nav-avatar');
   if(navPhotoSrc){
     // Afficher la photo — fallback sur initiale si l'image échoue à charger
-    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'">`;
+    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    navAv.style.borderColor='rgba(0,200,100,.7)';
+    navAv.style.fontSize='';
   } else {
-    // Pas de photo : afficher l'initiale
+    // Pas de photo : initiale sur fond vert
     navAv.textContent=initial;
+    navAv.style.background='linear-gradient(135deg,var(--green),#007a47)';
+    navAv.style.borderColor='rgba(255,255,255,.35)';
+    navAv.style.fontSize='16px';
   }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
   document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
@@ -3631,15 +3839,21 @@ async function loadActors(){
   let dbActors = [];
   if(db&&typeof collection==='function'){
     try{
-      const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+      const snap=await getDocs(query(collection(db,'users')));
       dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
+      dbActors.sort((a,b)=>{
+        const ta=a.createdAt?.toDate?a.createdAt.toDate():a.createdAt?new Date(a.createdAt):new Date(0);
+        const tb=b.createdAt?.toDate?b.createdAt.toDate():b.createdAt?new Date(b.createdAt):new Date(0);
+        return tb-ta;
+      });
     }catch(e){ console.warn('loadActors DB:',e); }
   }
   // Merge: Firebase first, then seed (avoid duplicates by uid)
   const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
   const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid));
   allActors=[...dbActors,...seedActors];
-  renderActors(allActors);
+  // Respecte le filtre et la recherche actifs
+  searchAnnuaire();
   // Update global stats with merged data
   const activeAll=allActors.filter(u=>u.status==='active'||u.status===undefined);
   const statEl=document.getElementById('stat-total-acteurs');
@@ -3757,8 +3971,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -3794,7 +4008,7 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','organisateur','independant','supporter','admin'];
+      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','ecole_universite','organisateur','independant','supporter','admin'];
       const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
@@ -3877,9 +4091,9 @@ function renderActors(actors){
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport'}[roleKey]||roleKey;
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ecole_universite:'École / Université'}[roleKey]||roleKey;
       const badgeClass='badge-'+roleKey;
-      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
+      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -3942,6 +4156,7 @@ function renderActors(actors){
 function openActorDetail(uid){
   const a=allActors.find(x=>(x.uid||x.id)===uid)||allAdminUsers.find(x=>(x.uid||x.id)===uid);
   if(!a) return;
+  currentDetailActorUid=uid;
   const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
   const initial=name[0]?.toUpperCase()||'?';
   // Photo : Firebase > admin localStorage > icône
@@ -3951,6 +4166,16 @@ function openActorDetail(uid){
   const el=document.getElementById('adm-avatar');
   if(detailPhotoSrc) el.innerHTML=`<img src="${detailPhotoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   else el.textContent=ROLE_ICONS[a.role]||initial;
+  // Photo de couverture : zone d'arrière-plan derrière logo/nom/QR, modifiable par le propriétaire du profil
+  const coverEl=document.getElementById('adm-cover-bg');
+  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${a.coverURL}')`:'none';
+  const isOwnerForCover=currentUser&&(a.uid||a.id)===currentUser.uid;
+  const coverBtn=document.getElementById('adm-cover-edit-btn');
+  if(coverBtn) coverBtn.style.display=isOwnerForCover?'flex':'none';
+  const coverClickLayer=document.getElementById('adm-cover-click-layer');
+  if(coverClickLayer) coverClickLayer.style.display=isOwnerForCover?'block':'none';
+  const coverHint=document.getElementById('adm-cover-hint');
+  if(coverHint) coverHint.style.display=isOwnerForCover?'flex':'none';
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
   // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables (masqué pour visiteurs)
@@ -3980,7 +4205,13 @@ function openActorDetail(uid){
     };
   })();
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
-  const isOrg=['club','association','federation','organisateur'].includes(a.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(a.role);
+  // Accès aux données sensibles (CNI, licence, n° de document) : uniquement le
+  // propriétaire du profil, son club/association employeur, ou l'administrateur.
+  const isProfileOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
+  const isProfileEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
+  const isPlatformAdmin=userProfile?.role==='admin';
+  const canViewSensitive=isProfileOwner||isProfileEmployerOrg||isPlatformAdmin;
   let html='';
   // Infos générales
   html+=`<div class="adm-section"><div class="adm-section-title">📋 Informations générales</div>`;
@@ -4000,32 +4231,28 @@ function openActorDetail(uid){
       html+=`</div></div>`;
     }
     // Stats
-    const _statsRoles=['joueur','independant','eleve_etudiant','sportif_etranger'];
-    if(_statsRoles.includes(a.role) && a.sport){
-      const _sl=getSportStatLabels(a.sport);
+    if(a.role==='joueur'){
       html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
       html+=`<div class="adm-stats-grid">`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">${_sl.matchs}</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">${_sl.buts}</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées / Médailles</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
       html+=`</div></div>`;
     }
     // Mandats
     const mandats=a.mandats||[];
     if(mandats.length||a.club){
-      const mandatTitle=a.role==='handisport'?'🏢 Structure / Club':'📅 Mandats & Clubs';
-      html+=`<div class="adm-section"><div class="adm-section-title">${mandatTitle}</div>`;
+      html+=`<div class="adm-section"><div class="adm-section-title">📅 Mandats & Clubs</div>`;
       if(a.club){
-        const clubIcon=a.role==='handisport'?'🏢':'🏟️';
-        html+=`<div class="mandat-badge"><div class="mandat-title">Structure actuelle</div><div class="mandat-club">${clubIcon} ${a.club}</div>${a.poste?`<div class="mandat-dates">Rôle : ${a.poste}</div>`:''}</div>`;
+        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${a.club}</div>${a.poste?`<div class="mandat-dates">Poste : ${a.poste}</div>`:''}</div>`;
       }
       mandats.forEach(m=>{
         html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
       });
       html+=`</div>`;
     }
-    // Licence — masqué pour les visiteurs
-    if(a.licenceNumero && !isVisitor){
+    // Licence — donnée sensible : propriétaire, club employeur ou admin uniquement
+    if(a.licenceNumero && canViewSensitive){
       html+=`<div class="adm-section"><div class="adm-section-title">🪪 Licence officielle</div>`;
       html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceNumero}</span></div>`;
       if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${a.licenceExpire}</span></div>`;
@@ -4045,12 +4272,13 @@ function openActorDetail(uid){
     if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${a.filiere}</span></div>`;
     html+=`</div>`;
   }
-  // Sportif étranger — statut & vérification documentaire
+  // Sportif étranger — statut & vérification documentaire (le n° de document exact
+  // reste une donnée sensible réservée au propriétaire, son club employeur ou l'admin)
   if(a.role==='sportif_etranger'){
     html+=`<div class="adm-section"><div class="adm-section-title">🌍 Statut sportif étranger</div>`;
     if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${a.statutPro}</span></div>`;
     if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${a.employeur}</span></div>`;
-    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${a.documentNumero?' n° '+a.documentNumero:''}</span></div>`;
+    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${(a.documentNumero&&canViewSensitive)?' n° '+a.documentNumero:''}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Vérification</span><span class="adm-info-val">${a.documentVerifie?'✅ Vérifié':'⏳ Non vérifié'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 FIFA TMS</a>
@@ -4089,14 +4317,14 @@ function openActorDetail(uid){
   if(a.palmares){
     html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
   }
-  // Documents personnels : masqués pour les visiteurs ; visibles avec actions si on est le propriétaire,
-  // son club/association employeur, ou l'admin. Sinon lecture seule masquée.
+  // Documents personnels : DONNÉES SENSIBLES (CNI, licence, etc.). Visibles et accessibles
+  // uniquement par le propriétaire, son club/association employeur, ou l'administrateur.
+  // Pour tout autre membre connecté, cette section ne doit ni s'afficher ni exposer
+  // le moindre lien de téléchargement — même en lecture seule.
   const docs=Array.isArray(a.documents)?a.documents:[];
-  const isOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
-  const isEmployerOrg=userProfile&&['club','association','federation'].includes(userProfile.role)&&a.club&&userProfile.nomOrganisation&&a.club.trim().toLowerCase()===userProfile.nomOrganisation.trim().toLowerCase();
-  const canManageDocs=isOwner||isEmployerOrg;
-  if(!isVisitor && (docs.length||canManageDocs)){
-    html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?'':' (visibles par l\'intéressé et son club)'}</div>`;
+  const canManageDocs=isProfileOwner||isProfileEmployerOrg;
+  if(canViewSensitive && (docs.length||canManageDocs)){
+    html+=`<div class="adm-section"><div class="adm-section-title">📁 Documents${canManageDocs?' (visibles par vous et votre club)':' (accès administrateur)'}</div>`;
     if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
     else docs.forEach((d,i)=>{
       html+=`<div class="doc-detail-row">
@@ -4116,7 +4344,7 @@ function openActorDetail(uid){
   document.getElementById('adm-body').innerHTML=html;
   document.getElementById('actor-detail-modal').classList.add('open');
 }
-function closeActorDetail(){ document.getElementById('actor-detail-modal').classList.remove('open'); }
+function closeActorDetail(){ document.getElementById('actor-detail-modal').classList.remove('open'); currentDetailActorUid=null; }
 
 // ── PROFIL ──
 function renderProfile(){
@@ -4136,7 +4364,7 @@ function renderProfile(){
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
 
@@ -4148,8 +4376,7 @@ function renderProfile(){
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
-  const hasStats=['joueur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  document.getElementById('prof-stats-card').style.display=(hasStats&&p.sport)?'':'none';
+  document.getElementById('prof-stats-card').style.display=isPersonnel&&p.role==='joueur'?'':'none';
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
 
   // Supporter card
@@ -4163,6 +4390,9 @@ function renderProfile(){
       document.getElementById('prof-supporter-abonnement').textContent=p.supporterAbonnement||'—';
     }
   }
+  // Devenir supporter (proposé uniquement aux rôles individuels qui ne le sont pas déjà)
+  const becomeSuppCard=document.getElementById('prof-become-supporter-card');
+  if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
   // Gallery card
   const gallCard=document.getElementById('prof-gallery-card');
@@ -4180,26 +4410,10 @@ function renderProfile(){
       const age=new Date().getFullYear()-new Date(p.dateNaissance).getFullYear();
       document.getElementById('prof-age').textContent=age;
     } else document.getElementById('prof-age').textContent='—';
-    // Pied fort : pertinent seulement pour Football, Rugby, Athlétisme
-    const sport=p.sport||'';
-    const piedSports=['Football','Rugby','Athlétisme','Futsal'];
-    const piedCard=document.getElementById('prof-pied-card');
-    if(piedCard) piedCard.style.display=piedSports.includes(sport)?'':'none';
     document.getElementById('prof-pied').textContent=p.pied||'—';
-    // Labels stats adaptés au sport
-    const statLabels=getSportStatLabels(sport);
-    const elMatchs=document.getElementById('prof-matchs');
-    const elButs=document.getElementById('prof-buts');
-    const elPasses=document.getElementById('prof-passes');
-    const elMatchsLbl=document.getElementById('prof-matchs-lbl');
-    const elButsLbl=document.getElementById('prof-buts-lbl');
-    const elPassesLbl=document.getElementById('prof-passes-lbl');
-    if(elMatchs) elMatchs.textContent=p.matchsJoues??0;
-    if(elButs) elButs.textContent=p.buts??0;
-    if(elPasses) elPasses.textContent=p.passes??0;
-    if(elMatchsLbl) elMatchsLbl.textContent=statLabels.matchs;
-    if(elButsLbl) elButsLbl.textContent=statLabels.buts;
-    if(elPassesLbl) elPassesLbl.textContent=statLabels.passes;
+    document.getElementById('prof-matchs').textContent=p.matchsJoues??0;
+    document.getElementById('prof-buts').textContent=p.buts??0;
+    document.getElementById('prof-passes').textContent=p.passes??0;
     const pb=document.getElementById('prof-position-badge');
     if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
@@ -4231,34 +4445,24 @@ function renderProfile(){
       <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${p.president||'—'}</span></div>
       <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>
       <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${p.effectif||'—'}</span></div>
+      ${p.role==='ecole_universite'?`
+      <div class="adm-info-row"><span class="adm-info-label">Type d'établissement</span><span class="adm-info-val">${p.typeEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${p.statutEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif filière sportive</span><span class="adm-info-val">${p.effectifSportif||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Disciplines proposées</span><span class="adm-info-val">${(p.disciplinesProposees||[]).join(', ')||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Infrastructures</span><span class="adm-info-val">${p.infrastructures||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Responsable des sports</span><span class="adm-info-val">${p.responsableSports||'—'}</span></div>
+      `:''}
     `;
   }
 
   buildEditForm(p);
 }
 
-function getSportStatLabels(sport){
-  const map={
-    Football:{matchs:'Matchs',buts:'Buts',passes:'Passes déc.'},
-    Basketball:{matchs:'Matchs',buts:'Points',passes:'Passes'},
-    Handball:{matchs:'Matchs',buts:'Buts',passes:'Passes'},
-    Volleyball:{matchs:'Sets joués',buts:'Points',passes:'Services'},
-    Rugby:{matchs:'Matchs',buts:'Essais',passes:'Passes'},
-    Tennis:{matchs:'Matchs',buts:'Sets gagnés',passes:'—'},
-    Boxe:{matchs:'Combats',buts:'Victoires',passes:'KO'},
-    Athlétisme:{matchs:'Compétitions',buts:'Médailles',passes:'Perfs'},
-    Natation:{matchs:'Compétitions',buts:'Médailles',passes:'Records'},
-    Judo:{matchs:'Combats',buts:'Victoires',passes:'Ippon'},
-    Cyclisme:{matchs:'Courses',buts:'Victoires',passes:'Podiums'},
-    Taekwondo:{matchs:'Combats',buts:'Victoires',passes:'KO'},
-  };
-  return map[sport]||{matchs:'Matchs',buts:'Points',passes:'Passes'};
-}
-
 function renderSportStats(p){
   const container=document.getElementById('sport-stats-display');
   if(!container) return;
-  const sport=p.sport||'';
+  const sport=p.sport||'Football';
   let items=[];
   if(sport==='Football'){
     items=p.poste==='Gardien'
@@ -4266,38 +4470,16 @@ function renderSportStats(p){
       :[{icon:'🥅',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes déc.'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'C. jaunes'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'C. rouges'}];
   } else if(sport==='Basketball'){
     items=[{icon:'🏀',val:p.buts??0,lbl:'Points'},{icon:'🔄',val:p.passes??0,lbl:'Passes'},{icon:'💪',val:p.tacles??0,lbl:'Rebonds'},{icon:'🛡️',val:p.interceptions??0,lbl:'Contres'}];
-  } else if(sport==='Handball'){
-    items=[{icon:'🤾',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'Exclusions 2min'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'Cartons rouges'}];
-  } else if(sport==='Volleyball'){
-    items=[{icon:'🏐',val:p.buts??0,lbl:'Points'},{icon:'💥',val:p.tacles??0,lbl:'Smashes'},{icon:'🛡️',val:p.interceptions??0,lbl:'Blocs'},{icon:'🎯',val:p.matchsJoues??0,lbl:'Sets joués'}];
-  } else if(sport==='Rugby'){
-    items=[{icon:'🏉',val:p.buts??0,lbl:'Essais'},{icon:'🅰️',val:p.passes??0,lbl:'Passes'},{icon:'👟',val:p.tacles??0,lbl:'Tacles'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'Cartons jaunes'}];
-  } else if(sport==='Tennis'){
-    items=[{icon:'🎾',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Titres'},{icon:'🎯',val:p.buts??0,lbl:'Sets gagnés'},{icon:'💨',val:p.aces??0,lbl:'Aces'}];
-  } else if(sport==='Boxe'){
-    items=[{icon:'🥊',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'💥',val:p.passes??0,lbl:'KO'},{icon:'🛡️',val:p.trophees??0,lbl:'Titres'}];
-  } else if(sport==='Judo'){
-    items=[{icon:'🥋',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'⚡',val:p.passes??0,lbl:'Ippon'},{icon:'🎖️',val:p.trophees??0,lbl:'Médailles'}];
-  } else if(sport==='Athlétisme'){
-    items=[{icon:'🏃',val:p.matchsJoues??0,lbl:'Compétitions'},{icon:'🥇',val:p.buts??0,lbl:'Médailles or'},{icon:'🥈',val:p.passes??0,lbl:'Médailles arg.'},{icon:'🏆',val:p.trophees??0,lbl:'Titres'}];
-  } else if(sport==='Natation'){
-    items=[{icon:'🏊',val:p.matchsJoues??0,lbl:'Compétitions'},{icon:'🥇',val:p.buts??0,lbl:'Médailles'},{icon:'⏱️',val:p.trophees??0,lbl:'Records'},{icon:'🎖️',val:p.passes??0,lbl:'Podiums'}];
-  } else if(sport==='Cyclisme'){
-    items=[{icon:'🚴',val:p.matchsJoues??0,lbl:'Courses'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'🥉',val:p.passes??0,lbl:'Podiums'},{icon:'🎖️',val:p.trophees??0,lbl:'Titres'}];
-  } else if(sport==='Taekwondo'){
-    items=[{icon:'🥋',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'⚡',val:p.passes??0,lbl:'KO'},{icon:'🎖️',val:p.trophees??0,lbl:'Médailles'}];
-  } else if(sport){
-    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs / Compétitions'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées / Médailles'}];
+  } else {
+    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées'}];
   }
-  container.innerHTML=items.length
-    ?items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('')
-    :'';
+  container.innerHTML=items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('');
 }
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';
 
@@ -4325,42 +4507,25 @@ function buildEditForm(p){
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="form-group"><label>Taille (cm)</label><input type="number" id="edit-taille" value="${p.taille||''}" placeholder="175"></div>
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Pied fort</label>
+        <select id="edit-pied">
+          <option value="">—</option>
+          <option${p.pied==='Droit'?' selected':''}>Droit</option>
+          <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
+          <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Main</label>
+        <select id="edit-main">
+          <option value="">—</option>
+          <option${p.main==='Droitier'?' selected':''}>Droitier</option>
+          <option${p.main==='Gaucher'?' selected':''}>Gaucher</option>
+          <option${p.main==='Ambidextre'?' selected':''}>Ambidextre</option>
+        </select>
+      </div>
     </div>`;
-    // Pied fort / Main : seulement pour les sports où c'est pertinent
-    const _piedSports=['Football','Rugby','Athlétisme','Futsal'];
-    const _mainSports=['Tennis','Volleyball','Basketball','Handball','Boxe','Judo','Taekwondo','Natation','Cyclisme'];
-    const _showPied=_piedSports.includes(p.sport||'');
-    const _showMain=_mainSports.includes(p.sport||'');
-    if(_showPied||_showMain){
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
-      if(_showPied){
-        h+=`<div class="form-group"><label>Pied fort</label>
-          <select id="edit-pied">
-            <option value="">—</option>
-            <option${p.pied==='Droit'?' selected':''}>Droit</option>
-            <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
-            <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
-          </select>
-        </div>`;
-      } else {
-        h+=`<input type="hidden" id="edit-pied" value="${p.pied||''}">`;
-      }
-      if(_showMain){
-        h+=`<div class="form-group"><label>Main dominante</label>
-          <select id="edit-main">
-            <option value="">—</option>
-            <option${p.main==='Droitier'?' selected':''}>Droitier</option>
-            <option${p.main==='Gaucher'?' selected':''}>Gaucher</option>
-            <option${p.main==='Ambidextre'?' selected':''}>Ambidextre</option>
-          </select>
-        </div>`;
-      } else {
-        h+=`<input type="hidden" id="edit-main" value="${p.main||''}">`;
-      }
-      h+=`</div>`;
-    } else {
-      h+=`<input type="hidden" id="edit-pied" value="${p.pied||''}"><input type="hidden" id="edit-main" value="${p.main||''}">`;
-    }
 
     h+=`<div class="section-divider orange">🏅 Informations sportives</div>`;
     const sports=['Football','Basketball','Handball','Volleyball','Athlétisme','Natation','Boxe','Judo','Tennis','Rugby','Cyclisme','Taekwondo'];
@@ -4408,28 +4573,20 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(['joueur','independant','eleve_etudiant','sportif_etranger'].includes(p.role)){
-      const _sport=(document.getElementById&&document.getElementById('edit-sport')?.value||p.sport)||'';
-      const _lbl=getSportStatLabels(_sport);
+    if(p.role==='joueur'){
       h+=`<div class="section-divider green">📊 Statistiques</div>`;
       h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>${_lbl.matchs}</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
-        <div class="form-group"><label>${_lbl.buts}</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
+        <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
+        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>${_lbl.passes}</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
-        <div class="form-group"><label>Trophées / Médailles</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
+        <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
+        <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
+        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
       </div>`;
-      // Cartons uniquement pour sports collectifs avec arbitrage
-      const _cartonSports=['Football','Handball','Rugby','Basketball','Volleyball'];
-      if(_cartonSports.includes(p.sport||'')){
-        h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>Cartons / Exclusions jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
-          <div class="form-group"><label>Cartons rouges / Disq.</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
-        </div>`;
-      } else {
-        h+=`<input type="hidden" id="edit-cartons-j" value="${p.cartonsJaunes??0}"><input type="hidden" id="edit-cartons-r" value="${p.cartonsRouges??0}">`;
-      }
     }
   }
 
@@ -4446,6 +4603,7 @@ function buildEditForm(p){
           <option${p.typeOrganisation==="Organisation d'évènements"?' selected':''}>Organisation d'évènements</option>
           <option${p.typeOrganisation==='Fédération'?' selected':''}>Fédération</option>
           <option${p.typeOrganisation==='Ligue'?' selected':''}>Ligue</option>
+          <option${p.typeOrganisation==='Établissement scolaire/universitaire'?' selected':''}>Établissement scolaire/universitaire</option>
         </select>
       </div>
       <div class="form-group"><label>Sport(s)</label>
@@ -4470,6 +4628,36 @@ function buildEditForm(p){
 
   if(p.role==='arbitre'){
     h+=`<div class="form-group"><label>Mon titre / spécialité d'arbitrage</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Arbitre central, Arbitre vidéo (VAR), Commissaire de match…"></div>`;
+  }
+
+  if(p.role==='ecole_universite'){
+    h+=`<div class="section-divider blue">🏫 Établissement</div>`;
+    h+=`<div class="form-group"><label>Type d'établissement</label>
+      <select id="edit-ecole-type">
+        <option${p.typeEtablissement==='Université'?' selected':''}>Université</option>
+        <option${p.typeEtablissement==='Institut supérieur'?' selected':''}>Institut supérieur</option>
+        <option${p.typeEtablissement==='Lycée'?' selected':''}>Lycée</option>
+        <option${p.typeEtablissement==='Collège'?' selected':''}>Collège</option>
+        <option${p.typeEtablissement==='École primaire'?' selected':''}>École primaire</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Statut</label>
+        <select id="edit-ecole-statut">
+          <option${p.statutEtablissement==='Public'?' selected':''}>Public</option>
+          <option${p.statutEtablissement==='Privé'?' selected':''}>Privé</option>
+          <option${p.statutEtablissement==='Confessionnel'?' selected':''}>Confessionnel</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Effectif filière sportive</label><input type="number" id="edit-ecole-effectif-sportif" value="${p.effectifSportif||0}" min="0" placeholder="ex: 120"></div>
+    </div>
+    <div class="form-group"><label>Disciplines sportives proposées</label>
+      <select id="edit-ecole-disciplines" multiple style="height:90px;">
+        ${['Football','Basketball','Handball','Volleyball','Athlétisme','Natation','Boxe','Judo','Tennis','Rugby'].map(s=>`<option value="${s}"${(p.disciplinesProposees||[]).includes(s)?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Infrastructures sportives</label><textarea id="edit-ecole-infra" placeholder="Terrain de football, gymnase couvert, piscine…">${p.infrastructures||''}</textarea></div>
+    <div class="form-group"><label>Responsable des sports / EPS</label><input type="text" id="edit-ecole-responsable" value="${p.responsableSports||''}" placeholder="Nom du responsable"></div>`;
   }
 
   // Profil sportif handisport — déficience, classification, accompagnement
@@ -4589,7 +4777,7 @@ async function saveProfile(){
   if(!currentUser||!userProfile) return;
   const p=userProfile;
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
   const updates={
@@ -4619,7 +4807,7 @@ async function saveProfile(){
       updates.clubsPrecedents=document.getElementById('edit-clubs-prec')?.value.trim()||'';
       updates.mandats=getMandatsFromForm();
     }
-    if(['joueur','independant','eleve_etudiant','sportif_etranger'].includes(p.role)){
+    if(p.role==='joueur'){
       Object.assign(updates,{
         matchsJoues:parseInt(document.getElementById('edit-matchs')?.value)||0,
         buts:parseInt(document.getElementById('edit-buts')?.value)||0,
@@ -4646,6 +4834,16 @@ async function saveProfile(){
   }
   if(p.role==='arbitre'){
     updates.titrePersonnalise=document.getElementById('edit-titre-perso')?.value.trim()||'';
+  }
+  if(p.role==='ecole_universite'){
+    Object.assign(updates,{
+      typeEtablissement:document.getElementById('edit-ecole-type')?.value||'Lycée',
+      statutEtablissement:document.getElementById('edit-ecole-statut')?.value||'Public',
+      effectifSportif:parseInt(document.getElementById('edit-ecole-effectif-sportif')?.value)||0,
+      disciplinesProposees:Array.from(document.getElementById('edit-ecole-disciplines')?.selectedOptions||[]).map(o=>o.value),
+      infrastructures:document.getElementById('edit-ecole-infra')?.value.trim()||'',
+      responsableSports:document.getElementById('edit-ecole-responsable')?.value.trim()||'',
+    });
   }
   if(p.role==='handisport'){
     Object.assign(updates,{
@@ -4719,6 +4917,42 @@ async function uploadProfilePhoto(input){
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
     toast('✅ Photo mise à jour !','success');
+  }catch(e){ toast('Erreur upload : '+e.message,'error'); }
+}
+
+// Photo de couverture (bannière) affichée derrière logo/nom/QR dans la modale de
+// détail d'acteur. Modifiable uniquement par le propriétaire du profil concerné.
+async function uploadCoverPhoto(input){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
+  if(!input.files[0]||!currentUser) return;
+  const file=input.files[0];
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
+  if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
+  // Vérification professionnelle minimale (format paysage recommandé pour une bannière)
+  try{
+    const dims=await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>resolve({w:img.width,h:img.height});
+      img.onerror=reject;
+      img.src=URL.createObjectURL(file);
+    });
+    if(dims.w<480||dims.h<160){
+      toast('⚠️ Photo trop petite (min. 480×160 px recommandé pour une couverture professionnelle).','error');
+      return;
+    }
+  }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
+  toast('📤 Upload de la couverture en cours…','info');
+  try{
+    const url=await uploadToCloudinary(file,'image');
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{coverURL:url,updatedAt:serverTimestamp()});
+    userProfile.coverURL=url;
+    // Met à jour le cache local de l'acteur si déjà chargé, puis rafraîchit la modale ouverte
+    const cached=allActors.find(x=>(x.uid||x.id)===currentUser.uid)||allAdminUsers.find(x=>(x.uid||x.id)===currentUser.uid);
+    if(cached) cached.coverURL=url;
+    if(currentDetailActorUid) openActorDetail(currentDetailActorUid);
+    toast('✅ Photo de couverture mise à jour !','success');
   }catch(e){ toast('Erreur upload : '+e.message,'error'); }
 }
 
@@ -5064,7 +5298,7 @@ function showView(name){
   if(ve) ve.scrollTop=0;
   if(name==='profil') renderProfile();
   if(name==='annuaire'){
-    if(!allActors.length) loadActors();
+    loadActors();
   }
   if(name==='stades'){
     initMap();
@@ -5183,8 +5417,8 @@ function renderActorsAdmin(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
 
-  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
@@ -5242,8 +5476,9 @@ async function loadAdminStats(){
 async function loadAdminUsers(){
   if(!db || typeof collection !== 'function'){ return; }
   try{
-    const snap=await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+    const snap=await getDocs(collection(db,'users'));
     allAdminUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    allAdminUsers.sort((a,b)=>{ const ta=a.createdAt?.toDate?a.createdAt.toDate():new Date(0); const tb=b.createdAt?.toDate?b.createdAt.toDate():new Date(0); return tb-ta; });
     renderAdminUsersTable(allAdminUsers);
     updatePendingBanner();
   }catch(e){
@@ -5288,6 +5523,7 @@ function renderAdminUsersTable(users){
       <td style="font-size:13px">${u.niveau||'—'}</td>
       <td>${statusBadge}</td>
       <td>${isPending?`<div class="pending-actions">
+        <button class="btn-sm" onclick="adminViewPendingDetail('${u.uid||u.id}')" title="Voir la fiche complète">👁️ Détail</button>
         <button class="btn-approve" onclick="adminApproveUser('${u.uid||u.id}')" title="Valider la fiche">✅ Valider</button>
         <button class="btn-reject" onclick="adminRejectUser('${u.uid||u.id}')" title="Rejeter la fiche">✕ Rejeter</button>
       </div>`:`<div class="action-btns">
@@ -5423,6 +5659,76 @@ function resetAdminSearch(){
   ['srch-nom','srch-email','srch-role','srch-sport','srch-ville','srch-niveau','srch-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderAdminUsersTable(allAdminUsers);
 }
+// Affiche le détail complet d'une fiche en attente, en lecture, avant validation/rejet.
+// Couvre les champs communs + les champs spécifiques par rôle (organisation, joueur, handisport, école).
+function adminViewPendingDetail(uid){
+  const u=allAdminUsers.find(x=>(x.uid||x.id)===uid);
+  if(!u) return;
+  const HS_CAT_LABELS_VIEW={visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
+  const ORG_ROLES_VIEW=['club','association','federation','organisateur','ecole_universite'];
+  const isOrgView=ORG_ROLES_VIEW.includes(u.role);
+  const row=(label,val)=> (val!==undefined&&val!==null&&val!=='')?`<div class="adm-info-row"><span class="adm-info-label">${label}</span><span class="adm-info-val">${Array.isArray(val)?val.join(', '):val}</span></div>`:'';
+  let html=`
+    <div class="adm-info-row"><span class="adm-info-label">Nom</span><span class="adm-info-val">${u.nomOrganisation||((u.prenom||'')+' '+(u.nom||''))||'—'}</span></div>
+    ${row('Rôle', ROLE_LABELS?.[u.role]||u.role)}
+    ${row('Email', u.email)}
+    ${row('Téléphone', u.telephone)}
+    ${row('Ville', u.ville)}
+    ${row('Sport', u.sport||u.sports)}
+    ${row('Niveau', u.niveau)}
+  `;
+  if(isOrgView){
+    html+=`
+    <div class="section-divider blue">🏛️ Organisation</div>
+    ${row('Type', u.typeOrganisation)}
+    ${row('Président / Responsable', u.president)}
+    ${row('Fondé en', u.anneeCreation)}
+    ${row('Effectif', u.effectif)}
+    `;
+    if(u.role==='ecole_universite'){
+      html+=`
+      ${row("Type d'établissement", u.typeEtablissement)}
+      ${row('Statut', u.statutEtablissement)}
+      ${row('Effectif filière sportive', u.effectifSportif)}
+      ${row('Disciplines proposées', u.disciplinesProposees)}
+      ${row('Infrastructures', u.infrastructures)}
+      ${row('Responsable des sports', u.responsableSports)}
+      `;
+    }
+  } else {
+    html+=`
+    <div class="section-divider blue">👤 Profil sportif</div>
+    ${row('Poste', u.poste)}
+    ${row('Club actuel', u.club||u.clubActuel)}
+    ${row('Taille (cm)', u.taille)}
+    ${row('Poids (kg)', u.poids)}
+    ${row('Pied fort', u.piedFort||u.pied)}
+    ${row('Type de contrat', u.contrat?.type||u.contratType)}
+    ${row('Bio', u.bio)}
+    ${row('Palmarès', u.palmares)}
+    `;
+    if(u.role==='handisport'){
+      html+=`
+      <div class="section-divider blue">🦾 Informations handisport</div>
+      ${row('Type de déficience', HS_CAT_LABELS_VIEW[u.handicapCategorie]||u.handicapCategorie)}
+      ${row('Précision', u.handicapPrecision)}
+      ${row('Classe sportive', u.classeSportive)}
+      ${row('Cadre de pratique', u.cadrePratique)}
+      ${row('Besoin guide/assistant', u.besoinGuide?('Oui'+(u.nomGuide?' — '+u.nomGuide:'')):'Non')}
+      ${row('Carte invalidité', u.carteInvalidite?'Oui':'Non')}
+      `;
+    }
+  }
+  if(u.documents && u.documents.length){
+    html+=`<div class="section-divider blue">📎 Documents fournis</div>`;
+    u.documents.forEach(d=>{ html+=row(d.label, d.url&&d.url!=='#'?'Fourni':'Non fourni'); });
+  }
+  document.getElementById('pending-detail-body').innerHTML=html;
+  document.getElementById('pending-detail-uid').value=uid;
+  document.getElementById('modal-pending-detail').classList.add('open');
+}
+window.adminViewPendingDetail=adminViewPendingDetail;
+
 function adminEditUser(uid){
   const user=allAdminUsers.find(u=>(u.uid||u.id)===uid);
   if(!user) return;
@@ -5529,6 +5835,40 @@ async function adminToggleSupporter(uid,current){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 window.adminToggleSupporter=adminToggleSupporter;
+
+// ── DEVENIR SUPPORTER (auto-déclaration depuis le profil) ──
+function openBecomeSupporterModal(){
+  document.getElementById('become-supporter-error').style.display='none';
+  document.getElementById('become-supporter-club').value=userProfile?.clubSupporte||'';
+  document.getElementById('modal-become-supporter').classList.add('open');
+}
+window.openBecomeSupporterModal=openBecomeSupporterModal;
+
+async function handleBecomeSupporter(){
+  const errEl=document.getElementById('become-supporter-error');
+  errEl.style.display='none';
+  const club=document.getElementById('become-supporter-club').value.trim();
+  if(!club){ errEl.textContent='Merci d\'indiquer le club que vous supportez.'; errEl.style.display='block'; return; }
+  if(!db || typeof updateDoc!=='function' || !userProfile?.uid){ errEl.textContent='Service indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('become-supporter-submit');
+  btn.disabled=true; btn.textContent='Enregistrement…';
+  try{
+    await updateDoc(doc(db,'users',userProfile.uid),{isSupporter:true,clubSupporte:club,supporterSaisons:1,supporterMatchs:0,supporterAbonnement:'Nouveau supporter',updatedAt:serverTimestamp()});
+    userProfile.isSupporter=true;
+    userProfile.clubSupporte=club;
+    userProfile.supporterSaisons=1;
+    userProfile.supporterMatchs=0;
+    userProfile.supporterAbonnement='Nouveau supporter';
+    closeModal('modal-become-supporter');
+    toast('💗 Vous êtes maintenant supporter de '+club+' !','success');
+    renderProfile();
+  }catch(e){
+    errEl.textContent='Erreur : '+e.message; errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Confirmer';
+  }
+}
+window.handleBecomeSupporter=handleBecomeSupporter;
 
 // ── PHOTO GALLERY ──
 function renderGallery(photos=[]){
@@ -5902,6 +6242,7 @@ document.addEventListener('firebase-ready', async function(){
   if(window.storage)       storage=window.storage;
   if(window.sRef)          sRef=window.sRef;
   if(window.uploadBytes)   uploadBytes=window.uploadBytes;
+  if(window.uploadBytesResumable) uploadBytesResumable=window.uploadBytesResumable;
   if(window.getDownloadURL) getDownloadURL=window.getDownloadURL;
 
   // If Firebase failed (e.g. file:// protocol), show a warning but keep the UI functional
@@ -6489,12 +6830,27 @@ function initSportView() {
 function renderDisciplineTabs() {
   const c = document.getElementById('discipline-tabs');
   if (!c) return;
-  c.innerHTML = GSC_SPORTS_DATA.map(s => `
-    <button class="disc-tab${s.id===currentSportId?' active':''}" onclick="selectDiscipline('${s.id}')">
-      <img src="${s.img}" alt="${s.nom}" onerror="this.style.display='none'">
-      ${s.nom}
-    </button>
-  `).join('');
+  const SC = {
+    football:   ['#009E60','#007a47','rgba(0,158,96,.07)'],
+    basketball: ['#f97316','#c2410c','rgba(249,115,22,.07)'],
+    handball:   ['#3b82f6','#1d4ed8','rgba(59,130,246,.07)'],
+    volleyball: ['#8b5cf6','#6d28d9','rgba(139,92,246,.07)'],
+    athletisme: ['#f59e0b','#d97706','rgba(245,158,11,.07)'],
+    boxe:       ['#e11d48','#be123c','rgba(225,29,72,.07)'],
+    judo:       ['#ec4899','#db2777','rgba(236,72,153,.07)'],
+    natation:   ['#0ea5e9','#0284c7','rgba(14,165,233,.07)'],
+  };
+  c.innerHTML = GSC_SPORTS_DATA.map((s,i) => {
+    const col = SC[s.id] || [];
+    const active = s.id === currentSportId;
+    let st = '';
+    if (i===0) st += 'grid-column:1/-1;';
+    if (active && col[0]) st += `background:linear-gradient(135deg,${col[0]},${col[1]});border-color:transparent;color:${s.id==='athletisme'?'#1a2d4a':'#fff'};`;
+    else if (col[0]) st += `border-color:${col[0]};color:${col[1]};background:${col[2]};`;
+    return `<button class="disc-tab${active?' active':''}" data-sport="${s.nom}" onclick="selectDiscipline('${s.id}')"${st?` style="${st}"`:''}>
+      <img src="${s.img}" alt="${s.nom}" onerror="this.style.display='none'">${s.nom}
+    </button>`;
+  }).join('');
 }
 
 function selectDiscipline(id) {
@@ -7101,10 +7457,10 @@ const ROLE_CODES_QR = {
   joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
-  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
+  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ecole_universite:'ECU'
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport'];
+const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport','ecole_universite'];
 
 function generateGscId(uid, role){
   if(!uid) return null;
@@ -7649,32 +8005,14 @@ window.lookupManualGscId = lookupManualGscId;
 })();
 </script>
 
-<!-- ══ TOPNAV ADAPTIVE LAYOUT — prevent icon overflow ══ -->
+<!-- ══ TOPNAV ADAPTIVE LAYOUT — désactivé : le CSS responsive gère déjà la taille du texte du logo sans le masquer ══ -->
 <script>
 (function(){
   function adaptTopnav(){
-    const nav = document.querySelector('.topnav');
-    const logoText = document.querySelector('.topnav-logo-text');
-    if(!nav) return;
-    // Measure total natural width of all flex children except the spacer
-    const spacer = nav.querySelector('.topnav-spacer');
-    let used = 0;
-    nav.querySelectorAll('.topnav > *:not(.topnav-spacer)').forEach(el=>{
-      if(el.offsetWidth) used += el.offsetWidth + parseInt(getComputedStyle(nav).gap||'0');
-    });
-    const available = nav.offsetWidth;
-    // If items overflow, collapse logo text first
-    if(logoText){
-      if(available - used < 40){
-        logoText.style.maxWidth = '0';
-        logoText.style.opacity = '0';
-        logoText.style.overflow = 'hidden';
-      } else {
-        logoText.style.maxWidth = '';
-        logoText.style.opacity = '';
-        logoText.style.overflow = '';
-      }
-    }
+    // Le texte du logo (.topnav-logo-text) reste toujours visible :
+    // sa taille est gérée par les media queries CSS (480px / 360px / 320px),
+    // ce script ne le masque plus dynamiquement (causait une disparition
+    // incohérente entre mode visiteur et mode connecté).
   }
   window.addEventListener('resize', adaptTopnav);
   document.addEventListener('DOMContentLoaded', adaptTopnav);
@@ -7733,52 +8071,42 @@ window.lookupManualGscId = lookupManualGscId;
   });
 })();
 </script>
-<!-- ══ INIT GSC COMMUNITY ══ -->
+<script src="gsc-community.js"></script>
+
+<!-- ══ PWA INSTALL — Bouton "Installer GSC" ══ -->
 <script>
 (function(){
-  'use strict';
-  let _ready = false;
+  let deferredPrompt = null;
 
-  function initCommunity(){
-    if(_ready || !window.db || !window.GSCCommunity) return;
-    const u = window.currentUser || {};
-    const uid = u.id || null;
-    const name = (u.prenom && u.nom) ? u.prenom+' '+u.nom : (u.email||'').split('@')[0] || 'Utilisateur';
-    const avatar = u.avatar || '';
-    window.GSCCommunity.init(uid, name, avatar);
-    const postForm = document.getElementById('community-post-form');
-    const btnNew   = document.getElementById('btn-new-post');
-    const noLogin  = document.getElementById('community-not-logged');
-    if(uid){
-      if(btnNew)   btnNew.style.display   = 'inline-block';
-      if(noLogin)  noLogin.style.display  = 'none';
-    } else {
-      if(btnNew)   btnNew.style.display   = 'none';
-      if(noLogin)  noLogin.style.display  = 'block';
-    }
-    if(postForm) postForm.style.display = 'none';
-    _ready = true;
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(initCommunity, 800);
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    // Rendre le bouton plus visible si l'app est installable
+    const btn = document.getElementById('btn-install-gsc');
+    if(btn){ btn.style.boxShadow = '0 2px 12px rgba(0,158,96,.5)'; }
   });
 
-  /* Hook login */
-  const _origLogin = window.handleSupabaseLogin;
-  window.handleSupabaseLogin = function(){
-    _ready = false;
-    if(_origLogin) _origLogin.apply(this, arguments);
-    setTimeout(initCommunity, 1200);
+  window.installGSC = function(){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result){
+        if(result.outcome === 'accepted'){
+          const btn = document.getElementById('btn-install-gsc');
+          if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; }
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      // Fallback : instructions manuelles
+      alert('📲 Pour installer Gabon Sport Connect :\n\nSur Android Chrome :\nMenu ⋮ → "Ajouter à l\'écran d\'accueil"\n\nSur iPhone Safari :\nBouton Partager → "Sur l\'écran d\'accueil"');
+    }
   };
 
-  /* Hook logout */
-  const _origLogout = window.handleLogout;
-  window.handleLogout = function(){
-    if(window.GSCCommunity) window.GSCCommunity.destroy();
-    _ready = false;
-    if(_origLogout) _origLogout.apply(this, arguments);
-  };
+  // Si déjà installée, adapter le bouton
+  window.addEventListener('appinstalled', function(){
+    const btn = document.getElementById('btn-install-gsc');
+    if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; btn.style.opacity = '.7'; }
+  });
 })();
 </script>
 </body>
