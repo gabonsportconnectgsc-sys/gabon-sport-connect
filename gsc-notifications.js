@@ -24,6 +24,9 @@
     alert:       { label:'Alerte admin',     icon:'⚠️',  color:'#dc2626' },
   };
 
+  /* ── WORKER PUSH URL ── */
+  const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+
   /* ── ÉTAT INTERNE ── */
   let _notifications   = [];
   let _unreadCount     = 0;
@@ -729,14 +732,64 @@
 
   async function togglePush(input){
     if(input.checked){
-      if('Notification' in window){
+      try{
+        if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+          input.checked = false;
+          if(typeof toast === 'function') toast('Push non supporté sur ce navigateur.','error');
+          return;
+        }
         const perm = await Notification.requestPermission();
         if(perm !== 'granted'){
           input.checked = false;
           if(typeof toast === 'function') toast('Notifications push refusées.','error');
+          return;
         }
+        /* Récupérer la clé publique VAPID depuis le Worker */
+        const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
+        const { publicKey } = await keyResp.json();
+        /* Enregistrer l'abonnement Push */
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+        /* Envoyer l'abonnement au Worker */
+        const userId = _currentUserId || 'anonymous';
+        await fetch(WORKER_URL+'/subscribe', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ subscription: sub, userId })
+        });
+        if(typeof toast === 'function') toast('\u2705 Notifications push activées !','success');
+      }catch(err){
+        console.error('Push subscribe error:', err);
+        input.checked = false;
+        if(typeof toast === 'function') toast('Erreur activation push : '+err.message,'error');
       }
+    } else {
+      try{
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if(sub){
+          const userId = _currentUserId || 'anonymous';
+          await fetch(WORKER_URL+'/unsubscribe', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ endpoint: sub.endpoint, userId })
+          });
+          await sub.unsubscribe();
+        }
+        if(typeof toast === 'function') toast('Notifications push désactivées.','info');
+      }catch(err){ console.error('Push unsubscribe error:', err); }
     }
+  }
+
+  /* Convertit une clé VAPID base64url en Uint8Array */
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = window.atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
   function savePrefs(){
