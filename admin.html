@@ -756,9 +756,6 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-cms">
           <span class="nav-icon">🎨</span><span>CMS</span>
         </button>
-        <button class="nav-item" id="nav-community" onclick="switchSection('community')">
-          <span class="nav-icon">💬</span><span>Communauté</span>
-        </button>
 
         <div class="nav-label">Application</div>
         <button class="nav-item" id="nav-open-app" onclick="window.open('index.html', '_blank')" title="Ouvre index.html dans un nouvel onglet pour vérifier vos modifications en direct">
@@ -924,15 +921,15 @@ tr.is-demo-row td { opacity: .82; }
                 <div class="tile-count" id="rc-sportif-etranger">—</div>
                 <div class="tile-name">Sportifs étrangers</div>
               </div>
-              <div class="role-tile clickable" style="background:linear-gradient(135deg,#059669,#10b981)" onclick="window.gscGoToFiltered({roles:'ecole_universite', title:'Écoles / Universités'})">
-                <div class="tile-icon">🏫</div>
-                <div class="tile-count" id="rc-ecole-universite">—</div>
-                <div class="tile-name">Écoles/Univ.</div>
-              </div>
               <div class="role-tile clickable" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" onclick="window.gscGoToFiltered({roles:'handisport', title:'Sportifs handisport'})">
                 <div class="tile-icon">🦾</div>
                 <div class="tile-count" id="rc-handisport">—</div>
                 <div class="tile-name">Handisport</div>
+              </div>
+              <div class="role-tile clickable" style="background:linear-gradient(135deg,#059669,#10b981)" onclick="window.gscGoToFiltered({roles:'ecole_universite', title:'Écoles / Universités'})">
+                <div class="tile-icon">🏫</div>
+                <div class="tile-count" id="rc-ecole-universite">—</div>
+                <div class="tile-name">Écoles/Univ.</div>
               </div>
             </div>
           </div>
@@ -1297,33 +1294,6 @@ tr.is-demo-row td { opacity: .82; }
   </div>
 </div>
 
-<!-- ── SECTION MODÉRATION COMMUNAUTÉ ── -->
-<div id="community" class="section">
-  <div class="page-header">
-    <div class="page-title">🛡️ Modération Communauté</div>
-    <div class="page-actions">
-      <button class="btn-action outline" onclick="if(window.GSCAdminCommunity)window.GSCAdminCommunity.renderAll()">↺ Actualiser</button>
-    </div>
-  </div>
-
-  <div id="admin-community-stats"></div>
-
-  <div class="dash-card" style="margin-top:20px;">
-    <div class="dash-card-title">📰 Publications</div>
-    <div id="admin-community-posts-table"><div style="text-align:center;padding:40px;color:#94a3b8;">Chargement…</div></div>
-  </div>
-
-  <div class="dash-card" style="margin-top:16px;">
-    <div class="dash-card-title">⚠️ Signalements</div>
-    <div id="admin-community-reports-table"><div style="text-align:center;padding:40px;color:#94a3b8;">Chargement…</div></div>
-  </div>
-
-  <div class="dash-card" style="margin-top:16px;">
-    <div class="dash-card-title">👥 Utilisateurs actifs</div>
-    <div id="admin-community-users-list"><div style="text-align:center;padding:40px;color:#94a3b8;">Chargement…</div></div>
-  </div>
-</div>
-
 <!-- MODAL JOUEUR -->
 <div id="player-modal" class="modal-overlay">
   <div class="modal">
@@ -1369,17 +1339,17 @@ tr.is-demo-row td { opacity: .82; }
         <div class="grid2">
           <div class="field"><label>Taille (cm)</label><input type="number" id="modal-taille" placeholder="175"></div>
           <div class="field"><label>Poids (kg)</label><input type="number" id="modal-poids" placeholder="70"></div>
-          <div class="field"><label>Pied fort (Football/Rugby)</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
-          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droitier/Gaucher"></div>
+          <div class="field"><label>Pied fort</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
+          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droite/Gauche"></div>
         </div>
       </div>
       <div class="msection">
-        <div class="msection-title">⚡ Performance (selon discipline)</div>
+        <div class="msection-title">⚡ Performance</div>
         <div class="grid2">
-          <div class="field"><label>Matchs / Combats / Compétitions</label><input type="number" id="modal-matchs" placeholder="0"></div>
-          <div class="field"><label>Buts / Points / Victoires</label><input type="number" id="modal-buts" placeholder="0"></div>
-          <div class="field"><label>Passes / Médailles / KO</label><input type="number" id="modal-passes" placeholder="0"></div>
-          <div class="field"><label>Club / Structure</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
+          <div class="field"><label>Matchs</label><input type="number" id="modal-matchs" placeholder="0"></div>
+          <div class="field"><label>Buts</label><input type="number" id="modal-buts" placeholder="0"></div>
+          <div class="field"><label>Passes décisives</label><input type="number" id="modal-passes" placeholder="0"></div>
+          <div class="field"><label>Club</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
         </div>
       </div>
       <div class="msection" id="modal-handisport-section" style="display:none;">
@@ -1535,13 +1505,15 @@ tr.is-demo-row td { opacity: .82; }
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', ecole_universite: '🏫 École/Université'
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
+    ecole_universite: '🏫 École / Université'
   };
   const ROLE_COLORS = {
     joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
     organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
-    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', ecole_universite: '#059669'
+    eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', handisport: '#7c3aed',
+    ecole_universite: '#059669'
   };
   const PALETTE = ['#009E60', '#0A1628', '#FFD700', '#3b82f6', '#8b5cf6', '#f97316', '#0d9488', '#e11d48'];
 
@@ -1632,11 +1604,7 @@ tr.is-demo-row td { opacity: .82; }
     mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
     mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
     mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
-    mkChart('chart-buteurs', 'bar',
-      topScorers.map(u => (u.nom||'—') + (u.sport?' ('+u.sport+')':'')),
-      topScorers.map(u => Number(u.buts) || 0),
-      ['#009E60']
-    );
+    mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
 
     const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
     const totalPending = users.filter(u => u.status === 'pending').length;
@@ -1651,8 +1619,8 @@ tr.is-demo-row td { opacity: .82; }
       ['Fiches en attente de validation', totalPending],
       ['Clubs / Fédérations / Associations', totalOrgs],
       ['Matchs enregistrés', matches.length],
-      ['Buts / Points / Victoires (cumulés — tous sports)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
-      ['Passes / Podiums / KO (cumulés — tous sports)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
+      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
+      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
     ];
     const tbody = document.getElementById('report-summary-tbody');
     if (tbody) tbody.innerHTML = rows.map((r, i) =>
@@ -1675,7 +1643,7 @@ tr.is-demo-row td { opacity: .82; }
   function indivGscId(u) {
     return u.gscId || (window.gscGenerateId ? window.gscGenerateId(u.uid || u.id, u.role || 'joueur') : '—');
   }
-  const STATUS_LABELS_INDIV = { active: 'Actif', pending: 'En attente', hidden: 'Masqué' };
+  const STATUS_LABELS_INDIV = { active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' };
 
   function populateIndivRoleSelect() {
     const sel = document.getElementById('indiv-report-role');
@@ -1756,12 +1724,10 @@ tr.is-demo-row td { opacity: .82; }
               ` : `
               <tr><td style="font-weight:700">Taille</td><td>${esc(u.taille || '—')}</td></tr>
               <tr><td style="font-weight:700">Poids</td><td>${esc(u.poids || '—')}</td></tr>
-              ${['Football','Rugby','Athlétisme','Futsal'].includes(u.sport||'') ? `<tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>` : ''}
-              ${['Tennis','Volleyball','Basketball','Handball','Boxe','Judo','Taekwondo'].includes(u.sport||'') ? `<tr><td style="font-weight:700">Main dominante</td><td>${esc(u.main || '—')}</td></tr>` : ''}
-              <tr><td style="font-weight:700">${(()=>{const m={Football:'Matchs joués',Basketball:'Matchs',Handball:'Matchs',Volleyball:'Sets joués',Rugby:'Matchs',Tennis:'Matchs',Boxe:'Combats',Athlétisme:'Compétitions',Natation:'Compétitions',Judo:'Combats',Cyclisme:'Courses',Taekwondo:'Combats'};return m[u.sport||'']||'Matchs / Compétitions';})()}</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
-              <tr><td style="font-weight:700">${(()=>{const m={Football:'Buts marqués',Basketball:'Points',Handball:'Buts',Volleyball:'Points',Rugby:'Essais',Tennis:'Sets gagnés',Boxe:'Victoires',Athlétisme:'Médailles',Natation:'Médailles',Judo:'Victoires',Cyclisme:'Victoires',Taekwondo:'Victoires'};return m[u.sport||'']||'Points / Buts';})()}</td><td>${esc(u.buts || 0)}</td></tr>
-              <tr><td style="font-weight:700">${(()=>{const m={Football:'Passes décisives',Basketball:'Passes',Handball:'Passes',Volleyball:'Services',Rugby:'Passes',Tennis:'—',Boxe:'KO',Athlétisme:'Médailles arg.',Natation:'Podiums',Judo:'Ippon',Cyclisme:'Podiums',Taekwondo:'KO'};return m[u.sport||'']||'Passes / Performance';})()}</td><td>${esc(u.passes || 0)}</td></tr>
-              <tr><td style="font-weight:700">Trophées / Médailles</td><td>${esc(u.trophees || 0)}</td></tr>
+              <tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>
+              <tr><td style="font-weight:700">Matchs joués</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
+              <tr><td style="font-weight:700">Buts marqués</td><td>${esc(u.buts || 0)}</td></tr>
+              <tr><td style="font-weight:700">Passes décisives</td><td>${esc(u.passes || 0)}</td></tr>
               `}
             </tbody>
           </table>
@@ -1975,13 +1941,14 @@ tr.is-demo-row td { opacity: .82; }
     joueur: 'JOU', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
     association: 'ASS', federation: 'FED', independant: 'IND',
     admin: 'ADM', supporter: 'SUP', organisateur: 'ORG',
-    eleve_etudiant: 'ELE', sportif_etranger: 'ETR'
+    eleve_etudiant: 'ELE', sportif_etranger: 'ETR', handisport: 'HAN', ecole_universite: 'ECU'
   };
   const ROLE_LABELS_QR = {
     joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
-    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger'
+    eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
+    ecole_universite: '🏫 École / Université'
   };
 
   function generateGscId(uid, role) {
@@ -2362,8 +2329,8 @@ tr.is-demo-row td { opacity: .82; }
       setText('rc-independant',countRole('independant'));
       setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
       setText('rc-sportif-etranger',countRole('sportif_etranger'));
-      setText('rc-ecole-universite',countRole('ecole_universite'));
       setText('rc-handisport',countRole('handisport'));
+      setText('rc-ecole-universite',countRole('ecole_universite'));
       // Tuile acteurs réels (non-démo)
       const reelEl=document.getElementById('rc-reels');
       if(reelEl) reelEl.textContent=snap.docs.filter(d=>!d.data().isDemo).length;
@@ -2528,82 +2495,60 @@ tr.is-demo-row td { opacity: .82; }
   });
 
   // Vérifie que le compte connecté a bien role === 'admin'
-  // 3 niveaux de protection pour éviter les faux "Accès refusé" :
-  //   Niveau 1 — Firebase Auth SDK (lecture authentifiée, pas de quota)
-  //   Niveau 2 — REST Firestore avec retry ×3 + délai croissant
-  //   Niveau 3 — Fallback app_metadata Supabase (si SQL UPDATE exécuté)
-  //   Niveau 4 — Email de secours (filet ultime pour le compte admin connu)
   async function verifyAdminRole(uid){
     const FIREBASE_API_KEY = 'AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM';
     const PROJECT_ID       = 'gabon-sport-connect';
     const ADMIN_EMAIL      = 'gabonsportconnectgsc@gmail.com';
+    const ADMIN_UIDS       = ['iFuq1ziDpDheqvYMacnGEXAxwzK2','PZZICAtfQuQ0vlT3d0iKpGaBTKt1','4fec97e4-c6ed-49e0-83c6-ab702779c836'];
 
-    // ── Niveau 1 : Firebase Auth SDK (token authentifié, sans quota) ──────────
+    // ── Niveau 0 : UID connu ─────────────────────────────────────────────────
+    if(uid && ADMIN_UIDS.includes(uid)){
+      console.log('[GSC Admin] Niveau 0 — UID admin reconnu:', uid);
+      return true;
+    }
+
+    // ── Niveau 1 : Firebase Auth SDK ────────────────────────────────────────
     try{
       if(window.firebase && firebase.firestore){
         const doc = await firebase.firestore().collection('users').doc(uid).get();
         if(doc.exists){
           const role = doc.data()?.role || '';
-          console.log('[GSC Admin] verifyAdminRole Niveau 1 SDK — role:', role);
+          console.log('[GSC Admin] Niveau 1 SDK — role:', role);
           if(role) return role === 'admin';
         }
       }
-    }catch(e){ console.warn('[GSC Admin] Niveau 1 SDK échoué:', e.message||e); }
+    }catch(e){ console.warn('[GSC Admin] Niveau 1 échoué:', e.message||e); }
 
-    // ── Niveau 2 : REST Firestore avec retry ×3 ───────────────────────────────
+    // ── Niveau 2 : REST Firestore retry ×3 ──────────────────────────────────
     const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}?key=${FIREBASE_API_KEY}`;
     for(let attempt=1; attempt<=3; attempt++){
       try{
-        if(attempt > 1) await new Promise(r => setTimeout(r, attempt * 600)); // 600ms, 1200ms
+        if(attempt > 1) await new Promise(r => setTimeout(r, attempt * 600));
         const res = await fetch(url);
-        if(res.status === 429 || res.status >= 500){
-          console.warn(`[GSC Admin] Niveau 2 HTTP ${res.status} — tentative ${attempt}/3`);
-          continue;
-        }
-        if(!res.ok){ console.warn('[GSC Admin] Niveau 2 HTTP', res.status); break; }
+        if(res.status === 429 || res.status >= 500){ continue; }
+        if(!res.ok) break;
         const json = await res.json();
         const role = json.fields?.role?.stringValue || '';
-        console.log('[GSC Admin] verifyAdminRole Niveau 2 REST — uid:', uid, '| role:', role);
+        console.log('[GSC Admin] Niveau 2 REST — role:', role);
         if(role) return role === 'admin';
-        // Document existe mais pas de champ role → passer aux niveaux suivants
         break;
-      }catch(e){ console.warn(`[GSC Admin] Niveau 2 tentative ${attempt} échouée:`, e.message||e); }
+      }catch(e){ console.warn(`[GSC Admin] Niveau 2 tentative ${attempt}:`, e.message||e); }
     }
 
-    // ── Niveau 3 : Fallback app_metadata Supabase ─────────────────────────────
-    try{
-      if(sb){
-        const { data:{ session } } = await sb.auth.getSession();
-        if(session?.user){
-          const appMeta = session.user.app_metadata || {};
-          const role = appMeta.role || '';
-          console.log('[GSC Admin] verifyAdminRole Niveau 3 Supabase app_metadata — role:', role);
-          if(role) return role === 'admin';
-          // Vérifier aussi l'email connu directement
-          const email = session.user.email || '';
-          if(email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-            console.warn('[GSC Admin] Niveau 3 — email admin reconnu, accès accordé par email de secours.');
-            return true;
-          }
-        }
-      }
-    }catch(e){ console.warn('[GSC Admin] Niveau 3 Supabase échoué:', e.message||e); }
-
-    // ── Niveau 4 : Filet ultime — email Supabase de la session en cours ───────
-    // Utilisé uniquement si Firestore ET app_metadata sont tous les deux inaccessibles.
-    // Ce niveau doit être supprimé une fois que Firestore contient bien role='admin'.
+    // ── Niveau 3 : Email Supabase session (permanent) ───────────────────────
     try{
       if(sb){
         const { data:{ session } } = await sb.auth.getSession();
         const email = session?.user?.email || '';
+        console.log('[GSC Admin] Niveau 3 — email session:', email);
         if(email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-          console.warn('[GSC Admin] Niveau 4 email filet — Firestore inaccessible, accès accordé temporairement.');
+          console.log('[GSC Admin] Niveau 3 — email admin reconnu, accès accordé.');
           return true;
         }
       }
-    }catch(e){ console.warn('[GSC Admin] Niveau 4 échoué:', e.message||e); }
+    }catch(e){ console.warn('[GSC Admin] Niveau 3 échoué:', e.message||e); }
 
-    console.error('[GSC Admin] verifyAdminRole — tous les niveaux ont échoué pour uid:', uid);
+    console.error('[GSC Admin] Tous les niveaux ont échoué pour uid:', uid);
     return false;
   }
 
@@ -2710,43 +2655,6 @@ tr.is-demo-row td { opacity: .82; }
 <script src="app-config-loader.js"></script>
 <script src="admin-cms.js"></script>
 <script src="admin-community.js"></script>
-<script>
-(function(){
-  'use strict';
-  let _ready = false;
-
-  window.switchSection = function(sectionId){
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(sectionId);
-    if(target) target.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    const navBtn = document.getElementById('nav-'+sectionId);
-    if(navBtn) navBtn.classList.add('active');
-    const topbarTitle = document.getElementById('topbar-title');
-    if(topbarTitle && topbarTitle.firstChild){
-      const labels = { community:'Modération Communauté' };
-      topbarTitle.firstChild.textContent = labels[sectionId] || sectionId;
-    }
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if(sidebar) sidebar.classList.remove('open');
-    if(overlay) overlay.classList.remove('open');
-    if(sectionId === 'community') initAdminCommunity();
-  };
-
-  function initAdminCommunity(){
-    if(_ready || !window.db || !window.GSCAdminCommunity) return;
-    window.GSCAdminCommunity.init();
-    window.GSCAdminCommunity.renderAll();
-    _ready = true;
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const btn = document.getElementById('nav-community');
-    if(btn) btn.addEventListener('click', function(){ window.switchSection('community'); });
-  });
-})();
-</script>
 
 </body>
 </html>
