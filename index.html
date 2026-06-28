@@ -2628,6 +2628,19 @@
 </div>
 
 <!-- MODAL: EDIT USER (admin) -->
+<div class="modal" id="modal-pending-detail" onclick="if(event.target===this)closeModal('modal-pending-detail')">
+  <div class="modal-card">
+    <button class="modal-close-x" onclick="closeModal('modal-pending-detail')" aria-label="Fermer">✕</button>
+    <div class="modal-title">👁️ Fiche en attente — Détail</div>
+    <input type="hidden" id="pending-detail-uid">
+    <div id="pending-detail-body" style="margin:14px 0;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-approve" style="flex:1;" onclick="adminApproveUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✅ Valider cette fiche</button>
+      <button class="btn-reject" style="flex:1;" onclick="adminRejectUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✕ Rejeter</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal-edit-user" onclick="if(event.target===this)closeModal('modal-edit-user')">
   <div class="modal-card">
     <button class="modal-close-x" onclick="closeModal('modal-edit-user')" aria-label="Fermer">✕</button>
@@ -3276,7 +3289,7 @@ async function onSupabaseSignedIn(user, extra){
       sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
       isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
       clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
-      status:     'active',
+      status:     'pending', // en attente de validation admin — cohérent avec inscription.html
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
     try{
@@ -5510,6 +5523,7 @@ function renderAdminUsersTable(users){
       <td style="font-size:13px">${u.niveau||'—'}</td>
       <td>${statusBadge}</td>
       <td>${isPending?`<div class="pending-actions">
+        <button class="btn-sm" onclick="adminViewPendingDetail('${u.uid||u.id}')" title="Voir la fiche complète">👁️ Détail</button>
         <button class="btn-approve" onclick="adminApproveUser('${u.uid||u.id}')" title="Valider la fiche">✅ Valider</button>
         <button class="btn-reject" onclick="adminRejectUser('${u.uid||u.id}')" title="Rejeter la fiche">✕ Rejeter</button>
       </div>`:`<div class="action-btns">
@@ -5645,6 +5659,76 @@ function resetAdminSearch(){
   ['srch-nom','srch-email','srch-role','srch-sport','srch-ville','srch-niveau','srch-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderAdminUsersTable(allAdminUsers);
 }
+// Affiche le détail complet d'une fiche en attente, en lecture, avant validation/rejet.
+// Couvre les champs communs + les champs spécifiques par rôle (organisation, joueur, handisport, école).
+function adminViewPendingDetail(uid){
+  const u=allAdminUsers.find(x=>(x.uid||x.id)===uid);
+  if(!u) return;
+  const HS_CAT_LABELS_VIEW={visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
+  const ORG_ROLES_VIEW=['club','association','federation','organisateur','ecole_universite'];
+  const isOrgView=ORG_ROLES_VIEW.includes(u.role);
+  const row=(label,val)=> (val!==undefined&&val!==null&&val!=='')?`<div class="adm-info-row"><span class="adm-info-label">${label}</span><span class="adm-info-val">${Array.isArray(val)?val.join(', '):val}</span></div>`:'';
+  let html=`
+    <div class="adm-info-row"><span class="adm-info-label">Nom</span><span class="adm-info-val">${u.nomOrganisation||((u.prenom||'')+' '+(u.nom||''))||'—'}</span></div>
+    ${row('Rôle', ROLE_LABELS?.[u.role]||u.role)}
+    ${row('Email', u.email)}
+    ${row('Téléphone', u.telephone)}
+    ${row('Ville', u.ville)}
+    ${row('Sport', u.sport||u.sports)}
+    ${row('Niveau', u.niveau)}
+  `;
+  if(isOrgView){
+    html+=`
+    <div class="section-divider blue">🏛️ Organisation</div>
+    ${row('Type', u.typeOrganisation)}
+    ${row('Président / Responsable', u.president)}
+    ${row('Fondé en', u.anneeCreation)}
+    ${row('Effectif', u.effectif)}
+    `;
+    if(u.role==='ecole_universite'){
+      html+=`
+      ${row("Type d'établissement", u.typeEtablissement)}
+      ${row('Statut', u.statutEtablissement)}
+      ${row('Effectif filière sportive', u.effectifSportif)}
+      ${row('Disciplines proposées', u.disciplinesProposees)}
+      ${row('Infrastructures', u.infrastructures)}
+      ${row('Responsable des sports', u.responsableSports)}
+      `;
+    }
+  } else {
+    html+=`
+    <div class="section-divider blue">👤 Profil sportif</div>
+    ${row('Poste', u.poste)}
+    ${row('Club actuel', u.club||u.clubActuel)}
+    ${row('Taille (cm)', u.taille)}
+    ${row('Poids (kg)', u.poids)}
+    ${row('Pied fort', u.piedFort||u.pied)}
+    ${row('Type de contrat', u.contrat?.type||u.contratType)}
+    ${row('Bio', u.bio)}
+    ${row('Palmarès', u.palmares)}
+    `;
+    if(u.role==='handisport'){
+      html+=`
+      <div class="section-divider blue">🦾 Informations handisport</div>
+      ${row('Type de déficience', HS_CAT_LABELS_VIEW[u.handicapCategorie]||u.handicapCategorie)}
+      ${row('Précision', u.handicapPrecision)}
+      ${row('Classe sportive', u.classeSportive)}
+      ${row('Cadre de pratique', u.cadrePratique)}
+      ${row('Besoin guide/assistant', u.besoinGuide?('Oui'+(u.nomGuide?' — '+u.nomGuide:'')):'Non')}
+      ${row('Carte invalidité', u.carteInvalidite?'Oui':'Non')}
+      `;
+    }
+  }
+  if(u.documents && u.documents.length){
+    html+=`<div class="section-divider blue">📎 Documents fournis</div>`;
+    u.documents.forEach(d=>{ html+=row(d.label, d.url&&d.url!=='#'?'Fourni':'Non fourni'); });
+  }
+  document.getElementById('pending-detail-body').innerHTML=html;
+  document.getElementById('pending-detail-uid').value=uid;
+  document.getElementById('modal-pending-detail').classList.add('open');
+}
+window.adminViewPendingDetail=adminViewPendingDetail;
+
 function adminEditUser(uid){
   const user=allAdminUsers.find(u=>(u.uid||u.id)===uid);
   if(!user) return;
