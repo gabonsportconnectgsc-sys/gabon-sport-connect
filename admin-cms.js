@@ -192,6 +192,28 @@
           </div>
         </div>
       </div>
+
+      <!-- Aperçu en direct — reproduction miniature isolée de l'app réelle -->
+      <div class="dash-card cms-preview-card">
+        <div class="dash-card-title">👁️ Aperçu en direct</div>
+        <p style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;">Reproduction miniature de l'application — se met à jour pendant que vous réglez les couleurs et bordures ci-dessus.</p>
+        <div id="cms-preview-colors" style="border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;max-width:320px;">
+          <div id="cms-prev-header" style="background:#0A1628;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;">
+            <span>🦅 Gabon Sport Connect</span>
+            <span id="cms-prev-badge" style="background:#FFD700;color:#0A1628;padding:2px 8px;border-radius:20px;font-size:10px;">ADMIN</span>
+          </div>
+          <div style="background:#F0F2F5;padding:14px;" id="cms-prev-bg">
+            <div id="cms-prev-card" style="background:#fff;border-radius:8px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+              <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Carte exemple</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button id="cms-prev-btn" style="background:#009E60;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:default;">Action</button>
+                <span id="cms-prev-danger" style="background:#fee2e2;color:#ef4444;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:600;">⚠️ Alerte</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- TAB: TYPOGRAPHIES -->
@@ -247,6 +269,20 @@
             <input type="range" id="cms-size-small" min="10" max="14" value="12" class="cms-slider" style="width:100%;margin:8px 0;">
             <span class="cms-value-label" id="cms-size-small-val">12px</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Aperçu en direct — reproduction miniature isolée de l'app réelle -->
+      <div class="dash-card cms-preview-card">
+        <div class="dash-card-title">👁️ Aperçu en direct</div>
+        <p style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;">Reproduction miniature — se met à jour pendant que vous changez les polices et tailles ci-dessus.</p>
+        <div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px;max-width:360px;background:#fff;">
+          <div id="cms-prev-h1" style="font-weight:800;color:#0A1628;margin-bottom:6px;">Bienvenue sur GSC</div>
+          <div id="cms-prev-h2" style="font-weight:700;color:#0A1628;margin-bottom:8px;">Section Joueurs</div>
+          <div id="cms-prev-body-text" style="color:#475569;margin-bottom:6px;">Voici un exemple de paragraphe affiché sur l'application, dans la police et la taille du corps de texte choisies.</div>
+          <div id="cms-prev-small-text" style="color:#94a3b8;margin-bottom:10px;">Petite mention en bas de carte</div>
+          <button id="cms-prev-font-btn" style="background:#009E60;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:default;">Bouton</button>
+          <span id="cms-prev-mono" style="margin-left:10px;background:#f1f5f9;padding:4px 8px;border-radius:6px;font-size:12px;color:#334155;">GSC-JOU-A1B2C3</span>
         </div>
       </div>
     </div>
@@ -418,6 +454,8 @@
       Object.keys(theme.zones).forEach(function(zoneId) {
         var inp = document.querySelector(`.cms-zone-input[data-zone="${zoneId}"]`);
         if (inp) inp.value = theme.zones[zoneId];
+        var prevEl = document.querySelector(`.cms-zone-preview[data-zone-preview="${zoneId}"]`);
+        if (prevEl) prevEl.innerHTML = renderZonePreview(zoneId, theme.zones[zoneId]);
       });
     }
     // Images
@@ -437,13 +475,49 @@
         if (posSel) posSel.value = imgData.position || 'default';
         if (shapeSel) shapeSel.value = imgData.shape || 'rounded';
         if (imgData.hidden) setImageHidden(imageId, true);
+        // Restaure la miniature elle-même (image source) si elle a été enregistrée
+        if (imgData.src) {
+          var fileInp = document.querySelector(`.image-upload-input[data-image="${imageId}"]`);
+          if (fileInp) fileInp.setAttribute('data-src', imgData.src);
+          var thumb = document.querySelector(`.image-preview-thumb[data-image="${imageId}"]`);
+          var noPreview = document.querySelector(`.image-no-preview[data-image="${imageId}"]`);
+          if (thumb) { thumb.src = imgData.src; thumb.style.display = 'block'; }
+          if (noPreview) noPreview.style.display = 'none';
+        }
+        applyImagePreviewStyle(imageId);
       });
     }
+
+    // Initialise les mini-aperçus avec les valeurs chargées depuis Firestore
+    updateMiniPreviews(theme);
   }
 
   // ────────────────────────────────────────────────────────────────────────────
   // INTERFACE CONSTRUCTION
   // ────────────────────────────────────────────────────────────────────────────
+
+  // Mini-rendus de contexte — un fragment HTML représentatif de l'endroit réel
+  // de l'app où chaque zone de texte est utilisée. Le texte ${''} est rempli en direct.
+  const ZONE_TEXT_PREVIEWS = {
+    'topnav-logo-text': function(t){ return `<div style="background:#0A1628;color:#fff;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:800;display:inline-block;">🦅 ${t||'Gabon Sport Connect'}</div>`; },
+    'hero-title': function(t){ return `<div style="background:linear-gradient(135deg,#0A1628,#1a2d4a);color:#fff;padding:14px;border-radius:10px;"><div style="font-size:16px;font-weight:800;">${t||'Bienvenue sur GSC'}</div></div>`; },
+    'hero-subtitle': function(t){ return `<div style="background:linear-gradient(135deg,#0A1628,#1a2d4a);color:#cbd5e1;padding:14px;border-radius:10px;font-size:12px;">${t||'La plateforme du sport gabonais'}</div>`; },
+    'dashboard-heading': function(t){ return `<div style="font-size:13px;font-weight:800;color:#0A1628;border-bottom:2px solid #009E60;display:inline-block;padding-bottom:4px;">${t||'Tableau de bord'}</div>`; },
+    'card-titles': function(t){ return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:#0A1628;">${t||'Titre de la carte'}</div>`; },
+    'modal-titles': function(t){ return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px 8px 0 0;padding:10px;font-size:13px;font-weight:800;color:#0A1628;border-bottom:1px solid #f1f5f9;">${t||'Titre de la modale'}</div>`; },
+    'button-texts': function(t){ return `<button style="background:#009E60;color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;">${t||'Bouton'}</button>`; },
+    'label-texts': function(t){ return `<label style="font-size:11px;font-weight:600;color:#64748b;">${t||'Étiquette du champ'}</label>`; },
+    'nav-items': function(t){ return `<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;color:#009E60;font-size:10px;font-weight:600;"><span>🏠</span><span>${t||'Accueil'}</span></div>`; },
+    'side-menu-items': function(t){ return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:12px;color:#0A1628;display:flex;align-items:center;gap:8px;">📋 ${t||"Élément du menu"}</div>`; }
+  };
+
+  function escHtml(s){ return (s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function renderZonePreview(zoneId, value){
+    var fn = ZONE_TEXT_PREVIEWS[zoneId];
+    if (!fn) return '';
+    return fn(escHtml(value));
+  }
 
   function buildZonesUI() {
     var container = document.getElementById('cms-zones-container');
@@ -454,13 +528,41 @@
       card.className = 'dash-card cms-zone-card';
       card.innerHTML = `
         <div class="dash-card-title" style="margin-bottom:8px;"><span>${zone.label}</span></div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
           <input type="text" class="cms-zone-input" data-zone="${zone.id}" placeholder="Entrez le texte…" style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
           <button class="cms-zone-reset-btn" data-zone="${zone.id}" style="padding:8px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:#64748b;">↺</button>
         </div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">👁️ Aperçu — zone réelle de l'application :</div>
+        <div class="cms-zone-preview" data-zone-preview="${zone.id}" style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;display:flex;align-items:center;">${renderZonePreview(zone.id, '')}</div>
       `;
       container.appendChild(card);
     });
+  }
+
+  // Applique en direct sur la miniature (image-preview-thumb) tous les réglages
+  // de la carte d'une zone d'image : taille, opacité, arrondi/forme, ombre.
+  const SHAPE_RADIUS = { square: '0', rounded: '12px', 'rounded-square': '22px', circle: '50%', hexagon: '0' };
+  const SHADOW_CSS = { none: 'none', sm: '0 1px 3px rgba(0,0,0,.15)', md: '0 4px 10px rgba(0,0,0,.2)', lg: '0 8px 22px rgba(0,0,0,.3)' };
+
+  function applyImagePreviewStyle(imageId) {
+    var thumb = document.querySelector(`.image-preview-thumb[data-image="${imageId}"]`);
+    if (!thumb) return;
+    var size = document.querySelector(`.image-size-slider[data-image="${imageId}"]`)?.value || 40;
+    var opacity = document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`)?.value || 100;
+    var radius = document.querySelector(`.image-radius-slider[data-image="${imageId}"]`)?.value || 0;
+    var shadow = document.querySelector(`.image-shadow-select[data-image="${imageId}"]`)?.value || 'none';
+    var shape = document.querySelector(`.image-shape-select[data-image="${imageId}"]`)?.value || 'rounded';
+
+    thumb.style.width = size + '%';
+    thumb.style.opacity = (opacity / 100);
+    thumb.style.boxShadow = SHADOW_CSS[shadow] || 'none';
+    // La forme prime sur l'arrondi manuel sauf pour "rounded" qui suit le slider
+    thumb.style.borderRadius = shape === 'rounded' ? (radius + 'px') : (SHAPE_RADIUS[shape] || '0');
+    if (shape === 'hexagon') {
+      thumb.style.clipPath = 'polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)';
+    } else {
+      thumb.style.clipPath = 'none';
+    }
   }
 
   function buildImagesUI() {
@@ -590,7 +692,12 @@
 
     // Zones de texte
     document.querySelectorAll('.cms-zone-input').forEach(function(inp) {
-      inp.addEventListener('input', livePreview);
+      inp.addEventListener('input', function(){
+        var zoneId = this.getAttribute('data-zone');
+        var prevEl = document.querySelector(`.cms-zone-preview[data-zone-preview="${zoneId}"]`);
+        if (prevEl) prevEl.innerHTML = renderZonePreview(zoneId, this.value);
+        livePreview();
+      });
     });
 
     document.querySelectorAll('.cms-zone-reset-btn').forEach(function(btn) {
@@ -598,6 +705,8 @@
         var zoneId = this.getAttribute('data-zone');
         var inp = document.querySelector(`.cms-zone-input[data-zone="${zoneId}"]`);
         if (inp) inp.value = '';
+        var prevEl = document.querySelector(`.cms-zone-preview[data-zone-preview="${zoneId}"]`);
+        if (prevEl) prevEl.innerHTML = renderZonePreview(zoneId, '');
         livePreview();
       });
     });
@@ -637,6 +746,7 @@
             thumb.style.display = 'block';
           }
           if (noPreview) noPreview.style.display = 'none';
+          applyImagePreviewStyle(imageId);
           var badge = document.getElementById('image-status-' + imageId);
           if (badge) {
             badge.textContent = '⏳ En attente';
@@ -653,6 +763,7 @@
         var imageId = this.getAttribute('data-image');
         var label = this.parentElement.querySelector('.cms-value-label');
         if (label) label.textContent = this.value + '%';
+        applyImagePreviewStyle(imageId);
         livePreview();
       });
     });
@@ -662,6 +773,7 @@
         var imageId = this.getAttribute('data-image');
         var label = this.parentElement.querySelector('.cms-value-label');
         if (label) label.textContent = this.value + '%';
+        applyImagePreviewStyle(imageId);
         livePreview();
       });
     });
@@ -671,13 +783,17 @@
         var imageId = this.getAttribute('data-image');
         var label = this.parentElement.querySelector('.cms-value-label');
         if (label) label.textContent = this.value + 'px';
+        applyImagePreviewStyle(imageId);
         livePreview();
       });
     });
 
     // Images: Select events
     document.querySelectorAll('.image-shadow-select, .image-position-select, .image-shape-select').forEach(function(sel) {
-      sel.addEventListener('change', livePreview);
+      sel.addEventListener('change', function(){
+        applyImagePreviewStyle(this.getAttribute('data-image'));
+        livePreview();
+      });
     });
 
     // Images: Confirm
@@ -813,7 +929,46 @@
   function livePreview() {
     var theme = collectTheme();
     if (window.gscThemeLoader) window.gscThemeLoader.applyTheme(theme);
+    updateMiniPreviews(theme);
   }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // MINI-APERÇUS EN DIRECT — reproductions isolées de zones réelles de l'app,
+  // mises à jour à chaque interaction sans dépendre des variables CSS globales
+  // de la page admin (donc fiables même si applyTheme() échoue ou est partiel).
+  // ────────────────────────────────────────────────────────────────────────────
+  function updateMiniPreviews(theme) {
+    theme = theme || collectTheme();
+
+    // --- Aperçu Couleurs + Rayons ---
+    var header = document.getElementById('cms-prev-header');
+    if (header) header.style.background = theme.colorNavy;
+    var badge = document.getElementById('cms-prev-badge');
+    if (badge) { badge.style.background = theme.colorAccent; badge.style.color = theme.colorNavy; badge.style.borderRadius = theme.radiusLight; }
+    var bg = document.getElementById('cms-prev-bg');
+    if (bg) bg.style.background = theme.colorBg;
+    var card = document.getElementById('cms-prev-card');
+    if (card) card.style.borderRadius = theme.radiusLight;
+    var btn = document.getElementById('cms-prev-btn');
+    if (btn) { btn.style.background = theme.colorPrimary; btn.style.borderRadius = theme.radiusNormal; }
+    var danger = document.getElementById('cms-prev-danger');
+    if (danger) { danger.style.color = theme.colorDanger; danger.style.borderRadius = theme.radiusLight; }
+
+    // --- Aperçu Typographies ---
+    var ph1 = document.getElementById('cms-prev-h1');
+    if (ph1) { ph1.style.fontFamily = theme.fontHeading; ph1.style.fontSize = theme.sizeH1; }
+    var ph2 = document.getElementById('cms-prev-h2');
+    if (ph2) { ph2.style.fontFamily = theme.fontHeading; ph2.style.fontSize = theme.sizeH2; }
+    var pbody = document.getElementById('cms-prev-body-text');
+    if (pbody) { pbody.style.fontFamily = theme.fontBody; pbody.style.fontSize = theme.sizeBody; }
+    var psmall = document.getElementById('cms-prev-small-text');
+    if (psmall) { psmall.style.fontFamily = theme.fontBody; psmall.style.fontSize = theme.sizeSmall; }
+    var pbtn = document.getElementById('cms-prev-font-btn');
+    if (pbtn) pbtn.style.fontFamily = theme.fontButtons;
+    var pmono = document.getElementById('cms-prev-mono');
+    if (pmono) pmono.style.fontFamily = theme.fontMono;
+  }
+  window.gscCmsUpdateMiniPreviews = updateMiniPreviews;
 
   function showCmsSection() {
     document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });

@@ -52,8 +52,8 @@
 /* ── CLOCHE HEADER ── */
 .notif-bell-wrap{position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .notif-bell-btn{
-  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
-  background:transparent;border:none;cursor:pointer;border-radius:8px;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:none;cursor:pointer;border-radius:50%;
   transition:background .2s,transform .2s;color:#fff;padding:0;
   position:relative;flex-shrink:0;
 }
@@ -277,11 +277,14 @@
     top:auto;bottom:70px;right:8px;left:8px;width:auto;
     max-height:calc(100vh - 160px);border-radius:20px 20px 16px 16px;
   }
-  .notif-bell-btn{width:32px;height:32px;}
-  .notif-bell-btn svg{width:19px;height:19px;}
 }
 @media(max-width:480px){
-  .notif-bell-btn{width:28px;height:28px;}
+  .notif-bell-btn{width:34px;height:34px;}
+  .notif-bell-btn svg{width:19px;height:19px;}
+}
+@media(max-width:360px){
+  .notif-bell-btn{width:30px;height:30px;}
+  .notif-bell-btn svg{width:17px;height:17px;}
 }
 `;
     document.head.appendChild(s);
