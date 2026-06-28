@@ -1755,7 +1755,7 @@
             <div class="phys-card"><div class="phys-val" id="prof-taille">—</div><div class="phys-lbl">Taille (cm)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-poids">—</div><div class="phys-lbl">Poids (kg)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-age">—</div><div class="phys-lbl">Âge</div></div>
-            <div class="phys-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
+            <div class="phys-card" id="prof-pied-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
           </div>
         </div>
       </div>
@@ -1768,9 +1768,9 @@
         </div>
         <div class="card-body">
           <div class="stats-row" style="margin-bottom:14px;">
-            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl">Matchs</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl">Buts/Pts</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl">Passes</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl" id="prof-matchs-lbl">Matchs</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl" id="prof-buts-lbl">Buts/Pts</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl" id="prof-passes-lbl">Passes</div></div>
           </div>
           <div class="sport-stats-grid" id="sport-stats-display"></div>
         </div>
@@ -4000,20 +4000,24 @@ function openActorDetail(uid){
       html+=`</div></div>`;
     }
     // Stats
-    if(a.role==='joueur'){
+    const _statsRoles=['joueur','independant','eleve_etudiant','sportif_etranger'];
+    if(_statsRoles.includes(a.role) && a.sport){
+      const _sl=getSportStatLabels(a.sport);
       html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
       html+=`<div class="adm-stats-grid">`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">${_sl.matchs}</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">${_sl.buts}</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées / Médailles</div></div>`;
       html+=`</div></div>`;
     }
     // Mandats
     const mandats=a.mandats||[];
     if(mandats.length||a.club){
-      html+=`<div class="adm-section"><div class="adm-section-title">📅 Mandats & Clubs</div>`;
+      const mandatTitle=a.role==='handisport'?'🏢 Structure / Club':'📅 Mandats & Clubs';
+      html+=`<div class="adm-section"><div class="adm-section-title">${mandatTitle}</div>`;
       if(a.club){
-        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${a.club}</div>${a.poste?`<div class="mandat-dates">Poste : ${a.poste}</div>`:''}</div>`;
+        const clubIcon=a.role==='handisport'?'🏢':'🏟️';
+        html+=`<div class="mandat-badge"><div class="mandat-title">Structure actuelle</div><div class="mandat-club">${clubIcon} ${a.club}</div>${a.poste?`<div class="mandat-dates">Rôle : ${a.poste}</div>`:''}</div>`;
       }
       mandats.forEach(m=>{
         html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
@@ -4144,7 +4148,8 @@ function renderProfile(){
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
-  document.getElementById('prof-stats-card').style.display=isPersonnel&&p.role==='joueur'?'':'none';
+  const hasStats=['joueur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  document.getElementById('prof-stats-card').style.display=(hasStats&&p.sport)?'':'none';
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
 
   // Supporter card
@@ -4175,10 +4180,26 @@ function renderProfile(){
       const age=new Date().getFullYear()-new Date(p.dateNaissance).getFullYear();
       document.getElementById('prof-age').textContent=age;
     } else document.getElementById('prof-age').textContent='—';
+    // Pied fort : pertinent seulement pour Football, Rugby, Athlétisme
+    const sport=p.sport||'';
+    const piedSports=['Football','Rugby','Athlétisme','Futsal'];
+    const piedCard=document.getElementById('prof-pied-card');
+    if(piedCard) piedCard.style.display=piedSports.includes(sport)?'':'none';
     document.getElementById('prof-pied').textContent=p.pied||'—';
-    document.getElementById('prof-matchs').textContent=p.matchsJoues??0;
-    document.getElementById('prof-buts').textContent=p.buts??0;
-    document.getElementById('prof-passes').textContent=p.passes??0;
+    // Labels stats adaptés au sport
+    const statLabels=getSportStatLabels(sport);
+    const elMatchs=document.getElementById('prof-matchs');
+    const elButs=document.getElementById('prof-buts');
+    const elPasses=document.getElementById('prof-passes');
+    const elMatchsLbl=document.getElementById('prof-matchs-lbl');
+    const elButsLbl=document.getElementById('prof-buts-lbl');
+    const elPassesLbl=document.getElementById('prof-passes-lbl');
+    if(elMatchs) elMatchs.textContent=p.matchsJoues??0;
+    if(elButs) elButs.textContent=p.buts??0;
+    if(elPasses) elPasses.textContent=p.passes??0;
+    if(elMatchsLbl) elMatchsLbl.textContent=statLabels.matchs;
+    if(elButsLbl) elButsLbl.textContent=statLabels.buts;
+    if(elPassesLbl) elPassesLbl.textContent=statLabels.passes;
     const pb=document.getElementById('prof-position-badge');
     if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
@@ -4216,10 +4237,28 @@ function renderProfile(){
   buildEditForm(p);
 }
 
+function getSportStatLabels(sport){
+  const map={
+    Football:{matchs:'Matchs',buts:'Buts',passes:'Passes déc.'},
+    Basketball:{matchs:'Matchs',buts:'Points',passes:'Passes'},
+    Handball:{matchs:'Matchs',buts:'Buts',passes:'Passes'},
+    Volleyball:{matchs:'Sets joués',buts:'Points',passes:'Services'},
+    Rugby:{matchs:'Matchs',buts:'Essais',passes:'Passes'},
+    Tennis:{matchs:'Matchs',buts:'Sets gagnés',passes:'—'},
+    Boxe:{matchs:'Combats',buts:'Victoires',passes:'KO'},
+    Athlétisme:{matchs:'Compétitions',buts:'Médailles',passes:'Perfs'},
+    Natation:{matchs:'Compétitions',buts:'Médailles',passes:'Records'},
+    Judo:{matchs:'Combats',buts:'Victoires',passes:'Ippon'},
+    Cyclisme:{matchs:'Courses',buts:'Victoires',passes:'Podiums'},
+    Taekwondo:{matchs:'Combats',buts:'Victoires',passes:'KO'},
+  };
+  return map[sport]||{matchs:'Matchs',buts:'Points',passes:'Passes'};
+}
+
 function renderSportStats(p){
   const container=document.getElementById('sport-stats-display');
   if(!container) return;
-  const sport=p.sport||'Football';
+  const sport=p.sport||'';
   let items=[];
   if(sport==='Football'){
     items=p.poste==='Gardien'
@@ -4227,10 +4266,32 @@ function renderSportStats(p){
       :[{icon:'🥅',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes déc.'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'C. jaunes'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'C. rouges'}];
   } else if(sport==='Basketball'){
     items=[{icon:'🏀',val:p.buts??0,lbl:'Points'},{icon:'🔄',val:p.passes??0,lbl:'Passes'},{icon:'💪',val:p.tacles??0,lbl:'Rebonds'},{icon:'🛡️',val:p.interceptions??0,lbl:'Contres'}];
-  } else {
-    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées'}];
+  } else if(sport==='Handball'){
+    items=[{icon:'🤾',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'Exclusions 2min'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'Cartons rouges'}];
+  } else if(sport==='Volleyball'){
+    items=[{icon:'🏐',val:p.buts??0,lbl:'Points'},{icon:'💥',val:p.tacles??0,lbl:'Smashes'},{icon:'🛡️',val:p.interceptions??0,lbl:'Blocs'},{icon:'🎯',val:p.matchsJoues??0,lbl:'Sets joués'}];
+  } else if(sport==='Rugby'){
+    items=[{icon:'🏉',val:p.buts??0,lbl:'Essais'},{icon:'🅰️',val:p.passes??0,lbl:'Passes'},{icon:'👟',val:p.tacles??0,lbl:'Tacles'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'Cartons jaunes'}];
+  } else if(sport==='Tennis'){
+    items=[{icon:'🎾',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Titres'},{icon:'🎯',val:p.buts??0,lbl:'Sets gagnés'},{icon:'💨',val:p.aces??0,lbl:'Aces'}];
+  } else if(sport==='Boxe'){
+    items=[{icon:'🥊',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'💥',val:p.passes??0,lbl:'KO'},{icon:'🛡️',val:p.trophees??0,lbl:'Titres'}];
+  } else if(sport==='Judo'){
+    items=[{icon:'🥋',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'⚡',val:p.passes??0,lbl:'Ippon'},{icon:'🎖️',val:p.trophees??0,lbl:'Médailles'}];
+  } else if(sport==='Athlétisme'){
+    items=[{icon:'🏃',val:p.matchsJoues??0,lbl:'Compétitions'},{icon:'🥇',val:p.buts??0,lbl:'Médailles or'},{icon:'🥈',val:p.passes??0,lbl:'Médailles arg.'},{icon:'🏆',val:p.trophees??0,lbl:'Titres'}];
+  } else if(sport==='Natation'){
+    items=[{icon:'🏊',val:p.matchsJoues??0,lbl:'Compétitions'},{icon:'🥇',val:p.buts??0,lbl:'Médailles'},{icon:'⏱️',val:p.trophees??0,lbl:'Records'},{icon:'🎖️',val:p.passes??0,lbl:'Podiums'}];
+  } else if(sport==='Cyclisme'){
+    items=[{icon:'🚴',val:p.matchsJoues??0,lbl:'Courses'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'🥉',val:p.passes??0,lbl:'Podiums'},{icon:'🎖️',val:p.trophees??0,lbl:'Titres'}];
+  } else if(sport==='Taekwondo'){
+    items=[{icon:'🥋',val:p.matchsJoues??0,lbl:'Combats'},{icon:'🏆',val:p.buts??0,lbl:'Victoires'},{icon:'⚡',val:p.passes??0,lbl:'KO'},{icon:'🎖️',val:p.trophees??0,lbl:'Médailles'}];
+  } else if(sport){
+    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs / Compétitions'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées / Médailles'}];
   }
-  container.innerHTML=items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('');
+  container.innerHTML=items.length
+    ?items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('')
+    :'';
 }
 
 function buildEditForm(p){
@@ -4264,25 +4325,42 @@ function buildEditForm(p){
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="form-group"><label>Taille (cm)</label><input type="number" id="edit-taille" value="${p.taille||''}" placeholder="175"></div>
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Pied fort</label>
-        <select id="edit-pied">
-          <option value="">—</option>
-          <option${p.pied==='Droit'?' selected':''}>Droit</option>
-          <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
-          <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Main</label>
-        <select id="edit-main">
-          <option value="">—</option>
-          <option${p.main==='Droitier'?' selected':''}>Droitier</option>
-          <option${p.main==='Gaucher'?' selected':''}>Gaucher</option>
-          <option${p.main==='Ambidextre'?' selected':''}>Ambidextre</option>
-        </select>
-      </div>
     </div>`;
+    // Pied fort / Main : seulement pour les sports où c'est pertinent
+    const _piedSports=['Football','Rugby','Athlétisme','Futsal'];
+    const _mainSports=['Tennis','Volleyball','Basketball','Handball','Boxe','Judo','Taekwondo','Natation','Cyclisme'];
+    const _showPied=_piedSports.includes(p.sport||'');
+    const _showMain=_mainSports.includes(p.sport||'');
+    if(_showPied||_showMain){
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+      if(_showPied){
+        h+=`<div class="form-group"><label>Pied fort</label>
+          <select id="edit-pied">
+            <option value="">—</option>
+            <option${p.pied==='Droit'?' selected':''}>Droit</option>
+            <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
+            <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
+          </select>
+        </div>`;
+      } else {
+        h+=`<input type="hidden" id="edit-pied" value="${p.pied||''}">`;
+      }
+      if(_showMain){
+        h+=`<div class="form-group"><label>Main dominante</label>
+          <select id="edit-main">
+            <option value="">—</option>
+            <option${p.main==='Droitier'?' selected':''}>Droitier</option>
+            <option${p.main==='Gaucher'?' selected':''}>Gaucher</option>
+            <option${p.main==='Ambidextre'?' selected':''}>Ambidextre</option>
+          </select>
+        </div>`;
+      } else {
+        h+=`<input type="hidden" id="edit-main" value="${p.main||''}">`;
+      }
+      h+=`</div>`;
+    } else {
+      h+=`<input type="hidden" id="edit-pied" value="${p.pied||''}"><input type="hidden" id="edit-main" value="${p.main||''}">`;
+    }
 
     h+=`<div class="section-divider orange">🏅 Informations sportives</div>`;
     const sports=['Football','Basketball','Handball','Volleyball','Athlétisme','Natation','Boxe','Judo','Tennis','Rugby','Cyclisme','Taekwondo'];
@@ -4330,20 +4408,28 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(p.role==='joueur'){
+    if(['joueur','independant','eleve_etudiant','sportif_etranger'].includes(p.role)){
+      const _sport=(document.getElementById&&document.getElementById('edit-sport')?.value||p.sport)||'';
+      const _lbl=getSportStatLabels(_sport);
       h+=`<div class="section-divider green">📊 Statistiques</div>`;
       h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
-        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
+        <div class="form-group"><label>${_lbl.matchs}</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
+        <div class="form-group"><label>${_lbl.buts}</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
-        <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
-        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
+        <div class="form-group"><label>${_lbl.passes}</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
+        <div class="form-group"><label>Trophées / Médailles</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
       </div>`;
+      // Cartons uniquement pour sports collectifs avec arbitrage
+      const _cartonSports=['Football','Handball','Rugby','Basketball','Volleyball'];
+      if(_cartonSports.includes(p.sport||'')){
+        h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>Cartons / Exclusions jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
+          <div class="form-group"><label>Cartons rouges / Disq.</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
+        </div>`;
+      } else {
+        h+=`<input type="hidden" id="edit-cartons-j" value="${p.cartonsJaunes??0}"><input type="hidden" id="edit-cartons-r" value="${p.cartonsRouges??0}">`;
+      }
     }
   }
 
@@ -4533,7 +4619,7 @@ async function saveProfile(){
       updates.clubsPrecedents=document.getElementById('edit-clubs-prec')?.value.trim()||'';
       updates.mandats=getMandatsFromForm();
     }
-    if(p.role==='joueur'){
+    if(['joueur','independant','eleve_etudiant','sportif_etranger'].includes(p.role)){
       Object.assign(updates,{
         matchsJoues:parseInt(document.getElementById('edit-matchs')?.value)||0,
         buts:parseInt(document.getElementById('edit-buts')?.value)||0,

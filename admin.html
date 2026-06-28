@@ -1369,17 +1369,17 @@ tr.is-demo-row td { opacity: .82; }
         <div class="grid2">
           <div class="field"><label>Taille (cm)</label><input type="number" id="modal-taille" placeholder="175"></div>
           <div class="field"><label>Poids (kg)</label><input type="number" id="modal-poids" placeholder="70"></div>
-          <div class="field"><label>Pied fort</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
-          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droite/Gauche"></div>
+          <div class="field"><label>Pied fort (Football/Rugby)</label><input type="text" id="modal-pied" placeholder="Droit/Gauche"></div>
+          <div class="field"><label>Main dominante</label><input type="text" id="modal-main" placeholder="Droitier/Gaucher"></div>
         </div>
       </div>
       <div class="msection">
-        <div class="msection-title">⚡ Performance</div>
+        <div class="msection-title">⚡ Performance (selon discipline)</div>
         <div class="grid2">
-          <div class="field"><label>Matchs</label><input type="number" id="modal-matchs" placeholder="0"></div>
-          <div class="field"><label>Buts</label><input type="number" id="modal-buts" placeholder="0"></div>
-          <div class="field"><label>Passes décisives</label><input type="number" id="modal-passes" placeholder="0"></div>
-          <div class="field"><label>Club</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
+          <div class="field"><label>Matchs / Combats / Compétitions</label><input type="number" id="modal-matchs" placeholder="0"></div>
+          <div class="field"><label>Buts / Points / Victoires</label><input type="number" id="modal-buts" placeholder="0"></div>
+          <div class="field"><label>Passes / Médailles / KO</label><input type="number" id="modal-passes" placeholder="0"></div>
+          <div class="field"><label>Club / Structure</label><input type="text" id="modal-club" placeholder="Nom du club"></div>
         </div>
       </div>
       <div class="msection" id="modal-handisport-section" style="display:none;">
@@ -1632,7 +1632,11 @@ tr.is-demo-row td { opacity: .82; }
     mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
     mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
     mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
-    mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
+    mkChart('chart-buteurs', 'bar',
+      topScorers.map(u => (u.nom||'—') + (u.sport?' ('+u.sport+')':'')),
+      topScorers.map(u => Number(u.buts) || 0),
+      ['#009E60']
+    );
 
     const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
     const totalPending = users.filter(u => u.status === 'pending').length;
@@ -1647,8 +1651,8 @@ tr.is-demo-row td { opacity: .82; }
       ['Fiches en attente de validation', totalPending],
       ['Clubs / Fédérations / Associations', totalOrgs],
       ['Matchs enregistrés', matches.length],
-      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
-      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
+      ['Buts / Points / Victoires (cumulés — tous sports)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
+      ['Passes / Podiums / KO (cumulés — tous sports)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
     ];
     const tbody = document.getElementById('report-summary-tbody');
     if (tbody) tbody.innerHTML = rows.map((r, i) =>
@@ -1752,10 +1756,12 @@ tr.is-demo-row td { opacity: .82; }
               ` : `
               <tr><td style="font-weight:700">Taille</td><td>${esc(u.taille || '—')}</td></tr>
               <tr><td style="font-weight:700">Poids</td><td>${esc(u.poids || '—')}</td></tr>
-              <tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>
-              <tr><td style="font-weight:700">Matchs joués</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
-              <tr><td style="font-weight:700">Buts marqués</td><td>${esc(u.buts || 0)}</td></tr>
-              <tr><td style="font-weight:700">Passes décisives</td><td>${esc(u.passes || 0)}</td></tr>
+              ${['Football','Rugby','Athlétisme','Futsal'].includes(u.sport||'') ? `<tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>` : ''}
+              ${['Tennis','Volleyball','Basketball','Handball','Boxe','Judo','Taekwondo'].includes(u.sport||'') ? `<tr><td style="font-weight:700">Main dominante</td><td>${esc(u.main || '—')}</td></tr>` : ''}
+              <tr><td style="font-weight:700">${(()=>{const m={Football:'Matchs joués',Basketball:'Matchs',Handball:'Matchs',Volleyball:'Sets joués',Rugby:'Matchs',Tennis:'Matchs',Boxe:'Combats',Athlétisme:'Compétitions',Natation:'Compétitions',Judo:'Combats',Cyclisme:'Courses',Taekwondo:'Combats'};return m[u.sport||'']||'Matchs / Compétitions';})()}</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
+              <tr><td style="font-weight:700">${(()=>{const m={Football:'Buts marqués',Basketball:'Points',Handball:'Buts',Volleyball:'Points',Rugby:'Essais',Tennis:'Sets gagnés',Boxe:'Victoires',Athlétisme:'Médailles',Natation:'Médailles',Judo:'Victoires',Cyclisme:'Victoires',Taekwondo:'Victoires'};return m[u.sport||'']||'Points / Buts';})()}</td><td>${esc(u.buts || 0)}</td></tr>
+              <tr><td style="font-weight:700">${(()=>{const m={Football:'Passes décisives',Basketball:'Passes',Handball:'Passes',Volleyball:'Services',Rugby:'Passes',Tennis:'—',Boxe:'KO',Athlétisme:'Médailles arg.',Natation:'Podiums',Judo:'Ippon',Cyclisme:'Podiums',Taekwondo:'KO'};return m[u.sport||'']||'Passes / Performance';})()}</td><td>${esc(u.passes || 0)}</td></tr>
+              <tr><td style="font-weight:700">Trophées / Médailles</td><td>${esc(u.trophees || 0)}</td></tr>
               `}
             </tbody>
           </table>
