@@ -488,8 +488,30 @@
       // Marque aussi les badges zones concernées
       updateZoneBadges();
     }
-    if(n.link) showView ? showView(n.link) : null;
     closeAll();
+    if(n.link){
+      const parts = n.link.split(':');
+      const view = parts[0];   // ex: 'fil', 'profil', 'actualites'
+      const param = parts[1];  // ex: postId ou uid
+
+      /* Naviguer vers la vue et scroller vers le post si besoin */
+      if(typeof window.showView === 'function'){
+        window.showView(view === 'fil' ? 'actualites' : view);
+        /* Scroller vers le post ciblé après rendu */
+        if(view === 'fil' && param && param !== 'new'){
+          setTimeout(()=>{
+            const el = document.getElementById('gsc-post-' + param)
+                    || document.querySelector('[data-post-id="' + param + '"]');
+            if(el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+          }, 600);
+        }
+      } else {
+        /* Fallback événement global */
+        window.dispatchEvent(new CustomEvent('gsc-navigate', {
+          detail: { view: view === 'fil' ? 'actualites' : view, param }
+        }));
+      }
+    }
   }
 
   function markAllRead(){
@@ -909,6 +931,7 @@
   async function push(opts){
     /* opts: {type, title, body, recipientId, personal, link, actions, actionCallbacks} */
     const id = 'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const recipientId = opts.recipientId || 'all';
     const n = {
       id,
       type: opts.type || 'system',
@@ -920,45 +943,56 @@
       actionCallbacks: opts.actionCallbacks || {},
       read: false,
       createdAt: Date.now(),
-      recipientId: opts.recipientId || _currentUserId || 'all',
+      recipientId,
+      senderId: _currentUserId || null,
     };
 
-    /* Filtre selon préférences */
-    if(_prefs?.[n.type] === false) return;
+    /* Filtre selon préférences locales — seulement si destinataire = moi */
+    const isMine = recipientId === _currentUserId || recipientId === 'all';
+    if(isMine && _prefs?.[n.type] === false) return;
 
-    /* Ajouter localement */
-    _notifications.unshift(n);
-    updateBadge();
-    updateZoneBadges();
-    showToast(n);
-    if(_panelOpen) renderList(_currentTab);
+    /* Afficher localement SEULEMENT si je suis le destinataire ou c'est général */
+    if(isMine){
+      _notifications.unshift(n);
+      updateBadge();
+      updateZoneBadges();
+      showToast(n);
+      if(_panelOpen) renderList(_currentTab);
+    }
 
-    /* Persiste sur Firestore */
+    /* Persiste sur Firestore — pour que le destinataire le reçoive via onSnapshot */
     if(window.db){
       try{
         const {collection, addDoc, serverTimestamp} = window;
         if(typeof addDoc === 'function'){
           await addDoc(collection(window.db, NOTIF_COLLECTION),{
-            ...n, createdAt: serverTimestamp(), id: undefined
+            ...n,
+            createdAt: serverTimestamp(),
+            id: undefined,
+            actionCallbacks: undefined
           });
         }
-      }catch(e){}
+      }catch(e){ console.error('Notif Firestore error:', e); }
     }
-    /* Push SW si permis */
-    if(Notification?.permission === 'granted' && 'serviceWorker' in navigator){
-      const reg = await navigator.serviceWorker.getRegistration();
-      if(reg){
-        const type = NOTIF_TYPES[n.type]||NOTIF_TYPES.system;
-        reg.showNotification('Gabon Sport Connect — '+type.label,{
-          body: n.body,
+
+    /* Envoyer push via Worker Cloudflare au(x) destinataire(s) */
+    try{
+      await fetch(WORKER_URL+'/send-notification', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          recipientId,
+          senderId: _currentUserId,
+          title: 'Gabon Sport Connect',
+          body: n.title + (n.body ? ' — ' + n.body : ''),
           icon: 'icon-192.png',
           badge: 'icon-192.png',
-          tag: n.type,
-          data: {link: n.link},
-          vibrate: [200,100,200]
-        }).catch(()=>{});
-      }
-    }
+          data: { link: n.link, type: n.type },
+          adminSecret: ''
+        })
+      });
+    }catch(e){ console.warn('Worker push error:', e); }
+
     return id;
   }
 

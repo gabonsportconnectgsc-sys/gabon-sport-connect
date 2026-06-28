@@ -208,7 +208,7 @@
         type: 'mention', recipientId: id, personal: true,
         title: `${authorName(authorProfile)} ${verb}`,
         body: (text || '').slice(0, 100),
-        link: 'index.html#actualites'
+        link: 'fil:' + (excludeUid || 'all')
       });
     });
   }
@@ -717,6 +717,17 @@
       /* Notifier les membres mentionnés via @Nom : "X a publié sur vous" */
       notifyMentions(text, { authorProfile: profile, action: 'post', excludeUid: window.currentUser.uid });
 
+      /* Notifier les membres ciblés ou tous (général) */
+      const postRecipient = targetRole ? ('role:' + targetRole) : 'all';
+      pushNotif({
+        type: 'system',
+        recipientId: postRecipient,
+        personal: false,
+        title: (authorName(profile) || 'Un membre') + ' a publié dans le fil communautaire',
+        body: (cat ? '[' + cat + '] ' : '') + text.slice(0, 100),
+        link: 'fil:new'
+      });
+
       if (ta) ta.value = '';
       clearComposerImage();
       const targetSel = document.getElementById('gsc-composer-target');
@@ -942,7 +953,7 @@
           type: 'like', recipientId: post.authorId, personal: true,
           title: `${authorName(window.userProfile || {})} a réagi à votre publication`,
           body: `${reactionMeta ? reactionMeta.icon : '👍'} sur « ${(post.text || '').slice(0, 60)} »`,
-          link: 'index.html#actualites'
+          link: 'fil:' + postId
         });
       }
     } catch (e) { toastMsg('Erreur lors de la réaction.', 'error'); }
@@ -984,7 +995,7 @@
           type: 'comment', recipientId: post.authorId, personal: true,
           title: `${authorName(profile)} a commenté votre publication`,
           body: text.slice(0, 100),
-          link: 'index.html#actualites'
+          link: 'fil:' + postId
         });
       }
       /* Notifier les membres mentionnés via @Nom : "X a commenté sur vous" */
@@ -1090,7 +1101,7 @@
                 type: 'alert', recipientId: post.authorId, personal: true,
                 title: 'Votre publication a été masquée',
                 body: 'Suite à plusieurs signalements, votre publication est en attente de revue par un modérateur.',
-                link: 'index.html#actualites'
+                link: 'fil:' + post.id
               });
             }
           }
