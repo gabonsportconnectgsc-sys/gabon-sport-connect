@@ -705,6 +705,7 @@
 
   // ── FIREBASE FIRESTORE (pour sauvegarder le profil) ──
   let db = null, _setDoc, _doc, _collection, _query, _where, _getDocs, _serverTimestamp;
+  let _fbApp = null;
   (async () => {
     try {
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
@@ -714,12 +715,55 @@
         authDomain:"gabon-sport-connect.firebaseapp.com",
         projectId:"gabon-sport-connect"
       }, "gsc-inscription");
+      _fbApp = app;
       db = getFirestore(app);
       _doc = doc; _setDoc = setDoc;
       _collection = collection; _query = query; _where = where; _getDocs = getDocs;
       _serverTimestamp = serverTimestamp;
     } catch(e) { console.warn("Firestore non disponible:", e); }
+    // ── Pont d'authentification Firebase (corrige "Missing or insufficient permissions") ──
+    // Même mécanisme que index.html : on échange le token Supabase contre un Custom
+    // Token Firebase signé avec le même uid, via le Worker Cloudflare. Sans cette étape,
+    // request.auth est null côté Firestore et TOUTE écriture/lecture est refusée par les
+    // règles de sécurité — c'est ce qui empêchait les nouveaux inscrits d'apparaître.
+    try {
+      const fa = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      window._fbAuth = fa.getAuth(_fbApp);
+      window._signInWithCustomToken = fa.signInWithCustomToken;
+    } catch(e) { console.warn("Firebase Auth non disponible:", e); }
   })();
+
+  // ── Pont d'authentification : Supabase → Firebase Custom Token (via Cloudflare Worker) ──
+  // Identique à index.html : permet à request.auth.uid d'être fiable dans les règles Firestore.
+  const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+  async function ensureFirebaseAuthViaSupabase(uid) {
+    try {
+      if (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === uid) {
+        return window._fbAuth.currentUser;
+      }
+      if (!_sb) throw new Error('Supabase non initialisé.');
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+
+      const res = await fetch(GSC_AUTH_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supabaseAccessToken: session.access_token })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.firebaseToken) {
+        throw new Error(data?.error || "Le pont d'authentification a refusé la demande.");
+      }
+      if (!window._fbAuth || !window._signInWithCustomToken) {
+        throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+      }
+      const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+      return cred.user;
+    } catch(e) {
+      console.warn('Pont Firebase Auth indisponible :', e);
+      return null;
+    }
+  }
 
   // ── GSC ID — fonction identique à index.html & admin.html ──
   // Déterministe : même uid + même role → même GSC-ID partout dans l'application.
@@ -823,6 +867,7 @@
 
   async function saveProfile(uid, email, profile) {
     if (!db || !_setDoc || !_doc) return;
+    await ensureFirebaseAuthViaSupabase(uid);
     try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() }); }
     catch(e) { console.warn('Firestore save failed:', e); }
   }
@@ -849,7 +894,7 @@
     try {
       const { data, error } = await _sb.auth.signUp({
         email, password: pw,
-        options: { data: { prenom, nom } }
+        options: { data: { prenom, nom, role:'visiteur', sport, ville } }
       });
       if (error) throw error;
       // Sauvegarder profil Firestore
@@ -948,7 +993,7 @@
     try {
       const { data, error } = await _sb.auth.signUp({
         email, password: pw,
-        options: { data: { prenom, nom } }
+        options: { data: { prenom, nom, role: selectedRole, sport, ville, tel, sexe, ddn } }
       });
       if (error) throw error;
       const uid = data.user?.id;
