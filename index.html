@@ -895,29 +895,12 @@
     .gallery-item{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
     .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
     .gallery-item:hover img{transform:scale(1.05);}
-    .gallery-item-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
-    .gallery-item:hover .gallery-item-overlay{display:flex;}
-    .gallery-item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
-    .gallery-action-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;transition:background .18s;white-space:nowrap;}
-    .gallery-action-btn:hover{background:rgba(255,255,255,.35);}
-    .gallery-action-btn.danger{border-color:#f87171;color:#f87171;}
-    .gallery-action-btn.danger:hover{background:rgba(248,113,113,.25);}
-    .gallery-is-profile-badge{position:absolute;top:5px;left:5px;background:var(--green);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;pointer-events:none;}
     .gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
     .gallery-add:hover{background:#d4f0e4;}
-    .gallery-limit-msg{font-size:11px;color:var(--gray-txt);text-align:center;margin-top:6px;padding:6px;background:var(--gray-bg);border-radius:6px;}
-    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
+    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:250;align-items:center;justify-content:center;}
     .gallery-modal.open{display:flex;}
-    .gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
-    .gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm);}
+    .gallery-modal img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:var(--radius-sm);}
     .gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
-    .gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;}
-    .gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
-    .gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
-    .gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
-    .gallery-modal-btn.primary{border-color:var(--green);color:#4ade80;}
-    .gallery-modal-btn.primary:hover{background:rgba(0,158,96,.25);}
 
     /* Documents personnels (carte d'identité, licence, justificatifs…) */
     .doc-detail-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;}
@@ -1848,8 +1831,8 @@
       <div class="profile-header-card fade-up">
         <div class="avatar-upload-wrap">
           <div class="profile-avatar-lg" id="prof-avatar-lg">?</div>
-          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo (JPG, PNG, WEBP, GIF, AVIF — max 5 Mo)">📷</label>
-          <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
+          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadProfilePhoto(this)">
         </div>
         <div style="text-align:center;font-size:10px;color:var(--gray-txt);margin-top:4px;">JPG/PNG/WEBP · min. 200×200 px · max 5 Mo</div>
         <div class="profile-fullname" id="prof-fullname">…</div>
@@ -1953,7 +1936,6 @@
         </div>
         <div class="card-body">
           <div class="photo-gallery" id="photo-gallery"></div>
-          <div id="gallery-limit-info"></div>
           <input type="file" id="gallery-photo-input" accept="image/*" multiple style="display:none" onchange="uploadGalleryPhotos(this)">
         </div>
       </div>
@@ -2695,14 +2677,7 @@
 <!-- PHOTO GALLERY MODAL -->
 <div class="gallery-modal" id="gallery-modal" onclick="if(event.target===this)closeGalleryModal()">
   <button class="gallery-modal-close" onclick="closeGalleryModal()">✕</button>
-  <div class="gallery-modal-img-wrap">
-    <img id="gallery-modal-img" src="" alt="Photo">
-  </div>
-  <div class="gallery-modal-toolbar" id="gallery-modal-toolbar">
-    <button class="gallery-modal-btn primary" onclick="gallerySetAsProfile()">⭐ Photo de profil</button>
-    <button class="gallery-modal-btn" onclick="galleryDownload()">⬇️ Télécharger</button>
-    <button class="gallery-modal-btn danger" onclick="galleryDelete()">🗑️ Supprimer</button>
-  </div>
+  <img id="gallery-modal-img" src="" alt="Photo">
 </div>
 
 <!-- ACTOR DETAIL MODAL -->
@@ -3633,13 +3608,6 @@ async function togglePushNotifications(){
     toast('Notifications bloquées : autorisez-les dans les réglages du site.','error');
     return;
   }
-  /* Déléguer entièrement à GSCNotif.togglePush pour éviter les doublons d'abonnement */
-  if(window.GSCNotif && typeof window.GSCNotif.togglePush === 'function'){
-    const fakeInput = { checked: Notification.permission !== 'granted' };
-    await window.GSCNotif.togglePush(fakeInput);
-    refreshNotifMenuState();
-    return;
-  }
   if(Notification.permission==='granted'){
     toast('🔔 Notifications déjà activées.','info');
     return;
@@ -3649,6 +3617,41 @@ async function togglePushNotifications(){
     refreshNotifMenuState();
     if(perm==='granted'){
       toast('🔔 Notifications activées !','success');
+      // Enregistrer l'abonnement push auprès du Worker Cloudflare
+      if('serviceWorker' in navigator && 'PushManager' in window){
+        try{
+          const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+          const reg = await navigator.serviceWorker.ready;
+          // Récupérer clé VAPID publique
+          const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
+          const { publicKey } = await keyResp.json();
+          // S'abonner
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: (function urlB64(b){
+              const pad='='.repeat((4-b.length%4)%4);
+              const base64=(b+pad).replace(/-/g,'+').replace(/_/g,'/');
+              const raw=window.atob(base64);
+              return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+            })(publicKey)
+          });
+          // Envoyer abonnement au Worker
+          const userId = currentUser ? currentUser.uid : 'anonymous';
+          await fetch(WORKER_URL+'/subscribe',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ subscription: sub, userId })
+          });
+          // Notification de confirmation
+          reg.showNotification('Gabon Sport Connect',{
+            body:'Notifications activées ! Vous recevrez les actualités en temps réel.',
+            icon:'icon-192.png',
+            badge:'icon-192.png'
+          });
+        }catch(swErr){
+          console.warn('Push subscribe error:',swErr);
+        }
+      }
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
         try{ await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
@@ -4238,15 +4241,13 @@ function openActorDetail(uid){
       if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
-    // Stats
-    if(a.role==='joueur'){
-      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
-      html+=`<div class="adm-stats-grid">`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
+    // Stats — tous rôles personnels, champs dynamiques selon sport
+    {const _sf=_gscResolveStats(a);
+    if(_sf.length){
+      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div><div class="adm-stats-grid">`;
+      _sf.forEach(f=>{let v=a[f.id];if(v===undefined||v===null||v==='') v=f.txt?'—':0;if(f.sfx) v=v+f.sfx;html+=`<div class="adm-stat"><div class="adm-stat-val">${v}</div><div class="adm-stat-lbl">${f.icon} ${f.lbl}</div></div>`;});
       html+=`</div></div>`;
-    }
+    }}
     // Mandats
     const mandats=a.mandats||[];
     if(mandats.length||a.club){
@@ -4402,11 +4403,10 @@ function renderProfile(){
   const becomeSuppCard=document.getElementById('prof-become-supporter-card');
   if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
-  // Gallery card — visible pour tous les membres inscrits (rôles acteurs sportifs)
-  const allActorRoles=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','club','association','federation','organisateur'];
+  // Gallery card
   const gallCard=document.getElementById('prof-gallery-card');
   if(gallCard){
-    gallCard.style.display=(!isVisitor && allActorRoles.includes(p.role))?'':'none';
+    gallCard.style.display=!isVisitor?'':'none';
     renderGallery(p.photos||[]);
   }
 
@@ -4419,10 +4419,17 @@ function renderProfile(){
       const age=new Date().getFullYear()-new Date(p.dateNaissance).getFullYear();
       document.getElementById('prof-age').textContent=age;
     } else document.getElementById('prof-age').textContent='—';
-    document.getElementById('prof-pied').textContent=p.pied||'—';
-    document.getElementById('prof-matchs').textContent=p.matchsJoues??0;
-    document.getElementById('prof-buts').textContent=p.buts??0;
-    document.getElementById('prof-passes').textContent=p.passes??0;
+    document.getElementById('prof-pied').textContent=(['Basketball','Handball','Volleyball','Tennis'].includes((p.sport||'').replace(/^[^\w\u00C0-\u017E]+/,'').trim())?p.main:p.pied)||'—';
+    // Label "Pied fort" adapté au sport
+    {const _sp=(p.sport||'Football').replace(/^[^\w\u00C0-\u017E]+/,'').trim();
+    const _pl=document.getElementById('prof-pied')?.closest?.('.phys-card')?.querySelector('.phys-lbl');
+    if(_pl) _pl.textContent=({Football:'Pied fort',Rugby:'Pied fort',Basketball:'Main forte',Handball:'Main forte',Volleyball:'Main forte',Tennis:'Main forte',Boxe:'Garde',Judo:'Garde',Taekwondo:'Garde'}[_sp]||'Latéralité');}
+    // Compteurs top-3 adaptés au sport
+    {const _sf=_gscResolveStats(p);
+    const _em=document.getElementById('prof-matchs'),_eb=document.getElementById('prof-buts'),_ep=document.getElementById('prof-passes');
+    if(_sf[0]&&_em){_em.textContent=p[_sf[0].id]??0;const l=_em.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[0].lbl;}
+    if(_sf[1]&&_eb){_eb.textContent=p[_sf[1].id]??(_sf[1].txt?'—':0);const l=_eb.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[1].lbl;}
+    if(_sf[2]&&_ep){_ep.textContent=p[_sf[2].id]??(_sf[2].txt?'—':0);const l=_ep.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[2].lbl;}}
     const pb=document.getElementById('prof-position-badge');
     if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
@@ -4459,21 +4466,58 @@ function renderProfile(){
 
   buildEditForm(p);
 }
-window.renderProfile=renderProfile;
+
+// ── GSC SPORT STATS CONFIG ── multi-sports × multi-rôles
+const _GSC_STATS={
+  joueur:{
+    Football:{
+      Gardien:[{icon:'✋',id:'arrets',lbl:'Arrêts'},{icon:'🧤',id:'cleanSheets',lbl:'Clean sheets'},{icon:'🥅',id:'butsEncaissés',lbl:'Buts enc.'},{icon:'📊',id:'pctArrets',lbl:'% Arrêts',sfx:'%'},{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+      _:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'⚽',id:'buts',lbl:'Buts'},{icon:'🅰️',id:'passes',lbl:'Passes déc.'},{icon:'🟨',id:'cartonsJaunes',lbl:'C. jaunes'},{icon:'🟥',id:'cartonsRouges',lbl:'C. rouges'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]
+    },
+    Basketball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏀',id:'buts',lbl:'Points'},{icon:'🔄',id:'passes',lbl:'Passes'},{icon:'💪',id:'rebonds',lbl:'Rebonds'},{icon:'🛡️',id:'contres',lbl:'Contres'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Handball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🤾',id:'buts',lbl:'Buts'},{icon:'🅰️',id:'passes',lbl:'Passes'},{icon:'✋',id:'arrets',lbl:'Arrêts'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Volleyball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏐',id:'buts',lbl:'Points'},{icon:'🎯',id:'aces',lbl:'Aces'},{icon:'🛡️',id:'blocs',lbl:'Blocs'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    'Athlétisme':[{icon:'🏃',id:'matchsJoues',lbl:'Épreuves'},{icon:'⏱️',id:'meilleursTemps',lbl:'Meilleur temps',txt:true},{icon:'📈',id:'records',lbl:'Records'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Natation:[{icon:'🏊',id:'matchsJoues',lbl:'Compétitions'},{icon:'⏱️',id:'meilleursTemps',lbl:'Meilleur temps',txt:true},{icon:'📈',id:'records',lbl:'Records'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Boxe:[{icon:'🥊',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'💥',id:'ko',lbl:'KO'},{icon:'❌',id:'defaites',lbl:'Défaites'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
+    Judo:[{icon:'🥋',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
+    Tennis:[{icon:'📊',id:'classement',lbl:'Classement',txt:true},{icon:'🎾',id:'matchsJoues',lbl:'Matchs'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🏆',id:'trophees',lbl:'Titres'}],
+    Rugby:[{icon:'🏉',id:'matchsJoues',lbl:'Matchs'},{icon:'⚡',id:'buts',lbl:'Essais'},{icon:'🔄',id:'passes',lbl:'Transformations'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Cyclisme:[{icon:'🚴',id:'matchsJoues',lbl:'Courses'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
+    Taekwondo:[{icon:'🥋',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
+    _:[{icon:'🎯',id:'matchsJoues',lbl:'Matchs/Épr.'},{icon:'🥇',id:'buts',lbl:'Points/Buts'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]
+  },
+  arbitre:{
+    Football:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs arbitrés'},{icon:'🟨',id:'cartonsJaunes',lbl:'C. jaunes'},{icon:'🟥',id:'cartonsRouges',lbl:'C. rouges'},{icon:'📊',id:'niveauArbitrage',lbl:'Niveau',txt:true}],
+    _:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs arbitrés'},{icon:'📊',id:'niveauArbitrage',lbl:'Niveau',txt:true}]
+  },
+  entraineur:{_:[{icon:'📋',id:'matchsJoues',lbl:'Matchs dirigés'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🏆',id:'trophees',lbl:'Trophées'},{icon:'🎓',id:'diplomesCoach',lbl:'Diplômes',txt:true}]},
+  independant:{_:[{icon:'🎯',id:'matchsJoues',lbl:'Événements'},{icon:'🏆',id:'trophees',lbl:'Distinctions'}]},
+  eleve_etudiant:{_:[{icon:'🎮',id:'matchsJoues',lbl:'Compétitions'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]},
+  sportif_etranger:{_:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'⚽',id:'buts',lbl:'Buts/Points'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]},
+  handisport:{_:[{icon:'🏅',id:'matchsJoues',lbl:'Compétitions'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]}
+};
+function _gscResolveStats(p){
+  const role=p.role||'joueur';
+  const sport=(p.sport||'Football').replace(/^[^\w\u00C0-\u017E]+/,'').trim();
+  const rc=_GSC_STATS[role]||_GSC_STATS.joueur;
+  let cfg=rc[sport]||rc['_'];
+  if(role==='joueur'&&sport==='Football'&&cfg&&!Array.isArray(cfg)){
+    cfg=cfg[p.poste]||cfg['_'];
+  }
+  return Array.isArray(cfg)?cfg:[];
+}
+function renderSportStats(p){
   const container=document.getElementById('sport-stats-display');
   if(!container) return;
-  const sport=p.sport||'Football';
-  let items=[];
-  if(sport==='Football'){
-    items=p.poste==='Gardien'
-      ?[{icon:'✋',val:p.arrets??0,lbl:'Arrêts'},{icon:'🧤',val:p.cleanSheets??0,lbl:'Clean sheets'},{icon:'🥅',val:p.butsEncaissés??0,lbl:'Buts enc.'},{icon:'📊',val:(p.pctArrets??0)+'%',lbl:'% Arrêts'}]
-      :[{icon:'🥅',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes déc.'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'C. jaunes'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'C. rouges'}];
-  } else if(sport==='Basketball'){
-    items=[{icon:'🏀',val:p.buts??0,lbl:'Points'},{icon:'🔄',val:p.passes??0,lbl:'Passes'},{icon:'💪',val:p.tacles??0,lbl:'Rebonds'},{icon:'🛡️',val:p.interceptions??0,lbl:'Contres'}];
-  } else {
-    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées'}];
-  }
-  container.innerHTML=items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('');
+  const fields=_gscResolveStats(p);
+  if(!fields.length){container.innerHTML='';return;}
+  container.innerHTML=fields.map(f=>{
+    let v=p[f.id];
+    if(v===undefined||v===null||v==='') v=f.txt?'—':0;
+    if(f.sfx) v=v+f.sfx;
+    return `<div class="sport-stat-item"><div class="sport-stat-icon">${f.icon}</div><div><div class="sport-stat-val">${v}</div><div class="sport-stat-lbl">${f.lbl}</div></div></div>`;
+  }).join('');
 }
 
 function buildEditForm(p){
@@ -4573,20 +4617,23 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(p.role==='joueur'){
-      h+=`<div class="section-divider green">📊 Statistiques</div>`;
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
-        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
-        <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
-        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
-      </div>`;
+    if(isPersonnel){
+      const _sf=_gscResolveStats(p);
+      if(_sf.length){
+        h+=`<div class="section-divider green">📊 Statistiques</div>`;
+        let _sr='';
+        _sf.forEach((f,i)=>{
+          const v=p[f.id]!==undefined&&p[f.id]!==null?p[f.id]:(f.txt?'':0);
+          if(i%2===0) _sr+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+          if(f.txt){
+            _sr+=`<div class="form-group"><label>${f.icon} ${f.lbl}</label><input type="text" id="edit-stat-${f.id}" value="${v}" placeholder="${f.lbl}"></div>`;
+          } else {
+            _sr+=`<div class="form-group"><label>${f.icon} ${f.lbl}</label><input type="number" id="edit-stat-${f.id}" value="${v}" min="0"></div>`;
+          }
+          if(i%2===1||i===_sf.length-1) _sr+=`</div>`;
+        });
+        h+=_sr;
+      }
     }
   }
 
@@ -4719,7 +4766,6 @@ function addMandatField(){
   list.insertAdjacentHTML('beforeend',mandatFieldHtml({},i));
 }
 function removeMandatField(id){ document.getElementById(id)?.remove(); }
-window.buildEditForm=buildEditForm;
 window.updatePosteOptions=updatePosteOptions;
 function updatePosteOptions(){
   const sport=(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim();
@@ -4777,16 +4823,12 @@ async function saveProfile(){
       updates.clubsPrecedents=document.getElementById('edit-clubs-prec')?.value.trim()||'';
       updates.mandats=getMandatsFromForm();
     }
-    if(p.role==='joueur'){
-      Object.assign(updates,{
-        matchsJoues:parseInt(document.getElementById('edit-matchs')?.value)||0,
-        buts:parseInt(document.getElementById('edit-buts')?.value)||0,
-        passes:parseInt(document.getElementById('edit-passes')?.value)||0,
-        trophees:parseInt(document.getElementById('edit-trophees')?.value)||0,
-        cartonsJaunes:parseInt(document.getElementById('edit-cartons-j')?.value)||0,
-        cartonsRouges:parseInt(document.getElementById('edit-cartons-r')?.value)||0,
-      });
-    }
+    // Stats dynamiques selon sport × rôle
+    _gscResolveStats(p).forEach(f=>{
+      const el=document.getElementById('edit-stat-'+f.id);
+      if(!el) return;
+      updates[f.id]=f.txt?el.value.trim():(parseInt(el.value)||0);
+    });
   }
   if(isOrg){
     Object.assign(updates,{
@@ -4822,7 +4864,6 @@ async function saveProfile(){
     });
   }
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),updates);
     Object.assign(userProfile,updates);
     renderDashboard();renderProfile();
@@ -4851,8 +4892,8 @@ async function uploadProfilePhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
   const file=input.files[0];
-  const allowedTypes=['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif','image/bmp','image/tiff'];
-  if(!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) return toast('Format non autorisé. Utilisez une image (JPG, PNG, WEBP, etc.).','error');
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
   // Vérification professionnelle minimale (dimensions, format portrait recommandé)
   try{
@@ -4887,8 +4928,8 @@ async function uploadCoverPhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
   const file=input.files[0];
-  const allowedTypes=['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif','image/bmp','image/tiff'];
-  if(!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) return toast('Format non autorisé. Utilisez une image (JPG, PNG, WEBP, etc.).','error');
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
   // Vérification professionnelle minimale (format paysage recommandé pour une bannière)
   try{
@@ -5645,7 +5686,6 @@ async function adminSaveUser(){
     updatedAt:serverTimestamp()
   };
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),updates);
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) Object.assign(allAdminUsers[idx],updates);
@@ -5762,136 +5802,42 @@ async function handleBecomeSupporter(){
 window.handleBecomeSupporter=handleBecomeSupporter;
 
 // ── PHOTO GALLERY ──
-// ── GALERIE PHOTOS — max 10 par membre, propriétaire uniquement ──
-const GALLERY_MAX = 10;
-let _galleryCurrentUrl = null;
-let _galleryCurrentIndex = -1;
-
 function renderGallery(photos=[]){
   const container=document.getElementById('photo-gallery');
   if(!container) return;
   const label=document.getElementById('gallery-count-label');
-  const profilePhoto=userProfile?.photoURL||null;
-  if(label) label.textContent=photos.length+'/'+GALLERY_MAX+' photo'+(photos.length!==1?'s':'');
-  const canAdd = photos.length < GALLERY_MAX;
-  const addBtn = canAdd
-    ? `<div class="gallery-item gallery-add" onclick="document.getElementById('gallery-photo-input').click()" title="Ajouter une photo">📷</div>`
-    : '';
-  const limitMsg = !canAdd
-    ? `<div class="gallery-limit-msg">⚠️ Limite de ${GALLERY_MAX} photos atteinte. Supprimez-en une pour en ajouter.</div>`
-    : '';
-  const items=photos.map((url,i)=>{
-    const isProfile = url === profilePhoto;
-    return `<div class="gallery-item">
-      ${isProfile?'<div class="gallery-is-profile-badge">✓ Profil</div>':''}
-      <img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openGalleryModal('${url}',${i})">
-      <div class="gallery-item-overlay">
-        <div class="gallery-item-actions">
-          <button class="gallery-action-btn" onclick="event.stopPropagation();gallerySetAsProfileDirect(${i})" title="Définir comme photo de profil">⭐</button>
-          <button class="gallery-action-btn" onclick="event.stopPropagation();galleryDownloadDirect('${url}')" title="Télécharger">⬇️</button>
-          <button class="gallery-action-btn danger" onclick="event.stopPropagation();galleryDeleteDirect(${i})" title="Supprimer">🗑️</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  if(label) label.textContent=photos.length+' photo'+(photos.length!==1?'s':'');
+  const addBtn=`<div class="gallery-item gallery-add" onclick="document.getElementById('gallery-photo-input').click()">📷</div>`;
+  const items=photos.map((url,i)=>`<div class="gallery-item" onclick="openGalleryModal('${url}')"><img src="${url}" alt="Photo ${i+1}" loading="lazy"></div>`).join('');
   container.innerHTML=items+addBtn;
-  const limitEl=document.getElementById('gallery-limit-info');
-  if(limitEl) limitEl.innerHTML=limitMsg;
 }
-
-function openGalleryModal(url,idx){
-  _galleryCurrentUrl=url;
-  _galleryCurrentIndex=idx;
+function openGalleryModal(url){
   document.getElementById('gallery-modal-img').src=url;
   document.getElementById('gallery-modal').classList.add('open');
 }
-window.openGalleryModal=openGalleryModal;
-
 function closeGalleryModal(){
   document.getElementById('gallery-modal').classList.remove('open');
   document.getElementById('gallery-modal-img').src='';
-  _galleryCurrentUrl=null;
-  _galleryCurrentIndex=-1;
 }
+window.openGalleryModal=openGalleryModal;
 window.closeGalleryModal=closeGalleryModal;
-
-async function gallerySetAsProfile(){
-  if(_galleryCurrentUrl) await gallerySetAsProfileDirect(_galleryCurrentIndex);
-}
-window.gallerySetAsProfile=gallerySetAsProfile;
-
-async function gallerySetAsProfileDirect(idx){
-  const photos=userProfile?.photos||[];
-  const url=photos[idx];
-  if(!url||!db||!currentUser) return;
-  try{
-    await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
-    userProfile.photoURL=url;
-    renderDashboard();renderProfile();
-    toast('✅ Photo de profil mise à jour !','success');
-    closeGalleryModal();
-  }catch(e){ toast('Erreur : '+e.message,'error'); }
-}
-window.gallerySetAsProfileDirect=gallerySetAsProfileDirect;
-
-function galleryDownload(){
-  if(_galleryCurrentUrl) galleryDownloadDirect(_galleryCurrentUrl);
-}
-window.galleryDownload=galleryDownload;
-
-function galleryDownloadDirect(url){
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='photo-gsc.jpg';
-  a.target='_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-window.galleryDownloadDirect=galleryDownloadDirect;
-
-async function galleryDelete(){
-  if(_galleryCurrentIndex>=0) await galleryDeleteDirect(_galleryCurrentIndex);
-}
-window.galleryDelete=galleryDelete;
-
-async function galleryDeleteDirect(idx){
-  if(!confirm('Supprimer cette photo ?')) return;
-  if(!db||!currentUser||!userProfile) return;
-  const photos=[...(userProfile.photos||[])];
-  photos.splice(idx,1);
-  try{
-    await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',currentUser.uid),{photos,updatedAt:serverTimestamp()});
-    userProfile.photos=photos;
-    renderGallery(photos);
-    toast('🗑️ Photo supprimée.','info');
-    closeGalleryModal();
-  }catch(e){ toast('Erreur : '+e.message,'error'); }
-}
-window.galleryDeleteDirect=galleryDeleteDirect;
 
 async function uploadGalleryPhotos(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files.length||!currentUser) return;
-  const existing=userProfile.photos||[];
-  const slots=GALLERY_MAX-existing.length;
-  if(slots<=0){ toast('⚠️ Limite de '+GALLERY_MAX+' photos atteinte. Supprimez-en une pour en ajouter.','error'); input.value=''; return; }
-  const files=Array.from(input.files).slice(0,slots);
-  if(files.length<Array.from(input.files).length) toast('ℹ️ Seules '+files.length+' photo(s) ajoutée(s) (limite '+GALLERY_MAX+').','info');
+  const files=Array.from(input.files).slice(0,10);
   toast('📤 Upload de '+files.length+' photo(s)…','info');
+  const existingPhotos=userProfile.photos||[];
   const newUrls=[];
   for(const file of files){
-    if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo) : '+file.name,'error');continue;}
+    if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo).','error');continue;}
     try{
       const url=await uploadToCloudinary(file,'image');
       newUrls.push(url);
     }catch(e){toast('Erreur upload : '+e.message,'error');}
   }
   if(newUrls.length){
-    const updatedPhotos=[...existing,...newUrls];
-    await ensureFirebaseAuthViaSupabase();
+    const updatedPhotos=[...existingPhotos,...newUrls];
     await updateDoc(doc(db,'users',currentUser.uid),{photos:updatedPhotos,updatedAt:serverTimestamp()});
     userProfile.photos=updatedPhotos;
     renderGallery(updatedPhotos);
@@ -8105,8 +8051,5 @@ window.lookupManualGscId = lookupManualGscId;
   });
 })();
 </script>
-
-<!-- ── GSC PROFILE ENGINE — Moteur de fiches multi-sports ── -->
-<script src="gsc-profile-engine.js"></script>
 </body>
 </html>
