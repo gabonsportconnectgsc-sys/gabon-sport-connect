@@ -491,9 +491,9 @@
           <!-- CONTRATS / MANDATS -->
           <div class="subsection">📄 Contrat / Mandat actuel</div>
           <div class="form-row">
-            <div class="fg"><label>Club / Structure actuel(le)</label><input type="text" id="a-club-actuel" placeholder="Nom du club ou structure" oninput="onContratChange()"/></div>
+            <div class="fg"><label>Club / Structure actuel(le)</label><input type="text" id="a-club-actuel" placeholder="Nom du club ou structure"/></div>
             <div class="fg"><label>Type de contrat</label>
-              <select id="a-contrat-type" onchange="onContratChange()"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
+              <select id="a-contrat-type"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
             </div>
           </div>
           <div class="form-row">
@@ -501,74 +501,6 @@
             <div class="fg"><label>Fin de contrat</label><input type="month" id="a-contrat-fin"/></div>
           </div>
           <div class="fg"><label>Agent / Mandataire (optionnel)</label><input type="text" id="a-agent" placeholder="Nom de l'agent ou mandataire"/></div>
-
-          <!-- ── GESTION DES DROITS & PRÉVENTION FRAUDE ── -->
-          <div id="ownership-section" style="display:none;">
-            <div class="subsection" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left-color:#f97316;color:#92400e;">🔐 Droits sur votre fiche</div>
-
-            <!-- Avertissement contrat détecté -->
-            <div class="ownership-box" id="contract-warning">
-              <div class="ownership-title">⚠️ Contrat détecté — règle de propriété</div>
-              <div class="ownership-info">
-                Vous déclarez être sous contrat avec <strong id="owner-club-name">un club</strong>. Selon les règles GSC, <strong>votre club ou fédération employeur est l'administrateur principal de votre fiche</strong> tant que le contrat est actif.<br><br>
-                Votre fiche sera en <span class="status-badge locked">🔒 Lecture seule</span> jusqu'à ce que votre employeur valide et revendique la gestion.
-              </div>
-
-              <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#92400e;margin-bottom:8px;">Qui doit administrer votre fiche ?</div>
-              <div class="ownership-radio-group" id="ownership-radio-group">
-                <label class="own-radio" id="own-r1" onclick="selectOwnership('club_manage')">
-                  <input type="radio" name="ownership" value="club_manage"/>
-                  <div>
-                    <div class="own-radio-label">🏟️ Mon club / employeur administre ma fiche</div>
-                    <div class="own-radio-desc">Votre fiche sera verrouillée jusqu'à confirmation de votre club. Vous ne pourrez consulter qu'en lecture seule.</div>
-                  </div>
-                </label>
-                <label class="own-radio" id="own-r2" onclick="selectOwnership('self_manage')">
-                  <input type="radio" name="ownership" value="self_manage"/>
-                  <div>
-                    <div class="own-radio-label">🧍 Je gère ma fiche moi-même (accord club)</div>
-                    <div class="own-radio-desc">Vous certifiez avoir l'accord de votre structure pour administrer votre propre fiche. Un email de confirmation sera envoyé au club.</div>
-                  </div>
-                </label>
-                <label class="own-radio" id="own-r3" onclick="selectOwnership('free_agent')">
-                  <input type="radio" name="ownership" value="free_agent"/>
-                  <div>
-                    <div class="own-radio-label">🆓 Je suis free agent / sans contrat formel</div>
-                    <div class="own-radio-desc">Aucun lien contractuel contraignant. Vous administrez votre fiche librement dès validation admin.</div>
-                  </div>
-                </label>
-              </div>
-
-              <!-- Avertissement lecture seule (mode club_manage) -->
-              <div class="warn-box" id="warn-readonly">
-                🔒 <strong>Votre compte sera en lecture seule</strong> dès la connexion. Vous pourrez consulter votre fiche mais pas la modifier. Votre club recevra une notification pour revendiquer la gestion et vous débloquer.
-              </div>
-              <!-- Avertissement accord requis (mode self_manage) -->
-              <div class="warn-box" id="warn-selfmanage">
-                📧 <strong>Un email de vérification sera envoyé à votre club.</strong> Si votre club conteste dans les 7 jours, la gestion lui sera transférée automatiquement.
-              </div>
-            </div>
-
-            <!-- Coordonnées de l'employeur pour notification -->
-            <div id="employer-contact-section" style="display:none;margin-top:10px;">
-              <div class="ownership-box" style="padding-top:11px;">
-                <div class="ownership-title">📧 Coordonnées de votre employeur</div>
-                <div class="ownership-info">Nécessaires pour notifier votre club/fédération et déclencher la validation de propriété.</div>
-                <div class="form-row">
-                  <div class="fg"><label>Email du club / fédération</label><input type="email" id="a-employer-email" placeholder="contact@monclub.ga"/></div>
-                  <div class="fg"><label>Nom du responsable (optionnel)</label><input type="text" id="a-employer-contact" placeholder="ex: M. Obiang"/></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hors contrat : message libre -->
-          <div id="free-agent-notice" style="display:none;margin-top:10px;">
-            <div class="ownership-box" style="background:linear-gradient(135deg,var(--green-lt),#d4f0e4);border-color:rgba(0,158,96,.25);">
-              <div class="ownership-title" style="color:var(--green-dk);">✅ Fiche en gestion libre</div>
-              <div class="ownership-info" style="color:var(--green-dk);">Vous n'êtes sous aucun contrat contraignant. Vous administrerez votre fiche librement après validation par un admin GSC.</div>
-            </div>
-          </div>
 
           <!-- BIOGRAPHIE COURTE -->
           <div class="subsection">✍️ Présentation personnelle</div>
@@ -740,28 +672,24 @@
       <div class="success-wrap fade-in">
         <div class="success-ico g">🏅</div>
         <div class="success-title">Profil créé, <span id="sa-prenom"></span> !</div>
-        <div class="success-desc">Votre fiche <strong>Acteur Sportif</strong> a été soumise. Après validation, vous figurerez dans l'annuaire national.</div>
+        <div class="success-desc">Votre fiche <strong>Acteur Sportif</strong> est active et visible dans l'annuaire national.</div>
         <div class="perms-box green" style="text-align:left;margin-bottom:14px;">
           <div class="perms-title g">🏅 Votre compte Acteur Sportif</div>
-          <div class="perm-item y">✅ Fiche dans l'annuaire national dès validation</div>
+          <div class="perm-item y">✅ Fiche dans l'annuaire national</div>
           <div class="perm-item y">✅ Carte GSC officielle &amp; QR code personnel</div>
-          <div class="perm-item y">✅ Gestion de votre profil sportif complet</div>
+          <div class="perm-item y">✅ Gestion complète de votre profil sportif</div>
           <div class="perm-item y">✅ Accès aux outils — rôle : <strong id="sa-role"></strong></div>
-          <div class="perm-item" style="color:#92400e;">⏳ Validation en cours — votre fédération sera notifiée</div>
           <div class="perm-item" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,158,96,.2);">
             <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green-dk);display:block;margin-bottom:4px;">Votre identifiant GSC (QR Code)</span>
             <code id="sa-gscid" style="font-family:monospace;font-size:13px;font-weight:700;color:var(--navy);background:rgba(0,158,96,.08);padding:4px 10px;border-radius:6px;letter-spacing:.5px;">—</code>
           </div>
         </div>
-        <!-- Bloc dynamique droits — injecté par JS -->
-        <div id="sa-rights-block" style="margin-bottom:14px;display:none;"></div>
-
-        <div class="next-steps" id="sa-next-steps">
+        <div class="next-steps">
           <div class="ns"><div class="ns-num">1</div><div>Confirmez votre email de vérification</div></div>
-          <div class="ns"><div class="ns-num">2</div><div>Complétez votre profil : photo, biographie, palmarès</div></div>
-          <div class="ns"><div class="ns-num">3</div><div>Votre fédération valide votre fiche — vous recevrez une confirmation</div></div>
+          <div class="ns"><div class="ns-num">2</div><div>Connectez-vous et complétez votre profil : photo, biographie, palmarès</div></div>
+          <div class="ns"><div class="ns-num">3</div><div>Votre fiche est immédiatement visible dans l'annuaire national GSC</div></div>
         </div>
-        <button class="btn-p" onclick="goHome('login')">Se connecter (accès en lecture)</button>
+        <button class="btn-p" onclick="goHome('login')">Se connecter</button>
       </div>
     </div>
 
@@ -792,33 +720,6 @@
       _serverTimestamp = serverTimestamp;
     } catch(e) { console.warn("Firestore non disponible:", e); }
   })();
-
-  // ── DÉTECTION AUTOMATIQUE DE STRUCTURE SOUS CONTRAT ──
-  // Cherche si le club/fédération/association déclaré par l'acteur existe déjà
-  // et est actif dans la base. Si oui, les droits d'administration lui sont
-  // attribués automatiquement (sous réserve de confirmation admin en validation).
-  async function detecterStructureContractante(nomClub) {
-    const result = { found: false, uid: null, nom: null, ambiguous: false };
-    if (!db || !_collection || !nomClub) return result;
-    try {
-      const snap = await _getDocs(_query(_collection(db, 'users'), _where('role', 'in', ['club', 'federation', 'association'])));
-      const target = nomClub.trim().toLowerCase();
-      const matches = [];
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
-        const nom = (d.nomOrganisation || '').trim().toLowerCase();
-        if (nom && (nom === target || nom.includes(target) || target.includes(nom))) {
-          matches.push({ uid: d.uid || docSnap.id, nom: d.nomOrganisation, status: d.status });
-        }
-      });
-      const actives = matches.filter(m => m.status === 'active');
-      const exact = actives.find(m => m.nom.trim().toLowerCase() === target) || matches.find(m => m.nom.trim().toLowerCase() === target);
-      if (exact) { result.found = true; result.uid = exact.uid; result.nom = exact.nom; }
-      else if (actives.length === 1) { result.found = true; result.uid = actives[0].uid; result.nom = actives[0].nom; }
-      else if (matches.length > 1) { result.ambiguous = true; }
-    } catch (e) { console.warn('Détection structure échouée:', e); }
-    return result;
-  }
 
   // ── GSC ID — fonction identique à index.html & admin.html ──
   // Déterministe : même uid + même role → même GSC-ID partout dans l'application.
@@ -1021,14 +922,6 @@
     const hsCarte          = isHandisportRole ? (document.getElementById('a-hs-carte')?.value || '') : '';
     const hsBio            = isHandisportRole ? (document.getElementById('a-hs-bio')?.value?.trim() || '').slice(0,500) : '';
     const hsPalmares       = isHandisportRole ? (document.getElementById('a-hs-palmares')?.value?.trim() || '') : '';
-    // Droits & propriété
-    const ownershipChoice   = document.querySelector('input[name="ownership"]:checked')?.value || 'free_agent';
-    const employerEmail     = document.getElementById('a-employer-email')?.value?.trim() || '';
-    const employerContact   = document.getElementById('a-employer-contact')?.value?.trim() || '';
-    // Détermine si la fiche est verrouillée à la création
-    const hasBindingContract = isJoueurRole && ['Professionnel','Semi-professionnel'].includes(contratType);
-    const editLocked = hasBindingContract && ownershipChoice === 'club_manage';
-
     if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
@@ -1064,14 +957,6 @@
         // → même uid + même role = même code QR partout dans l'application
         const gscId = generateGscId(uid, selectedRole);
 
-        // ── DÉTECTION AUTOMATIQUE DE LA STRUCTURE CONTRACTANTE ──
-        let autoOwnerUid = null, autoOwnerNom = null, autoDetectionAmbiguous = false;
-        if (editLocked && clubActuel) {
-          const detection = await detecterStructureContractante(clubActuel);
-          if (detection.found) { autoOwnerUid = detection.uid; autoOwnerNom = detection.nom; }
-          autoDetectionAmbiguous = detection.ambiguous;
-        }
-
         const profile = {
           prenom, nom, role: selectedRole, accountType: 'acteur',
           sport, ville, telephone: tel, sexe, dateNaissance: ddn,
@@ -1093,30 +978,9 @@
             licenceFegoph: hsLicenceNum, carteInvalidite: hsCarte === 'oui',
             bio: hsBio, palmares: hsPalmares
           }),
-          gscId,          // stocké dès l'inscription pour cohérence admin ↔ public
-          club: clubActuel || '',  // dupliqué à la racine pour la recherche annuaire
-          status: 'pending', // en attente de validation par l'admin (createdAt posé par saveProfile — référence pour le délai 24h)
-          // ── DROITS & PROPRIÉTÉ ──
-          editLocked,       // true = fiche en lecture seule (contrat pro + club_manage)
-          ownershipStatus: editLocked
-                         ? (autoOwnerUid ? 'owner_confirmed_auto'        // structure détectée automatiquement
-                            : autoDetectionAmbiguous ? 'pending_owner_claim_ambiguous' // plusieurs structures possibles
-                            : 'pending_owner_claim')                    // club doit revendiquer / admin doit assigner
-                         : (hasBindingContract && ownershipChoice === 'self_manage') ? 'self_managed_pending_confirm'
-                         : 'free',                               // libre ou hors contrat
-          ownershipChoice,  // 'club_manage' | 'self_manage' | 'free_agent'
-          ownerRef: {       // coordonnées de l'employeur pour notification
-            clubName: clubActuel || '',
-            email: employerEmail,
-            contactName: employerContact
-          },
-          ownerUid: autoOwnerUid,     // rempli automatiquement si la structure est détectée, sinon par l'admin
-          ownerDetectedAuto: !!autoOwnerUid,
-          ownerConfirmedAt: autoOwnerUid ? new Date().toISOString() : null,
-          // Droit d'accès effectif à la connexion :
-          // editLocked=true  → mode visiteur jusqu'à ownerUid confirmé
-          // editLocked=false → accès acteur normal après validation status='active'
-          accessLevel: editLocked ? 'visitor_readonly' : 'pending_activation'
+          gscId,
+          club: clubActuel || '',
+          status: 'active'
         };
         await saveProfile(uid, email, profile);
         // Afficher le GSC-ID généré sur l'écran de succès
@@ -1125,15 +989,6 @@
       }
       document.getElementById('sa-prenom').textContent = prenom;
       document.getElementById('sa-role').textContent = ROLE_LABELS[selectedRole] || selectedRole;
-      // Afficher le bloc droits sur l'écran de succès
-      renderRightsBlock(editLocked, ownershipChoice, clubActuel, contratType, autoOwnerUid ? autoOwnerNom : null);
-      // Adapter le bouton de connexion
-      const loginBtn = document.querySelector('#sa .btn-p');
-      if (loginBtn) {
-        loginBtn.textContent = editLocked
-          ? 'Se connecter (accès en lecture seule)'
-          : 'Se connecter';
-      }
       show('sa');
     } catch(e) {
       errMsg('a-err', sbError(e));
@@ -1229,106 +1084,6 @@
       if (club || periode) entries.push({ club, periode, poste, matchs, stats });
     });
     return entries;
-  }
-
-  // ── OWNERSHIP / DROITS ──
-
-  let _ownershipChoice = 'free_agent';
-
-  function onContratChange() {
-    const type  = document.getElementById('a-contrat-type')?.value || '';
-    const club  = document.getElementById('a-club-actuel')?.value?.trim() || '';
-    const isBinding = ['Professionnel','Semi-professionnel'].includes(type);
-
-    const sec      = document.getElementById('ownership-section');
-    const freeNotice = document.getElementById('free-agent-notice');
-    const clubNameEl = document.getElementById('owner-club-name');
-
-    if (clubNameEl) clubNameEl.textContent = club || 'un club';
-
-    if (isBinding && club) {
-      if (sec)       { sec.style.display = 'block'; }
-      if (freeNotice){ freeNotice.style.display = 'none'; }
-    } else if (type && type !== 'Libre (sans club)' && club) {
-      if (sec)       { sec.style.display = 'none'; }
-      if (freeNotice){ freeNotice.style.display = 'block'; }
-      _ownershipChoice = 'free_agent';
-    } else {
-      if (sec)       { sec.style.display = 'none'; }
-      if (freeNotice){ freeNotice.style.display = type === 'Libre (sans club)' ? 'block' : 'none'; }
-      _ownershipChoice = 'free_agent';
-    }
-  }
-
-  function selectOwnership(choice) {
-    _ownershipChoice = choice;
-    ['own-r1','own-r2','own-r3'].forEach(id => {
-      document.getElementById(id)?.classList.remove('sel');
-    });
-    const map = { club_manage:'own-r1', self_manage:'own-r2', free_agent:'own-r3' };
-    document.getElementById(map[choice])?.classList.add('sel');
-
-    const warnRO = document.getElementById('warn-readonly');
-    const warnSM = document.getElementById('warn-selfmanage');
-    const empSec = document.getElementById('employer-contact-section');
-
-    if (warnRO) warnRO.classList.toggle('show', choice === 'club_manage');
-    if (warnSM) warnSM.classList.toggle('show', choice === 'self_manage');
-    if (empSec) empSec.style.display = (choice === 'club_manage' || choice === 'self_manage') ? 'block' : 'none';
-  }
-
-  function renderRightsBlock(editLocked, ownershipChoice, clubName, contratType, autoDetectedNom) {
-    const block = document.getElementById('sa-rights-block');
-    if (!block) return;
-    if (!contratType) { block.style.display = 'none'; return; }
-
-    let html = '';
-    if (editLocked && autoDetectedNom) {
-      html = `
-        <div class="ownership-box" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#93c5fd;text-align:left;">
-          <div class="ownership-title" style="color:#1e40af;">🤖 Structure détectée automatiquement</div>
-          <div class="ownership-info" style="color:#1e40af;">
-            Vous avez déclaré être sous contrat <strong>${contratType}</strong> avec <strong>${clubName || 'votre club'}</strong>.<br>
-            <strong>${autoDetectedNom}</strong> existe déjà dans le système GSC et a été automatiquement associé à votre fiche.<br>
-            Statut : <span class="status-badge pending">⏳ En attente de confirmation admin (sous 24h)</span>
-          </div>
-        </div>`;
-    } else if (editLocked) {
-      html = `
-        <div class="ownership-box locked" style="text-align:left;">
-          <div class="ownership-title red">🔒 Fiche en lecture seule</div>
-          <div class="ownership-info red">
-            Vous avez déclaré être sous contrat <strong>${contratType}</strong> avec <strong>${clubName || 'votre club'}</strong>.<br>
-            Votre fiche est <span class="status-badge locked">🔒 Verrouillée</span> jusqu'à ce que votre club revendique la gestion.<br><br>
-            <strong>À la connexion :</strong> vous aurez un accès en lecture seule (mode visiteur).
-          </div>
-          <div style="font-size:11.5px;color:#7f1d1d;font-weight:600;">⏳ Étapes suivantes :<br>
-            1. Votre club reçoit une notification GSC<br>
-            2. Il valide et revendique votre fiche dans l'admin<br>
-            3. Vous recevez la confirmation et obtenez l'accès complet
-          </div>
-        </div>`;
-    } else if (ownershipChoice === 'self_manage') {
-      html = `
-        <div class="ownership-box" style="text-align:left;">
-          <div class="ownership-title">📧 Confirmation club en attente</div>
-          <div class="ownership-info">
-            Vous avez choisi de gérer votre fiche vous-même. Un email a été envoyé à votre club.<br>
-            Statut : <span class="status-badge pending">⏳ En attente confirmation club</span>
-          </div>
-        </div>`;
-    } else {
-      html = `
-        <div class="ownership-box" style="background:linear-gradient(135deg,var(--green-lt),#d4f0e4);border-color:rgba(0,158,96,.25);text-align:left;">
-          <div class="ownership-title" style="color:var(--green-dk);">✅ Gestion libre</div>
-          <div class="ownership-info" style="color:var(--green-dk);">
-            Vous administrerez votre fiche librement après validation admin GSC.<br>
-            Statut : <span class="status-badge free">✅ Libre</span>
-          </div>
-        </div>`;
-    }
-    block.innerHTML = html;
-    block.style.display = 'block';
   }
 
   // Initialiser les étoiles au chargement
