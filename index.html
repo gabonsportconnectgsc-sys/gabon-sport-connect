@@ -101,14 +101,14 @@
       pointer-events:none;
     }
     /* Groupe droite : toutes les icônes sauf le logo */
-    .topnav-icons{display:flex;align-items:center;gap:7px;flex:0 1 auto;min-width:0;justify-content:flex-end;position:relative;z-index:1;}
+    .topnav-icons{display:flex;align-items:center;gap:6px;flex:0 0 auto;justify-content:flex-end;position:relative;z-index:1;}
     /* Rôle badge : tronqué sur très petits écrans */
     #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
-    .topnav .btn-hamburger{position:sticky;right:0;background:#0d1b2e;z-index:2;}
-    /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
-    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
-      flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
-    }
+    /* Mobile : masquer badge rôle et QR pour éviter le débordement */
+    #nav-rolebadge{display:none;}
+    #nav-qr-scan-btn{display:none !important;}
+    .topnav .btn-hamburger{flex-shrink:0;background:#0d1b2e;z-index:2;}
+    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge{flex-shrink:0;}
     /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
     .topnav .btn-icon,
     .topnav .visitor-banner,
@@ -146,6 +146,8 @@
       .topnav-logo-text span{font-size:15px;}
       .topnav-icons{gap:10px;}
       .visitor-banner,.user-avatar,.btn-icon{width:42px;height:42px;min-width:42px;min-height:42px;}
+      #nav-rolebadge{display:flex;}
+      #nav-qr-scan-btn{display:flex !important;}
     }
     /* ── Mobile ≤480px : texte logo réduit (visible, sans déborder) ── */
     @media (max-width:480px){
@@ -1123,6 +1125,7 @@
       <button class="side-menu-item" onclick="showView('sport');closeMenu()"><span class="smi-ico">⚽</span>Sport Gabon</button>
       <button class="side-menu-item" onclick="showView('stades');closeMenu()"><span class="smi-ico">🗺️</span>Carte sportive</button>
       <button class="side-menu-item" onclick="showView('actualites');closeMenu()"><span class="smi-ico">📰</span>Actualités</button>
+      <button class="side-menu-item" onclick="openQrScanner();closeMenu()"><span class="smi-ico">📷</span>Scanner un QR Code</button>
 
       <!-- MON COMPTE -->
       <div class="side-menu-divider" style="margin:6px 0;"></div>
