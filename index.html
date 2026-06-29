@@ -101,14 +101,18 @@
       pointer-events:none;
     }
     /* Groupe droite : toutes les icônes sauf le logo */
-    .topnav-icons{display:flex;align-items:center;gap:6px;flex:0 0 auto;justify-content:flex-end;position:relative;z-index:1;}
-    /* Rôle badge : tronqué sur très petits écrans */
-    #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
-    /* Mobile : masquer badge rôle et QR pour éviter le débordement */
+    .topnav-icons{display:flex;align-items:center;gap:4px;flex-shrink:0;justify-content:flex-end;position:relative;z-index:1;}
+    /* Icônes compactes sur mobile */
+    .topnav .btn-icon,.topnav .visitor-banner{
+      width:34px;height:34px;min-width:34px;min-height:34px;flex-shrink:0;
+    }
+    .topnav .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:15px;}
+    /* Badge rôle masqué sur mobile — trop large */
     #nav-rolebadge{display:none;}
-    #nav-qr-scan-btn{display:none !important;}
+    #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
     .topnav .btn-hamburger{flex-shrink:0;background:#0d1b2e;z-index:2;}
-    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge{flex-shrink:0;}
+    /* Cloche injectée par gsc-notifications.js */
+    #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
     /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
     .topnav .btn-icon,
     .topnav .visitor-banner,
@@ -147,30 +151,28 @@
       .topnav-icons{gap:10px;}
       .visitor-banner,.user-avatar,.btn-icon{width:42px;height:42px;min-width:42px;min-height:42px;}
       #nav-rolebadge{display:flex;}
-      #nav-qr-scan-btn{display:flex !important;}
     }
-    /* ── Mobile ≤480px : texte logo réduit (visible, sans déborder) ── */
+    /* ── Mobile ≤480px ── */
     @media (max-width:480px){
-      .topnav{padding:0 10px;}
-      .topnav-logo{gap:6px;}
-      .topnav-logo img{width:36px;height:36px;}
-      .topnav-logo-text{display:flex;max-width:62px;}
+      .topnav{padding:0 8px;}
+      .topnav-logo{gap:5px;}
+      .topnav-logo img{width:32px;height:32px;}
+      .topnav-logo-text{display:flex;max-width:58px;}
       .topnav-logo-text span{font-size:8px;letter-spacing:.1px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      .topnav-icons{gap:5px;}
-      .visitor-banner{width:32px;height:32px;min-width:32px;min-height:32px;font-size:15px;}
-      .btn-icon{width:32px;height:32px;min-width:32px;min-height:32px;font-size:15px;}
-      .user-avatar{width:32px;height:32px;min-width:32px;min-height:32px;font-size:15px;}
+      .topnav-icons{gap:3px;}
+      .topnav .btn-icon,.topnav .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .topnav .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:13px;}
       .user-name{display:none;}
       #nav-rolebadge .role-badge{font-size:8px;padding:2px 5px;max-width:60px;}
-      #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
+      #gsc-notif-bell .notif-bell-btn{width:30px;height:30px;}
     }
     @media (max-width:360px){
-      .topnav-logo-text{max-width:58px;}
-      .topnav-logo-text span{font-size:7.5px;}
-      .topnav-icons{gap:3px;}
-      .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
-      .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
-      .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .topnav-logo-text{max-width:50px;}
+      .topnav-logo-text span{font-size:7px;}
+      .topnav-icons{gap:2px;}
+      .topnav .btn-icon,.topnav .visitor-banner{width:28px;height:28px;min-width:28px;min-height:28px;}
+      .topnav .user-avatar{width:28px;height:28px;min-width:28px;min-height:28px;}
+      #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
     }
     @media (max-width:320px){
       .topnav-logo-text{display:none;}
@@ -1093,7 +1095,6 @@
         <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
       </div>
     </div>
-    <div class="topnav-spacer"></div>
     <div class="topnav-icons">
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
     <div id="nav-rolebadge"></div>
@@ -1125,7 +1126,6 @@
       <button class="side-menu-item" onclick="showView('sport');closeMenu()"><span class="smi-ico">⚽</span>Sport Gabon</button>
       <button class="side-menu-item" onclick="showView('stades');closeMenu()"><span class="smi-ico">🗺️</span>Carte sportive</button>
       <button class="side-menu-item" onclick="showView('actualites');closeMenu()"><span class="smi-ico">📰</span>Actualités</button>
-      <button class="side-menu-item" onclick="openQrScanner();closeMenu()"><span class="smi-ico">📷</span>Scanner un QR Code</button>
 
       <!-- MON COMPTE -->
       <div class="side-menu-divider" style="margin:6px 0;"></div>
