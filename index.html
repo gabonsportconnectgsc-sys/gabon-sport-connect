@@ -101,7 +101,9 @@
       pointer-events:none;
     }
     /* Groupe droite : toutes les icônes sauf le logo */
-    .topnav-icons{display:flex;align-items:center;gap:7px;flex-shrink:0;position:relative;z-index:1;}
+    .topnav-icons{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;justify-content:flex-end;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;position:relative;z-index:1;}
+    .topnav-icons::-webkit-scrollbar{display:none;}
+    .topnav .btn-hamburger{position:sticky;right:0;background:#0d1b2e;z-index:2;}
     /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
       flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
@@ -154,6 +156,7 @@
       .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      .user-name{display:none;}
       #nav-rolebadge{display:none;}
       #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
     }
@@ -4269,9 +4272,60 @@ function openActorDetail(uid){
     }
   }
   if(isOrg){
-    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${a.president}</span></div>`;
-    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
-    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${a.effectif} membres</span></div>`;
+    // ── Identité structurelle
+    html+=`<div class="adm-section"><div class="adm-section-title">🏛️ Identité de la structure</div>`;
+    if(a.nomOrganisation) html+=`<div class="adm-info-row"><span class="adm-info-label">Nom officiel</span><span class="adm-info-val">${a.nomOrganisation}</span></div>`;
+    if(a.typeOrganisation) html+=`<div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${a.typeOrganisation}</span></div>`;
+    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président / DG</span><span class="adm-info-val">${a.president}</span></div>`;
+    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondée en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
+    if(a.adresse) html+=`<div class="adm-info-row"><span class="adm-info-label">Siège social</span><span class="adm-info-val">📍 ${a.adresse}</span></div>`;
+    if(a.siteWeb) html+=`<div class="adm-info-row"><span class="adm-info-label">Site web</span><span class="adm-info-val"><a href="${a.siteWeb}" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;">${a.siteWeb}</a></span></div>`;
+    if(a.email) html+=`<div class="adm-info-row"><span class="adm-info-label">Contact</span><span class="adm-info-val">${a.email}</span></div>`;
+    if(a.telephone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">${a.telephone}</span></div>`;
+    html+=`</div>`;
+    // ── Chiffres clés
+    const hasStats=a.effectif||a.licencies||a.clubsAffilies||a.competitionsParAn||a.titresNationaux||a.evenementsOrganises||a.participantsTotal||a.budgetAnnuel;
+    if(hasStats){
+      html+=`<div class="adm-section"><div class="adm-section-title">📊 Chiffres clés</div><div class="adm-stats-grid">`;
+      if(a.effectif) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.effectif}</div><div class="adm-stat-lbl">👥 Membres</div></div>`;
+      if(a.licencies) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.licencies}</div><div class="adm-stat-lbl">🪪 Licenciés</div></div>`;
+      if(a.clubsAffilies) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.clubsAffilies}</div><div class="adm-stat-lbl">🏟️ Clubs affiliés</div></div>`;
+      if(a.competitionsParAn) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.competitionsParAn}</div><div class="adm-stat-lbl">🏆 Compétitions/an</div></div>`;
+      if(a.titresNationaux) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.titresNationaux}</div><div class="adm-stat-lbl">🥇 Titres nationaux</div></div>`;
+      if(a.evenementsOrganises) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.evenementsOrganises}</div><div class="adm-stat-lbl">📅 Événements org.</div></div>`;
+      if(a.participantsTotal) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.participantsTotal}</div><div class="adm-stat-lbl">👤 Participants</div></div>`;
+      if(a.capaciteAccueil) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.capaciteAccueil}</div><div class="adm-stat-lbl">🏟️ Capacité accueil</div></div>`;
+      if(a.anneesExperience) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.anneesExperience}</div><div class="adm-stat-lbl">📆 Ans d'expérience</div></div>`;
+      if(a.budgetAnnuel) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.budgetAnnuel}</div><div class="adm-stat-lbl">💰 Budget annuel</div></div>`;
+      html+=`</div></div>`;
+    }
+    // ── Infos spécifiques club
+    if(a.role==='club'||a.role==='association'){
+      html+=`<div class="adm-section"><div class="adm-section-title">⚽ Infos sportives</div>`;
+      if(a.division) html+=`<div class="adm-info-row"><span class="adm-info-label">Division / Ligue</span><span class="adm-info-val">🏅 ${a.division}</span></div>`;
+      if(a.stade) html+=`<div class="adm-info-row"><span class="adm-info-label">Stade / Terrain</span><span class="adm-info-val">🏟️ ${a.stade}</span></div>`;
+      if(a.couleursClub) html+=`<div class="adm-info-row"><span class="adm-info-label">Couleurs</span><span class="adm-info-val">🎨 ${a.couleursClub}</span></div>`;
+      if(a.entraîneur||a.entr) html+=`<div class="adm-info-row"><span class="adm-info-label">Entraîneur</span><span class="adm-info-val">📋 ${a.entraîneur||a.entr}</span></div>`;
+      html+=`</div>`;
+    }
+    // ── Organisateur : événement phare
+    if(a.role==='organisateur'){
+      html+=`<div class="adm-section"><div class="adm-section-title">📅 Activités</div>`;
+      if(a.evenementPhare) html+=`<div class="adm-info-row"><span class="adm-info-label">Événement phare</span><span class="adm-info-val">⭐ ${a.evenementPhare}</span></div>`;
+      if(a.partenaires) html+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires</span><span class="adm-info-val">${a.partenaires}</span></div>`;
+      html+=`</div>`;
+    }
+    // ── Fédération : partenaires & affiliations
+    if(a.role==='federation'){
+      html+=`<div class="adm-section"><div class="adm-section-title">🌐 Affiliations & Partenaires</div>`;
+      if(a.affiliationInternationale) html+=`<div class="adm-info-row"><span class="adm-info-label">Affiliation int.</span><span class="adm-info-val">${a.affiliationInternationale}</span></div>`;
+      if(a.partenaires) html+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires / sponsors</span><span class="adm-info-val">${a.partenaires}</span></div>`;
+      html+=`</div>`;
+    }
+    // ── Palmarès
+    if(a.palmares){
+      html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
+    }
   }
   // Élève / Étudiant — infos académiques
   if(a.role==='eleve_etudiant'){
@@ -4452,16 +4506,42 @@ function renderProfile(){
     document.getElementById('mandats-display').innerHTML=mandHtml;
   } else { mandatsCard.style.display='none'; }
 
-  // Club info display
+  // Club / Org info display
   if(isOrg){
     const ci=document.getElementById('club-info-display');
-    ci.innerHTML=`
-      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${p.president||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${p.effectif||'—'}</span></div>
-    `;
+    let ciHtml='';
+    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>`;
+    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>`;
+    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Président / DG</span><span class="adm-info-val">${p.president||'—'}</span></div>`;
+    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Fondée en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>`;
+    if(p.adresse) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Siège social</span><span class="adm-info-val">📍 ${p.adresse}</span></div>`;
+    if(p.siteWeb) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Site web</span><span class="adm-info-val"><a href="${p.siteWeb}" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;">${p.siteWeb}</a></span></div>`;
+    // Chiffres clés
+    const statsOrg=[
+      p.effectif?['👥 Membres',p.effectif]:null,
+      p.licencies?['🪪 Licenciés',p.licencies]:null,
+      p.clubsAffilies?['🏟️ Clubs affiliés',p.clubsAffilies]:null,
+      p.titresNationaux?['🥇 Titres nationaux',p.titresNationaux]:null,
+      p.competitionsParAn?['🏆 Compétitions/an',p.competitionsParAn]:null,
+      p.evenementsOrganises?['📅 Événements org.',p.evenementsOrganises]:null,
+      p.participantsTotal?['👤 Participants',p.participantsTotal]:null,
+      p.capaciteAccueil?['🏟️ Capacité accueil',p.capaciteAccueil]:null,
+      p.anneesExperience?['📆 Ans d\'expérience',p.anneesExperience]:null,
+      p.budgetAnnuel?['💰 Budget annuel',p.budgetAnnuel]:null,
+    ].filter(Boolean);
+    if(statsOrg.length){
+      ciHtml+=`<div class="adm-stats-grid" style="margin-top:12px;">`;
+      statsOrg.forEach(([lbl,val])=>{ciHtml+=`<div class="adm-stat"><div class="adm-stat-val" style="font-size:16px;">${val}</div><div class="adm-stat-lbl">${lbl}</div></div>`;});
+      ciHtml+=`</div>`;
+    }
+    if(p.division) ciHtml+=`<div class="adm-info-row" style="margin-top:8px;"><span class="adm-info-label">Division / Ligue</span><span class="adm-info-val">🏅 ${p.division}</span></div>`;
+    if(p.stade) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Stade / Terrain</span><span class="adm-info-val">🏟️ ${p.stade}</span></div>`;
+    if(p.couleursClub) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Couleurs</span><span class="adm-info-val">🎨 ${p.couleursClub}</span></div>`;
+    if(p.evenementPhare) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Événement phare</span><span class="adm-info-val">⭐ ${p.evenementPhare}</span></div>`;
+    if(p.partenaires) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires</span><span class="adm-info-val">${p.partenaires}</span></div>`;
+    if(p.affiliationInternationale) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Affiliation int.</span><span class="adm-info-val">${p.affiliationInternationale}</span></div>`;
+    if(p.palmares) ciHtml+=`<div style="margin-top:10px;padding:10px;background:var(--gray-bg);border-radius:8px;font-size:12.5px;color:#374151;line-height:1.5;"><strong>🏆 Palmarès</strong><br>${p.palmares}</div>`;
+    ci.innerHTML=ciHtml;
   }
 
   buildEditForm(p);
@@ -4638,10 +4718,10 @@ function buildEditForm(p){
   }
 
   if(isOrg){
-    h+=`<div class="section-divider orange">🏟️ Organisation</div>`;
-    h+=`<div class="form-group"><label>Nom de l'organisation</label><input type="text" id="edit-nom-org" value="${p.nomOrganisation||''}" placeholder="FC Libreville…"></div>`;
+    h+=`<div class="section-divider orange">🏛️ Identité de la structure</div>`;
+    h+=`<div class="form-group"><label>Nom officiel de l'organisation</label><input type="text" id="edit-nom-org" value="${p.nomOrganisation||''}" placeholder="FC Libreville, Fédération Gabonaise de Football…"></div>`;
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Type</label>
+      <div class="form-group"><label>Type de structure</label>
         <select id="edit-type-org">
           <option${p.typeOrganisation==='Club sportif'?' selected':''}>Club sportif</option>
           <option${p.typeOrganisation==='Association'?' selected':''}>Association</option>
@@ -4659,17 +4739,62 @@ function buildEditForm(p){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Président</label><input type="text" id="edit-president" value="${p.president||''}" placeholder="Nom du président"></div>
+      <div class="form-group"><label>Président / Directeur général</label><input type="text" id="edit-president" value="${p.president||''}" placeholder="Nom du président"></div>
       <div class="form-group"><label>Année de création</label><input type="number" id="edit-annee" value="${p.anneeCreation||''}" placeholder="2010"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Effectif (membres)</label><input type="number" id="edit-effectif" value="${p.effectif||0}" min="0"></div>
-      <div class="form-group"><label>Site web</label><input type="url" id="edit-siteweb" value="${p.siteWeb||''}" placeholder="https://…"></div>
+      <div class="form-group"><label>Adresse / Siège social</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>
+      <div class="form-group"><label>Site web officiel</label><input type="url" id="edit-siteweb" value="${p.siteWeb||''}" placeholder="https://…"></div>
     </div>
-    <div class="form-group"><label>Adresse / Siège</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>
     <div class="form-group"><label>Mon titre / rôle au sein de l'organisation</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Président, Secrétaire général, Organisateur principal…"></div>`;
+
+    h+=`<div class="section-divider blue">📊 Chiffres clés</div>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>👥 Effectif / Membres</label><input type="number" id="edit-effectif" value="${p.effectif||0}" min="0"></div>
+      <div class="form-group"><label>🪪 Licenciés</label><input type="number" id="edit-licencies" value="${p.licencies||0}" min="0"></div>
+    </div>`;
+
+    if(p.role==='federation'){
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🏟️ Clubs affiliés</label><input type="number" id="edit-clubs-affilies" value="${p.clubsAffilies||0}" min="0"></div>
+        <div class="form-group"><label>🏆 Compétitions organisées / an</label><input type="number" id="edit-competitions-an" value="${p.competitionsParAn||0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🥇 Titres nationaux remportés</label><input type="number" id="edit-titres-nat" value="${p.titresNationaux||0}" min="0"></div>
+        <div class="form-group"><label>🌐 Affiliation internationale</label><input type="text" id="edit-affiliation-int" value="${p.affiliationInternationale||''}" placeholder="FIFA, CAF, FIBA…"></div>
+      </div>
+      <div class="form-group"><label>🤝 Partenaires / Sponsors</label><input type="text" id="edit-partenaires" value="${p.partenaires||''}" placeholder="Ministère des Sports, Total Gabon…"></div>`;
+    }
+
+    if(p.role==='club'||p.role==='association'){
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🏅 Division / Ligue actuelle</label><input type="text" id="edit-division" value="${p.division||''}" placeholder="Ligue 1, Division Régionale…"></div>
+        <div class="form-group"><label>🥇 Titres nationaux</label><input type="number" id="edit-titres-nat" value="${p.titresNationaux||0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🏟️ Stade / Terrain home</label><input type="text" id="edit-stade" value="${p.stade||''}" placeholder="Stade Omar Bongo…"></div>
+        <div class="form-group"><label>🎨 Couleurs du club</label><input type="text" id="edit-couleurs" value="${p.couleursClub||''}" placeholder="Jaune et vert…"></div>
+      </div>
+      <div class="form-group"><label>💰 Budget annuel estimé</label><input type="text" id="edit-budget" value="${p.budgetAnnuel||''}" placeholder="Ex : 50 000 000 XAF"></div>`;
+    }
+
+    if(p.role==='organisateur'){
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>📅 Événements organisés (total)</label><input type="number" id="edit-evenements" value="${p.evenementsOrganises||0}" min="0"></div>
+        <div class="form-group"><label>👤 Participants (total cumulé)</label><input type="number" id="edit-participants" value="${p.participantsTotal||0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>⭐ Événement phare / Flagship</label><input type="text" id="edit-evenement-phare" value="${p.evenementPhare||''}" placeholder="Coupe du Gabon de Football…"></div>
+        <div class="form-group"><label>🏟️ Capacité d'accueil max</label><input type="number" id="edit-capacite" value="${p.capaciteAccueil||0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>📆 Années d'expérience</label><input type="number" id="edit-experience" value="${p.anneesExperience||0}" min="0"></div>
+        <div class="form-group"><label>🤝 Partenaires / Sponsors</label><input type="text" id="edit-partenaires" value="${p.partenaires||''}" placeholder="Sponsors, institutions…"></div>
+      </div>`;
+    }
+
     h+=`<div class="section-divider green">🏆 Palmarès / Historique</div>`;
-    h+=`<div class="form-group"><label>Palmarès</label><textarea id="edit-palmares" placeholder="Champion national 2023…">${p.palmares||''}</textarea></div>`;
+    h+=`<div class="form-group"><label>Palmarès détaillé</label><textarea id="edit-palmares" placeholder="Champion national 2023, Vainqueur Coupe du Gabon 2021…">${p.palmares||''}</textarea></div>`;
   }
 
   if(p.role==='arbitre'){
@@ -4838,10 +4963,28 @@ async function saveProfile(){
       president:document.getElementById('edit-president')?.value.trim()||'',
       anneeCreation:document.getElementById('edit-annee')?.value||'',
       effectif:parseInt(document.getElementById('edit-effectif')?.value)||0,
+      licencies:parseInt(document.getElementById('edit-licencies')?.value)||0,
       siteWeb:document.getElementById('edit-siteweb')?.value.trim()||'',
       adresse:document.getElementById('edit-adresse')?.value.trim()||'',
       palmares:document.getElementById('edit-palmares')?.value.trim()||'',
       titrePersonnalise:document.getElementById('edit-titre-perso')?.value.trim()||'',
+      titresNationaux:parseInt(document.getElementById('edit-titres-nat')?.value)||0,
+      // Club / Association
+      division:document.getElementById('edit-division')?.value.trim()||'',
+      stade:document.getElementById('edit-stade')?.value.trim()||'',
+      couleursClub:document.getElementById('edit-couleurs')?.value.trim()||'',
+      budgetAnnuel:document.getElementById('edit-budget')?.value.trim()||'',
+      // Fédération
+      clubsAffilies:parseInt(document.getElementById('edit-clubs-affilies')?.value)||0,
+      competitionsParAn:parseInt(document.getElementById('edit-competitions-an')?.value)||0,
+      affiliationInternationale:document.getElementById('edit-affiliation-int')?.value.trim()||'',
+      partenaires:document.getElementById('edit-partenaires')?.value.trim()||'',
+      // Organisateur
+      evenementsOrganises:parseInt(document.getElementById('edit-evenements')?.value)||0,
+      participantsTotal:parseInt(document.getElementById('edit-participants')?.value)||0,
+      evenementPhare:document.getElementById('edit-evenement-phare')?.value.trim()||'',
+      capaciteAccueil:parseInt(document.getElementById('edit-capacite')?.value)||0,
+      anneesExperience:parseInt(document.getElementById('edit-experience')?.value)||0,
     });
   }
   if(p.role==='arbitre'){
