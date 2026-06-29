@@ -3203,6 +3203,97 @@ function supabaseAuthErrorMessage(e){
 // Firebase avec ce token, ce qui rend request.auth.uid fiable dans les règles
 // Firestore (request.auth.uid == uid du document utilisateur).
 const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+const GSC_FIRESTORE_PROJECT = 'gabon-sport-connect';
+
+/**
+ * Écrit un profil utilisateur dans Firestore via la REST API publique.
+ * Ne dépend PAS de Firebase Auth — fonctionne même si le pont Cloudflare est down.
+ * @param {string} uid       - UID Supabase de l'utilisateur
+ * @param {object} profile   - Données du profil à écrire
+ * @param {boolean} merge    - Si true, PATCH (merge) ; si false, PUT (écrase)
+ */
+async function writeProfileViaRestAPI(uid, profile, merge = false) {
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${GSC_FIRESTORE_PROJECT}/databases/(default)/documents/users/${uid}`;
+
+  // Convertit un objet JS en champs Firestore REST
+  function toFirestoreFields(obj) {
+    const fields = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === null || v === undefined) {
+        fields[k] = { nullValue: null };
+      } else if (typeof v === 'boolean') {
+        fields[k] = { booleanValue: v };
+      } else if (typeof v === 'number') {
+        fields[k] = Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+      } else if (v instanceof Date) {
+        fields[k] = { timestampValue: v.toISOString() };
+      } else if (typeof v === 'object' && v.constructor?.name === 'Timestamp') {
+        // Firebase serverTimestamp → date actuelle
+        fields[k] = { timestampValue: new Date().toISOString() };
+      } else {
+        fields[k] = { stringValue: String(v) };
+      }
+    }
+    return fields;
+  }
+
+  const body = JSON.stringify({ fields: toFirestoreFields(profile) });
+
+  if (merge) {
+    // PATCH avec updateMask pour ne toucher que les champs fournis
+    const fieldPaths = Object.keys(profile).map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
+    const res = await fetch(`${baseUrl}?${fieldPaths}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `REST PATCH échoué (${res.status})`);
+    }
+  } else {
+    // PUT complet (crée ou remplace)
+    const res = await fetch(baseUrl, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `REST PUT échoué (${res.status})`);
+    }
+  }
+}
+window.writeProfileViaRestAPI = writeProfileViaRestAPI;
+
+/**
+ * Au démarrage de l'app, tente de synchroniser les profils qui n'ont pas pu
+ * être écrits lors d'une session précédente (stockés dans localStorage).
+ */
+async function syncPendingProfiles() {
+  try {
+    const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles') || '[]');
+    if (!pending.length) return;
+    console.log(`[GSC] ${pending.length} profil(s) en attente de synchronisation…`);
+    const remaining = [];
+    for (const item of pending) {
+      try {
+        await writeProfileViaRestAPI(item.uid, item.profile, false);
+        console.log(`[GSC] Profil ${item.uid} synchronisé avec succès.`);
+      } catch (e) {
+        // Si l'entrée a plus de 7 jours, on l'abandonne
+        if (Date.now() - (item.ts || 0) < 7 * 24 * 3600 * 1000) remaining.push(item);
+        else console.warn(`[GSC] Profil ${item.uid} abandonné après 7 jours :`, e?.message);
+      }
+    }
+    localStorage.setItem('gsc_pending_profiles', JSON.stringify(remaining));
+  } catch (e) {
+    console.warn('[GSC] syncPendingProfiles:', e?.message);
+  }
+}
+window.syncPendingProfiles = syncPendingProfiles;
+// Lancement automatique au démarrage (non-bloquant)
+setTimeout(syncPendingProfiles, 3000);
 let _firebaseCustomAuthPromise = null;
 
 async function ensureFirebaseAuthViaSupabase(){
@@ -3281,7 +3372,23 @@ async function onSupabaseSignedIn(user, extra){
     });
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
-    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
+      console.log('[GSC] Profil créé via SDK Firestore.');
+    }catch(e){
+      console.warn('[GSC] SDK Firestore échoué, tentative REST API :', e?.code, e?.message);
+      // Fallback : écriture via REST API Firestore (ne dépend pas de Firebase Auth)
+      try{
+        await writeProfileViaRestAPI(user.id, userProfile);
+        console.log('[GSC] Profil créé via REST API Firestore.');
+      }catch(e2){
+        console.warn('[GSC] REST API Firestore échoué, profil sauvegardé localement :', e2?.message);
+        // Dernier recours : mettre en attente pour synchronisation ultérieure
+        try{
+          const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles')||'[]');
+          pending.push({uid: user.id, profile: userProfile, ts: Date.now()});
+          localStorage.setItem('gsc_pending_profiles', JSON.stringify(pending));
+        }catch(e3){}
+      }
+    }
   }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
@@ -3339,10 +3446,18 @@ async function handleCompleteProfile(){
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
       await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
+      console.log('[GSC] Profil mis à jour via SDK Firestore.');
     }
   }catch(e){
     console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
-    // On continue quand même — les données sont déjà en mémoire et localStorage
+    // Fallback REST API
+    try{
+      await writeProfileViaRestAPI(userProfile.uid, {prenom, nom}, true);
+      console.log('[GSC] Profil mis à jour via REST API Firestore.');
+    }catch(e2){
+      console.warn('[GSC] REST API fallback échoué :', e2?.message);
+      // On continue quand même — les données sont déjà en mémoire et localStorage
+    }
   }
 
   closeModal('modal-complete-profile');
