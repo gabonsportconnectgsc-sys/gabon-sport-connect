@@ -159,7 +159,7 @@
       .btn-icon{width:32px;height:32px;min-width:32px;min-height:32px;font-size:15px;}
       .user-avatar{width:32px;height:32px;min-width:32px;min-height:32px;font-size:15px;}
       .user-name{display:none;}
-      #nav-rolebadge{display:none;}
+      #nav-rolebadge .role-badge{font-size:8px;padding:2px 5px;max-width:60px;}
       #gsc-notif-bell .notif-bell-btn{width:32px;height:32px;}
     }
     @media (max-width:360px){
@@ -3872,7 +3872,7 @@ function renderDashboard(){
   if(!userProfile) return;
   const p=userProfile;
   const fullname=[p.prenom,p.nom].filter(Boolean).join(' ')||p.email?.split('@')[0]||'Utilisateur';
-  const initial=fullname[0]?.toUpperCase()||'?';
+  const initial=(p.prenom?.[0]||fullname[0])?.toUpperCase()||'?';
   document.getElementById('nav-username').textContent=fullname;
   // Photo de profil : priorité Firebase, sinon localStorage (upload admin)
   const navPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})();
@@ -3890,7 +3890,7 @@ function renderDashboard(){
     navAv.style.fontSize='16px';
   }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
-  document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
+  document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${roleLabel}</span>`;
   const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
   document.getElementById('hero-name').textContent=`Bonjour, ${heroDisplayName} !`;
   document.getElementById('hero-role-label').textContent=roleLabel;
