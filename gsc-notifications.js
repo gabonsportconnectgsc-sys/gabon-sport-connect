@@ -867,9 +867,13 @@
     try{
       const {collection, query, where, orderBy, limit, onSnapshot} = window;
       if(typeof onSnapshot !== 'function') return;
+      /* Récupérer le rôle de l'utilisateur pour filtrer role:xxx */
+      const userRole = (window.userProfile && window.userProfile.role) ? ('role:'+window.userProfile.role) : null;
+      const recipientFilters = [uid,'all'];
+      if(userRole) recipientFilters.push(userRole);
       const q = query(
         collection(window.db, NOTIF_COLLECTION),
-        where('recipientId','in',[uid,'all']),
+        where('recipientId','in', recipientFilters),
         orderBy('createdAt','desc'),
         limit(50)
       );
@@ -881,9 +885,9 @@
         _notifications.forEach(n=>{
           if(n.createdAt?.seconds) n.createdAt = n.createdAt.seconds*1000;
         });
-        /* Nouvelles notifications — afficher toast */
+        /* Nouvelles notifications — toast seulement si je suis le destinataire (pas l'expéditeur) */
         if(_notifications.length > prev){
-          const newest = _notifications.find(n=>!n.read);
+          const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId);
           if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
         }
         updateBadge();
@@ -988,7 +992,7 @@
           icon: 'icon-192.png',
           badge: 'icon-192.png',
           data: { link: n.link, type: n.type },
-          adminSecret: ''
+          adminSecret: window._GSC_ADMIN_SECRET || ''
         })
       });
     }catch(e){ console.warn('Worker push error:', e); }
