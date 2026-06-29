@@ -104,7 +104,7 @@
     .topnav-icons{display:flex;align-items:center;gap:7px;flex:0 1 auto;min-width:0;justify-content:flex-end;position:relative;z-index:1;}
     /* Rôle badge : tronqué sur très petits écrans */
     #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
-    .topnav .btn-hamburger{background:#0d1b2e;}
+    .topnav .btn-hamburger{position:sticky;right:0;background:#0d1b2e;z-index:2;}
     /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
       flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
@@ -173,8 +173,6 @@
     @media (max-width:320px){
       .topnav-logo-text{display:none;}
     }
-    /* Wrapper du hamburger — sert d'ancre de positionnement pour le dropdown */
-    .topnav-hamburger-wrap{position:relative;flex-shrink:0;}
     .nav-menu-dropdown{
       position:absolute;top:calc(100% + 8px);right:0;
       background:var(--white);border:1px solid var(--gray-bd);
@@ -1094,27 +1092,26 @@
         <span class="l-sport">Sport</span>
         <span class="l-connect">Connect</span>
       </div>
+      <div class="nav-menu-dropdown" id="nav-menu-dropdown">
+        <a href="index.html" class="nav-menu-item"><span class="icon">🏠</span>Application</a>
+        <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
+        <div class="nav-menu-divider"></div>
+        <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
+      </div>
     </div>
+    <div class="topnav-spacer"></div>
     <div class="topnav-icons">
-      <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
-      <div id="nav-rolebadge"></div>
-      <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
-        <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
-        <div class="user-name" id="nav-username">…</div>
-      </div>
-      <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
-      <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter">👤</button>
-      <div class="topnav-hamburger-wrap">
-        <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleNavMenu()" title="Menu" aria-label="Ouvrir le menu">
-          <span class="hamburger-lines"><span></span><span></span><span></span></span>
-        </button>
-        <div class="nav-menu-dropdown" id="nav-menu-dropdown">
-          <a href="index.html" class="nav-menu-item"><span class="icon">🏠</span>Application</a>
-          <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
-          <div class="nav-menu-divider"></div>
-          <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
-        </div>
-      </div>
+    <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
+    <div id="nav-rolebadge"></div>
+    <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
+      <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
+      <div class="user-name" id="nav-username">…</div>
+    </div>
+    <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter">👤</button>
+    <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
+      <span class="hamburger-lines"><span></span><span></span><span></span></span>
+    </button>
     </div>
   </nav>
 
@@ -3546,7 +3543,7 @@ function toggleNavMenu(){
     if(dropdown.classList.contains('open')){
       setTimeout(function(){
         document.addEventListener('click',function closeDropdown(e){
-          if(!e.target.closest('.topnav-hamburger-wrap')){
+          if(!e.target.closest('.topnav-logo')){
             dropdown.classList.remove('open');
             document.removeEventListener('click',closeDropdown);
           }
