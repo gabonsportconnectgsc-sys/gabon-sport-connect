@@ -3657,7 +3657,7 @@ async function togglePushNotifications(){
       }
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
-        try{ await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
+        try{ await ensureFirebaseAuthViaSupabase(); await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
       }
     }else{
       toast('Notifications refusées.','info');
@@ -5007,6 +5007,7 @@ async function saveProfile(){
     });
   }
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),updates);
     Object.assign(userProfile,updates);
     renderDashboard();renderProfile();
@@ -5685,6 +5686,7 @@ function renderAdminUsersTable(users){
 async function adminApproveUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='active';
@@ -5700,6 +5702,7 @@ async function adminRejectUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='hidden';
@@ -5773,6 +5776,7 @@ async function adminToggleFederation(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{gereParFederation:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].gereParFederation=newVal;
@@ -5829,9 +5833,8 @@ async function adminSaveUser(){
     updatedAt:serverTimestamp()
   };
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),updates);
-    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
-    if(idx>=0) Object.assign(allAdminUsers[idx],updates);
     renderAdminUsersTable(allAdminUsers);
     updatePendingBanner();
     await loadActors();
@@ -5843,6 +5846,7 @@ async function adminToggleHide(uid,currentStatus){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newStatus=currentStatus==='hidden'?'active':'hidden';
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:newStatus,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status=newStatus;
@@ -5856,6 +5860,7 @@ async function adminDeleteUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer définitivement cet utilisateur ?')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'deleted',updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='deleted';
@@ -5901,6 +5906,7 @@ async function adminToggleSupporter(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{isSupporter:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].isSupporter=newVal;
@@ -5927,6 +5933,7 @@ async function handleBecomeSupporter(){
   const btn=document.getElementById('become-supporter-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',userProfile.uid),{isSupporter:true,clubSupporte:club,supporterSaisons:1,supporterMatchs:0,supporterAbonnement:'Nouveau supporter',updatedAt:serverTimestamp()});
     userProfile.isSupporter=true;
     userProfile.clubSupporte=club;
@@ -5981,6 +5988,7 @@ async function uploadGalleryPhotos(input){
   }
   if(newUrls.length){
     const updatedPhotos=[...existingPhotos,...newUrls];
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),{photos:updatedPhotos,updatedAt:serverTimestamp()});
     userProfile.photos=updatedPhotos;
     renderGallery(updatedPhotos);
@@ -6038,6 +6046,7 @@ async function uploadOwnDocument(input){
     const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
     const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
     const updatedDocs=[...existingDocs,newDoc];
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',targetUid),{documents:updatedDocs,updatedAt:serverTimestamp()});
     if(targetUid===currentUser?.uid){ userProfile.documents=updatedDocs; renderOwnDocuments(); }
     await loadActors();
@@ -6058,6 +6067,7 @@ async function removeOwnDocument(uid,idx){
   if(!confirm('Supprimer ce document ?')) return;
   const updated=docs.filter((_,i)=>i!==idx);
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documents:updated,updatedAt:serverTimestamp()});
     if(currentUser&&uid===currentUser.uid){ userProfile.documents=updated; renderOwnDocuments(); }
     await loadActors();
@@ -6070,6 +6080,7 @@ window.removeOwnDocument=removeOwnDocument;
 async function toggleDocumentVerifie(uid,value){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documentVerifie:value,updatedAt:serverTimestamp()});
     await loadActors();
     toast(value?'✅ Document marqué comme vérifié.':'Document marqué comme non vérifié.','success');
