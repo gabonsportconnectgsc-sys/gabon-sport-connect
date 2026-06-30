@@ -229,10 +229,10 @@
     .role-badge.arbitre{background:var(--purple);color:white;}
     .role-badge.entraineur{background:var(--teal);color:white;}
     .role-badge.association{background:var(--rose);color:white;}
-    .role-badge.independant{background:#0ea5e9;color:white;}
-    .role-badge.visiteur{background:#94a3b8;color:white;}
-    .role-badge.eleve_etudiant{background:#6366f1;color:white;}
-    .role-badge.sportif_etranger{background:#ca8a04;color:white;}
+    .role-badge.independant{background:#0a7bae;color:white;}
+    .role-badge.visiteur{background:#677280;color:white;}
+    .role-badge.eleve_etudiant{background:#595bd8;color:white;}
+    .role-badge.sportif_etranger{background:#976703;color:white;}
     .role-badge.handisport{background:#7c3aed;color:white;}
     .btn-icon{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
     .btn-icon:hover{background:rgba(255,255,255,.16);}
@@ -305,7 +305,7 @@
     }
     .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.6);font-size:10px;font-family:var(--font-body);font-weight:500;transition:color .2s;padding:6px 2px;position:relative;z-index:1;}
     .bnav-item .bnav-icon{font-size:26px;}
-    .bnav-item.active{color:#3ddc91;}
+    .bnav-item.active{color:var(--green-dk);}
     .main-content{padding-top:calc(72px + 12px);padding-bottom:80px;padding-left:10px;padding-right:10px;max-width:100%;margin:0 auto;width:100%;overflow-x:hidden;box-sizing:border-box;}
     .view{display:none;}.view.active{display:block;animation:fadeUp .35s ease;}
     .card{background:var(--white);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--gray-bd);overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;}
@@ -317,7 +317,7 @@
     .btn-sm:hover{background:var(--green);color:var(--white);}
     .btn-danger{padding:6px 14px;border:1.5px solid var(--danger);border-radius:var(--radius-sm);background:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
     .btn-danger:hover{background:var(--danger);color:var(--white);}
-    .btn-warn{padding:6px 14px;border:1.5px solid var(--warn);border-radius:var(--radius-sm);background:none;color:var(--warn);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+    .btn-warn{padding:6px 14px;border:1.5px solid var(--warn);border-radius:var(--radius-sm);background:none;color:#b45309;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
     .btn-warn:hover{background:var(--warn);color:var(--white);}
 
     /* Read-only notice */
@@ -8645,6 +8645,41 @@ window.lookupManualGscId = lookupManualGscId;
     const btn = document.getElementById('btn-install-gsc');
     if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; btn.style.opacity = '.7'; }
   });
+})();
+</script>
+<script>
+// --- Accessibilité clavier : rend focusables/activables au clavier tous les
+// éléments <div>/<span onclick=...> (cartes annuaire, actus, menu, etc.),
+// y compris ceux générés dynamiquement. Les fonds de modale (dismiss au clic
+// extérieur) et l'overlay du menu latéral sont volontairement exclus. ---
+(function(){
+  function enhance(el){
+    if(el.hasAttribute('tabindex')) return;
+    const oc = el.getAttribute('onclick') || '';
+    if(oc.includes('event.target===this')) return; // fond de modale, fermeture seule
+    if(el.classList.contains('side-menu-overlay')) return;
+    el.setAttribute('tabindex', '0');
+    if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
+  }
+  function scan(root){
+    if(!root.querySelectorAll) return;
+    root.querySelectorAll('div[onclick],span[onclick]').forEach(enhance);
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest('[role="button"][tabindex]');
+    if(t){ e.preventDefault(); t.click(); }
+  });
+  scan(document);
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType !== 1) return;
+        if(n.matches && n.matches('div[onclick],span[onclick]')) enhance(n);
+        scan(n);
+      });
+    });
+  }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
 </body>

@@ -2883,6 +2883,39 @@ tr.is-demo-row td { opacity: .82; }
 <script src="app-config-loader.js"></script>
 <script src="admin-cms.js"></script>
 <script src="admin-community.js"></script>
+<script>
+// --- Accessibilité clavier : rend focusables/activables au clavier tous les
+// éléments <div>/<span onclick=...>, y compris générés dynamiquement
+// (lignes signalements, listes utilisateurs, etc.). Fonds de modale exclus. ---
+(function(){
+  function enhance(el){
+    if(el.hasAttribute('tabindex')) return;
+    const oc = el.getAttribute('onclick') || '';
+    if(oc.includes('event.target===this')) return;
+    el.setAttribute('tabindex', '0');
+    if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
+  }
+  function scan(root){
+    if(!root.querySelectorAll) return;
+    root.querySelectorAll('div[onclick],span[onclick]').forEach(enhance);
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest('[role="button"][tabindex]');
+    if(t){ e.preventDefault(); t.click(); }
+  });
+  scan(document);
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType !== 1) return;
+        if(n.matches && n.matches('div[onclick],span[onclick]')) enhance(n);
+        scan(n);
+      });
+    });
+  }).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 
 </body>
 </html>
