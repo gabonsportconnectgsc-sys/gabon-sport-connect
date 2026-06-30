@@ -101,18 +101,15 @@
       pointer-events:none;
     }
     /* Groupe droite : toutes les icônes sauf le logo */
-    .topnav-icons{display:flex;align-items:center;gap:4px;flex-shrink:0;justify-content:flex-end;position:relative;z-index:1;}
-    /* Icônes compactes sur mobile */
-    .topnav .btn-icon,.topnav .visitor-banner{
-      width:34px;height:34px;min-width:34px;min-height:34px;flex-shrink:0;
-    }
-    .topnav .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:15px;}
-    /* Badge rôle masqué sur mobile — trop large */
+    .topnav-icons{display:flex;align-items:center;gap:5px;flex:0 1 auto;min-width:0;justify-content:flex-end;position:relative;z-index:1;}
+    /* Rôle badge : masqué sur mobile (trop large), visible desktop */
     #nav-rolebadge{display:none;}
     #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
-    .topnav .btn-hamburger{flex-shrink:0;background:#0d1b2e;z-index:2;}
-    /* Cloche injectée par gsc-notifications.js */
-    #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
+    .topnav .btn-hamburger{position:sticky;right:0;background:#0d1b2e;z-index:2;}
+    /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
+    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
+      flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
+    }
     /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
     .topnav .btn-icon,
     .topnav .visitor-banner,
@@ -154,24 +151,23 @@
     }
     /* ── Mobile ≤480px ── */
     @media (max-width:480px){
-      .topnav{padding:0 8px;}
+      .topnav{padding:0 6px;}
       .topnav-logo{gap:5px;}
-      .topnav-logo img{width:32px;height:32px;}
-      .topnav-logo-text{display:flex;max-width:58px;}
+      .topnav-logo img{width:34px;height:34px;}
+      .topnav-logo-text{display:flex;max-width:60px;}
       .topnav-logo-text span{font-size:8px;letter-spacing:.1px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .topnav-icons{gap:3px;}
-      .topnav .btn-icon,.topnav .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
-      .topnav .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:13px;}
+      .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:15px;}
+      .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:15px;}
+      .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
       .user-name{display:none;}
-      #nav-rolebadge .role-badge{font-size:8px;padding:2px 5px;max-width:60px;}
       #gsc-notif-bell .notif-bell-btn{width:30px;height:30px;}
     }
     @media (max-width:360px){
       .topnav-logo-text{max-width:50px;}
       .topnav-logo-text span{font-size:7px;}
       .topnav-icons{gap:2px;}
-      .topnav .btn-icon,.topnav .visitor-banner{width:28px;height:28px;min-width:28px;min-height:28px;}
-      .topnav .user-avatar{width:28px;height:28px;min-width:28px;min-height:28px;}
+      .visitor-banner,.btn-icon,.user-avatar{width:28px;height:28px;min-width:28px;min-height:28px;}
       #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
     }
     @media (max-width:320px){
@@ -1095,6 +1091,7 @@
         <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
       </div>
     </div>
+    <div class="topnav-spacer"></div>
     <div class="topnav-icons">
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
     <div id="nav-rolebadge"></div>
