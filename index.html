@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="icon-192.png">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#009E60" />
   <meta name="description" content="Plateforme nationale de gestion du sport au Gabon" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://www.gstatic.com https://www.googleapis.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://accounts.google.com; object-src 'none'; base-uri 'self';" />
   <!-- PWA iOS (Safari iPhone/iPad) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1319,7 +1319,13 @@
         </div>
 
         <!-- Mot de passe -->
-        <div class="form-group"><label>Mot de passe *</label><div class="pwd-wrap"><input type="password" id="auth-register-password" placeholder="6 caractères minimum" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-register-password',this)" title="Afficher/masquer">👁️</button></div></div>
+        <div class="form-group"><label>Mot de passe *</label><div class="pwd-wrap"><input type="password" id="auth-register-password" placeholder="8 caractères minimum, avec 1 chiffre" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-register-password',this)" title="Afficher/masquer">👁️</button></div></div>
+        <div class="form-group"><label>Confirmer le mot de passe *</label><div class="pwd-wrap"><input type="password" id="auth-register-password2" placeholder="Ressaisissez le mot de passe" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-register-password2',this)" title="Afficher/masquer">👁️</button></div></div>
+
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;margin-top:4px;">
+          <input type="checkbox" id="auth-register-cgu" style="width:18px;height:18px;min-width:18px;margin-top:2px;accent-color:var(--green);">
+          <label for="auth-register-cgu" style="font-size:12.5px;font-weight:500;color:var(--gray-txt);line-height:1.4;">J'accepte les <a href="#" onclick="event.preventDefault();showView('legal')" style="color:var(--green-dk);font-weight:700;">Mentions légales et Conditions Générales d'Utilisation</a> *</label>
+        </div>
 
         <button class="btn-sm" id="auth-register-submit" onclick="handleSupabaseRegister()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Créer mon compte</button>
         <div id="auth-register-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
@@ -1341,7 +1347,7 @@
       <!-- Vue: NOUVEAU MOT DE PASSE (après clic sur le lien reçu par email) -->
       <div id="auth-view-reset" style="display:none;">
         <div class="modal-title" style="margin-bottom:14px;">🔐 Nouveau mot de passe</div>
-        <div class="form-group"><label>Nouveau mot de passe</label><div class="pwd-wrap"><input type="password" id="auth-reset-password" placeholder="6 caractères minimum" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-reset-password',this)" title="Afficher/masquer">👁️</button></div></div>
+        <div class="form-group"><label>Nouveau mot de passe</label><div class="pwd-wrap"><input type="password" id="auth-reset-password" placeholder="8 caractères minimum, avec 1 chiffre" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-reset-password',this)" title="Afficher/masquer">👁️</button></div></div>
         <button class="btn-sm" id="auth-reset-submit" onclick="handleSupabaseResetPassword()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Mettre à jour le mot de passe</button>
         <div id="auth-reset-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
@@ -2751,6 +2757,38 @@
 
 <!-- GLOBAL FUNCTIONS (non-module) -->
 <script>
+// ── PERFORMANCE : compression côté client avant upload (réduit poids & temps de chargement) ──
+async function compressImageFile(file, maxDim=1600, quality=0.82){
+  if(!file || !file.type || !file.type.startsWith('image/') || file.type==='image/gif') return file;
+  try{
+    const img=await new Promise((resolve,reject)=>{
+      const im=new Image();
+      im.onload=()=>resolve(im);
+      im.onerror=reject;
+      im.src=URL.createObjectURL(file);
+    });
+    let {width:w,height:h}=img;
+    if(w<=maxDim && h<=maxDim) return file; // déjà assez léger
+    const ratio=Math.min(maxDim/w, maxDim/h);
+    w=Math.round(w*ratio); h=Math.round(h*ratio);
+    const canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',quality));
+    if(!blob || blob.size>=file.size) return file; // garde l'original si pas de gain
+    return new File([blob], file.name.replace(/\.[^.]+$/,'.jpg'), {type:'image/jpeg'});
+  }catch(e){ return file; } // best-effort : en cas d'échec, on garde le fichier original
+}
+// ── SÉCURITÉ : désactive console.log en production pour ne pas exposer la mécanique interne ──
+// (console.warn/error restent actifs pour le diagnostic). Ajoutez ?debug=1 à l'URL pour les réactiver.
+if(!/[?&]debug=1/.test(location.search)){
+  console.log = function(){};
+}
+// ── SÉCURITÉ : échappement systématique de tout contenu utilisateur injecté en HTML (anti-XSS) ──
+function escapeHtml(str){
+  if(str===null||str===undefined) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 // ── CLÉ API Firebase (partagée avec le bloc module bootstrap) ──
 
 // Garde en mémoire l'UID de l'acteur actuellement affiché dans la modale de détail,
@@ -3170,7 +3208,9 @@ async function handleSupabaseRegister(){
   const isSupporterOptIn=!ORG_ROLES_REG.includes(role)&&!!document.getElementById('auth-register-supporter')?.checked;
   const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
-  if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
+  if(password.length<8 || !/[0-9]/.test(password) || !/[a-zA-Z]/.test(password)){ errEl.textContent='Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre.'; errEl.style.display='block'; return; }
+  if(password!==document.getElementById('auth-register-password2')?.value){ errEl.textContent='Les deux mots de passe ne correspondent pas.'; errEl.style.display='block'; return; }
+  if(!document.getElementById('auth-register-cgu')?.checked){ errEl.textContent='Vous devez accepter les CGU pour créer un compte.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
   // Vérification doublon téléphone
   if(tel && db && typeof getDocs==='function'){
@@ -3234,7 +3274,7 @@ async function handleSupabaseResetPassword(){
   const errEl=document.getElementById('auth-reset-error');
   errEl.style.display='none';
   const password=document.getElementById('auth-reset-password').value;
-  if(!password||password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
+  if(!password||password.length<8||!/[0-9]/.test(password)||!/[a-zA-Z]/.test(password)){ errEl.textContent='Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
   const btn=document.getElementById('auth-reset-submit');
   btn.disabled=true; btn.textContent='Mise à jour…';
@@ -3258,7 +3298,7 @@ function supabaseAuthErrorMessage(e){
   const msg=(e&&e.message)||'';
   if(/invalid login credentials/i.test(msg)) return 'Email ou mot de passe incorrect.';
   if(/user already registered/i.test(msg)) return 'Un compte existe déjà avec cet email.';
-  if(/password should be at least/i.test(msg)) return 'Le mot de passe doit contenir au moins 6 caractères.';
+  if(/password should be at least/i.test(msg)) return 'Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre.';
   if(/email not confirmed/i.test(msg)) return 'Veuillez confirmer votre email avant de vous connecter.';
   if(/rate limit/i.test(msg)) return 'Trop de tentatives. Réessayez dans quelques minutes.';
   return msg || 'Une erreur est survenue. Réessayez.';
@@ -4170,12 +4210,12 @@ function renderActors(actors){
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
-      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const name=escapeHtml([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—');
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
       const roleKey=a.role||'joueur';
       const roleShort=ROLE_SHORT[roleKey]||roleKey;
       const roleIcon=ROLE_ICONS_MAP[roleKey]||'👤';
-      const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
+      const clubOrg=escapeHtml(a.club||a.nomOrganisation||a.nomEtablissement||'');
       const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
       // Ordre professionnel : ID · Rôle · Club/Association — affiché sous le nom
       const meta=[gscId,roleShort,clubOrg].filter(Boolean).join(' · ');
@@ -4282,7 +4322,7 @@ function renderActors(actors){
     let qrIndexCounter=0;
     const cardHtml=a=>{
       const id=a.uid||a.id;
-      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const name=escapeHtml([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—');
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
       const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ecole_universite:'École / Université'}[roleKey]||roleKey;
@@ -4291,9 +4331,15 @@ function renderActors(actors){
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
-      const clubOrg=a.club||a.nomOrganisation||a.nomEtablissement||'';
+      const clubOrg=escapeHtml(a.club||a.nomOrganisation||a.nomEtablissement||'');
       const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
       const qrIdx=qrIndexCounter++;
+      const sportTxt=escapeHtml(a.sport||a.sports?.join(', ')||'—');
+      const villeTxt=escapeHtml(a.ville||'—');
+      const niveauTxt=escapeHtml(a.niveau||'');
+      const etabTxt=escapeHtml(a.etablissement||'');
+      const nationTxt=escapeHtml(a.nationalite||'');
+      const statutProTxt=escapeHtml(a.statutPro||'');
       return `
         <div class="actor-card" onclick="openActorDetail('${id}')">
           <div class="actor-card-header">
@@ -4312,11 +4358,11 @@ function renderActors(actors){
               </div>
             </div>
             ${clubOrg?`<div class="actor-meta-row">🏟️ ${clubOrg}</div>`:''}
-            <div class="actor-meta-row">🏅 ${a.sport||a.sports?.join(', ')||'—'}</div>
-            <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
-            ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
-            ${a.etablissement?`<div class="actor-meta-row">🎓 ${a.etablissement}</div>`:''}
-            ${a.nationalite?`<div class="actor-meta-row">🌍 ${a.nationalite}${a.statutPro?' · '+a.statutPro:''}</div>`:''}
+            <div class="actor-meta-row">🏅 ${sportTxt}</div>
+            <div class="actor-meta-row">📍 ${villeTxt}</div>
+            ${niveauTxt?`<div class="actor-meta-row">📊 ${niveauTxt}</div>`:''}
+            ${etabTxt?`<div class="actor-meta-row">🎓 ${etabTxt}</div>`:''}
+            ${nationTxt?`<div class="actor-meta-row">🌍 ${nationTxt}${statutProTxt?' · '+statutProTxt:''}</div>`:''}
           </div>
         </div>`;
     };
@@ -5161,7 +5207,8 @@ async function uploadProfilePhoto(input){
   }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
   toast('📤 Upload en cours…','info');
   try{
-    const url=await uploadToCloudinary(file,'image');
+    const compressed=await compressImageFile(file);
+    const url=await uploadToCloudinary(compressed,'image');
     // S'assure qu'une session Firebase Auth (via Custom Token Supabase) est bien
     // ouverte avant d'écrire dans Firestore. Sans ça, request.auth est null côté
     // règles et l'updateDoc échoue avec "Missing or insufficient permissions".
@@ -5197,7 +5244,8 @@ async function uploadCoverPhoto(input){
   }catch(e){ /* validation best-effort, on continue si l'image ne peut être inspectée */ }
   toast('📤 Upload de la couverture en cours…','info');
   try{
-    const url=await uploadToCloudinary(file,'image');
+    const compressed=await compressImageFile(file, 1920);
+    const url=await uploadToCloudinary(compressed,'image');
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),{coverURL:url,updatedAt:serverTimestamp()});
     userProfile.coverURL=url;
@@ -5457,15 +5505,19 @@ function renderNewsFiltered(){
   const isAdmin=userProfile?.role==='admin';
   const makeCard=n=>{
     const accentClass=n.cat==='Football'?'football':n.cat==='Basketball'?'basketball':n.cat==='Gabon'?'gabon':'other';
-    return `<div class="news-online-card" ${n.url&&n.url!=='#'?`onclick="window.open('${n.url}','_blank')"`:''}> 
+    const title=escapeHtml(n.title);
+    const source=escapeHtml(n.source||'GSC Sport');
+    const cat=escapeHtml(n.cat||'Sport');
+    const excerpt=n.excerpt?escapeHtml(n.excerpt.substring(0,200))+'…':'';
+    return `<div class="news-online-card" ${n.url&&n.url!=='#'?`onclick="window.open('${encodeURI(n.url)}','_blank')"`:''}> 
       <div class="news-online-accent ${accentClass}"></div>
       <div class="news-online-body">
-        <div class="news-online-source">${n.source||'GSC Sport'}</div>
-        <div class="news-online-title">${n.title}</div>
-        ${n.excerpt?`<div class="news-online-excerpt">${n.excerpt.substring(0,200)}…</div>`:''}
+        <div class="news-online-source">${source}</div>
+        <div class="news-online-title">${title}</div>
+        ${excerpt?`<div class="news-online-excerpt">${excerpt}</div>`:''}
         <div class="news-online-footer">
-          <span class="news-online-cat">${n.cat||'Sport'}</span>
-          <span class="news-online-date">🕐 ${n.date||'Récent'}</span>
+          <span class="news-online-cat">${cat}</span>
+          <span class="news-online-date">🕐 ${escapeHtml(n.date||'Récent')}</span>
           ${isAdmin&&!n.online?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();deleteNews('${n.id}')">🗑️</button>`:''}
         </div>
       </div>
@@ -5478,10 +5530,10 @@ function renderNewsFiltered(){
     <div class="news-card">
       <div class="news-accent"></div>
       <div class="news-body">
-        <div class="news-cat">${n.cat||'Sport'}</div>
-        <div class="news-title">${n.title}</div>
-        <div class="news-excerpt">${(n.excerpt||'').substring(0,120)}</div>
-        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span></div>
+        <div class="news-cat">${escapeHtml(n.cat||'Sport')}</div>
+        <div class="news-title">${escapeHtml(n.title)}</div>
+        <div class="news-excerpt">${escapeHtml((n.excerpt||'').substring(0,120))}</div>
+        <div class="news-footer"><span class="news-date">🕐 ${escapeHtml(n.date||'Récent')}</span><span class="news-tag">${escapeHtml(n.tag||'')}</span></div>
       </div>
     </div>`).join('');
   const adm=document.getElementById('news-list-admin');
@@ -5489,10 +5541,10 @@ function renderNewsFiltered(){
     <div class="news-card">
       <div class="news-accent"></div>
       <div class="news-body">
-        <div class="news-cat">${n.cat||'Sport'}</div>
-        <div class="news-title">${n.title}</div>
-        <div class="news-excerpt">${n.excerpt||''}</div>
-        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span>
+        <div class="news-cat">${escapeHtml(n.cat||'Sport')}</div>
+        <div class="news-title">${escapeHtml(n.title)}</div>
+        <div class="news-excerpt">${escapeHtml(n.excerpt||'')}</div>
+        <div class="news-footer"><span class="news-date">🕐 ${escapeHtml(n.date||'Récent')}</span><span class="news-tag">${escapeHtml(n.tag||'')}</span>
           <button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteNews('${n.id}')">🗑️</button>
         </div>
       </div>
@@ -6263,7 +6315,8 @@ async function uploadGalleryPhotos(input){
   for(const file of files){
     if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo) : '+file.name,'error');continue;}
     try{
-      const url=await uploadToCloudinary(file,'image');
+      const compressed=await compressImageFile(file);
+      const url=await uploadToCloudinary(compressed,'image');
       newUrls.push(url);
     }catch(e){toast('Erreur upload : '+e.message,'error');}
   }
