@@ -897,10 +897,27 @@
     .gallery-item:hover img{transform:scale(1.05);}
     .gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
     .gallery-add:hover{background:#d4f0e4;}
-    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:250;align-items:center;justify-content:center;}
+    .gallery-item-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+    .gallery-item:hover .gallery-item-overlay{display:flex;}
+    .gallery-item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+    .gallery-action-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;transition:background .18s;white-space:nowrap;}
+    .gallery-action-btn:hover{background:rgba(255,255,255,.35);}
+    .gallery-action-btn.danger{border-color:#f87171;color:#f87171;}
+    .gallery-action-btn.danger:hover{background:rgba(248,113,113,.25);}
+    .gallery-is-profile-badge{position:absolute;top:5px;left:5px;background:var(--green);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;pointer-events:none;}
+    .gallery-limit-msg{font-size:11px;color:var(--gray-txt);text-align:center;margin-top:6px;padding:6px;background:var(--gray-bg);border-radius:6px;}
+    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
     .gallery-modal.open{display:flex;}
-    .gallery-modal img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:var(--radius-sm);}
+    .gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
+    .gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm);}
     .gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+    .gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;}
+    .gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
+    .gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
+    .gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
+    .gallery-modal-btn.primary{border-color:var(--green);color:#4ade80;}
+    .gallery-modal-btn.primary:hover{background:rgba(0,158,96,.25);}
 
     /* Documents personnels (carte d'identité, licence, justificatifs…) */
     .doc-detail-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;}
@@ -1832,8 +1849,8 @@
       <div class="profile-header-card fade-up">
         <div class="avatar-upload-wrap">
           <div class="profile-avatar-lg" id="prof-avatar-lg">?</div>
-          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
-          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadProfilePhoto(this)">
+          <label class="avatar-edit-btn" for="photo-input" id="avatar-edit-btn-label" title="Changer la photo (JPG, PNG, WEBP, GIF, AVIF — max 5 Mo)">📷</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
         </div>
         <div style="text-align:center;font-size:10px;color:var(--gray-txt);margin-top:4px;">JPG/PNG/WEBP · min. 200×200 px · max 5 Mo</div>
         <div class="profile-fullname" id="prof-fullname">…</div>
@@ -1937,6 +1954,7 @@
         </div>
         <div class="card-body">
           <div class="photo-gallery" id="photo-gallery"></div>
+          <div id="gallery-limit-info"></div>
           <input type="file" id="gallery-photo-input" accept="image/*" multiple style="display:none" onchange="uploadGalleryPhotos(this)">
         </div>
       </div>
@@ -2693,7 +2711,14 @@
 <!-- PHOTO GALLERY MODAL -->
 <div class="gallery-modal" id="gallery-modal" onclick="if(event.target===this)closeGalleryModal()">
   <button class="gallery-modal-close" onclick="closeGalleryModal()">✕</button>
-  <img id="gallery-modal-img" src="" alt="Photo">
+  <div class="gallery-modal-img-wrap">
+    <img id="gallery-modal-img" src="" alt="Photo">
+  </div>
+  <div class="gallery-modal-toolbar" id="gallery-modal-toolbar">
+    <button class="gallery-modal-btn primary" onclick="gallerySetAsProfile()">⭐ Photo de profil</button>
+    <button class="gallery-modal-btn" onclick="galleryDownload()">⬇️ Télécharger</button>
+    <button class="gallery-modal-btn danger" onclick="galleryDelete()">🗑️ Supprimer</button>
+  </div>
 </div>
 
 <!-- ACTOR DETAIL MODAL -->
@@ -2869,6 +2894,36 @@ var db=null, _fbApp=null;
 // Firestore function stubs — assigned when firebase-ready fires
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
     query, orderBy, serverTimestamp, deleteDoc, where, limit;
+
+// ── STATISTIQUES PAR SPORT — jargon adapté à chaque discipline ──
+const SPORT_STATS = {
+  Football:[['matchsJoues','Matchs joués'],['buts','Buts marqués'],['passes','Passes décisives'],['trophees','Trophées'],['cartonsJaunes','Cartons jaunes'],['cartonsRouges','Cartons rouges']],
+  Basketball:[['matchsJoues','Matchs joués'],['buts','Points marqués'],['passes','Passes décisives'],['rebonds','Rebonds'],['interceptions','Interceptions'],['trophees','Trophées']],
+  Handball:[['matchsJoues','Matchs joués'],['buts','Buts marqués'],['passes','Passes décisives'],['arrets','Arrêts (gardien)'],['exclusions','Exclusions 2 min'],['trophees','Trophées']],
+  Volleyball:[['matchsJoues','Matchs joués'],['buts','Points marqués'],['aces','Aces (services gagnants)'],['blocks','Contres (blocks)'],['receptions','Réceptions réussies'],['trophees','Trophées']],
+  Rugby:[['matchsJoues','Matchs joués'],['buts','Essais marqués'],['passes','Passes décisives'],['transformations','Transformations'],['plaquages','Plaquages'],['trophees','Trophées']],
+  Tennis:[['matchsJoues','Matchs joués'],['victoires','Victoires'],['defaites','Défaites'],['aces','Aces'],['titres','Titres remportés'],['trophees','Trophées']],
+  Boxe:[['matchsJoues','Combats disputés'],['victoires','Victoires'],['defaites','Défaites'],['ko','Victoires par KO'],['trophees','Titres / Ceintures']],
+  'Athlétisme':[['participations','Compétitions disputées'],['records','Records personnels battus'],['medailles','Médailles'],['trophees','Titres / Trophées']],
+  Natation:[['participations','Compétitions disputées'],['records','Records personnels battus'],['medailles','Médailles'],['trophees','Titres / Trophées']],
+  Judo:[['matchsJoues','Combats disputés'],['victoires','Victoires'],['defaites','Défaites'],['ippons','Ippons marqués'],['trophees','Titres / Ceintures']],
+  Cyclisme:[['participations','Courses disputées'],['victoires',"Victoires d'étape"],['classements','Podiums / Classements'],['trophees','Titres / Trophées']],
+  Taekwondo:[['matchsJoues','Combats disputés'],['victoires','Victoires'],['defaites','Défaites'],['points','Points marqués'],['trophees','Titres / Ceintures']],
+};
+
+// Champs physiques pertinents par sport — évite "Pied fort/Main" hors contexte
+const PHYSICAL_FIELDS = {
+  Football:[['pied','Pied fort',['Droit','Gauche','Les deux']]],
+  Rugby:[['pied','Pied fort',['Droit','Gauche','Les deux']]],
+  Basketball:[['main','Main directrice',['Droitier','Gaucher','Ambidextre']]],
+  Handball:[['main','Main directrice',['Droitier','Gaucher','Ambidextre']]],
+  Volleyball:[['main','Main directrice',['Droitier','Gaucher','Ambidextre']]],
+  Tennis:[['main','Main directrice',['Droitier','Gaucher','Ambidextre']]],
+  Boxe:[['main','Garde',['Orthodoxe (droitier)','Sud-paw (gaucher)']]],
+  Judo:[['main','Garde',['Droite (Migi)','Gauche (Hidari)']]],
+  Taekwondo:[['main',"Jambe d'appui",['Droite','Gauche']]],
+  'Athlétisme':[],Natation:[],Cyclisme:[],
+};
 
 // ── POSTES ──
 const POSTES = {
@@ -3256,6 +3311,92 @@ async function ensureFirebaseAuthViaSupabase(){
 }
 window.ensureFirebaseAuthViaSupabase = ensureFirebaseAuthViaSupabase;
 
+const GSC_FIRESTORE_PROJECT = 'gabon-sport-connect';
+
+/**
+ * Écrit un profil utilisateur dans Firestore via la REST API publique.
+ * Ne dépend PAS de Firebase Auth — fonctionne même si le pont Cloudflare est down.
+ * @param {string} uid       - UID Supabase de l'utilisateur
+ * @param {object} profile   - Données du profil à écrire
+ * @param {boolean} merge    - Si true, PATCH (merge) ; si false, PUT (écrase)
+ */
+async function writeProfileViaRestAPI(uid, profile, merge = false) {
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${GSC_FIRESTORE_PROJECT}/databases/(default)/documents/users/${uid}`;
+
+  function toFirestoreFields(obj) {
+    const fields = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === null || v === undefined) {
+        fields[k] = { nullValue: null };
+      } else if (typeof v === 'boolean') {
+        fields[k] = { booleanValue: v };
+      } else if (typeof v === 'number') {
+        fields[k] = Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+      } else if (v instanceof Date) {
+        fields[k] = { timestampValue: v.toISOString() };
+      } else if (typeof v === 'object' && v.constructor?.name === 'Timestamp') {
+        fields[k] = { timestampValue: new Date().toISOString() };
+      } else {
+        fields[k] = { stringValue: String(v) };
+      }
+    }
+    return fields;
+  }
+
+  const body = JSON.stringify({ fields: toFirestoreFields(profile) });
+
+  if (merge) {
+    const fieldPaths = Object.keys(profile).map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
+    const res = await fetch(`${baseUrl}?${fieldPaths}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `REST PATCH échoué (${res.status})`);
+    }
+  } else {
+    const res = await fetch(baseUrl, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `REST PUT échoué (${res.status})`);
+    }
+  }
+}
+window.writeProfileViaRestAPI = writeProfileViaRestAPI;
+
+/**
+ * Au démarrage de l'app, tente de synchroniser les profils qui n'ont pas pu
+ * être écrits lors d'une session précédente (stockés dans localStorage).
+ */
+async function syncPendingProfiles() {
+  try {
+    const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles') || '[]');
+    if (!pending.length) return;
+    console.log(`[GSC] ${pending.length} profil(s) en attente de synchronisation…`);
+    const remaining = [];
+    for (const item of pending) {
+      try {
+        await writeProfileViaRestAPI(item.uid, item.profile, false);
+        console.log(`[GSC] Profil ${item.uid} synchronisé avec succès.`);
+      } catch (e) {
+        if (Date.now() - (item.ts || 0) < 7 * 24 * 3600 * 1000) remaining.push(item);
+        else console.warn(`[GSC] Profil ${item.uid} abandonné après 7 jours :`, e?.message);
+      }
+    }
+    localStorage.setItem('gsc_pending_profiles', JSON.stringify(remaining));
+  } catch (e) {
+    console.warn('[GSC] syncPendingProfiles:', e?.message);
+  }
+}
+window.syncPendingProfiles = syncPendingProfiles;
+setTimeout(syncPendingProfiles, 3000);
+
 // Appelé après un login/signup/reset Supabase réussi : relie l'identité Supabase
 // au profil Firestore existant (collection 'users', clé = uid Supabase).
 async function onSupabaseSignedIn(user, extra){
@@ -3294,7 +3435,21 @@ async function onSupabaseSignedIn(user, extra){
     });
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
-    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
+      console.log('[GSC] Profil créé via SDK Firestore.');
+    }catch(e){
+      console.warn('[GSC] SDK Firestore échoué, tentative REST API :', e?.code, e?.message);
+      try{
+        await writeProfileViaRestAPI(user.id, userProfile);
+        console.log('[GSC] Profil créé via REST API Firestore.');
+      }catch(e2){
+        console.warn('[GSC] REST API Firestore échoué, profil mis en attente :', e2?.message);
+        try{
+          const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles')||'[]');
+          pending.push({uid: user.id, profile: userProfile, ts: Date.now()});
+          localStorage.setItem('gsc_pending_profiles', JSON.stringify(pending));
+        }catch(e3){}
+      }
+    }
   }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
@@ -3352,10 +3507,17 @@ async function handleCompleteProfile(){
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
       await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
+      console.log('[GSC] Profil mis à jour via SDK Firestore.');
     }
   }catch(e){
     console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
-    // On continue quand même — les données sont déjà en mémoire et localStorage
+    try{
+      await writeProfileViaRestAPI(userProfile.uid, {prenom, nom}, true);
+      console.log('[GSC] Profil mis à jour via REST API Firestore.');
+    }catch(e2){
+      console.warn('[GSC] REST API fallback échoué :', e2?.message);
+      // On continue quand même — les données sont déjà en mémoire et localStorage
+    }
   }
 
   closeModal('modal-complete-profile');
@@ -3620,6 +3782,13 @@ async function togglePushNotifications(){
     toast('Notifications non supportées sur ce navigateur.','error');
     return;
   }
+  /* Déléguer entièrement à GSCNotif.togglePush pour éviter les doublons d'abonnement */
+  if(window.GSCNotif && typeof window.GSCNotif.togglePush === 'function'){
+    const fakeInput = { checked: Notification.permission !== 'granted' };
+    await window.GSCNotif.togglePush(fakeInput);
+    refreshNotifMenuState();
+    return;
+  }
   if(Notification.permission==='denied'){
     toast('Notifications bloquées : autorisez-les dans les réglages du site.','error');
     return;
@@ -3633,17 +3802,41 @@ async function togglePushNotifications(){
     refreshNotifMenuState();
     if(perm==='granted'){
       toast('🔔 Notifications activées !','success');
-      // Notification de confirmation via le Service Worker
-      if('serviceWorker' in navigator){
-        const reg=await navigator.serviceWorker.ready;
-        reg.showNotification('Gabon Sport Connect',{
-          body:'Les notifications sont activées. Vous recevrez les actualités sportives et mises à jour.',
-          icon:'data:image/png;base64,'+(document.querySelector('.topnav-logo img')?.src.split('base64,')[1]||'')
-        });
+      // Enregistrer l'abonnement push auprès du Worker Cloudflare
+      if('serviceWorker' in navigator && 'PushManager' in window){
+        try{
+          const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+          const reg = await navigator.serviceWorker.ready;
+          const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
+          const { publicKey } = await keyResp.json();
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: (function urlB64(b){
+              const pad='='.repeat((4-b.length%4)%4);
+              const base64=(b+pad).replace(/-/g,'+').replace(/_/g,'/');
+              const raw=window.atob(base64);
+              return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+            })(publicKey)
+          });
+          const userId = currentUser ? currentUser.uid : 'anonymous';
+          await fetch(WORKER_URL+'/subscribe',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ subscription: sub, userId })
+          });
+          reg.showNotification('Gabon Sport Connect',{
+            body:'Notifications activées ! Vous recevrez les actualités en temps réel.',
+            icon:'icon-192.png',
+            badge:'icon-192.png'
+          });
+        }catch(swErr){
+          console.warn('Push subscribe error:',swErr);
+          // Repli silencieux : la notification locale reste activée même si l'abonnement push échoue
+        }
       }
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
-        try{ await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
+        try{ await ensureFirebaseAuthViaSupabase(); await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
       }
     }else{
       toast('Notifications refusées.','info');
@@ -4230,13 +4423,16 @@ function openActorDetail(uid){
       if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
-    // Stats
+    // Stats — adaptées au sport pratiqué
     if(a.role==='joueur'){
-      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
+      const statSportKey=Object.keys(SPORT_STATS).find(k=>(a.sport||'').includes(k))||'Football';
+      const statsList=SPORT_STATS[statSportKey]||SPORT_STATS['Football'];
+      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques (${a.sport||statSportKey})</div>`;
       html+=`<div class="adm-stats-grid">`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
+      statsList.slice(0,4).forEach(([key,label])=>{
+        const shortLbl=label.length>14?label.split(' ')[0]:label;
+        html+=`<div class="adm-stat"><div class="adm-stat-val">${a[key]??0}</div><div class="adm-stat-lbl">${shortLbl}</div></div>`;
+      });
       html+=`</div></div>`;
     }
     // Mandats
@@ -4309,6 +4505,19 @@ function openActorDetail(uid){
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://www.paralympic.org/" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 Comité Paralympique International</a>
     </div>`;
+    html+=`</div>`;
+  }
+  // Sportif étranger — pays d'origine, statut de séjour
+  if(a.role==='sportif_etranger' && (a.paysOrigine||a.statutSejour)){
+    html+=`<div class="adm-section"><div class="adm-section-title">🌍 Profil sportif étranger</div>`;
+    if(a.paysOrigine) html+=`<div class="adm-info-row"><span class="adm-info-label">Pays d'origine</span><span class="adm-info-val">${a.paysOrigine}</span></div>`;
+    if(a.statutSejour) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut de séjour</span><span class="adm-info-val">${a.statutSejour}</span></div>`;
+    html+=`</div>`;
+  }
+  // Entraîneur — diplôme
+  if(a.role==='entraineur' && a.diplome){
+    html+=`<div class="adm-section"><div class="adm-section-title">📋 Qualification</div>`;
+    html+=`<div class="adm-info-row"><span class="adm-info-label">Diplôme</span><span class="adm-info-val">${a.diplome}</span></div>`;
     html+=`</div>`;
   }
   if(a.bio){
@@ -4394,10 +4603,11 @@ function renderProfile(){
   const becomeSuppCard=document.getElementById('prof-become-supporter-card');
   if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
-  // Gallery card
+  // Gallery card — visible pour tous les membres inscrits (rôles acteurs sportifs)
+  const allActorRoles=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','club','association','federation','organisateur','ecole_universite'];
   const gallCard=document.getElementById('prof-gallery-card');
   if(gallCard){
-    gallCard.style.display=!isVisitor?'':'none';
+    gallCard.style.display=(!isVisitor && allActorRoles.includes(p.role))?'':'none';
     renderGallery(p.photos||[]);
   }
 
@@ -4508,24 +4718,7 @@ function buildEditForm(p){
       <div class="form-group"><label>Taille (cm)</label><input type="number" id="edit-taille" value="${p.taille||''}" placeholder="175"></div>
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Pied fort</label>
-        <select id="edit-pied">
-          <option value="">—</option>
-          <option${p.pied==='Droit'?' selected':''}>Droit</option>
-          <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
-          <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Main</label>
-        <select id="edit-main">
-          <option value="">—</option>
-          <option${p.main==='Droitier'?' selected':''}>Droitier</option>
-          <option${p.main==='Gaucher'?' selected':''}>Gaucher</option>
-          <option${p.main==='Ambidextre'?' selected':''}>Ambidextre</option>
-        </select>
-      </div>
-    </div>`;
+    <div id="physical-extra-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>`;
 
     h+=`<div class="section-divider orange">🏅 Informations sportives</div>`;
     const sports=['Football','Basketball','Handball','Volleyball','Athlétisme','Natation','Boxe','Judo','Tennis','Rugby','Cyclisme','Taekwondo'];
@@ -4574,20 +4767,53 @@ function buildEditForm(p){
     }
 
     if(p.role==='joueur'){
-      h+=`<div class="section-divider green">📊 Statistiques</div>`;
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
-        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
-        <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
-        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
-      </div>`;
+      const statSport=Object.keys(SPORT_STATS).find(k=>(p.sport||'').includes(k))||'Football';
+      const stats=SPORT_STATS[statSport]||SPORT_STATS['Football'];
+      h+=`<div class="section-divider green">📊 Statistiques (${statSport})</div>`;
+      h+=`<div id="stats-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
+      stats.forEach(([key,label])=>{
+        h+=`<div class="form-group"><label>${label}</label><input type="number" id="edit-stat-${key}" value="${p[key]??0}" min="0"></div>`;
+      });
+      h+=`</div>`;
     }
+  }
+
+  if(p.role==='entraineur'){
+    h+=`<div class="section-divider teal" style="border-color:#0d9488;">📋 Profil d'entraîneur / coach</div>`;
+    h+=`<div class="form-group"><label>Diplôme / Certification</label><input type="text" id="edit-diplome" value="${p.diplome||''}" placeholder="Ex : Diplôme CAF C, Brevet d'État, UEFA Pro…"></div>`;
+    h+=`<div class="form-group"><label>Spécialité d'entraînement</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Entraîneur gardiens, Préparateur physique, Sélectionneur…"></div>`;
+  }
+
+  if(p.role==='eleve_etudiant'){
+    h+=`<div class="section-divider indigo" style="border-color:#6366f1;">🎓 Profil académique</div>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Niveau scolaire</label>
+        <select id="edit-niveau-scolaire">
+          <option value="">—</option>
+          ${['Primaire','Collège','Lycée','Licence','Master','Doctorat','Formation professionnelle'].map(v=>`<option${p.niveauScolaire===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Filière</label><input type="text" id="edit-filiere" value="${p.filiere||''}" placeholder="Ex : STAPS, Sciences, Lettres…"></div>
+    </div>
+    <div class="form-group"><label>Établissement</label><input type="text" id="edit-etablissement" value="${p.etablissement||''}" placeholder="Nom de l'école / université"></div>`;
+  }
+
+  if(p.role==='sportif_etranger'){
+    h+=`<div class="section-divider gold" style="border-color:#ca8a04;">🌍 Profil sportif étranger</div>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Pays d'origine</label><input type="text" id="edit-pays-origine" value="${p.paysOrigine||''}" placeholder="Pays de provenance"></div>
+      <div class="form-group"><label>Statut de séjour</label>
+        <select id="edit-statut-sejour">
+          <option value="">—</option>
+          ${['Résident','Visa sportif','Visa étudiant','Visa de travail','Titre de séjour permanent'].map(v=>`<option${p.statutSejour===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }
+
+  if(p.role==='independant'){
+    h+=`<div class="section-divider green">🏃 Profil sportif indépendant</div>`;
+    h+=`<div class="form-group"><label>Discipline(s) pratiquée(s)</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Course à pied amateur, Fitness, Trail…"></div>`;
   }
 
   if(isOrg){
@@ -4754,11 +4980,21 @@ window.updatePosteOptions=updatePosteOptions;
 function updatePosteOptions(){
   const sport=(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim();
   const sel=document.getElementById('edit-poste');
-  if(!sel) return;
-  const sportKey=Object.keys(POSTES).find(k=>sport.includes(k))||'Football';
-  const opts=(POSTES[sportKey]||['Joueur']);
-  const cur=userProfile?.poste||'';
-  sel.innerHTML=opts.map(p=>`<option${p===cur?' selected':''}>${p}</option>`).join('');
+  if(sel){
+    const sportKey=Object.keys(POSTES).find(k=>sport.includes(k))||'Football';
+    const opts=(POSTES[sportKey]||['Joueur']);
+    const cur=userProfile?.poste||'';
+    sel.innerHTML=opts.map(p=>`<option${p===cur?' selected':''}>${p}</option>`).join('');
+  }
+  const physWrap=document.getElementById('physical-extra-fields');
+  if(physWrap){
+    const sportKey=Object.keys(PHYSICAL_FIELDS).find(k=>sport.includes(k))||'Football';
+    const fields=PHYSICAL_FIELDS[sportKey]||[];
+    physWrap.innerHTML=fields.map(([key,label,opts])=>{
+      const cur=userProfile?.[key]||'';
+      return `<div class="form-group"><label>${label}</label><select id="edit-${key}"><option value="">—</option>${opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('')}</select></div>`;
+    }).join('');
+  }
 }
 
 function getMandatsFromForm(){
@@ -4789,18 +5025,22 @@ async function saveProfile(){
     updatedAt:serverTimestamp()
   };
   if(isPersonnel){
+    const chosenSport=(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim();
     Object.assign(updates,{
       dateNaissance:document.getElementById('edit-dob')?.value||'',
       nationalite:document.getElementById('edit-nationalite')?.value.trim()||'Gabonaise',
       taille:parseInt(document.getElementById('edit-taille')?.value)||0,
       poids:parseInt(document.getElementById('edit-poids')?.value)||0,
-      pied:document.getElementById('edit-pied')?.value||'',
-      main:document.getElementById('edit-main')?.value||'',
-      sport:(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim(),
+      sport:chosenSport,
       poste:document.getElementById('edit-poste')?.value||'',
       niveau:document.getElementById('edit-niveau')?.value||'Amateur',
       licenceNumero:document.getElementById('edit-licence-num')?.value.trim()||'',
       licenceExpire:document.getElementById('edit-licence-exp')?.value||'',
+    });
+    // Champs physiques dynamiques (pied/main/garde selon sport)
+    const physSportKey=Object.keys(PHYSICAL_FIELDS).find(k=>chosenSport.includes(k))||'Football';
+    (PHYSICAL_FIELDS[physSportKey]||[]).forEach(([key])=>{
+      updates[key]=document.getElementById('edit-'+key)?.value||'';
     });
     if(!fedManaged){
       updates.club=document.getElementById('edit-club')?.value.trim()||'';
@@ -4808,13 +5048,9 @@ async function saveProfile(){
       updates.mandats=getMandatsFromForm();
     }
     if(p.role==='joueur'){
-      Object.assign(updates,{
-        matchsJoues:parseInt(document.getElementById('edit-matchs')?.value)||0,
-        buts:parseInt(document.getElementById('edit-buts')?.value)||0,
-        passes:parseInt(document.getElementById('edit-passes')?.value)||0,
-        trophees:parseInt(document.getElementById('edit-trophees')?.value)||0,
-        cartonsJaunes:parseInt(document.getElementById('edit-cartons-j')?.value)||0,
-        cartonsRouges:parseInt(document.getElementById('edit-cartons-r')?.value)||0,
+      const statSportKey=Object.keys(SPORT_STATS).find(k=>chosenSport.includes(k))||'Football';
+      (SPORT_STATS[statSportKey]||SPORT_STATS['Football']).forEach(([key])=>{
+        updates[key]=parseInt(document.getElementById('edit-stat-'+key)?.value)||0;
       });
     }
   }
@@ -4844,6 +5080,22 @@ async function saveProfile(){
       infrastructures:document.getElementById('edit-ecole-infra')?.value.trim()||'',
       responsableSports:document.getElementById('edit-ecole-responsable')?.value.trim()||'',
     });
+  }
+  if(p.role==='entraineur'){
+    updates.diplome=document.getElementById('edit-diplome')?.value.trim()||'';
+    updates.titrePersonnalise=document.getElementById('edit-titre-perso')?.value.trim()||'';
+  }
+  if(p.role==='eleve_etudiant'){
+    updates.niveauScolaire=document.getElementById('edit-niveau-scolaire')?.value||'';
+    updates.filiere=document.getElementById('edit-filiere')?.value.trim()||'';
+    updates.etablissement=document.getElementById('edit-etablissement')?.value.trim()||'';
+  }
+  if(p.role==='sportif_etranger'){
+    updates.paysOrigine=document.getElementById('edit-pays-origine')?.value.trim()||'';
+    updates.statutSejour=document.getElementById('edit-statut-sejour')?.value||'';
+  }
+  if(p.role==='independant'){
+    updates.titrePersonnalise=document.getElementById('edit-titre-perso')?.value.trim()||'';
   }
   if(p.role==='handisport'){
     Object.assign(updates,{
@@ -4890,8 +5142,8 @@ async function uploadProfilePhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
   const file=input.files[0];
-  const allowedTypes=['image/jpeg','image/png','image/webp'];
-  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
+  const allowedTypes=['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif','image/bmp','image/tiff'];
+  if(!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) return toast('Format non autorisé. Utilisez une image (JPG, PNG, WEBP, etc.).','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
   // Vérification professionnelle minimale (dimensions, format portrait recommandé)
   try{
@@ -4926,8 +5178,8 @@ async function uploadCoverPhoto(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files[0]||!currentUser) return;
   const file=input.files[0];
-  const allowedTypes=['image/jpeg','image/png','image/webp'];
-  if(!allowedTypes.includes(file.type)) return toast('Format non autorisé. Utilisez JPG, PNG ou WEBP.','error');
+  const allowedTypes=['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif','image/bmp','image/tiff'];
+  if(!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) return toast('Format non autorisé. Utilisez une image (JPG, PNG, WEBP, etc.).','error');
   if(file.size>5*1024*1024) return toast('Photo trop lourde (max 5 Mo).','error');
   // Vérification professionnelle minimale (format paysage recommandé pour une bannière)
   try{
@@ -5870,44 +6122,159 @@ async function handleBecomeSupporter(){
 }
 window.handleBecomeSupporter=handleBecomeSupporter;
 
-// ── PHOTO GALLERY ──
+// ── GALERIE PHOTOS — max 10 par membre, propriétaire uniquement ──
+const GALLERY_MAX = 10;
+let _galleryCurrentUrl = null;
+let _galleryCurrentIndex = -1;
+
 function renderGallery(photos=[]){
   const container=document.getElementById('photo-gallery');
   if(!container) return;
   const label=document.getElementById('gallery-count-label');
-  if(label) label.textContent=photos.length+' photo'+(photos.length!==1?'s':'');
-  const addBtn=`<div class="gallery-item gallery-add" onclick="document.getElementById('gallery-photo-input').click()">📷</div>`;
-  const items=photos.map((url,i)=>`<div class="gallery-item" onclick="openGalleryModal('${url}')"><img src="${url}" alt="Photo ${i+1}" loading="lazy"></div>`).join('');
+  const profilePhoto=userProfile?.photoURL||null;
+  if(label) label.textContent=photos.length+'/'+GALLERY_MAX+' photo'+(photos.length!==1?'s':'');
+  const canAdd = photos.length < GALLERY_MAX;
+  const addBtn = canAdd
+    ? `<div class="gallery-item gallery-add" onclick="document.getElementById('gallery-photo-input').click()" title="Ajouter une photo">📷</div>`
+    : '';
+  const limitMsg = !canAdd
+    ? `<div class="gallery-limit-msg">⚠️ Limite de ${GALLERY_MAX} photos atteinte. Supprimez-en une pour en ajouter.</div>`
+    : '';
+  const items=photos.map((url,i)=>{
+    const isProfile = url === profilePhoto;
+    return `<div class="gallery-item">
+      ${isProfile?'<div class="gallery-is-profile-badge">✓ Profil</div>':''}
+      <img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openGalleryModal('${url}',${i})">
+      <div class="gallery-item-overlay">
+        <div class="gallery-item-actions">
+          <button class="gallery-action-btn" onclick="event.stopPropagation();gallerySetAsProfileDirect(${i})" title="Définir comme photo de profil">⭐</button>
+          <button class="gallery-action-btn" onclick="event.stopPropagation();galleryDownloadDirect('${url}')" title="Télécharger">⬇️</button>
+          <button class="gallery-action-btn danger" onclick="event.stopPropagation();galleryDeleteDirect(${i})" title="Supprimer">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
   container.innerHTML=items+addBtn;
+  const limitEl=document.getElementById('gallery-limit-info');
+  if(limitEl) limitEl.innerHTML=limitMsg;
 }
-function openGalleryModal(url){
+
+function openGalleryModal(url,idx){
+  _galleryCurrentUrl=url;
+  _galleryCurrentIndex=idx;
   document.getElementById('gallery-modal-img').src=url;
   document.getElementById('gallery-modal').classList.add('open');
 }
 function closeGalleryModal(){
   document.getElementById('gallery-modal').classList.remove('open');
   document.getElementById('gallery-modal-img').src='';
+  _galleryCurrentUrl=null;
+  _galleryCurrentIndex=-1;
 }
 window.openGalleryModal=openGalleryModal;
 window.closeGalleryModal=closeGalleryModal;
 
+async function gallerySetAsProfile(){
+  if(_galleryCurrentUrl!=null && _galleryCurrentIndex>=0) await gallerySetAsProfileDirect(_galleryCurrentIndex);
+}
+window.gallerySetAsProfile=gallerySetAsProfile;
+
+async function gallerySetAsProfileDirect(idx){
+  const photos=userProfile?.photos||[];
+  const url=photos[idx];
+  if(!url||!db||!currentUser) return;
+  try{
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
+    userProfile.photoURL=url;
+    renderDashboard();renderProfile();
+    toast('✅ Photo de profil mise à jour !','success');
+    closeGalleryModal();
+  }catch(e){
+    console.warn('[GSC] gallerySetAsProfileDirect SDK échoué, tentative REST :', e?.message);
+    try{
+      await writeProfileViaRestAPI(currentUser.uid, {photoURL:url}, true);
+      userProfile.photoURL=url;
+      renderDashboard();renderProfile();
+      toast('✅ Photo de profil mise à jour !','success');
+      closeGalleryModal();
+    }catch(e2){ toast('Erreur : '+e2.message,'error'); }
+  }
+}
+window.gallerySetAsProfileDirect=gallerySetAsProfileDirect;
+
+function galleryDownload(){
+  if(_galleryCurrentUrl) galleryDownloadDirect(_galleryCurrentUrl);
+}
+window.galleryDownload=galleryDownload;
+
+function galleryDownloadDirect(url){
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='photo-gsc.jpg';
+  a.target='_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+window.galleryDownloadDirect=galleryDownloadDirect;
+
+async function galleryDelete(){
+  if(_galleryCurrentIndex>=0) await galleryDeleteDirect(_galleryCurrentIndex);
+}
+window.galleryDelete=galleryDelete;
+
+async function galleryDeleteDirect(idx){
+  if(!confirm('Supprimer cette photo ?')) return;
+  if(!db||!currentUser||!userProfile) return;
+  const photos=[...(userProfile.photos||[])];
+  photos.splice(idx,1);
+  try{
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{photos,updatedAt:serverTimestamp()});
+    userProfile.photos=photos;
+    renderGallery(photos);
+    toast('🗑️ Photo supprimée.','info');
+    closeGalleryModal();
+  }catch(e){
+    console.warn('[GSC] galleryDeleteDirect SDK échoué, tentative REST :', e?.message);
+    try{
+      await writeProfileViaRestAPI(currentUser.uid, {photos}, true);
+      userProfile.photos=photos;
+      renderGallery(photos);
+      toast('🗑️ Photo supprimée.','info');
+      closeGalleryModal();
+    }catch(e2){ toast('Erreur : '+e2.message,'error'); }
+  }
+}
+window.galleryDeleteDirect=galleryDeleteDirect;
+
 async function uploadGalleryPhotos(input){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   if(!input.files.length||!currentUser) return;
-  const files=Array.from(input.files).slice(0,10);
+  const existing=userProfile.photos||[];
+  const slots=GALLERY_MAX-existing.length;
+  if(slots<=0){ toast('⚠️ Limite de '+GALLERY_MAX+' photos atteinte. Supprimez-en une pour en ajouter.','error'); input.value=''; return; }
+  const files=Array.from(input.files).slice(0,slots);
+  if(files.length<Array.from(input.files).length) toast('ℹ️ Seules '+files.length+' photo(s) ajoutée(s) (limite '+GALLERY_MAX+').','info');
   toast('📤 Upload de '+files.length+' photo(s)…','info');
-  const existingPhotos=userProfile.photos||[];
   const newUrls=[];
   for(const file of files){
-    if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo).','error');continue;}
+    if(file.size>5*1024*1024){toast('Photo trop lourde (max 5 Mo) : '+file.name,'error');continue;}
     try{
       const url=await uploadToCloudinary(file,'image');
       newUrls.push(url);
     }catch(e){toast('Erreur upload : '+e.message,'error');}
   }
   if(newUrls.length){
-    const updatedPhotos=[...existingPhotos,...newUrls];
-    await updateDoc(doc(db,'users',currentUser.uid),{photos:updatedPhotos,updatedAt:serverTimestamp()});
+    const updatedPhotos=[...existing,...newUrls];
+    try{
+      await ensureFirebaseAuthViaSupabase();
+      await updateDoc(doc(db,'users',currentUser.uid),{photos:updatedPhotos,updatedAt:serverTimestamp()});
+    }catch(e){
+      console.warn('[GSC] uploadGalleryPhotos SDK échoué, tentative REST :', e?.message);
+      try{ await writeProfileViaRestAPI(currentUser.uid, {photos:updatedPhotos}, true); }catch(e2){ toast('Erreur : '+e2.message,'error'); }
+    }
     userProfile.photos=updatedPhotos;
     renderGallery(updatedPhotos);
     toast('✅ '+newUrls.length+' photo(s) ajoutée(s) !','success');
@@ -7898,8 +8265,14 @@ window.lookupManualGscId = lookupManualGscId;
         _refreshAdminViews(rawUsers);
         console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
         window.dispatchEvent(new Event('gsc-data-synced'));
-      }, function(err){
-        // sync error — silencieux
+      }, async function(err){
+        // Permissions refusées (règles Firestore + pas encore authentifié) :
+        // on attend l'auth Firebase puis on relance
+        if(err?.code==='permission-denied'||err?.code==='PERMISSION_DENIED'){
+          _unsubUsers=null;
+          try{ await window.ensureFirebaseAuthViaSupabase(); }catch(e2){}
+          startUsersSync();
+        }
       });
       _showSyncIndicator();
       window.dispatchEvent(new Event('gsc-sync-ready'));
