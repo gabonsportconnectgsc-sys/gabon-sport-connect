@@ -381,6 +381,9 @@
           <div class="role-tile" data-role="association" onclick="pickRole('association',this)"><div class="rt-icon">🤝</div><div class="rt-label">Association</div><div class="rt-desc">Organisation sportive</div></div>
           <div class="role-tile" data-role="eleve_etudiant" onclick="pickRole('eleve_etudiant',this)"><div class="rt-icon">🎓</div><div class="rt-label">Élève / Étudiant</div><div class="rt-desc">Espoir sportif</div></div>
           <div class="role-tile" data-role="handisport" onclick="pickRole('handisport',this)"><div class="rt-icon">🦾</div><div class="rt-label">Sportif handisport</div><div class="rt-desc">Para-sport, en fédération ou indépendant</div></div>
+          <div class="role-tile" data-role="organisateur" onclick="pickRole('organisateur',this)"><div class="rt-icon">🎪</div><div class="rt-label">Organisateur</div><div class="rt-desc">Événements et compétitions sportives</div></div>
+          <div class="role-tile" data-role="supporter" onclick="pickRole('supporter',this)"><div class="rt-icon">💗</div><div class="rt-label">Supporter</div><div class="rt-desc">Fan d'un club ou d'une discipline</div></div>
+          <div class="role-tile" data-role="sportif_etranger" onclick="pickRole('sportif_etranger',this)"><div class="rt-icon">🌍</div><div class="rt-label">Sportif étranger</div><div class="rt-desc">Pratique au Gabon, nationalité étrangère</div></div>
         </div>
         <div id="a-role-err" class="err-msg" style="margin-top:8px;"></div>
         <div style="margin-top:14px;"><button class="btn-p" onclick="goToActeurForm()">Continuer →</button></div>
@@ -790,7 +793,8 @@
     joueur:'⚽ Joueur / Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
-    handisport:'🦾 Sportif handisport'
+    handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
+    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger'
   };
 
   let selectedRole = null;
@@ -829,7 +833,7 @@
     document.getElementById('a-title').textContent = ROLE_LABELS[selectedRole];
     document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
     document.getElementById('ex-joueur').classList.toggle('show', ['joueur','independant','eleve_etudiant'].includes(selectedRole));
-    document.getElementById('ex-org').classList.toggle('show', ['club','federation','association'].includes(selectedRole));
+    document.getElementById('ex-org').classList.toggle('show', ['club','federation','association','organisateur'].includes(selectedRole));
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
     show('s2a');
@@ -972,7 +976,7 @@
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
     if (!sport)          { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
     if (!ville)          { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
-    if (['club','federation','association'].includes(selectedRole) && !org) {
+    if (['club','federation','association','organisateur'].includes(selectedRole) && !org) {
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
     if (isHandisportRole && !hsCategorie) {
                            errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
