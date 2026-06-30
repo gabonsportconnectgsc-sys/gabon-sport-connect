@@ -75,7 +75,8 @@
     }
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:var(--font-body);background:var(--gray-bg);color:var(--navy);min-height:100vh;}
+    html{overflow-x:hidden;}
+    body{font-family:var(--font-body);background:var(--gray-bg);color:var(--navy);min-height:100vh;overflow-x:hidden;width:100%;}
     ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--gray-bg);}::-webkit-scrollbar-thumb{background:var(--green);border-radius:3px;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -117,7 +118,7 @@
     .topnav #nav-user-chip:not([style*="display:none"]) ~ #nav-login-btn{display:none !important;}
     .topnav .btn-icon[style*="display: none"],.topnav .btn-icon[style*="display:none"],.topnav .visitor-banner[style*="display: none"],.topnav .visitor-banner[style*="display:none"],.topnav .user-chip[style*="display: none"],.topnav .user-chip[style*="display:none"]{display:none !important;}
     /* Logo compressible */
-    .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;position:relative;z-index:1;}
+    .topnav-logo{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--white);letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;overflow:hidden;cursor:pointer;position:relative;z-index:1;}
     .topnav-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
     .topnav-logo-text{display:flex;flex-direction:column;justify-content:center;line-height:1.15;min-width:0;overflow:hidden;}
     .topnav-logo-text span{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
@@ -156,6 +157,7 @@
       .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       #nav-rolebadge{display:none;}
       #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
+      #nav-qr-scan-btn{display:none !important;}
     }
     @media (max-width:360px){
       .topnav-logo-text{max-width:58px;}
