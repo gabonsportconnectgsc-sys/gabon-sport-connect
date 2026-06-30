@@ -14,6 +14,40 @@
   <meta name="apple-mobile-web-app-title" content="GSC">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Gabon Sport Connect" />
+  <meta property="og:title" content="Gabon Sport Connect — Plateforme Nationale du Sport" />
+  <meta property="og:description" content="Plateforme nationale de gestion du sport au Gabon : annuaire des acteurs, carte des infrastructures sportives, actualités et services pour clubs, fédérations, sportifs et organisateurs." />
+  <meta property="og:image" content="https://gabonsportconnect.com/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://gabonsportconnect.com/" />
+  <meta property="og:locale" content="fr_FR" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Gabon Sport Connect — Plateforme Nationale du Sport" />
+  <meta name="twitter:description" content="Annuaire des acteurs, carte des infrastructures sportives et actualités du sport gabonais." />
+  <meta name="twitter:image" content="https://gabonsportconnect.com/og-image.jpg" />
+  <!-- Données structurées JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Gabon Sport Connect",
+    "url": "https://gabonsportconnect.com/",
+    "description": "Plateforme nationale de gestion du sport au Gabon",
+    "inLanguage": "fr",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Gabon Sport Connect",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://gabonsportconnect.com/icon-192.png"
+      }
+    }
+  }
+  </script>
   <script src="app-config-loader.js"></script>
   <script src="gsc-notifications.js"></script>
   <script src="gsc-nav-badges.js"></script>
@@ -2734,7 +2768,8 @@
     <div class="adm-hero">
       <div class="adm-cover-bg" id="adm-cover-bg"></div>
       <div class="adm-cover-overlay"></div>
-      <button class="adm-close" onclick="closeActorDetail()">✕</button>
+      <button class="adm-close" onclick="closeActorDetail()" aria-label="Fermer la fiche">✕</button>
+      <button class="adm-report-btn" onclick="reportActor()" title="Signaler ce profil" aria-label="Signaler ce profil" style="position:absolute;top:14px;right:60px;z-index:5;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🚩</button>
       <label class="adm-cover-click-layer" id="adm-cover-click-layer" for="adm-cover-input" title="Changer la photo de couverture (JPG, PNG, WEBP — max 5 Mo)" style="display:none;"></label>
       <label class="adm-cover-edit-btn" id="adm-cover-edit-btn" for="adm-cover-input" style="display:none;"><span aria-hidden="true">📷</span></label>
       <label class="adm-cover-hint" id="adm-cover-hint" for="adm-cover-input" style="display:none;">📷 Couverture</label>
@@ -3606,12 +3641,43 @@ function openMenu(){
   document.getElementById('nav-menu-btn').classList.add('open');
   refreshNotifMenuState();
   renderLoginHistoryCompact();
+  // Accessibilité : mémoriser l'élément focusé, déplacer le focus dans le menu, piéger le focus (Tab) et fermer avec Échap
+  _menuPrevFocus = document.activeElement;
+  document.addEventListener('keydown', _menuKeydownHandler);
+  setTimeout(function(){
+    const menu=document.getElementById('side-menu');
+    const first=menu.querySelector('button, a[href], [tabindex]:not([tabindex="-1"])');
+    if(first) first.focus();
+  },50);
+}
+let _menuPrevFocus=null;
+function _menuKeydownHandler(e){
+  const menu=document.getElementById('side-menu');
+  if(!menu || !menu.classList.contains('open')) return;
+  if(e.key==='Escape'){
+    e.preventDefault();
+    closeMenu();
+    return;
+  }
+  if(e.key==='Tab'){
+    const focusables=Array.from(menu.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')).filter(el=>el.offsetParent!==null);
+    if(focusables.length===0) return;
+    const firstEl=focusables[0], lastEl=focusables[focusables.length-1];
+    if(e.shiftKey && document.activeElement===firstEl){
+      e.preventDefault(); lastEl.focus();
+    }else if(!e.shiftKey && document.activeElement===lastEl){
+      e.preventDefault(); firstEl.focus();
+    }
+  }
 }
 function closeMenu(){
   document.getElementById('side-menu').classList.remove('open');
   document.getElementById('side-menu').setAttribute('aria-hidden','true');
   document.getElementById('side-menu-overlay').classList.remove('open');
   document.getElementById('nav-menu-btn').classList.remove('open');
+  document.removeEventListener('keydown', _menuKeydownHandler);
+  if(_menuPrevFocus && typeof _menuPrevFocus.focus==='function') _menuPrevFocus.focus();
+  _menuPrevFocus=null;
 }
 window.toggleMenu=toggleMenu;window.openMenu=openMenu;window.closeMenu=closeMenu;
 
@@ -4601,6 +4667,51 @@ function openActorDetail(uid){
   document.getElementById('actor-detail-modal').classList.add('open');
 }
 function closeActorDetail(){ document.getElementById('actor-detail-modal').classList.remove('open'); currentDetailActorUid=null; }
+
+// ── SIGNALEMENT D'UN PROFIL DE L'ANNUAIRE ──
+function reportActor(){
+  if(!currentDetailActorUid){ return; }
+  if(!currentUser || isVisitor){
+    alert('Vous devez être connecté pour signaler un profil.');
+    return;
+  }
+  if(currentDetailActorUid===currentUser.uid){
+    alert('Vous ne pouvez pas signaler votre propre profil.');
+    return;
+  }
+  const reasons=['Contenu inapproprié','Fausse identité / usurpation','Spam ou publicité','Photo choquante ou non conforme','Autre'];
+  const choice=prompt('Pourquoi signalez-vous ce profil ?\n'+reasons.map((r,i)=>(i+1)+'. '+r).join('\n')+'\n\nEntrez le numéro (1-5) :');
+  if(!choice) return;
+  const idx=parseInt(choice,10)-1;
+  if(isNaN(idx)||idx<0||idx>=reasons.length){ alert('Choix invalide.'); return; }
+  const reason=reasons[idx];
+  let details='';
+  if(reason==='Autre'){
+    details=prompt('Merci de préciser (facultatif) :')||'';
+  }
+  (async function(){
+    try{
+      if(!window.db || typeof addDoc!=='function' || typeof collection!=='function'){
+        alert("Le signalement n'a pas pu être envoyé (service indisponible). Réessayez plus tard.");
+        return;
+      }
+      await addDoc(collection(db,'signalements'),{
+        targetUid: currentDetailActorUid,
+        reason: reason,
+        details: details||'',
+        reportedBy: currentUser.uid,
+        reportedByEmail: currentUser.email||'',
+        status:'pending',
+        createdAt: typeof serverTimestamp==='function'?serverTimestamp():new Date().toISOString()
+      });
+      alert('Merci, ce profil a été signalé à l\'équipe de modération.');
+    }catch(e){
+      console.error('reportActor error',e);
+      alert("Une erreur est survenue lors de l'envoi du signalement.");
+    }
+  })();
+}
+window.reportActor=reportActor;
 
 // ── PROFIL ──
 function renderProfile(){

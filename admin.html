@@ -103,6 +103,20 @@ img, svg, canvas { max-width: 100%; }
 .nav-item.active { background: linear-gradient(135deg, rgba(0, 158, 96, 0.35), rgba(0, 158, 96, 0.12)); color: rgb(255, 255, 255); font-weight: 600; }
 
 .nav-item.active::before { content: ""; position: absolute; left: 0px; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--green); border-radius: 0px 4px 4px 0px; }
+.nav-badge-count{background:var(--danger);color:#fff;font-size:10.5px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:auto;}
+.sig-card{background:#fff;border:1px solid var(--gray-bd);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;}
+.sig-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.sig-reason{font-weight:700;color:var(--navy);}
+.sig-meta{font-size:12px;color:var(--gray-txt);}
+.sig-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.sig-actions button{border:none;border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-weight:600;}
+.sig-btn-view{background:var(--green-lt,#e6f7ef);color:var(--green-dk,#007a47);}
+.sig-btn-dismiss{background:#f4f6f8;color:var(--gray-txt);}
+.sig-btn-hide{background:#fff3e0;color:var(--warn,#f59e0b);}
+.sig-btn-ban{background:#fee2e2;color:var(--danger);}
+.sig-status-pill{font-size:11px;font-weight:700;border-radius:8px;padding:2px 8px;}
+.sig-status-resolved{background:#e6f7ef;color:#007a47;}
+.sig-status-dismissed{background:#f4f6f8;color:var(--gray-txt);}
 
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 
@@ -744,6 +758,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-rapports">
           <span class="nav-icon">📈</span><span>Rapports</span>
         </button>
+        <button class="nav-item" id="nav-signalements">
+          <span class="nav-icon">🚩</span><span>Signalements</span><span class="nav-badge-count" id="nav-signalements-count" style="display:none;"></span>
+        </button>
         <button class="nav-item" id="nav-documents">
           <span class="nav-icon">📁</span><span>Documents</span>
         </button>
@@ -792,7 +809,7 @@ tr.is-demo-row td { opacity: .82; }
         <div class="stats-grid">
           <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
           <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">—</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
-          <div class="stat-card c3 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'pending', title:'Fiches en attente'})" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-data"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">En attente</div><div class="stat-trend">À valider</div></div></div>
+          <div class="stat-card c3 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'hidden', title:'Membres masqués'})" style="cursor:pointer;"><div class="stat-icon">🙈</div><div class="stat-data"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Masqués</div><div class="stat-trend">Non visibles</div></div></div>
           <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
         <div class="dash-grid">
@@ -1084,7 +1101,6 @@ tr.is-demo-row td { opacity: .82; }
               <select id="indiv-report-status">
                 <option value="all">Tous statuts</option>
                 <option value="active">Actif</option>
-                <option value="pending">En attente</option>
                 <option value="hidden">Masqué</option>
               </select>
             </div>
@@ -1160,6 +1176,31 @@ tr.is-demo-row td { opacity: .82; }
           <div style="display:flex;flex-wrap:wrap;gap:10px;">
             <button class="btn btn-danger" id="btn-reset-general">♻️ Réinitialisation générale (TOUS les acteurs)</button>
             <button class="btn btn-danger" id="btn-reset-partial" disabled>✂️ Réinitialisation partielle (catégories sélectionnées)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNALEMENTS — modération des fiches de l'annuaire -->
+      <div id="signalements" class="section">
+        <div class="page-header">
+          <div class="page-title">🚩 Signalements</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-report outline" id="btn-refresh-signalements">🔄 Actualiser</button>
+          </div>
+        </div>
+        <div class="report-meta-line">Profils de l'annuaire signalés par les utilisateurs, en attente de modération.</div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">⏳ En attente de traitement</div>
+          <div id="signalements-list">
+            <p style="color:var(--gray-txt);font-size:13px;">Chargement…</p>
+          </div>
+        </div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">📜 Historique (traités)</div>
+          <div id="signalements-history-list">
+            <p style="color:var(--gray-txt);font-size:13px;">Chargement…</p>
           </div>
         </div>
       </div>
@@ -1312,7 +1353,7 @@ tr.is-demo-row td { opacity: .82; }
           <div class="field"><label>Email</label><div class="val" id="modal-email">—</div></div>
           <div class="field"><label>Téléphone</label><div class="val" id="modal-phone">—</div></div>
           <div class="field"><label>Inscription</label><div class="val" id="modal-date">—</div></div>
-          <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="pending">⏳ En attente</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
+          <div class="field"><label>Statut</label><select id="modal-status"><option value="active">✅ Actif</option><option value="hidden">👁️ Masqué</option><option value="deleted">🗑️ Supprimé</option></select></div>
         </div>
         <div class="field" style="margin-top:10px;">
           <label>Titre / rôle personnalisé</label>
@@ -1482,6 +1523,7 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-photos"><span class="mn-icon">📸</span><span>Photos</span></button>
   <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
   <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
+  <button class="mn-btn" id="mnav-signalements"><span class="mn-icon">🚩</span><span>Signalts</span></button>
   <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
   <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
@@ -1586,10 +1628,9 @@ tr.is-demo-row td { opacity: .82; }
       return ROLE_COLORS[key] || '#94a3b8';
     });
 
-    const byStatus = { 'Actif': 0, 'En attente': 0, 'Masqué': 0 };
+    const byStatus = { 'Actif': 0, 'Masqué': 0 };
     users.forEach(u => {
-      if (u.status === 'pending') byStatus['En attente']++;
-      else if (u.status === 'hidden') byStatus['Masqué']++;
+      if (u.status === 'hidden') byStatus['Masqué']++;
       else if (u.status !== 'deleted') byStatus['Actif']++;
     });
 
@@ -1602,12 +1643,11 @@ tr.is-demo-row td { opacity: .82; }
       .slice(0, 8);
 
     mkChart('chart-roles', 'doughnut', Object.keys(byRole), Object.values(byRole), roleColors);
-    mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#1e40af', '#92400e']);
+    mkChart('chart-statuts', 'doughnut', Object.keys(byStatus), Object.values(byStatus), ['#16a34a', '#92400e']);
     mkChart('chart-clubs', 'bar', Object.keys(byClub), Object.values(byClub));
     mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
 
-    const totalActifs = visible.filter(u => (u.status || 'active') === 'active').length;
-    const totalPending = users.filter(u => u.status === 'pending').length;
+    const totalActifs = visible.filter(u => u.status !== 'hidden' && u.status !== 'deleted').length;
     const totalOrgs = visible.filter(u => ['club', 'federation', 'association'].includes(u.role)).length;
 
     setText('report-stat-actifs', totalActifs);
@@ -1616,7 +1656,6 @@ tr.is-demo-row td { opacity: .82; }
     const rows = [
       ['Membres enregistrés (total)', users.length],
       ['Fiches actives', totalActifs],
-      ['Fiches en attente de validation', totalPending],
       ['Clubs / Fédérations / Associations', totalOrgs],
       ['Matchs enregistrés', matches.length],
       ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
@@ -1808,6 +1847,195 @@ tr.is-demo-row td { opacity: .82; }
     wireIndivReport();
     if (window.realtimeSync && window.realtimeSync.onUpdate) {
       window.realtimeSync.onUpdate('users', renderIndivResults);
+    }
+  });
+})();
+</script>
+
+<!-- Module Signalements — modération des fiches de l'annuaire (SDK compat) -->
+<script>
+(function () {
+  'use strict';
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function fmtDate(ts) {
+    try {
+      if (ts && typeof ts.toDate === 'function') return ts.toDate().toLocaleString('fr-FR');
+      if (ts) return new Date(ts).toLocaleString('fr-FR');
+    } catch (e) {}
+    return '—';
+  }
+
+  let _unsubSignalements = null;
+  let _unsubSignalementsHistory = null;
+
+  function db() {
+    return (window.firebase && firebase.firestore) ? firebase.firestore() : null;
+  }
+
+  function renderCard(s, opts) {
+    opts = opts || {};
+    const date = fmtDate(s.createdAt);
+    const statusBadge = s.status === 'resolved'
+      ? '<span class="sig-status-pill sig-status-resolved">✔️ Traité — ' + esc(s.resolvedAction || '') + '</span>'
+      : (s.status === 'dismissed' ? '<span class="sig-status-pill sig-status-dismissed">Rejeté</span>' : '');
+    const actions = opts.history ? '' : `
+      <div class="sig-actions">
+        <button class="sig-btn-view" onclick="gscViewReportedProfile('${esc(s.targetUid)}')">👁️ Voir le profil</button>
+        <button class="sig-btn-hide" onclick="gscResolveSignalement('${s.id}','${esc(s.targetUid)}','hide')">🚫 Masquer le profil</button>
+        <button class="sig-btn-ban" onclick="gscResolveSignalement('${s.id}','${esc(s.targetUid)}','ban')">⛔ Bannir l'utilisateur</button>
+        <button class="sig-btn-dismiss" onclick="gscResolveSignalement('${s.id}',null,'dismiss')">✔️ Rejeter (sans suite)</button>
+      </div>`;
+    return `
+      <div class="sig-card">
+        <div class="sig-row">
+          <span class="sig-reason">${esc(s.reason || 'Motif non précisé')}</span>
+          <span class="sig-meta">${date} ${statusBadge}</span>
+        </div>
+        ${s.details ? `<div class="sig-meta">📝 ${esc(s.details)}</div>` : ''}
+        <div class="sig-meta">Profil signalé : <code>${esc(s.targetUid)}</code> · Par : ${esc(s.reportedByEmail || s.reportedBy || '—')}</div>
+        ${actions}
+      </div>`;
+  }
+
+  function renderSignalementsList() {
+    const listEl = document.getElementById('signalements-list');
+    const d = db();
+    if (!listEl) return;
+    if (!d) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px;">Firestore indisponible.</p>'; return; }
+    if (_unsubSignalements) { _unsubSignalements(); _unsubSignalements = null; }
+
+    _unsubSignalements = d.collection('signalements')
+      .where('status', '==', 'pending')
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .onSnapshot(function (snap) {
+        const items = [];
+        snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+
+        const countEl = document.getElementById('nav-signalements-count');
+        if (countEl) {
+          if (items.length > 0) { countEl.textContent = items.length; countEl.style.display = 'inline-block'; }
+          else { countEl.style.display = 'none'; }
+        }
+
+        if (items.length === 0) {
+          listEl.innerHTML = '<p style="color:var(--gray-txt);font-size:13px;">Aucun signalement en attente. ✅</p>';
+          return;
+        }
+        listEl.innerHTML = items.map(s => renderCard(s)).join('');
+      }, function (err) {
+        console.error('renderSignalementsList:', err);
+        listEl.innerHTML = '<p style="color:var(--danger);font-size:13px;">Erreur de chargement des signalements.</p>';
+      });
+  }
+
+  function renderSignalementsHistory() {
+    const listEl = document.getElementById('signalements-history-list');
+    const d = db();
+    if (!listEl) return;
+    if (!d) return;
+    if (_unsubSignalementsHistory) { _unsubSignalementsHistory(); _unsubSignalementsHistory = null; }
+
+    _unsubSignalementsHistory = d.collection('signalements')
+      .where('status', 'in', ['resolved', 'dismissed'])
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .onSnapshot(function (snap) {
+        const items = [];
+        snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        if (items.length === 0) {
+          listEl.innerHTML = '<p style="color:var(--gray-txt);font-size:13px;">Aucun signalement traité pour le moment.</p>';
+          return;
+        }
+        listEl.innerHTML = items.map(s => renderCard(s, { history: true })).join('');
+      }, function (err) {
+        console.error('renderSignalementsHistory:', err);
+        listEl.innerHTML = '<p style="color:var(--danger);font-size:13px;">Erreur de chargement.</p>';
+      });
+  }
+
+  window.gscViewReportedProfile = function (targetUid) {
+    if (typeof window.gscGoToFiltered === 'function') {
+      window.gscGoToFiltered({ roles: 'all', title: 'Profil signalé', searchUid: targetUid });
+    } else {
+      alert('UID du profil signalé : ' + targetUid);
+    }
+  };
+
+  window.gscResolveSignalement = async function (signalementId, targetUid, action) {
+    const d = db();
+    if (!d) return;
+    if (action === 'hide' && !confirm('Masquer ce profil de l\'annuaire public ?')) return;
+    if (action === 'ban' && !confirm("Bannir cet utilisateur de la plateforme ? Cette action est forte et bloquera sa connexion.")) return;
+
+    try {
+      if (action === 'hide' && targetUid) {
+        await d.collection('users').doc(targetUid).update({ status: 'hidden' });
+      }
+      if (action === 'ban' && targetUid) {
+        await d.collection('users').doc(targetUid).update({ status: 'banned' });
+      }
+      const currentAdminUid = (window.firebase && firebase.auth().currentUser) ? firebase.auth().currentUser.uid : null;
+      await d.collection('signalements').doc(signalementId).update({
+        status: action === 'dismiss' ? 'dismissed' : 'resolved',
+        resolvedAction: action,
+        resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        resolvedBy: currentAdminUid
+      });
+    } catch (e) {
+      console.error('gscResolveSignalement:', e);
+      alert("Erreur lors du traitement du signalement : " + (e.message || e));
+    }
+  };
+
+  function showSignalementsSection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('signalements');
+    if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-signalements');
+    if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById('mnav-signalements');
+    if (mNavBtn) mNavBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Signalements';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    renderSignalementsList();
+    renderSignalementsHistory();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const navBtn = document.getElementById('nav-signalements');
+    if (navBtn) navBtn.addEventListener('click', showSignalementsSection);
+    const mNavBtn = document.getElementById('mnav-signalements');
+    if (mNavBtn) mNavBtn.addEventListener('click', showSignalementsSection);
+    const refreshBtn = document.getElementById('btn-refresh-signalements');
+    if (refreshBtn) refreshBtn.addEventListener('click', () => { renderSignalementsList(); renderSignalementsHistory(); });
+
+    // Badge du nombre de signalements en attente, visible même hors de l'onglet
+    const d = db();
+    if (d) {
+      d.collection('signalements').where('status', '==', 'pending').onSnapshot(function (snap) {
+        const countEl = document.getElementById('nav-signalements-count');
+        if (!countEl) return;
+        if (snap.size > 0) { countEl.textContent = snap.size; countEl.style.display = 'inline-block'; }
+        else { countEl.style.display = 'none'; }
+      }, function (err) { console.warn('signalements badge:', err); });
     }
   });
 })();
@@ -2303,14 +2531,14 @@ tr.is-demo-row td { opacity: .82; }
       if(!window.firebase||!firebase.firestore) return;
       const snap=await firebase.firestore().collection('users').get();
       const users=snap.docs.map(d=>d.data());
-      const active=users.filter(u=>u.status==='active'||u.status===undefined);
-      const pending=users.filter(u=>u.status==='pending');
+      const active=users.filter(u=>u.status!=='hidden'&&u.status!=='deleted');
+      const hidden=users.filter(u=>u.status==='hidden');
       const total=users.length;
       const totalActive=active.length;
       // Stat-cards (bloc supérieur)
       setText('stat-total',total);
       setText('stat-verified',totalActive);
-      setText('stat-pending',pending.length);
+      setText('stat-pending',hidden.length);
       // Tuiles
       setText('app-total-membres',total);
       setText('app-actifs',totalActive);
