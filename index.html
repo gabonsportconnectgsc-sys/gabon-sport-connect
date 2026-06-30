@@ -101,11 +101,7 @@
       pointer-events:none;
     }
     /* Groupe droite : toutes les icônes sauf le logo */
-    .topnav-icons{display:flex;align-items:center;gap:5px;flex:0 1 auto;min-width:0;justify-content:flex-end;position:relative;z-index:1;}
-    /* Rôle badge : masqué sur mobile (trop large), visible desktop */
-    #nav-rolebadge{display:none;}
-    #nav-rolebadge .role-badge{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
-    .topnav .btn-hamburger{position:sticky;right:0;background:#0d1b2e;z-index:2;}
+    .topnav-icons{display:flex;align-items:center;gap:7px;flex-shrink:0;position:relative;z-index:1;}
     /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
     .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
       flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
@@ -147,40 +143,32 @@
       .topnav-logo-text span{font-size:15px;}
       .topnav-icons{gap:10px;}
       .visitor-banner,.user-avatar,.btn-icon{width:42px;height:42px;min-width:42px;min-height:42px;}
-      #nav-rolebadge{display:flex;}
     }
-    /* ── Mobile ≤480px ── */
+    /* ── Mobile ≤480px : texte logo réduit (visible, sans déborder) ── */
     @media (max-width:480px){
-      .topnav{padding:0 6px;}
-      .topnav-logo{gap:5px;}
-      .topnav-logo img{width:34px;height:34px;}
-      .topnav-logo-text{display:flex;max-width:60px;}
-      .topnav-logo-text span{font-size:8px;letter-spacing:.1px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      .topnav-icons{gap:3px;}
-      .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:15px;}
-      .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:15px;}
-      .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
-      .user-name{display:none;}
-      #gsc-notif-bell .notif-bell-btn{width:30px;height:30px;}
+      .topnav{padding:0 14px 0 10px;}
+      .topnav-logo img{width:40px;height:40px;}
+      .topnav-logo-text{display:flex;max-width:72px;}
+      .topnav-logo-text span{font-size:8.5px;letter-spacing:.1px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .topnav-icons{gap:5px;}
+      .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
+      #nav-rolebadge{display:none;}
+      #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
     }
     @media (max-width:360px){
-      .topnav-logo-text{max-width:50px;}
-      .topnav-logo-text span{font-size:7px;}
-      .topnav-icons{gap:2px;}
-      .visitor-banner,.btn-icon,.user-avatar{width:28px;height:28px;min-width:28px;min-height:28px;}
-      #gsc-notif-bell .notif-bell-btn{width:28px;height:28px;}
+      .topnav-logo-text{max-width:58px;}
+      .topnav-logo-text span{font-size:7.5px;}
+      .topnav-icons{gap:3px;}
+      .visitor-banner{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .btn-icon{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
+      .user-avatar{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px;}
     }
     @media (max-width:320px){
       .topnav-logo-text{display:none;}
     }
-    .nav-menu-dropdown{
-      position:absolute;top:calc(100% + 8px);right:0;
-      background:var(--white);border:1px solid var(--gray-bd);
-      border-radius:var(--radius-md);box-shadow:0 8px 24px rgba(0,0,0,.18);
-      min-width:220px;z-index:9999;
-      display:none;
-      animation:fadeUp .18s ease both;
-    }
+    .nav-menu-dropdown{position:absolute;top:100%;left:0;background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:240px;z-index:1000;display:none;margin-top:8px;}
     .nav-menu-dropdown.open{display:block;}
     .nav-menu-item{display:flex;align-items:center;gap:8px;padding:12px 16px;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
     .nav-menu-item:hover{background:var(--green-lt);color:var(--green-dk);}
@@ -591,6 +579,14 @@
     .status-active{background:#dcfce7;color:#166534;}
     .status-hidden{background:#fef9c3;color:#92400e;}
     .status-deleted{background:#fee2e2;color:#991b1b;}
+    .status-pending{background:#dbeafe;color:#1e40af;}
+    .pending-row{background:#f0f7ff;}
+    .pending-actions{display:flex;gap:6px;}
+    .btn-approve{background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+    .btn-approve:hover{background:var(--green-dk);}
+    .btn-reject{background:var(--danger);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+    .pending-banner{background:linear-gradient(135deg,#dbeafe,#eff6ff);border:1.5px solid #93c5fd;border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#1e40af;font-weight:600;}
+    .pending-banner .count-bubble{background:#1e40af;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
     .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
     @media (max-width:640px){.report-grid{grid-template-columns:1fr;}}
     .report-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);padding:16px;box-shadow:var(--shadow-sm);}
@@ -1238,6 +1234,7 @@
             <option value="association">🤝 Association sportive</option>
             <option value="federation">🏛️ Fédération</option>
             <option value="organisateur">🎯 Organisateur</option>
+            <option value="ecole_universite">🏫 École / Université</option>
             <option value="independant">🏃 Sportif indépendant</option>
             <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
             <option value="sportif_etranger">🌍 Sportif étranger</option>
@@ -1369,6 +1366,12 @@
             <div class="weather-desc" id="weather-desc">Localisation…</div>
           </div>
         </div>
+      </div>
+
+      <!-- Fiche en attente de validation -->
+      <div class="readonly-notice" id="pending-self-notice" style="display:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fbbf24;color:#92400e;">
+        <span class="rn-icon">⏳</span>
+        <span>Votre fiche est <strong>en attente de validation</strong> par l'administrateur. Elle sera visible dans l'annuaire dès son approbation.</span>
       </div>
 
       <div class="dashboard-hero fade-up">
@@ -2054,6 +2057,11 @@
         <button class="admin-tab" onclick="switchAdminTab('reports')">📊 Rapports</button>
       </div>
       <div class="admin-section active" id="admin-section-users">
+        <div class="pending-banner fade-up" id="pending-banner" style="display:none;">
+          <span class="count-bubble" id="pending-count-bubble">0</span>
+          <span id="pending-banner-text">fiche(s) en attente de validation</span>
+          <button class="btn-sm" style="margin-left:auto;" onclick="document.getElementById('srch-status').value='pending';filterAdminUsers();">Voir</button>
+        </div>
         <div class="search-panel fade-up">
           <h3>🔍 Recherche multi-critères</h3>
           <div class="search-grid">
@@ -2068,6 +2076,7 @@
               <option value="association">Association</option>
               <option value="federation">Fédération</option>
               <option value="organisateur">Organisateur</option>
+              <option value="ecole_universite">École / Université</option>
               <option value="independant">Sportif indépendant</option>
               <option value="eleve_etudiant">Élève / Étudiant</option>
               <option value="sportif_etranger">Sportif étranger</option>
@@ -2077,6 +2086,7 @@
             </select>
             <select class="search-input" id="srch-status" onchange="filterAdminUsers()">
               <option value="">Tous statuts</option>
+              <option value="pending">⏳ En attente</option>
               <option value="active">✅ Actif</option>
               <option value="hidden">🙈 Masqué</option>
               <option value="deleted">🗑️ Supprimé</option>
@@ -2618,6 +2628,19 @@
 </div>
 
 <!-- MODAL: EDIT USER (admin) -->
+<div class="modal" id="modal-pending-detail" onclick="if(event.target===this)closeModal('modal-pending-detail')">
+  <div class="modal-card">
+    <button class="modal-close-x" onclick="closeModal('modal-pending-detail')" aria-label="Fermer">✕</button>
+    <div class="modal-title">👁️ Fiche en attente — Détail</div>
+    <input type="hidden" id="pending-detail-uid">
+    <div id="pending-detail-body" style="margin:14px 0;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-approve" style="flex:1;" onclick="adminApproveUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✅ Valider cette fiche</button>
+      <button class="btn-reject" style="flex:1;" onclick="adminRejectUser(document.getElementById('pending-detail-uid').value);closeModal('modal-pending-detail');">✕ Rejeter</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal-edit-user" onclick="if(event.target===this)closeModal('modal-edit-user')">
   <div class="modal-card">
     <button class="modal-close-x" onclick="closeModal('modal-edit-user')" aria-label="Fermer">✕</button>
@@ -2635,6 +2658,7 @@
         <option value="independant">🧍 Sportif indépendant</option>
         <option value="federation">🏛️ Fédération</option>
         <option value="organisateur">🎯 Organisateur</option>
+        <option value="ecole_universite">🏫 École / Université</option>
         <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
         <option value="sportif_etranger">🌍 Sportif étranger</option>
         <option value="handisport">🦾 Sportif handisport</option>
@@ -2713,13 +2737,13 @@ const ROLE_LABELS = {
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
-  handisport:'🦾 Sportif handisport'
+  handisport:'🦾 Sportif handisport', ecole_universite:'🏫 École / Université'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
   joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍',
-  handisport:'🦾'
+  handisport:'🦾', ecole_universite:'🏫'
 };
 
 // Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
@@ -3063,7 +3087,7 @@ function toggleSupporterOptIn(){
   const role=document.getElementById('auth-register-role')?.value;
   const wrap=document.getElementById('auth-register-supporter-wrap');
   if(!wrap) return;
-  const ORG_ROLES=['club','association','federation','organisateur'];
+  const ORG_ROLES=['club','association','federation','organisateur','ecole_universite'];
   wrap.style.display=ORG_ROLES.includes(role)?'none':'';
   if(ORG_ROLES.includes(role)){
     document.getElementById('auth-register-supporter').checked=false;
@@ -3086,7 +3110,7 @@ async function handleSupabaseRegister(){
   const role=document.getElementById('auth-register-role')?.value||'joueur';
   const statut=document.getElementById('auth-register-statut')?.value||'libre';
   const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
-  const ORG_ROLES_REG=['club','association','federation','organisateur'];
+  const ORG_ROLES_REG=['club','association','federation','organisateur','ecole_universite'];
   const isSupporterOptIn=!ORG_ROLES_REG.includes(role)&&!!document.getElementById('auth-register-supporter')?.checked;
   const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
@@ -3192,97 +3216,6 @@ function supabaseAuthErrorMessage(e){
 // Firebase avec ce token, ce qui rend request.auth.uid fiable dans les règles
 // Firestore (request.auth.uid == uid du document utilisateur).
 const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
-const GSC_FIRESTORE_PROJECT = 'gabon-sport-connect';
-
-/**
- * Écrit un profil utilisateur dans Firestore via la REST API publique.
- * Ne dépend PAS de Firebase Auth — fonctionne même si le pont Cloudflare est down.
- * @param {string} uid       - UID Supabase de l'utilisateur
- * @param {object} profile   - Données du profil à écrire
- * @param {boolean} merge    - Si true, PATCH (merge) ; si false, PUT (écrase)
- */
-async function writeProfileViaRestAPI(uid, profile, merge = false) {
-  const baseUrl = `https://firestore.googleapis.com/v1/projects/${GSC_FIRESTORE_PROJECT}/databases/(default)/documents/users/${uid}`;
-
-  // Convertit un objet JS en champs Firestore REST
-  function toFirestoreFields(obj) {
-    const fields = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (v === null || v === undefined) {
-        fields[k] = { nullValue: null };
-      } else if (typeof v === 'boolean') {
-        fields[k] = { booleanValue: v };
-      } else if (typeof v === 'number') {
-        fields[k] = Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-      } else if (v instanceof Date) {
-        fields[k] = { timestampValue: v.toISOString() };
-      } else if (typeof v === 'object' && v.constructor?.name === 'Timestamp') {
-        // Firebase serverTimestamp → date actuelle
-        fields[k] = { timestampValue: new Date().toISOString() };
-      } else {
-        fields[k] = { stringValue: String(v) };
-      }
-    }
-    return fields;
-  }
-
-  const body = JSON.stringify({ fields: toFirestoreFields(profile) });
-
-  if (merge) {
-    // PATCH avec updateMask pour ne toucher que les champs fournis
-    const fieldPaths = Object.keys(profile).map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
-    const res = await fetch(`${baseUrl}?${fieldPaths}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `REST PATCH échoué (${res.status})`);
-    }
-  } else {
-    // PUT complet (crée ou remplace)
-    const res = await fetch(baseUrl, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `REST PUT échoué (${res.status})`);
-    }
-  }
-}
-window.writeProfileViaRestAPI = writeProfileViaRestAPI;
-
-/**
- * Au démarrage de l'app, tente de synchroniser les profils qui n'ont pas pu
- * être écrits lors d'une session précédente (stockés dans localStorage).
- */
-async function syncPendingProfiles() {
-  try {
-    const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles') || '[]');
-    if (!pending.length) return;
-    console.log(`[GSC] ${pending.length} profil(s) en attente de synchronisation…`);
-    const remaining = [];
-    for (const item of pending) {
-      try {
-        await writeProfileViaRestAPI(item.uid, item.profile, false);
-        console.log(`[GSC] Profil ${item.uid} synchronisé avec succès.`);
-      } catch (e) {
-        // Si l'entrée a plus de 7 jours, on l'abandonne
-        if (Date.now() - (item.ts || 0) < 7 * 24 * 3600 * 1000) remaining.push(item);
-        else console.warn(`[GSC] Profil ${item.uid} abandonné après 7 jours :`, e?.message);
-      }
-    }
-    localStorage.setItem('gsc_pending_profiles', JSON.stringify(remaining));
-  } catch (e) {
-    console.warn('[GSC] syncPendingProfiles:', e?.message);
-  }
-}
-window.syncPendingProfiles = syncPendingProfiles;
-// Lancement automatique au démarrage (non-bloquant)
-setTimeout(syncPendingProfiles, 3000);
 let _firebaseCustomAuthPromise = null;
 
 async function ensureFirebaseAuthViaSupabase(){
@@ -3334,8 +3267,6 @@ async function onSupabaseSignedIn(user, extra){
   // Le pont passe désormais par un Firebase Custom Token (généré par le Worker
   // Cloudflare à partir du token Supabase), pour que request.auth.uid == uid Supabase.
   try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('Pont Firebase Auth indisponible :', e); }
-  // Relancer la sync temps réel si elle avait échoué par manque d'auth
-  if(typeof startUsersSync==='function') try{ startUsersSync(); }catch(e){}
   await loadUserProfile(user.id);
   if(userProfile && userProfile._isNew){
     // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
@@ -3358,28 +3289,12 @@ async function onSupabaseSignedIn(user, extra){
       sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
       isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
       clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
-      status:     'active',
+      status:     'pending', // en attente de validation admin — cohérent avec inscription.html
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
     try{
       if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
-      console.log('[GSC] Profil créé via SDK Firestore.');
-    }catch(e){
-      console.warn('[GSC] SDK Firestore échoué, tentative REST API :', e?.code, e?.message);
-      // Fallback : écriture via REST API Firestore (ne dépend pas de Firebase Auth)
-      try{
-        await writeProfileViaRestAPI(user.id, userProfile);
-        console.log('[GSC] Profil créé via REST API Firestore.');
-      }catch(e2){
-        console.warn('[GSC] REST API Firestore échoué, profil sauvegardé localement :', e2?.message);
-        // Dernier recours : mettre en attente pour synchronisation ultérieure
-        try{
-          const pending = JSON.parse(localStorage.getItem('gsc_pending_profiles')||'[]');
-          pending.push({uid: user.id, profile: userProfile, ts: Date.now()});
-          localStorage.setItem('gsc_pending_profiles', JSON.stringify(pending));
-        }catch(e3){}
-      }
-    }
+    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
   }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
@@ -3437,18 +3352,10 @@ async function handleCompleteProfile(){
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
       await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
-      console.log('[GSC] Profil mis à jour via SDK Firestore.');
     }
   }catch(e){
     console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
-    // Fallback REST API
-    try{
-      await writeProfileViaRestAPI(userProfile.uid, {prenom, nom}, true);
-      console.log('[GSC] Profil mis à jour via REST API Firestore.');
-    }catch(e2){
-      console.warn('[GSC] REST API fallback échoué :', e2?.message);
-      // On continue quand même — les données sont déjà en mémoire et localStorage
-    }
+    // On continue quand même — les données sont déjà en mémoire et localStorage
   }
 
   closeModal('modal-complete-profile');
@@ -3522,16 +3429,12 @@ function toggleNavMenu(){
   const dropdown=document.getElementById('nav-menu-dropdown');
   if(dropdown){
     dropdown.classList.toggle('open');
-    if(dropdown.classList.contains('open')){
-      setTimeout(function(){
-        document.addEventListener('click',function closeDropdown(e){
-          if(!e.target.closest('.topnav-logo')){
-            dropdown.classList.remove('open');
-            document.removeEventListener('click',closeDropdown);
-          }
-        });
-      },0);
-    }
+    document.addEventListener('click',function closeDropdown(e){
+      if(!e.target.closest('.topnav-logo')){
+        dropdown.classList.remove('open');
+        document.removeEventListener('click',closeDropdown);
+      }
+    });
   }
 }
 window.toggleNavMenu=toggleNavMenu;
@@ -3730,44 +3633,17 @@ async function togglePushNotifications(){
     refreshNotifMenuState();
     if(perm==='granted'){
       toast('🔔 Notifications activées !','success');
-      // Enregistrer l'abonnement push auprès du Worker Cloudflare
-      if('serviceWorker' in navigator && 'PushManager' in window){
-        try{
-          const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
-          const reg = await navigator.serviceWorker.ready;
-          // Récupérer clé VAPID publique
-          const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
-          const { publicKey } = await keyResp.json();
-          // S'abonner
-          const sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: (function urlB64(b){
-              const pad='='.repeat((4-b.length%4)%4);
-              const base64=(b+pad).replace(/-/g,'+').replace(/_/g,'/');
-              const raw=window.atob(base64);
-              return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
-            })(publicKey)
-          });
-          // Envoyer abonnement au Worker
-          const userId = currentUser ? currentUser.uid : 'anonymous';
-          await fetch(WORKER_URL+'/subscribe',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ subscription: sub, userId })
-          });
-          // Notification de confirmation
-          reg.showNotification('Gabon Sport Connect',{
-            body:'Notifications activées ! Vous recevrez les actualités en temps réel.',
-            icon:'icon-192.png',
-            badge:'icon-192.png'
-          });
-        }catch(swErr){
-          console.warn('Push subscribe error:',swErr);
-        }
+      // Notification de confirmation via le Service Worker
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.ready;
+        reg.showNotification('Gabon Sport Connect',{
+          body:'Les notifications sont activées. Vous recevrez les actualités sportives et mises à jour.',
+          icon:'data:image/png;base64,'+(document.querySelector('.topnav-logo img')?.src.split('base64,')[1]||'')
+        });
       }
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
-        try{ await ensureFirebaseAuthViaSupabase(); await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
+        try{ await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
       }
     }else{
       toast('Notifications refusées.','info');
@@ -3872,7 +3748,7 @@ function renderDashboard(){
   if(!userProfile) return;
   const p=userProfile;
   const fullname=[p.prenom,p.nom].filter(Boolean).join(' ')||p.email?.split('@')[0]||'Utilisateur';
-  const initial=(p.prenom?.[0]||fullname[0])?.toUpperCase()||'?';
+  const initial=fullname[0]?.toUpperCase()||'?';
   document.getElementById('nav-username').textContent=fullname;
   // Photo de profil : priorité Firebase, sinon localStorage (upload admin)
   const navPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})();
@@ -3890,13 +3766,15 @@ function renderDashboard(){
     navAv.style.fontSize='16px';
   }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
-  document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${roleLabel}</span>`;
+  document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
   const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
   document.getElementById('hero-name').textContent=`Bonjour, ${heroDisplayName} !`;
   document.getElementById('hero-role-label').textContent=roleLabel;
   document.getElementById('hero-sport-label').textContent=p.sport||'—';
   document.getElementById('hero-email-label').textContent=p.email||'';
   document.getElementById('stat-niveau').textContent=p.niveau||'—';
+  const pendingNoticeEl=document.getElementById('pending-self-notice');
+  if(pendingNoticeEl) pendingNoticeEl.style.display=(p.status==='pending')?'flex':'none';
   // Completion bar
   let fields;
   if(['club','association','federation'].includes(p.role)){
@@ -3945,13 +3823,12 @@ async function loadGlobalStats(){
   let dbActors=[];
   if(db&&typeof collection==='function'){
     try{
-      try{ await ensureFirebaseAuthViaSupabase(); }catch(e){}
       const snap=await getDocs(collection(db,'users'));
-      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status!=='hidden'&&u.status!=='deleted');
+      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
     }catch(e){console.warn('stats:',e);}
   }
   const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
-  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&a.status!=='hidden'&&a.status!=='deleted');
+  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&(a.status==='active'||a.status===undefined));
   const merged=[...dbActors,...seedActors];
   const el1=document.getElementById('stat-total-acteurs');
   if(el1) el1.textContent=merged.length;
@@ -3962,9 +3839,8 @@ async function loadActors(){
   let dbActors = [];
   if(db&&typeof collection==='function'){
     try{
-      try{ await ensureFirebaseAuthViaSupabase(); }catch(e){}
       const snap=await getDocs(query(collection(db,'users')));
-      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status!=='hidden'&&u.status!=='deleted');
+      dbActors=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.status==='active'||u.status===undefined);
       dbActors.sort((a,b)=>{
         const ta=a.createdAt?.toDate?a.createdAt.toDate():a.createdAt?new Date(a.createdAt):new Date(0);
         const tb=b.createdAt?.toDate?b.createdAt.toDate():b.createdAt?new Date(b.createdAt):new Date(0);
@@ -3979,7 +3855,7 @@ async function loadActors(){
   // Respecte le filtre et la recherche actifs
   searchAnnuaire();
   // Update global stats with merged data
-  const activeAll=allActors.filter(u=>u.status!=='hidden'&&u.status!=='deleted');
+  const activeAll=allActors.filter(u=>u.status==='active'||u.status===undefined);
   const statEl=document.getElementById('stat-total-acteurs');
   if(statEl) statEl.textContent=activeAll.length;
   const jEl=document.getElementById('stat-total-joueurs');
@@ -4095,8 +3971,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -4132,7 +4008,7 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','organisateur','independant','supporter','admin'];
+      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','ecole_universite','organisateur','independant','supporter','admin'];
       const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
@@ -4215,9 +4091,9 @@ function renderActors(actors){
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport'}[roleKey]||roleKey;
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ecole_universite:'École / Université'}[roleKey]||roleKey;
       const badgeClass='badge-'+roleKey;
-      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
+      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -4329,7 +4205,7 @@ function openActorDetail(uid){
     };
   })();
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
-  const isOrg=['club','association','federation','organisateur'].includes(a.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(a.role);
   // Accès aux données sensibles (CNI, licence, n° de document) : uniquement le
   // propriétaire du profil, son club/association employeur, ou l'administrateur.
   const isProfileOwner=currentUser&&(a.uid||a.id)===currentUser.uid;
@@ -4354,13 +4230,15 @@ function openActorDetail(uid){
       if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
-    // Stats — tous rôles personnels, champs dynamiques selon sport
-    {const _sf=_gscResolveStats(a);
-    if(_sf.length){
-      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div><div class="adm-stats-grid">`;
-      _sf.forEach(f=>{let v=a[f.id];if(v===undefined||v===null||v==='') v=f.txt?'—':0;if(f.sfx) v=v+f.sfx;html+=`<div class="adm-stat"><div class="adm-stat-val">${v}</div><div class="adm-stat-lbl">${f.icon} ${f.lbl}</div></div>`;});
+    // Stats
+    if(a.role==='joueur'){
+      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
+      html+=`<div class="adm-stats-grid">`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
       html+=`</div></div>`;
-    }}
+    }
     // Mandats
     const mandats=a.mandats||[];
     if(mandats.length||a.club){
@@ -4382,60 +4260,9 @@ function openActorDetail(uid){
     }
   }
   if(isOrg){
-    // ── Identité structurelle
-    html+=`<div class="adm-section"><div class="adm-section-title">🏛️ Identité de la structure</div>`;
-    if(a.nomOrganisation) html+=`<div class="adm-info-row"><span class="adm-info-label">Nom officiel</span><span class="adm-info-val">${a.nomOrganisation}</span></div>`;
-    if(a.typeOrganisation) html+=`<div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${a.typeOrganisation}</span></div>`;
-    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président / DG</span><span class="adm-info-val">${a.president}</span></div>`;
-    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondée en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
-    if(a.adresse) html+=`<div class="adm-info-row"><span class="adm-info-label">Siège social</span><span class="adm-info-val">📍 ${a.adresse}</span></div>`;
-    if(a.siteWeb) html+=`<div class="adm-info-row"><span class="adm-info-label">Site web</span><span class="adm-info-val"><a href="${a.siteWeb}" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;">${a.siteWeb}</a></span></div>`;
-    if(a.email) html+=`<div class="adm-info-row"><span class="adm-info-label">Contact</span><span class="adm-info-val">${a.email}</span></div>`;
-    if(a.telephone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">${a.telephone}</span></div>`;
-    html+=`</div>`;
-    // ── Chiffres clés
-    const hasStats=a.effectif||a.licencies||a.clubsAffilies||a.competitionsParAn||a.titresNationaux||a.evenementsOrganises||a.participantsTotal||a.budgetAnnuel;
-    if(hasStats){
-      html+=`<div class="adm-section"><div class="adm-section-title">📊 Chiffres clés</div><div class="adm-stats-grid">`;
-      if(a.effectif) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.effectif}</div><div class="adm-stat-lbl">👥 Membres</div></div>`;
-      if(a.licencies) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.licencies}</div><div class="adm-stat-lbl">🪪 Licenciés</div></div>`;
-      if(a.clubsAffilies) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.clubsAffilies}</div><div class="adm-stat-lbl">🏟️ Clubs affiliés</div></div>`;
-      if(a.competitionsParAn) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.competitionsParAn}</div><div class="adm-stat-lbl">🏆 Compétitions/an</div></div>`;
-      if(a.titresNationaux) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.titresNationaux}</div><div class="adm-stat-lbl">🥇 Titres nationaux</div></div>`;
-      if(a.evenementsOrganises) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.evenementsOrganises}</div><div class="adm-stat-lbl">📅 Événements org.</div></div>`;
-      if(a.participantsTotal) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.participantsTotal}</div><div class="adm-stat-lbl">👤 Participants</div></div>`;
-      if(a.capaciteAccueil) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.capaciteAccueil}</div><div class="adm-stat-lbl">🏟️ Capacité accueil</div></div>`;
-      if(a.anneesExperience) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.anneesExperience}</div><div class="adm-stat-lbl">📆 Ans d'expérience</div></div>`;
-      if(a.budgetAnnuel) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.budgetAnnuel}</div><div class="adm-stat-lbl">💰 Budget annuel</div></div>`;
-      html+=`</div></div>`;
-    }
-    // ── Infos spécifiques club
-    if(a.role==='club'||a.role==='association'){
-      html+=`<div class="adm-section"><div class="adm-section-title">⚽ Infos sportives</div>`;
-      if(a.division) html+=`<div class="adm-info-row"><span class="adm-info-label">Division / Ligue</span><span class="adm-info-val">🏅 ${a.division}</span></div>`;
-      if(a.stade) html+=`<div class="adm-info-row"><span class="adm-info-label">Stade / Terrain</span><span class="adm-info-val">🏟️ ${a.stade}</span></div>`;
-      if(a.couleursClub) html+=`<div class="adm-info-row"><span class="adm-info-label">Couleurs</span><span class="adm-info-val">🎨 ${a.couleursClub}</span></div>`;
-      if(a.entraîneur||a.entr) html+=`<div class="adm-info-row"><span class="adm-info-label">Entraîneur</span><span class="adm-info-val">📋 ${a.entraîneur||a.entr}</span></div>`;
-      html+=`</div>`;
-    }
-    // ── Organisateur : événement phare
-    if(a.role==='organisateur'){
-      html+=`<div class="adm-section"><div class="adm-section-title">📅 Activités</div>`;
-      if(a.evenementPhare) html+=`<div class="adm-info-row"><span class="adm-info-label">Événement phare</span><span class="adm-info-val">⭐ ${a.evenementPhare}</span></div>`;
-      if(a.partenaires) html+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires</span><span class="adm-info-val">${a.partenaires}</span></div>`;
-      html+=`</div>`;
-    }
-    // ── Fédération : partenaires & affiliations
-    if(a.role==='federation'){
-      html+=`<div class="adm-section"><div class="adm-section-title">🌐 Affiliations & Partenaires</div>`;
-      if(a.affiliationInternationale) html+=`<div class="adm-info-row"><span class="adm-info-label">Affiliation int.</span><span class="adm-info-val">${a.affiliationInternationale}</span></div>`;
-      if(a.partenaires) html+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires / sponsors</span><span class="adm-info-val">${a.partenaires}</span></div>`;
-      html+=`</div>`;
-    }
-    // ── Palmarès
-    if(a.palmares){
-      html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
-    }
+    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${a.president}</span></div>`;
+    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
+    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${a.effectif} membres</span></div>`;
   }
   // Élève / Étudiant — infos académiques
   if(a.role==='eleve_etudiant'){
@@ -4537,7 +4364,7 @@ function renderProfile(){
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
 
@@ -4549,7 +4376,7 @@ function renderProfile(){
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
-  document.getElementById('prof-stats-card').style.display=isPersonnel?'':'none';
+  document.getElementById('prof-stats-card').style.display=isPersonnel&&p.role==='joueur'?'':'none';
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
 
   // Supporter card
@@ -4583,17 +4410,10 @@ function renderProfile(){
       const age=new Date().getFullYear()-new Date(p.dateNaissance).getFullYear();
       document.getElementById('prof-age').textContent=age;
     } else document.getElementById('prof-age').textContent='—';
-    document.getElementById('prof-pied').textContent=(['Basketball','Handball','Volleyball','Tennis'].includes((p.sport||'').replace(/^[^\w\u00C0-\u017E]+/,'').trim())?p.main:p.pied)||'—';
-    // Label "Pied fort" adapté au sport
-    {const _sp=(p.sport||'Football').replace(/^[^\w\u00C0-\u017E]+/,'').trim();
-    const _pl=document.getElementById('prof-pied')?.closest?.('.phys-card')?.querySelector('.phys-lbl');
-    if(_pl) _pl.textContent=({Football:'Pied fort',Rugby:'Pied fort',Basketball:'Main forte',Handball:'Main forte',Volleyball:'Main forte',Tennis:'Main forte',Boxe:'Garde',Judo:'Garde',Taekwondo:'Garde'}[_sp]||'Latéralité');}
-    // Compteurs top-3 adaptés au sport
-    {const _sf=_gscResolveStats(p);
-    const _em=document.getElementById('prof-matchs'),_eb=document.getElementById('prof-buts'),_ep=document.getElementById('prof-passes');
-    if(_sf[0]&&_em){_em.textContent=p[_sf[0].id]??0;const l=_em.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[0].lbl;}
-    if(_sf[1]&&_eb){_eb.textContent=p[_sf[1].id]??(_sf[1].txt?'—':0);const l=_eb.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[1].lbl;}
-    if(_sf[2]&&_ep){_ep.textContent=p[_sf[2].id]??(_sf[2].txt?'—':0);const l=_ep.closest('.mini-stat')?.querySelector('.ms-lbl');if(l)l.textContent=_sf[2].lbl;}}
+    document.getElementById('prof-pied').textContent=p.pied||'—';
+    document.getElementById('prof-matchs').textContent=p.matchsJoues??0;
+    document.getElementById('prof-buts').textContent=p.buts??0;
+    document.getElementById('prof-passes').textContent=p.passes??0;
     const pb=document.getElementById('prof-position-badge');
     if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
@@ -4616,104 +4436,50 @@ function renderProfile(){
     document.getElementById('mandats-display').innerHTML=mandHtml;
   } else { mandatsCard.style.display='none'; }
 
-  // Club / Org info display
+  // Club info display
   if(isOrg){
     const ci=document.getElementById('club-info-display');
-    let ciHtml='';
-    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>`;
-    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>`;
-    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Président / DG</span><span class="adm-info-val">${p.president||'—'}</span></div>`;
-    ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Fondée en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>`;
-    if(p.adresse) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Siège social</span><span class="adm-info-val">📍 ${p.adresse}</span></div>`;
-    if(p.siteWeb) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Site web</span><span class="adm-info-val"><a href="${p.siteWeb}" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;">${p.siteWeb}</a></span></div>`;
-    // Chiffres clés
-    const statsOrg=[
-      p.effectif?['👥 Membres',p.effectif]:null,
-      p.licencies?['🪪 Licenciés',p.licencies]:null,
-      p.clubsAffilies?['🏟️ Clubs affiliés',p.clubsAffilies]:null,
-      p.titresNationaux?['🥇 Titres nationaux',p.titresNationaux]:null,
-      p.competitionsParAn?['🏆 Compétitions/an',p.competitionsParAn]:null,
-      p.evenementsOrganises?['📅 Événements org.',p.evenementsOrganises]:null,
-      p.participantsTotal?['👤 Participants',p.participantsTotal]:null,
-      p.capaciteAccueil?['🏟️ Capacité accueil',p.capaciteAccueil]:null,
-      p.anneesExperience?['📆 Ans d\'expérience',p.anneesExperience]:null,
-      p.budgetAnnuel?['💰 Budget annuel',p.budgetAnnuel]:null,
-    ].filter(Boolean);
-    if(statsOrg.length){
-      ciHtml+=`<div class="adm-stats-grid" style="margin-top:12px;">`;
-      statsOrg.forEach(([lbl,val])=>{ciHtml+=`<div class="adm-stat"><div class="adm-stat-val" style="font-size:16px;">${val}</div><div class="adm-stat-lbl">${lbl}</div></div>`;});
-      ciHtml+=`</div>`;
-    }
-    if(p.division) ciHtml+=`<div class="adm-info-row" style="margin-top:8px;"><span class="adm-info-label">Division / Ligue</span><span class="adm-info-val">🏅 ${p.division}</span></div>`;
-    if(p.stade) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Stade / Terrain</span><span class="adm-info-val">🏟️ ${p.stade}</span></div>`;
-    if(p.couleursClub) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Couleurs</span><span class="adm-info-val">🎨 ${p.couleursClub}</span></div>`;
-    if(p.evenementPhare) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Événement phare</span><span class="adm-info-val">⭐ ${p.evenementPhare}</span></div>`;
-    if(p.partenaires) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Partenaires</span><span class="adm-info-val">${p.partenaires}</span></div>`;
-    if(p.affiliationInternationale) ciHtml+=`<div class="adm-info-row"><span class="adm-info-label">Affiliation int.</span><span class="adm-info-val">${p.affiliationInternationale}</span></div>`;
-    if(p.palmares) ciHtml+=`<div style="margin-top:10px;padding:10px;background:var(--gray-bg);border-radius:8px;font-size:12.5px;color:#374151;line-height:1.5;"><strong>🏆 Palmarès</strong><br>${p.palmares}</div>`;
-    ci.innerHTML=ciHtml;
+    ci.innerHTML=`
+      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${p.president||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${p.effectif||'—'}</span></div>
+      ${p.role==='ecole_universite'?`
+      <div class="adm-info-row"><span class="adm-info-label">Type d'établissement</span><span class="adm-info-val">${p.typeEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${p.statutEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif filière sportive</span><span class="adm-info-val">${p.effectifSportif||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Disciplines proposées</span><span class="adm-info-val">${(p.disciplinesProposees||[]).join(', ')||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Infrastructures</span><span class="adm-info-val">${p.infrastructures||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Responsable des sports</span><span class="adm-info-val">${p.responsableSports||'—'}</span></div>
+      `:''}
+    `;
   }
 
   buildEditForm(p);
 }
 
-// ── GSC SPORT STATS CONFIG ── multi-sports × multi-rôles
-const _GSC_STATS={
-  joueur:{
-    Football:{
-      Gardien:[{icon:'✋',id:'arrets',lbl:'Arrêts'},{icon:'🧤',id:'cleanSheets',lbl:'Clean sheets'},{icon:'🥅',id:'butsEncaissés',lbl:'Buts enc.'},{icon:'📊',id:'pctArrets',lbl:'% Arrêts',sfx:'%'},{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-      _:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'⚽',id:'buts',lbl:'Buts'},{icon:'🅰️',id:'passes',lbl:'Passes déc.'},{icon:'🟨',id:'cartonsJaunes',lbl:'C. jaunes'},{icon:'🟥',id:'cartonsRouges',lbl:'C. rouges'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]
-    },
-    Basketball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏀',id:'buts',lbl:'Points'},{icon:'🔄',id:'passes',lbl:'Passes'},{icon:'💪',id:'rebonds',lbl:'Rebonds'},{icon:'🛡️',id:'contres',lbl:'Contres'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Handball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🤾',id:'buts',lbl:'Buts'},{icon:'🅰️',id:'passes',lbl:'Passes'},{icon:'✋',id:'arrets',lbl:'Arrêts'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Volleyball:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'🏐',id:'buts',lbl:'Points'},{icon:'🎯',id:'aces',lbl:'Aces'},{icon:'🛡️',id:'blocs',lbl:'Blocs'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    'Athlétisme':[{icon:'🏃',id:'matchsJoues',lbl:'Épreuves'},{icon:'⏱️',id:'meilleursTemps',lbl:'Meilleur temps',txt:true},{icon:'📈',id:'records',lbl:'Records'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Natation:[{icon:'🏊',id:'matchsJoues',lbl:'Compétitions'},{icon:'⏱️',id:'meilleursTemps',lbl:'Meilleur temps',txt:true},{icon:'📈',id:'records',lbl:'Records'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Boxe:[{icon:'🥊',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'💥',id:'ko',lbl:'KO'},{icon:'❌',id:'defaites',lbl:'Défaites'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
-    Judo:[{icon:'🥋',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
-    Tennis:[{icon:'📊',id:'classement',lbl:'Classement',txt:true},{icon:'🎾',id:'matchsJoues',lbl:'Matchs'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🏆',id:'trophees',lbl:'Titres'}],
-    Rugby:[{icon:'🏉',id:'matchsJoues',lbl:'Matchs'},{icon:'⚡',id:'buts',lbl:'Essais'},{icon:'🔄',id:'passes',lbl:'Transformations'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Cyclisme:[{icon:'🚴',id:'matchsJoues',lbl:'Courses'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}],
-    Taekwondo:[{icon:'🥋',id:'matchsJoues',lbl:'Combats'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'⚖️',id:'categoriePoids',lbl:'Catégorie',txt:true}],
-    _:[{icon:'🎯',id:'matchsJoues',lbl:'Matchs/Épr.'},{icon:'🥇',id:'buts',lbl:'Points/Buts'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]
-  },
-  arbitre:{
-    Football:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs arbitrés'},{icon:'🟨',id:'cartonsJaunes',lbl:'C. jaunes'},{icon:'🟥',id:'cartonsRouges',lbl:'C. rouges'},{icon:'📊',id:'niveauArbitrage',lbl:'Niveau',txt:true}],
-    _:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs arbitrés'},{icon:'📊',id:'niveauArbitrage',lbl:'Niveau',txt:true}]
-  },
-  entraineur:{_:[{icon:'📋',id:'matchsJoues',lbl:'Matchs dirigés'},{icon:'✅',id:'buts',lbl:'Victoires'},{icon:'🏆',id:'trophees',lbl:'Trophées'},{icon:'🎓',id:'diplomesCoach',lbl:'Diplômes',txt:true}]},
-  independant:{_:[{icon:'🎯',id:'matchsJoues',lbl:'Événements'},{icon:'🏆',id:'trophees',lbl:'Distinctions'}]},
-  eleve_etudiant:{_:[{icon:'🎮',id:'matchsJoues',lbl:'Compétitions'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]},
-  sportif_etranger:{_:[{icon:'🎮',id:'matchsJoues',lbl:'Matchs'},{icon:'⚽',id:'buts',lbl:'Buts/Points'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]},
-  handisport:{_:[{icon:'🏅',id:'matchsJoues',lbl:'Compétitions'},{icon:'🥇',id:'medailles',lbl:'Médailles'},{icon:'🏆',id:'trophees',lbl:'Trophées'}]}
-};
-function _gscResolveStats(p){
-  const role=p.role||'joueur';
-  const sport=(p.sport||'Football').replace(/^[^\w\u00C0-\u017E]+/,'').trim();
-  const rc=_GSC_STATS[role]||_GSC_STATS.joueur;
-  let cfg=rc[sport]||rc['_'];
-  if(role==='joueur'&&sport==='Football'&&cfg&&!Array.isArray(cfg)){
-    cfg=cfg[p.poste]||cfg['_'];
-  }
-  return Array.isArray(cfg)?cfg:[];
-}
 function renderSportStats(p){
   const container=document.getElementById('sport-stats-display');
   if(!container) return;
-  const fields=_gscResolveStats(p);
-  if(!fields.length){container.innerHTML='';return;}
-  container.innerHTML=fields.map(f=>{
-    let v=p[f.id];
-    if(v===undefined||v===null||v==='') v=f.txt?'—':0;
-    if(f.sfx) v=v+f.sfx;
-    return `<div class="sport-stat-item"><div class="sport-stat-icon">${f.icon}</div><div><div class="sport-stat-val">${v}</div><div class="sport-stat-lbl">${f.lbl}</div></div></div>`;
-  }).join('');
+  const sport=p.sport||'Football';
+  let items=[];
+  if(sport==='Football'){
+    items=p.poste==='Gardien'
+      ?[{icon:'✋',val:p.arrets??0,lbl:'Arrêts'},{icon:'🧤',val:p.cleanSheets??0,lbl:'Clean sheets'},{icon:'🥅',val:p.butsEncaissés??0,lbl:'Buts enc.'},{icon:'📊',val:(p.pctArrets??0)+'%',lbl:'% Arrêts'}]
+      :[{icon:'🥅',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes déc.'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'C. jaunes'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'C. rouges'}];
+  } else if(sport==='Basketball'){
+    items=[{icon:'🏀',val:p.buts??0,lbl:'Points'},{icon:'🔄',val:p.passes??0,lbl:'Passes'},{icon:'💪',val:p.tacles??0,lbl:'Rebonds'},{icon:'🛡️',val:p.interceptions??0,lbl:'Contres'}];
+  } else {
+    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées'}];
+  }
+  container.innerHTML=items.map(i=>`<div class="sport-stat-item"><div class="sport-stat-icon">${i.icon}</div><div><div class="sport-stat-val">${i.val}</div><div class="sport-stat-lbl">${i.lbl}</div></div></div>`).join('');
 }
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';
 
@@ -4807,31 +4573,28 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(isPersonnel){
-      const _sf=_gscResolveStats(p);
-      if(_sf.length){
-        h+=`<div class="section-divider green">📊 Statistiques</div>`;
-        let _sr='';
-        _sf.forEach((f,i)=>{
-          const v=p[f.id]!==undefined&&p[f.id]!==null?p[f.id]:(f.txt?'':0);
-          if(i%2===0) _sr+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">`;
-          if(f.txt){
-            _sr+=`<div class="form-group"><label>${f.icon} ${f.lbl}</label><input type="text" id="edit-stat-${f.id}" value="${v}" placeholder="${f.lbl}"></div>`;
-          } else {
-            _sr+=`<div class="form-group"><label>${f.icon} ${f.lbl}</label><input type="number" id="edit-stat-${f.id}" value="${v}" min="0"></div>`;
-          }
-          if(i%2===1||i===_sf.length-1) _sr+=`</div>`;
-        });
-        h+=_sr;
-      }
+    if(p.role==='joueur'){
+      h+=`<div class="section-divider green">📊 Statistiques</div>`;
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
+        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
+        <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
+        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
+      </div>`;
     }
   }
 
   if(isOrg){
-    h+=`<div class="section-divider orange">🏛️ Identité de la structure</div>`;
-    h+=`<div class="form-group"><label>Nom officiel de l'organisation</label><input type="text" id="edit-nom-org" value="${p.nomOrganisation||''}" placeholder="FC Libreville, Fédération Gabonaise de Football…"></div>`;
+    h+=`<div class="section-divider orange">🏟️ Organisation</div>`;
+    h+=`<div class="form-group"><label>Nom de l'organisation</label><input type="text" id="edit-nom-org" value="${p.nomOrganisation||''}" placeholder="FC Libreville…"></div>`;
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Type de structure</label>
+      <div class="form-group"><label>Type</label>
         <select id="edit-type-org">
           <option${p.typeOrganisation==='Club sportif'?' selected':''}>Club sportif</option>
           <option${p.typeOrganisation==='Association'?' selected':''}>Association</option>
@@ -4840,6 +4603,7 @@ function buildEditForm(p){
           <option${p.typeOrganisation==="Organisation d'évènements"?' selected':''}>Organisation d'évènements</option>
           <option${p.typeOrganisation==='Fédération'?' selected':''}>Fédération</option>
           <option${p.typeOrganisation==='Ligue'?' selected':''}>Ligue</option>
+          <option${p.typeOrganisation==='Établissement scolaire/universitaire'?' selected':''}>Établissement scolaire/universitaire</option>
         </select>
       </div>
       <div class="form-group"><label>Sport(s)</label>
@@ -4849,66 +4613,51 @@ function buildEditForm(p){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Président / Directeur général</label><input type="text" id="edit-president" value="${p.president||''}" placeholder="Nom du président"></div>
+      <div class="form-group"><label>Président</label><input type="text" id="edit-president" value="${p.president||''}" placeholder="Nom du président"></div>
       <div class="form-group"><label>Année de création</label><input type="number" id="edit-annee" value="${p.anneeCreation||''}" placeholder="2010"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Adresse / Siège social</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>
-      <div class="form-group"><label>Site web officiel</label><input type="url" id="edit-siteweb" value="${p.siteWeb||''}" placeholder="https://…"></div>
+      <div class="form-group"><label>Effectif (membres)</label><input type="number" id="edit-effectif" value="${p.effectif||0}" min="0"></div>
+      <div class="form-group"><label>Site web</label><input type="url" id="edit-siteweb" value="${p.siteWeb||''}" placeholder="https://…"></div>
     </div>
+    <div class="form-group"><label>Adresse / Siège</label><input type="text" id="edit-adresse" value="${p.adresse||''}" placeholder="Quartier, Ville"></div>
     <div class="form-group"><label>Mon titre / rôle au sein de l'organisation</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Président, Secrétaire général, Organisateur principal…"></div>`;
-
-    h+=`<div class="section-divider blue">📊 Chiffres clés</div>`;
-    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>👥 Effectif / Membres</label><input type="number" id="edit-effectif" value="${p.effectif||0}" min="0"></div>
-      <div class="form-group"><label>🪪 Licenciés</label><input type="number" id="edit-licencies" value="${p.licencies||0}" min="0"></div>
-    </div>`;
-
-    if(p.role==='federation'){
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>🏟️ Clubs affiliés</label><input type="number" id="edit-clubs-affilies" value="${p.clubsAffilies||0}" min="0"></div>
-        <div class="form-group"><label>🏆 Compétitions organisées / an</label><input type="number" id="edit-competitions-an" value="${p.competitionsParAn||0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>🥇 Titres nationaux remportés</label><input type="number" id="edit-titres-nat" value="${p.titresNationaux||0}" min="0"></div>
-        <div class="form-group"><label>🌐 Affiliation internationale</label><input type="text" id="edit-affiliation-int" value="${p.affiliationInternationale||''}" placeholder="FIFA, CAF, FIBA…"></div>
-      </div>
-      <div class="form-group"><label>🤝 Partenaires / Sponsors</label><input type="text" id="edit-partenaires" value="${p.partenaires||''}" placeholder="Ministère des Sports, Total Gabon…"></div>`;
-    }
-
-    if(p.role==='club'||p.role==='association'){
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>🏅 Division / Ligue actuelle</label><input type="text" id="edit-division" value="${p.division||''}" placeholder="Ligue 1, Division Régionale…"></div>
-        <div class="form-group"><label>🥇 Titres nationaux</label><input type="number" id="edit-titres-nat" value="${p.titresNationaux||0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>🏟️ Stade / Terrain home</label><input type="text" id="edit-stade" value="${p.stade||''}" placeholder="Stade Omar Bongo…"></div>
-        <div class="form-group"><label>🎨 Couleurs du club</label><input type="text" id="edit-couleurs" value="${p.couleursClub||''}" placeholder="Jaune et vert…"></div>
-      </div>
-      <div class="form-group"><label>💰 Budget annuel estimé</label><input type="text" id="edit-budget" value="${p.budgetAnnuel||''}" placeholder="Ex : 50 000 000 XAF"></div>`;
-    }
-
-    if(p.role==='organisateur'){
-      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>📅 Événements organisés (total)</label><input type="number" id="edit-evenements" value="${p.evenementsOrganises||0}" min="0"></div>
-        <div class="form-group"><label>👤 Participants (total cumulé)</label><input type="number" id="edit-participants" value="${p.participantsTotal||0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>⭐ Événement phare / Flagship</label><input type="text" id="edit-evenement-phare" value="${p.evenementPhare||''}" placeholder="Coupe du Gabon de Football…"></div>
-        <div class="form-group"><label>🏟️ Capacité d'accueil max</label><input type="number" id="edit-capacite" value="${p.capaciteAccueil||0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>📆 Années d'expérience</label><input type="number" id="edit-experience" value="${p.anneesExperience||0}" min="0"></div>
-        <div class="form-group"><label>🤝 Partenaires / Sponsors</label><input type="text" id="edit-partenaires" value="${p.partenaires||''}" placeholder="Sponsors, institutions…"></div>
-      </div>`;
-    }
-
     h+=`<div class="section-divider green">🏆 Palmarès / Historique</div>`;
-    h+=`<div class="form-group"><label>Palmarès détaillé</label><textarea id="edit-palmares" placeholder="Champion national 2023, Vainqueur Coupe du Gabon 2021…">${p.palmares||''}</textarea></div>`;
+    h+=`<div class="form-group"><label>Palmarès</label><textarea id="edit-palmares" placeholder="Champion national 2023…">${p.palmares||''}</textarea></div>`;
   }
 
   if(p.role==='arbitre'){
     h+=`<div class="form-group"><label>Mon titre / spécialité d'arbitrage</label><input type="text" id="edit-titre-perso" value="${p.titrePersonnalise||''}" placeholder="Ex : Arbitre central, Arbitre vidéo (VAR), Commissaire de match…"></div>`;
+  }
+
+  if(p.role==='ecole_universite'){
+    h+=`<div class="section-divider blue">🏫 Établissement</div>`;
+    h+=`<div class="form-group"><label>Type d'établissement</label>
+      <select id="edit-ecole-type">
+        <option${p.typeEtablissement==='Université'?' selected':''}>Université</option>
+        <option${p.typeEtablissement==='Institut supérieur'?' selected':''}>Institut supérieur</option>
+        <option${p.typeEtablissement==='Lycée'?' selected':''}>Lycée</option>
+        <option${p.typeEtablissement==='Collège'?' selected':''}>Collège</option>
+        <option${p.typeEtablissement==='École primaire'?' selected':''}>École primaire</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Statut</label>
+        <select id="edit-ecole-statut">
+          <option${p.statutEtablissement==='Public'?' selected':''}>Public</option>
+          <option${p.statutEtablissement==='Privé'?' selected':''}>Privé</option>
+          <option${p.statutEtablissement==='Confessionnel'?' selected':''}>Confessionnel</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Effectif filière sportive</label><input type="number" id="edit-ecole-effectif-sportif" value="${p.effectifSportif||0}" min="0" placeholder="ex: 120"></div>
+    </div>
+    <div class="form-group"><label>Disciplines sportives proposées</label>
+      <select id="edit-ecole-disciplines" multiple style="height:90px;">
+        ${['Football','Basketball','Handball','Volleyball','Athlétisme','Natation','Boxe','Judo','Tennis','Rugby'].map(s=>`<option value="${s}"${(p.disciplinesProposees||[]).includes(s)?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Infrastructures sportives</label><textarea id="edit-ecole-infra" placeholder="Terrain de football, gymnase couvert, piscine…">${p.infrastructures||''}</textarea></div>
+    <div class="form-group"><label>Responsable des sports / EPS</label><input type="text" id="edit-ecole-responsable" value="${p.responsableSports||''}" placeholder="Nom du responsable"></div>`;
   }
 
   // Profil sportif handisport — déficience, classification, accompagnement
@@ -5028,7 +4777,7 @@ async function saveProfile(){
   if(!currentUser||!userProfile) return;
   const p=userProfile;
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
-  const isOrg=['club','association','federation','organisateur'].includes(p.role);
+  const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
   const updates={
@@ -5058,12 +4807,16 @@ async function saveProfile(){
       updates.clubsPrecedents=document.getElementById('edit-clubs-prec')?.value.trim()||'';
       updates.mandats=getMandatsFromForm();
     }
-    // Stats dynamiques selon sport × rôle
-    _gscResolveStats(p).forEach(f=>{
-      const el=document.getElementById('edit-stat-'+f.id);
-      if(!el) return;
-      updates[f.id]=f.txt?el.value.trim():(parseInt(el.value)||0);
-    });
+    if(p.role==='joueur'){
+      Object.assign(updates,{
+        matchsJoues:parseInt(document.getElementById('edit-matchs')?.value)||0,
+        buts:parseInt(document.getElementById('edit-buts')?.value)||0,
+        passes:parseInt(document.getElementById('edit-passes')?.value)||0,
+        trophees:parseInt(document.getElementById('edit-trophees')?.value)||0,
+        cartonsJaunes:parseInt(document.getElementById('edit-cartons-j')?.value)||0,
+        cartonsRouges:parseInt(document.getElementById('edit-cartons-r')?.value)||0,
+      });
+    }
   }
   if(isOrg){
     Object.assign(updates,{
@@ -5073,32 +4826,24 @@ async function saveProfile(){
       president:document.getElementById('edit-president')?.value.trim()||'',
       anneeCreation:document.getElementById('edit-annee')?.value||'',
       effectif:parseInt(document.getElementById('edit-effectif')?.value)||0,
-      licencies:parseInt(document.getElementById('edit-licencies')?.value)||0,
       siteWeb:document.getElementById('edit-siteweb')?.value.trim()||'',
       adresse:document.getElementById('edit-adresse')?.value.trim()||'',
       palmares:document.getElementById('edit-palmares')?.value.trim()||'',
       titrePersonnalise:document.getElementById('edit-titre-perso')?.value.trim()||'',
-      titresNationaux:parseInt(document.getElementById('edit-titres-nat')?.value)||0,
-      // Club / Association
-      division:document.getElementById('edit-division')?.value.trim()||'',
-      stade:document.getElementById('edit-stade')?.value.trim()||'',
-      couleursClub:document.getElementById('edit-couleurs')?.value.trim()||'',
-      budgetAnnuel:document.getElementById('edit-budget')?.value.trim()||'',
-      // Fédération
-      clubsAffilies:parseInt(document.getElementById('edit-clubs-affilies')?.value)||0,
-      competitionsParAn:parseInt(document.getElementById('edit-competitions-an')?.value)||0,
-      affiliationInternationale:document.getElementById('edit-affiliation-int')?.value.trim()||'',
-      partenaires:document.getElementById('edit-partenaires')?.value.trim()||'',
-      // Organisateur
-      evenementsOrganises:parseInt(document.getElementById('edit-evenements')?.value)||0,
-      participantsTotal:parseInt(document.getElementById('edit-participants')?.value)||0,
-      evenementPhare:document.getElementById('edit-evenement-phare')?.value.trim()||'',
-      capaciteAccueil:parseInt(document.getElementById('edit-capacite')?.value)||0,
-      anneesExperience:parseInt(document.getElementById('edit-experience')?.value)||0,
     });
   }
   if(p.role==='arbitre'){
     updates.titrePersonnalise=document.getElementById('edit-titre-perso')?.value.trim()||'';
+  }
+  if(p.role==='ecole_universite'){
+    Object.assign(updates,{
+      typeEtablissement:document.getElementById('edit-ecole-type')?.value||'Lycée',
+      statutEtablissement:document.getElementById('edit-ecole-statut')?.value||'Public',
+      effectifSportif:parseInt(document.getElementById('edit-ecole-effectif-sportif')?.value)||0,
+      disciplinesProposees:Array.from(document.getElementById('edit-ecole-disciplines')?.selectedOptions||[]).map(o=>o.value),
+      infrastructures:document.getElementById('edit-ecole-infra')?.value.trim()||'',
+      responsableSports:document.getElementById('edit-ecole-responsable')?.value.trim()||'',
+    });
   }
   if(p.role==='handisport'){
     Object.assign(updates,{
@@ -5117,7 +4862,6 @@ async function saveProfile(){
     });
   }
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),updates);
     Object.assign(userProfile,updates);
     renderDashboard();renderProfile();
@@ -5673,8 +5417,8 @@ function renderActorsAdmin(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
 
-  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
@@ -5736,9 +5480,22 @@ async function loadAdminUsers(){
     allAdminUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
     allAdminUsers.sort((a,b)=>{ const ta=a.createdAt?.toDate?a.createdAt.toDate():new Date(0); const tb=b.createdAt?.toDate?b.createdAt.toDate():new Date(0); return tb-ta; });
     renderAdminUsersTable(allAdminUsers);
-
+    updatePendingBanner();
   }catch(e){
     document.getElementById('admin-users-tbody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--danger)">Erreur : ${e.message}</td></tr>`;
+  }
+}
+
+function updatePendingBanner(){
+  const pending=allAdminUsers.filter(u=>u.status==='pending');
+  const banner=document.getElementById('pending-banner');
+  if(!banner) return;
+  if(pending.length){
+    banner.style.display='flex';
+    document.getElementById('pending-count-bubble').textContent=pending.length;
+    document.getElementById('pending-banner-text').textContent=`fiche(s) en attente de validation — à traiter`;
+  } else {
+    banner.style.display='none';
   }
 }
 
@@ -5749,9 +5506,10 @@ function renderAdminUsersTable(users){
   tbody.innerHTML=users.map(u=>{
     const fullname=[u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||u.email?.split('@')[0]||'—';
     const initial=fullname[0]?.toUpperCase()||'?';
-    const statusBadge=u.status==='hidden'?'<span class="status-badge status-hidden">Masqué</span>':u.status==='deleted'?'<span class="status-badge status-deleted">Supprimé</span>':'<span class="status-badge status-active">Actif</span>';
+    const isPending=u.status==='pending';
+    const statusBadge=isPending?'<span class="status-badge status-pending">⏳ En attente</span>':u.status==='hidden'?'<span class="status-badge status-hidden">Masqué</span>':u.status==='deleted'?'<span class="status-badge status-deleted">Supprimé</span>':'<span class="status-badge status-active">Actif</span>';
     const fedIcon=u.gereParFederation?'🏛️ ':'' ;
-    return `<tr>
+    return `<tr class="${isPending?'pending-row':''}">
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="user-row-avatar">${u.photoURL?`<img src="${u.photoURL}" alt="">`:initial}</div>
         <div>
@@ -5764,16 +5522,49 @@ function renderAdminUsersTable(users){
       <td style="font-size:13px">${u.ville||'—'}</td>
       <td style="font-size:13px">${u.niveau||'—'}</td>
       <td>${statusBadge}</td>
-      <td><div class="action-btns">
+      <td>${isPending?`<div class="pending-actions">
+        <button class="btn-sm" onclick="adminViewPendingDetail('${u.uid||u.id}')" title="Voir la fiche complète">👁️ Détail</button>
+        <button class="btn-approve" onclick="adminApproveUser('${u.uid||u.id}')" title="Valider la fiche">✅ Valider</button>
+        <button class="btn-reject" onclick="adminRejectUser('${u.uid||u.id}')" title="Rejeter la fiche">✕ Rejeter</button>
+      </div>`:`<div class="action-btns">
         <button class="btn-sm" onclick="adminEditUser('${u.uid||u.id}')">✏️</button>
         <button class="btn-warn" onclick="adminToggleHide('${u.uid||u.id}','${u.status||'active'}')">${u.status==='hidden'?'👁️':'🙈'}</button>
         ${u.role!=='admin'?`<button class="btn-danger" onclick="adminDeleteUser('${u.uid||u.id}')">🗑️</button>`:''}
         ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
         <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${u.uid||u.id}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
-      </div></td>
+      </div>`}</td>
     </tr>`;
   }).join('');
 }
+
+// ── Validation des fiches en attente ──
+async function adminApproveUser(uid){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
+  try{
+    await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(idx>=0) allAdminUsers[idx].status='active';
+    renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    await loadActors();
+    toast('✅ Fiche validée — désormais visible dans l\'annuaire.','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.adminApproveUser=adminApproveUser;
+
+async function adminRejectUser(uid){
+  if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
+  if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
+  try{
+    await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(idx>=0) allAdminUsers[idx].status='hidden';
+    renderAdminUsersTable(allAdminUsers);
+    updatePendingBanner();
+    toast('Fiche rejetée et masquée.','info');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.adminRejectUser=adminRejectUser;
 
 // ── RAPPORTS ADMIN (graphiques + impression) ──
 let _reportCharts={};
@@ -5792,9 +5583,10 @@ function renderAdminReports(){
   const byVille={};
   visibleUsers.forEach(u=>{ const v=u.ville; if(v) byVille[v]=(byVille[v]||0)+1; });
 
-  const byStatut={'Actif':0,'Masqué':0};
+  const byStatut={'Actif':0,'En attente':0,'Masqué':0};
   allAdminUsers.forEach(u=>{
-    if(u.status==='hidden') byStatut['Masqué']++;
+    if(u.status==='pending') byStatut['En attente']++;
+    else if(u.status==='hidden') byStatut['Masqué']++;
     else if(u.status!=='deleted') byStatut['Actif']++;
   });
 
@@ -5813,15 +5605,17 @@ function renderAdminReports(){
   mkChart('chart-roles','doughnut',Object.keys(byRole),Object.values(byRole));
   mkChart('chart-sports','bar',Object.keys(bySport),Object.values(bySport));
   mkChart('chart-villes','bar',Object.keys(byVille),Object.values(byVille));
-  mkChart('chart-statuts','doughnut',Object.keys(byStatut),Object.values(byStatut),['#16a34a','#92400e']);
+  mkChart('chart-statuts','doughnut',Object.keys(byStatut),Object.values(byStatut),['#16a34a','#1e40af','#92400e']);
 
-  const totalActeurs=visibleUsers.filter(u=>u.status!=='hidden'&&u.status!=='deleted').length;
+  const totalActeurs=visibleUsers.filter(u=>u.status==='active'||u.status===undefined).length;
+  const totalPending=allAdminUsers.filter(u=>u.status==='pending').length;
   const totalClubs=visibleUsers.filter(u=>['club','association','federation'].includes(u.role)).length;
   const totalSitesEl=document.getElementById('admin-total-sites');
   const totalSites=totalSitesEl?totalSitesEl.textContent:'—';
   const rows=[
     ['Utilisateurs enregistrés (total)',allAdminUsers.length],
     ['Fiches actives (visibles)',totalActeurs],
+    ['Fiches en attente de validation',totalPending],
     ['Clubs / Associations / Fédérations',totalClubs],
     ['Sites sportifs référencés',totalSites],
     ['Sportifs indépendants',visibleUsers.filter(u=>u.role==='independant').length],
@@ -5835,7 +5629,6 @@ async function adminToggleFederation(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{gereParFederation:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].gereParFederation=newVal;
@@ -5866,6 +5659,76 @@ function resetAdminSearch(){
   ['srch-nom','srch-email','srch-role','srch-sport','srch-ville','srch-niveau','srch-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderAdminUsersTable(allAdminUsers);
 }
+// Affiche le détail complet d'une fiche en attente, en lecture, avant validation/rejet.
+// Couvre les champs communs + les champs spécifiques par rôle (organisation, joueur, handisport, école).
+function adminViewPendingDetail(uid){
+  const u=allAdminUsers.find(x=>(x.uid||x.id)===uid);
+  if(!u) return;
+  const HS_CAT_LABELS_VIEW={visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
+  const ORG_ROLES_VIEW=['club','association','federation','organisateur','ecole_universite'];
+  const isOrgView=ORG_ROLES_VIEW.includes(u.role);
+  const row=(label,val)=> (val!==undefined&&val!==null&&val!=='')?`<div class="adm-info-row"><span class="adm-info-label">${label}</span><span class="adm-info-val">${Array.isArray(val)?val.join(', '):val}</span></div>`:'';
+  let html=`
+    <div class="adm-info-row"><span class="adm-info-label">Nom</span><span class="adm-info-val">${u.nomOrganisation||((u.prenom||'')+' '+(u.nom||''))||'—'}</span></div>
+    ${row('Rôle', ROLE_LABELS?.[u.role]||u.role)}
+    ${row('Email', u.email)}
+    ${row('Téléphone', u.telephone)}
+    ${row('Ville', u.ville)}
+    ${row('Sport', u.sport||u.sports)}
+    ${row('Niveau', u.niveau)}
+  `;
+  if(isOrgView){
+    html+=`
+    <div class="section-divider blue">🏛️ Organisation</div>
+    ${row('Type', u.typeOrganisation)}
+    ${row('Président / Responsable', u.president)}
+    ${row('Fondé en', u.anneeCreation)}
+    ${row('Effectif', u.effectif)}
+    `;
+    if(u.role==='ecole_universite'){
+      html+=`
+      ${row("Type d'établissement", u.typeEtablissement)}
+      ${row('Statut', u.statutEtablissement)}
+      ${row('Effectif filière sportive', u.effectifSportif)}
+      ${row('Disciplines proposées', u.disciplinesProposees)}
+      ${row('Infrastructures', u.infrastructures)}
+      ${row('Responsable des sports', u.responsableSports)}
+      `;
+    }
+  } else {
+    html+=`
+    <div class="section-divider blue">👤 Profil sportif</div>
+    ${row('Poste', u.poste)}
+    ${row('Club actuel', u.club||u.clubActuel)}
+    ${row('Taille (cm)', u.taille)}
+    ${row('Poids (kg)', u.poids)}
+    ${row('Pied fort', u.piedFort||u.pied)}
+    ${row('Type de contrat', u.contrat?.type||u.contratType)}
+    ${row('Bio', u.bio)}
+    ${row('Palmarès', u.palmares)}
+    `;
+    if(u.role==='handisport'){
+      html+=`
+      <div class="section-divider blue">🦾 Informations handisport</div>
+      ${row('Type de déficience', HS_CAT_LABELS_VIEW[u.handicapCategorie]||u.handicapCategorie)}
+      ${row('Précision', u.handicapPrecision)}
+      ${row('Classe sportive', u.classeSportive)}
+      ${row('Cadre de pratique', u.cadrePratique)}
+      ${row('Besoin guide/assistant', u.besoinGuide?('Oui'+(u.nomGuide?' — '+u.nomGuide:'')):'Non')}
+      ${row('Carte invalidité', u.carteInvalidite?'Oui':'Non')}
+      `;
+    }
+  }
+  if(u.documents && u.documents.length){
+    html+=`<div class="section-divider blue">📎 Documents fournis</div>`;
+    u.documents.forEach(d=>{ html+=row(d.label, d.url&&d.url!=='#'?'Fourni':'Non fourni'); });
+  }
+  document.getElementById('pending-detail-body').innerHTML=html;
+  document.getElementById('pending-detail-uid').value=uid;
+  document.getElementById('modal-pending-detail').classList.add('open');
+}
+window.adminViewPendingDetail=adminViewPendingDetail;
+
 function adminEditUser(uid){
   const user=allAdminUsers.find(u=>(u.uid||u.id)===uid);
   if(!user) return;
@@ -5892,10 +5755,11 @@ async function adminSaveUser(){
     updatedAt:serverTimestamp()
   };
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),updates);
+    const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
+    if(idx>=0) Object.assign(allAdminUsers[idx],updates);
     renderAdminUsersTable(allAdminUsers);
-
+    updatePendingBanner();
     await loadActors();
     closeModal('modal-edit-user');
     toast('✅ Utilisateur mis à jour !','success');
@@ -5905,12 +5769,11 @@ async function adminToggleHide(uid,currentStatus){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newStatus=currentStatus==='hidden'?'active':'hidden';
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:newStatus,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status=newStatus;
     renderAdminUsersTable(allAdminUsers);
-
+    updatePendingBanner();
     await loadActors();
     toast(newStatus==='hidden'?'🙈 Utilisateur masqué.':'👁️ Utilisateur visible.','info');
   }catch(e){ toast('Erreur : '+e.message,'error'); }
@@ -5919,7 +5782,6 @@ async function adminDeleteUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer définitivement cet utilisateur ?')) return;
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'deleted',updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='deleted';
@@ -5965,7 +5827,6 @@ async function adminToggleSupporter(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{isSupporter:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].isSupporter=newVal;
@@ -5992,7 +5853,6 @@ async function handleBecomeSupporter(){
   const btn=document.getElementById('become-supporter-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',userProfile.uid),{isSupporter:true,clubSupporte:club,supporterSaisons:1,supporterMatchs:0,supporterAbonnement:'Nouveau supporter',updatedAt:serverTimestamp()});
     userProfile.isSupporter=true;
     userProfile.clubSupporte=club;
@@ -6047,7 +5907,6 @@ async function uploadGalleryPhotos(input){
   }
   if(newUrls.length){
     const updatedPhotos=[...existingPhotos,...newUrls];
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),{photos:updatedPhotos,updatedAt:serverTimestamp()});
     userProfile.photos=updatedPhotos;
     renderGallery(updatedPhotos);
@@ -6105,7 +5964,6 @@ async function uploadOwnDocument(input){
     const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
     const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
     const updatedDocs=[...existingDocs,newDoc];
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',targetUid),{documents:updatedDocs,updatedAt:serverTimestamp()});
     if(targetUid===currentUser?.uid){ userProfile.documents=updatedDocs; renderOwnDocuments(); }
     await loadActors();
@@ -6126,7 +5984,6 @@ async function removeOwnDocument(uid,idx){
   if(!confirm('Supprimer ce document ?')) return;
   const updated=docs.filter((_,i)=>i!==idx);
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documents:updated,updatedAt:serverTimestamp()});
     if(currentUser&&uid===currentUser.uid){ userProfile.documents=updated; renderOwnDocuments(); }
     await loadActors();
@@ -6139,7 +5996,6 @@ window.removeOwnDocument=removeOwnDocument;
 async function toggleDocumentVerifie(uid,value){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   try{
-    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documentVerifie:value,updatedAt:serverTimestamp()});
     await loadActors();
     toast(value?'✅ Document marqué comme vérifié.':'Document marqué comme non vérifié.','success');
@@ -7601,10 +7457,10 @@ const ROLE_CODES_QR = {
   joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
-  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
+  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ecole_universite:'ECU'
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport'];
+const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport','ecole_universite'];
 
 function generateGscId(uid, role){
   if(!uid) return null;
@@ -7678,20 +7534,9 @@ function openProfileQrModal(){
   const url = buildQrUrl(uid);
   drawQrOnCanvas(document.getElementById('qr-prof-canvas'), url, 200);
   drawQrOnCanvas(document.getElementById('qr-print-prof-canvas'), url, 200);
-  // Boutons visibles : propriétaire, admin, ou employeur (club/asso/fédé)
+  // Propriétaire voit toujours ses boutons Imprimer/Télécharger
   const actEl = document.querySelector('.qr-profile-actions');
-  if(actEl){
-    const isOwner = currentUser && currentUser.uid === uid;
-    const isAdmin = userProfile && userProfile.role === 'admin';
-    const isEmployer = userProfile
-      && ['club','association','federation'].includes(userProfile.role)
-      && (() => {
-          const clubName = (userProfile.nomOrganisation||'').trim().toLowerCase();
-          const actorClub = (p.club||'').trim().toLowerCase();
-          return clubName && actorClub && actorClub === clubName;
-        })();
-    actEl.style.display = (isOwner || isAdmin || isEmployer) ? '' : 'none';
-  }
+  if(actEl) actEl.style.display = '';
   document.getElementById('qr-profile-modal').classList.add('open');
 }
 function closeProfileQrModal(){
@@ -8020,6 +7865,7 @@ window.lookupManualGscId = lookupManualGscId;
     if (typeof window.renderAdminUsersTable === 'function' && document.getElementById('admin-users-tbody')){
       window.renderAdminUsersTable(rawUsers);
     }
+    if (typeof window.updatePendingBanner === 'function') window.updatePendingBanner();
   }
 
   // ── Photos/logos par défaut par catégorie (uploadés depuis l'admin) ──
@@ -8044,7 +7890,7 @@ window.lookupManualGscId = lookupManualGscId;
     try{
       _unsubUsers = window.onSnapshot(window.collection(window.db,'users'), function(snap){
         const rawUsers = snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
-        const dbActors = rawUsers.filter(u=>u.status!=='hidden'&&u.status!=='deleted');
+        const dbActors = rawUsers.filter(u=>u.status==='active'||u.status===undefined);
         const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
         const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
         window.allActors = [...dbActors, ...seedActors];
@@ -8052,14 +7898,8 @@ window.lookupManualGscId = lookupManualGscId;
         _refreshAdminViews(rawUsers);
         console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
         window.dispatchEvent(new Event('gsc-data-synced'));
-      }, async function(err){
-        // Permissions refusées (règles Firestore + pas encore authentifié) :
-        // on attend l'auth Firebase puis on relance
-        if(err?.code==='permission-denied'||err?.code==='PERMISSION_DENIED'){
-          _unsubUsers=null;
-          try{ await window.ensureFirebaseAuthViaSupabase(); }catch(e2){}
-          startUsersSync();
-        }
+      }, function(err){
+        // sync error — silencieux
       });
       _showSyncIndicator();
       window.dispatchEvent(new Event('gsc-sync-ready'));
