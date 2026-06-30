@@ -52,18 +52,35 @@
   <script src="gsc-notifications.js"></script>
   <script src="gsc-nav-badges.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" crossorigin="anonymous">
   <!-- Leaflet pour la carte des sites + Import OSM -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
-  <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavG0ndn6pjVqS6ny56CAt3nsEVT4H"
+        crossorigin="anonymous" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+          crossorigin="anonymous"></script>
+  <!-- Leaflet-geosearch (migré sur jsdelivr — unpkg bloque les requêtes CORS mobiles) -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/leaflet-geosearch@3.11.2/dist/geosearch.css"
+        crossorigin="anonymous" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-geosearch@3.11.2/dist/bundle.min.js"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+          integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
+          crossorigin="anonymous"></script>
   <!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
        jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
-  <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
+          integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx"
+          crossorigin="anonymous"
+          defer></script>
+  <!-- Supabase (Authentication uniquement — épinglé à 2.45.0, Firestore/Storage restent sur Firebase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"
+          integrity="sha384-NNePyabYRaJyedI6EQAY7SV5Z8/0sQkuQ5WVfhKm0H+j0KSugkI2ZMNzw/QtzAWz"
+          crossorigin="anonymous"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
