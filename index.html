@@ -3527,6 +3527,13 @@ async function onSupabaseSignedIn(user, extra){
       }
     }
   }
+  // ── SÉCURITÉ : compte banni — déconnexion immédiate, aucun accès à l'app ──
+  if(userProfile && userProfile.status === 'banned'){
+    try{ if(window._sb) await window._sb.auth.signOut(); }catch(e){}
+    _uid = null; currentUser = null; userProfile = null;
+    toast("Votre compte a été suspendu par l'administration. Contactez le support si vous pensez qu'il s'agit d'une erreur.", 'error', 8000);
+    return;
+  }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
     await enregistrerConnexion({uid:user.id, email:user.email, displayName:fullname||user.email});
@@ -6738,11 +6745,11 @@ function addImportHistory(msg){
 window.addImportHistory=addImportHistory;
 
 // ── UTILS ──
-function toast(msg,type='info'){
+function toast(msg,type='info',duration=3500){
   const el=document.createElement('div');
   el.className=`toast ${type}`;el.textContent=msg;
   document.getElementById('toast-container').appendChild(el);
-  setTimeout(()=>el.remove(),3500);
+  setTimeout(()=>el.remove(),duration);
 }
 function setLoading(id,loading,label){
   const btn=document.getElementById(id);if(!btn)return;
