@@ -52,35 +52,18 @@
   <script src="gsc-notifications.js"></script>
   <script src="gsc-nav-badges.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Leaflet pour la carte des sites + Import OSM -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavG0ndn6pjVqS6ny56CAt3nsEVT4H"
-        crossorigin="anonymous" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
-          crossorigin="anonymous"></script>
-  <!-- Leaflet-geosearch (unpkg — v3.11.2 absent de jsdelivr, SRI non applicable) -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css"
-        crossorigin="anonymous" />
-  <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"
-          crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
-          integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
-          crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
+  <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
        jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
-          integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx"
-          crossorigin="anonymous"
-          defer></script>
-  <!-- Supabase (Authentication uniquement — épinglé à 2.45.0, Firestore/Storage restent sur Firebase) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"
-          integrity="sha384-NNePyabYRaJyedI6EQAY7SV5Z8/0sQkuQ5WVfhKm0H+j0KSugkI2ZMNzw/QtzAWz"
-          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+  <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <style>
     :root {
@@ -3544,13 +3527,6 @@ async function onSupabaseSignedIn(user, extra){
       }
     }
   }
-  // ── SÉCURITÉ : compte banni — déconnexion immédiate, aucun accès à l'app ──
-  if(userProfile && userProfile.status === 'banned'){
-    try{ if(window._sb) await window._sb.auth.signOut(); }catch(e){}
-    _uid = null; currentUser = null; userProfile = null;
-    toast("Votre compte a été suspendu par l'administration. Contactez le support si vous pensez qu'il s'agit d'une erreur.", 'error', 8000);
-    return;
-  }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
     await enregistrerConnexion({uid:user.id, email:user.email, displayName:fullname||user.email});
@@ -4494,11 +4470,11 @@ function openActorDetail(uid){
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhoto=d.photos?.[uid]||null;}}catch(e){}
   const detailPhotoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||localPhoto||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
   const el=document.getElementById('adm-avatar');
-  if(detailPhotoSrc) el.innerHTML=`<img src="${escapeHtml(detailPhotoSrc)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  if(detailPhotoSrc) el.innerHTML=`<img src="${detailPhotoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   else el.textContent=ROLE_ICONS[a.role]||initial;
   // Photo de couverture : zone d'arrière-plan derrière logo/nom/QR, modifiable par le propriétaire du profil
   const coverEl=document.getElementById('adm-cover-bg');
-  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${escapeHtml(a.coverURL)}')`:'none';
+  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${a.coverURL}')`:'none';
   const isOwnerForCover=currentUser&&(a.uid||a.id)===currentUser.uid;
   const coverBtn=document.getElementById('adm-cover-edit-btn');
   if(coverBtn) coverBtn.style.display=isOwnerForCover?'flex':'none';
@@ -4545,18 +4521,18 @@ function openActorDetail(uid){
   let html='';
   // Infos générales
   html+=`<div class="adm-section"><div class="adm-section-title">📋 Informations générales</div>`;
-  html+=`<div class="adm-info-row"><span class="adm-info-label">Ville</span><span class="adm-info-val">📍 ${escapeHtml(a.ville)||'—'}</span></div>`;
-  html+=`<div class="adm-info-row"><span class="adm-info-label">Sport</span><span class="adm-info-val">🏅 ${escapeHtml(a.sport)||escapeHtml(a.sports?.join(', '))||'—'}</span></div>`;
-  if(a.niveau) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">📊 ${escapeHtml(a.niveau)}</span></div>`;
-  if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${escapeHtml(a.nationalite)}</span></div>`;
+  html+=`<div class="adm-info-row"><span class="adm-info-label">Ville</span><span class="adm-info-val">📍 ${a.ville||'—'}</span></div>`;
+  html+=`<div class="adm-info-row"><span class="adm-info-label">Sport</span><span class="adm-info-val">🏅 ${a.sport||a.sports?.join(', ')||'—'}</span></div>`;
+  if(a.niveau) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">📊 ${a.niveau}</span></div>`;
+  if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${a.nationalite}</span></div>`;
   html+=`</div>`;
   if(isPersonnel){
     // Physique — masqué pour les visiteurs
     if((a.taille||a.poids) && !isVisitor){
       html+=`<div class="adm-section"><div class="adm-section-title">💪 Profil physique</div>`;
       html+=`<div class="adm-stats-grid">`;
-      if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${escapeHtml(a.taille)}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
-      if(a.poids) html+=`<div class="adm-stat"><div class="adm-stat-val">${escapeHtml(a.poids)}</div><div class="adm-stat-lbl">Poids kg</div></div>`;
+      if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.taille}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
+      if(a.poids) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.poids}</div><div class="adm-stat-lbl">Poids kg</div></div>`;
       if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
@@ -4564,11 +4540,11 @@ function openActorDetail(uid){
     if(a.role==='joueur'){
       const statSportKey=Object.keys(SPORT_STATS).find(k=>(a.sport||'').includes(k))||'Football';
       const statsList=SPORT_STATS[statSportKey]||SPORT_STATS['Football'];
-      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques (${escapeHtml(a.sport)||statSportKey})</div>`;
+      html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques (${a.sport||statSportKey})</div>`;
       html+=`<div class="adm-stats-grid">`;
       statsList.slice(0,4).forEach(([key,label])=>{
         const shortLbl=label.length>14?label.split(' ')[0]:label;
-        html+=`<div class="adm-stat"><div class="adm-stat-val">${escapeHtml(a[key]??0)}</div><div class="adm-stat-lbl">${escapeHtml(shortLbl)}</div></div>`;
+        html+=`<div class="adm-stat"><div class="adm-stat-val">${a[key]??0}</div><div class="adm-stat-lbl">${shortLbl}</div></div>`;
       });
       html+=`</div></div>`;
     }
@@ -4577,41 +4553,41 @@ function openActorDetail(uid){
     if(mandats.length||a.club){
       html+=`<div class="adm-section"><div class="adm-section-title">📅 Mandats & Clubs</div>`;
       if(a.club){
-        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${escapeHtml(a.club)}</div>${a.poste?`<div class="mandat-dates">Poste : ${escapeHtml(a.poste)}</div>`:''}</div>`;
+        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${a.club}</div>${a.poste?`<div class="mandat-dates">Poste : ${a.poste}</div>`:''}</div>`;
       }
       mandats.forEach(m=>{
-        html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${escapeHtml(m.club)||'—'}</div><div class="mandat-dates">${escapeHtml(m.dateDebut)||''}${m.dateFin?' → '+escapeHtml(m.dateFin):' → en cours'}</div>${m.poste?`<div class="mandat-title">${escapeHtml(m.poste)}</div>`:''}</div>`;
+        html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
       });
       html+=`</div>`;
     }
     // Licence — donnée sensible : propriétaire, club employeur ou admin uniquement
     if(a.licenceNumero && canViewSensitive){
       html+=`<div class="adm-section"><div class="adm-section-title">🪪 Licence officielle</div>`;
-      html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${escapeHtml(a.licenceNumero)}</span></div>`;
-      if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${escapeHtml(a.licenceExpire)}</span></div>`;
+      html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceNumero}</span></div>`;
+      if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${a.licenceExpire}</span></div>`;
       html+=`</div>`;
     }
   }
   if(isOrg){
-    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${escapeHtml(a.president)}</span></div>`;
-    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${escapeHtml(a.anneeCreation)}</span></div>`;
-    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${escapeHtml(a.effectif)} membres</span></div>`;
+    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${a.president}</span></div>`;
+    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
+    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${a.effectif} membres</span></div>`;
   }
   // Élève / Étudiant — infos académiques
   if(a.role==='eleve_etudiant'){
     html+=`<div class="adm-section"><div class="adm-section-title">🎓 Profil académique</div>`;
-    if(a.niveauScolaire) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${escapeHtml(a.niveauScolaire)}</span></div>`;
-    if(a.etablissement) html+=`<div class="adm-info-row"><span class="adm-info-label">Établissement</span><span class="adm-info-val">${escapeHtml(a.etablissement)}</span></div>`;
-    if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${escapeHtml(a.filiere)}</span></div>`;
+    if(a.niveauScolaire) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${a.niveauScolaire}</span></div>`;
+    if(a.etablissement) html+=`<div class="adm-info-row"><span class="adm-info-label">Établissement</span><span class="adm-info-val">${a.etablissement}</span></div>`;
+    if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${a.filiere}</span></div>`;
     html+=`</div>`;
   }
   // Sportif étranger — statut & vérification documentaire (le n° de document exact
   // reste une donnée sensible réservée au propriétaire, son club employeur ou l'admin)
   if(a.role==='sportif_etranger'){
     html+=`<div class="adm-section"><div class="adm-section-title">🌍 Statut sportif étranger</div>`;
-    if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${escapeHtml(a.statutPro)}</span></div>`;
-    if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${escapeHtml(a.employeur)}</span></div>`;
-    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${escapeHtml(a.documentType)}${(a.documentNumero&&canViewSensitive)?' n° '+escapeHtml(a.documentNumero):''}</span></div>`;
+    if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${a.statutPro}</span></div>`;
+    if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${a.employeur}</span></div>`;
+    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${(a.documentNumero&&canViewSensitive)?' n° '+a.documentNumero:''}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Vérification</span><span class="adm-info-val">${a.documentVerifie?'✅ Vérifié':'⏳ Non vérifié'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 FIFA TMS</a>
@@ -4628,16 +4604,16 @@ function openActorDetail(uid){
     const HS_CAT_LABELS={visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
     const HS_CADRE_LABELS={federation:'Fégoph / Comité Paralympique Gabonais',club_ordinaire:'Club ordinaire, section adaptée',independant:'Indépendant, hors structure fédérale',etablissement:'Établissement spécialisé / centre de rééducation'};
     html+=`<div class="adm-section"><div class="adm-section-title">🦾 Profil sportif handisport</div>`;
-    if(a.handicapCategorie) html+=`<div class="adm-info-row"><span class="adm-info-label">Type de déficience</span><span class="adm-info-val">${escapeHtml(HS_CAT_LABELS[a.handicapCategorie]||a.handicapCategorie)}</span></div>`;
-    if(a.handicapPrecision) html+=`<div class="adm-info-row"><span class="adm-info-label">Précision</span><span class="adm-info-val">${escapeHtml(a.handicapPrecision)}</span></div>`;
-    if(a.classeSportive) html+=`<div class="adm-info-row"><span class="adm-info-label">Classe sportive</span><span class="adm-info-val">${escapeHtml(a.classeSportive)}${a.organismeClassificateur?' — '+escapeHtml(a.organismeClassificateur):''}</span></div>`;
-    if(a.disciplineParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Discipline</span><span class="adm-info-val">${escapeHtml(a.disciplineParaSport)}</span></div>`;
-    if(a.niveauParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${escapeHtml(a.niveauParaSport)}</span></div>`;
-    if(a.cadrePratique) html+=`<div class="adm-info-row"><span class="adm-info-label">Cadre de pratique</span><span class="adm-info-val">${escapeHtml(HS_CADRE_LABELS[a.cadrePratique]||a.cadrePratique)}</span></div>`;
-    if(a.club) html+=`<div class="adm-info-row"><span class="adm-info-label">Club / Structure</span><span class="adm-info-val">🏟️ ${escapeHtml(a.club)}</span></div>`;
-    if(Array.isArray(a.equipementsAdaptes)&&a.equipementsAdaptes.length) html+=`<div class="adm-info-row"><span class="adm-info-label">Équipements</span><span class="adm-info-val">${escapeHtml(a.equipementsAdaptes.join(', '))}</span></div>`;
-    if(a.besoinGuide) html+=`<div class="adm-info-row"><span class="adm-info-label">Guide / accompagnateur</span><span class="adm-info-val">✅ ${escapeHtml(a.nomGuide)||'Oui'}</span></div>`;
-    if(a.licenceFegoph) html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${escapeHtml(a.licenceFegoph)}</span></div>`;
+    if(a.handicapCategorie) html+=`<div class="adm-info-row"><span class="adm-info-label">Type de déficience</span><span class="adm-info-val">${HS_CAT_LABELS[a.handicapCategorie]||a.handicapCategorie}</span></div>`;
+    if(a.handicapPrecision) html+=`<div class="adm-info-row"><span class="adm-info-label">Précision</span><span class="adm-info-val">${a.handicapPrecision}</span></div>`;
+    if(a.classeSportive) html+=`<div class="adm-info-row"><span class="adm-info-label">Classe sportive</span><span class="adm-info-val">${a.classeSportive}${a.organismeClassificateur?' — '+a.organismeClassificateur:''}</span></div>`;
+    if(a.disciplineParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Discipline</span><span class="adm-info-val">${a.disciplineParaSport}</span></div>`;
+    if(a.niveauParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${a.niveauParaSport}</span></div>`;
+    if(a.cadrePratique) html+=`<div class="adm-info-row"><span class="adm-info-label">Cadre de pratique</span><span class="adm-info-val">${HS_CADRE_LABELS[a.cadrePratique]||a.cadrePratique}</span></div>`;
+    if(a.club) html+=`<div class="adm-info-row"><span class="adm-info-label">Club / Structure</span><span class="adm-info-val">🏟️ ${a.club}</span></div>`;
+    if(Array.isArray(a.equipementsAdaptes)&&a.equipementsAdaptes.length) html+=`<div class="adm-info-row"><span class="adm-info-label">Équipements</span><span class="adm-info-val">${a.equipementsAdaptes.join(', ')}</span></div>`;
+    if(a.besoinGuide) html+=`<div class="adm-info-row"><span class="adm-info-label">Guide / accompagnateur</span><span class="adm-info-val">✅ ${a.nomGuide||'Oui'}</span></div>`;
+    if(a.licenceFegoph) html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceFegoph}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Carte d'invalidité</span><span class="adm-info-val">${a.carteInvalidite?'✅ Reconnue':'⏳ Non renseignée'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://www.paralympic.org/" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 Comité Paralympique International</a>
@@ -4647,21 +4623,21 @@ function openActorDetail(uid){
   // Sportif étranger — pays d'origine, statut de séjour
   if(a.role==='sportif_etranger' && (a.paysOrigine||a.statutSejour)){
     html+=`<div class="adm-section"><div class="adm-section-title">🌍 Profil sportif étranger</div>`;
-    if(a.paysOrigine) html+=`<div class="adm-info-row"><span class="adm-info-label">Pays d'origine</span><span class="adm-info-val">${escapeHtml(a.paysOrigine)}</span></div>`;
-    if(a.statutSejour) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut de séjour</span><span class="adm-info-val">${escapeHtml(a.statutSejour)}</span></div>`;
+    if(a.paysOrigine) html+=`<div class="adm-info-row"><span class="adm-info-label">Pays d'origine</span><span class="adm-info-val">${a.paysOrigine}</span></div>`;
+    if(a.statutSejour) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut de séjour</span><span class="adm-info-val">${a.statutSejour}</span></div>`;
     html+=`</div>`;
   }
   // Entraîneur — diplôme
   if(a.role==='entraineur' && a.diplome){
     html+=`<div class="adm-section"><div class="adm-section-title">📋 Qualification</div>`;
-    html+=`<div class="adm-info-row"><span class="adm-info-label">Diplôme</span><span class="adm-info-val">${escapeHtml(a.diplome)}</span></div>`;
+    html+=`<div class="adm-info-row"><span class="adm-info-label">Diplôme</span><span class="adm-info-val">${a.diplome}</span></div>`;
     html+=`</div>`;
   }
   if(a.bio){
-    html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${escapeHtml(a.bio)}</p></div>`;
+    html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.bio}</p></div>`;
   }
   if(a.palmares){
-    html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${escapeHtml(a.palmares)}</p></div>`;
+    html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
   }
   // Documents personnels : DONNÉES SENSIBLES (CNI, licence, etc.). Visibles et accessibles
   // uniquement par le propriétaire, son club/association employeur, ou l'administrateur.
@@ -4674,7 +4650,7 @@ function openActorDetail(uid){
     if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
     else docs.forEach((d,i)=>{
       html+=`<div class="doc-detail-row">
-        <a href="${/^https?:\/\//i.test(d.url||'')?escapeHtml(d.url):'#'}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${escapeHtml(d.label)||'Document'}</a>
+        <a href="${d.url}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${d.label||'Document'}</a>
         ${d.locked?'<span class="doc-detail-lock">🔒 Sous contrat</span>':''}
         ${canManageDocs?`
           <button class="doc-detail-btn" onclick="event.stopPropagation();shareOwnDocument('${a.uid||a.id}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
@@ -4751,7 +4727,7 @@ function renderProfile(){
   document.getElementById('prof-chip-poste').textContent=p.poste?`🎯 ${p.poste}`:(p.titrePersonnalise?`🎖️ ${p.titrePersonnalise}`:'');
   const av=document.getElementById('prof-avatar-lg');
   const profPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})()||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[p.role])||null;
-  if(profPhotoSrc) av.innerHTML=`<img src="${escapeHtml(profPhotoSrc)}" alt="av">`;
+  if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
   const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
@@ -4763,7 +4739,7 @@ function renderProfile(){
   if(fedManaged){
     const ownerManaged=p.editLocked&&p.ownershipStatus!=='owner_self';
     document.getElementById('fed-notice').innerHTML=ownerManaged
-      ? `<span>🏢</span><span>Informations de club/mandat gérées par <strong>${escapeHtml(p.ownerRef?.clubName)||'votre club/employeur'}</strong>. Vos données personnelles restent modifiables par vous.</span>`
+      ? `<span>🏢</span><span>Informations de club/mandat gérées par <strong>${p.ownerRef?.clubName||'votre club/employeur'}</strong>. Vos données personnelles restent modifiables par vous.</span>`
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
@@ -4807,7 +4783,7 @@ function renderProfile(){
     document.getElementById('prof-buts').textContent=p.buts??0;
     document.getElementById('prof-passes').textContent=p.passes??0;
     const pb=document.getElementById('prof-position-badge');
-    if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${escapeHtml(p.poste)}</span>`;
+    if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
     renderSportStats(p);
   }
@@ -4820,9 +4796,9 @@ function renderProfile(){
     const src=p.editLocked&&p.ownershipStatus!=='owner_self'?`Géré par ${p.ownerRef?.clubName||'votre club'}`:(fedManaged?'Géré par la Fédération':'Géré par vous');
     document.getElementById('mandats-source-label').textContent=src;
     let mandHtml='';
-    if(p.club) mandHtml+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${escapeHtml(p.club)}</div>${p.poste?`<div class="mandat-dates">Poste : ${escapeHtml(p.poste)}</div>`:''}</div>`;
+    if(p.club) mandHtml+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${p.club}</div>${p.poste?`<div class="mandat-dates">Poste : ${p.poste}</div>`:''}</div>`;
     mandats.forEach(m=>{
-      mandHtml+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${escapeHtml(m.club)||'—'}</div><div class="mandat-dates">${escapeHtml(m.dateDebut)||''}${m.dateFin?' → '+escapeHtml(m.dateFin):' → en cours'}</div>${m.poste?`<div class="mandat-title">${escapeHtml(m.poste)}</div>`:''}</div>`;
+      mandHtml+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
     });
     if(!mandHtml) mandHtml='<p style="font-size:13px;color:var(--gray-txt);">Aucun mandat enregistré.</p>';
     document.getElementById('mandats-display').innerHTML=mandHtml;
@@ -4832,18 +4808,18 @@ function renderProfile(){
   if(isOrg){
     const ci=document.getElementById('club-info-display');
     ci.innerHTML=`
-      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${escapeHtml(p.nomOrganisation)||escapeHtml(fullname)}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${escapeHtml(p.typeOrganisation)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${escapeHtml(p.president)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${escapeHtml(p.anneeCreation)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${escapeHtml(p.effectif)||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${p.president||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${p.effectif||'—'}</span></div>
       ${p.role==='ecole_universite'?`
-      <div class="adm-info-row"><span class="adm-info-label">Type d'établissement</span><span class="adm-info-val">${escapeHtml(p.typeEtablissement)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${escapeHtml(p.statutEtablissement)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Effectif filière sportive</span><span class="adm-info-val">${escapeHtml(p.effectifSportif)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Disciplines proposées</span><span class="adm-info-val">${escapeHtml((p.disciplinesProposees||[]).join(', '))||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Infrastructures</span><span class="adm-info-val">${escapeHtml(p.infrastructures)||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Responsable des sports</span><span class="adm-info-val">${escapeHtml(p.responsableSports)||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Type d'établissement</span><span class="adm-info-val">${p.typeEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${p.statutEtablissement||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif filière sportive</span><span class="adm-info-val">${p.effectifSportif||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Disciplines proposées</span><span class="adm-info-val">${(p.disciplinesProposees||[]).join(', ')||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Infrastructures</span><span class="adm-info-val">${p.infrastructures||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Responsable des sports</span><span class="adm-info-val">${p.responsableSports||'—'}</span></div>
       `:''}
     `;
   }
@@ -6762,11 +6738,11 @@ function addImportHistory(msg){
 window.addImportHistory=addImportHistory;
 
 // ── UTILS ──
-function toast(msg,type='info',duration=3500){
+function toast(msg,type='info'){
   const el=document.createElement('div');
   el.className=`toast ${type}`;el.textContent=msg;
   document.getElementById('toast-container').appendChild(el);
-  setTimeout(()=>el.remove(),duration);
+  setTimeout(()=>el.remove(),3500);
 }
 function setLoading(id,loading,label){
   const btn=document.getElementById(id);if(!btn)return;
