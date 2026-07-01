@@ -958,7 +958,7 @@
           link: 'fil:' + postId
         });
       }
-    } catch (e) { toastMsg('Erreur lors de la réaction.', 'error'); }
+    } catch (e) { console.error('GSC Community reactToPost:', e); toastMsg('Erreur lors de la réaction : ' + (e.message || e), 'error'); }
   }
 
   /* ═══ COMMENTAIRES ═══ */
@@ -1002,7 +1002,7 @@
       }
       /* Notifier les membres mentionnés via @Nom : "X a commenté sur vous" */
       notifyMentions(text, { authorProfile: profile, action: 'comment', excludeUid: window.currentUser.uid });
-    } catch (e) { toastMsg('Erreur lors de l\'envoi du commentaire.', 'error'); }
+    } catch (e) { console.error('GSC Community addComment:', e); toastMsg('Erreur lors de l\'envoi du commentaire : ' + (e.message || e), 'error'); }
   }
 
   async function deleteComment(postId, commentId) {
@@ -1016,7 +1016,7 @@
       if (post) post.commentsCount = Math.max(0, (post.commentsCount || 1) - 1);
       renderFeed();
       toastMsg('🗑️ Commentaire supprimé.', 'success');
-    } catch (e) { toastMsg('Erreur lors de la suppression.', 'error'); }
+    } catch (e) { console.error('GSC Community delete:', e); toastMsg('Erreur lors de la suppression : ' + (e.message || e), 'error'); }
   }
 
   /* ═══ PARTAGE ═══ */
@@ -1051,7 +1051,7 @@
       _blockedIds.add(post.authorId);
       toastMsg('🚫 Membre bloqué.', 'success');
       renderFeed();
-    } catch (e) { toastMsg('Erreur lors du blocage.', 'error'); }
+    } catch (e) { console.error('GSC Community blockUser:', e); toastMsg('Erreur lors du blocage : ' + (e.message || e), 'error'); }
   }
 
   /* ═══ SUPPRESSION D'UNE PUBLICATION ═══ */
@@ -1064,7 +1064,7 @@
     try {
       await withAuth(() => window.updateDoc(window.doc(window.db, POSTS_COL, postId), { status: 'removed', removedAt: window.serverTimestamp(), removedBy: window.currentUser?.uid || null }));
       toastMsg('🗑️ Publication supprimée.', 'success');
-    } catch (e) { toastMsg('Erreur lors de la suppression.', 'error'); }
+    } catch (e) { console.error('GSC Community delete:', e); toastMsg('Erreur lors de la suppression : ' + (e.message || e), 'error'); }
   }
 
   /* ═══ SIGNALEMENT ═══ */
@@ -1113,7 +1113,7 @@
       closeReportModal();
       renderFeed();
       toastMsg('✅ Signalement envoyé. Merci, notre équipe va l\'examiner.', 'success');
-    } catch (e) { toastMsg('Erreur lors du signalement.', 'error'); }
+    } catch (e) { console.error('GSC Community submitReport:', e); toastMsg('Erreur lors du signalement : ' + (e.message || e), 'error'); }
   }
 
   /* ═══ INITIALISATION ═══ */
