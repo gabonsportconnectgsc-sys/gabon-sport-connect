@@ -103,7 +103,7 @@
     /* Groupe droite : toutes les icônes sauf le logo */
     .topnav-icons{display:flex;align-items:center;gap:7px;flex-shrink:0;position:relative;z-index:1;}
     /* Toutes les icônes visibles (sauf si explicitement masquées en JS via display:none) */
-    .topnav .btn-icon, .topnav .visitor-banner, .topnav #nav-rolebadge {
+    .topnav .btn-icon, .topnav .visitor-banner {
       flex-shrink:0;opacity:1 !important;visibility:visible !important;display:flex;
     }
     /* Forçage rond — empêche tout flash carré pendant le chargement d'autres CSS (ex: filter-luxe-styles.css) */
@@ -126,7 +126,7 @@
     .topnav-logo-text .l-connect{color:#009FCA;}
     .topnav-logo:hover{opacity:.85;}
     .topnav-spacer{display:none;}
-    .topnav .btn-icon,.topnav .visitor-banner,.topnav #nav-rolebadge,.topnav .user-chip{flex-shrink:0;}
+    .topnav .btn-icon,.topnav .visitor-banner,.topnav .user-chip{flex-shrink:0;}
     /* Icônes */
     .visitor-banner{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:rgba(255,215,0,.14);border:2px solid rgba(255,215,0,.35);border-radius:50%;font-size:18px;line-height:1;color:var(--yellow);cursor:pointer;flex-shrink:0;box-sizing:border-box;}
     .user-chip{display:flex;align-items:center;gap:8px;min-width:0;}
@@ -154,7 +154,6 @@
       .visitor-banner{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       .btn-icon{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
       .user-avatar{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px;}
-      #nav-rolebadge{display:none;}
       #gsc-notif-bell .notif-bell-btn{width:34px;height:34px;}
     }
     @media (max-width:360px){
@@ -1107,7 +1106,6 @@
     <div class="topnav-spacer"></div>
     <div class="topnav-icons">
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
-    <div id="nav-rolebadge"></div>
     <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
       <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
       <div class="user-name" id="nav-username">…</div>
@@ -3777,7 +3775,6 @@ function renderDashboard(){
     navAv.style.fontSize='16px';
   }
   const roleLabel=ROLE_LABELS[p.role]||p.role;
-  document.getElementById('nav-rolebadge').innerHTML=`<span class="role-badge ${p.role}">${p.role}</span>`;
   const heroDisplayName = p.prenom || (fullname.length>18 ? fullname.slice(0,16)+'…' : fullname);
   document.getElementById('hero-name').textContent=`Bonjour, ${heroDisplayName} !`;
   document.getElementById('hero-role-label').textContent=roleLabel;
