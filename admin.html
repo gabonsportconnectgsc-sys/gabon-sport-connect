@@ -1190,13 +1190,17 @@ tr.is-demo-row td { opacity: .82; }
         <div class="dash-card" id="reset-demo-card" style="margin-top:16px;border:1.5px solid var(--danger);">
           <div class="dash-card-title" style="color:var(--danger);">🎭 Acteurs démo — Réinitialisation</div>
           <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
-            <strong id="demo-actors-count">0</strong> fiche(s) fictive(s) de démonstration sont définies dans <code>seed-data.js</code> et ne peuvent pas être supprimées depuis ce panneau. Ce bouton supprime uniquement les <strong>données Firestore associées</strong> à ces fiches (signalements et notifications les concernant).
+            <strong id="demo-actors-count">0</strong> fiche(s) fictive(s) sont définies dans <code>seed-data.js</code> (fichier statique, non modifiable depuis ce panneau). <strong id="demo-hidden-count">0</strong> sont actuellement masquées.
+            Le bouton ci-dessous les masque partout dans l'app (annuaire, rapports) et supprime les données Firestore associées (signalements, notifications). Réversible via « Réafficher ».
           </p>
           <div class="field" style="margin-bottom:12px;max-width:320px;">
             <label>Confirmation (taper SUPPRIMER)</label>
             <input type="text" id="reset-demo-confirm-input" placeholder="SUPPRIMER">
           </div>
-          <button class="btn btn-danger" id="btn-reset-demo">🗑️ Réinitialiser les données liées aux acteurs démo</button>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <button class="btn btn-danger" id="btn-reset-demo">🙈 Masquer les acteurs démo et purger leurs données</button>
+            <button class="btn btn-secondary" id="btn-restore-demo">👁️ Réafficher les acteurs démo</button>
+          </div>
         </div>
       </div>
 
@@ -1597,7 +1601,8 @@ tr.is-demo-row td { opacity: .82; }
     const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
     const seed = window.GSC_SEED_ACTORS || [];
     const realIds = new Set(real.map(u => u.uid || u.id));
-    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    const hidden = window.__hiddenDemoUids || new Set();
+    const demoOnly = seed.filter(s => !realIds.has(s.uid) && !hidden.has(s.uid)).map(s => ({ ...s, id: s.uid }));
     return [...real, ...demoOnly];
   }
   function getMatches() {
@@ -2249,7 +2254,8 @@ tr.is-demo-row td { opacity: .82; }
     const real = (window.realtimeSync && window.realtimeSync.getCache('users')) || [];
     const seed = window.GSC_SEED_ACTORS || [];
     const realIds = new Set(real.map(u => u.uid || u.id));
-    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    const hidden = window.__hiddenDemoUids || new Set();
+    const demoOnly = seed.filter(s => !realIds.has(s.uid) && !hidden.has(s.uid)).map(s => ({ ...s, id: s.uid }));
     return [...real, ...demoOnly];
   }
 

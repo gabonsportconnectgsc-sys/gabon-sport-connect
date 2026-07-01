@@ -4140,6 +4140,13 @@ if(typeof generateGscId!=='function'){
   };
 }
 
+// Acteurs démo masqués depuis l'admin (registre Firestore settings/hiddenDemoActors) :
+// filtrés hors de GSC_SEED_ACTORS partout où le seed est fusionné aux données réelles.
+// window.__hiddenDemoUids est alimenté en temps réel par startHiddenDemoActorsSync() (plus bas).
+function getHiddenDemoUidsSync(){
+  return window.__hiddenDemoUids || new Set();
+}
+
 async function loadGlobalStats(){
   // Même logique de déduplication que loadActors : Firebase d'abord, puis seed sans doublon
   let dbActors=[];
@@ -4150,7 +4157,8 @@ async function loadGlobalStats(){
     }catch(e){console.warn('stats:',e);}
   }
   const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
-  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&(a.status==='active'||a.status===undefined));
+  const hidden=getHiddenDemoUidsSync();
+  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&!hidden.has(a.uid)&&(a.status==='active'||a.status===undefined));
   const merged=[...dbActors,...seedActors];
   const el1=document.getElementById('stat-total-acteurs');
   if(el1) el1.textContent=merged.length;
@@ -4172,7 +4180,8 @@ async function loadActors(){
   }
   // Merge: Firebase first, then seed (avoid duplicates by uid)
   const dbUids=new Set(dbActors.map(a=>a.uid||a.id));
-  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid));
+  const hidden=getHiddenDemoUidsSync();
+  const seedActors=GSC_SEED_ACTORS.filter(a=>!dbUids.has(a.uid)&&!hidden.has(a.uid));
   allActors=[...dbActors,...seedActors];
   // Respecte le filtre et la recherche actifs
   searchAnnuaire();
@@ -8439,6 +8448,21 @@ window.lookupManualGscId = lookupManualGscId;
     }catch(e){ /* silencieux */ }
   }
 
+  // ── Acteurs démo masqués depuis l'admin (registre Firestore settings/hiddenDemoActors) ──
+  window.__hiddenDemoUids = window.__hiddenDemoUids || new Set();
+  let _unsubHiddenDemoActors = null;
+  function startHiddenDemoActorsSync(){
+    if (!window.db || typeof window.doc !== 'function' || typeof window.onSnapshot !== 'function') return;
+    if (_unsubHiddenDemoActors) return;
+    try{
+      _unsubHiddenDemoActors = window.onSnapshot(window.doc(window.db,'settings','hiddenDemoActors'), function(snap){
+        const uids = (snap.exists() && Array.isArray(snap.data().uids)) ? snap.data().uids : [];
+        window.__hiddenDemoUids = new Set(uids);
+        _refreshViews();
+      }, function(){ /* silencieux — rien de masqué par défaut */ });
+    }catch(e){ /* silencieux */ }
+  }
+
   function startUsersSync(){
     if (!window.db || typeof window.collection !== 'function' || typeof window.onSnapshot !== 'function') {
       return;
@@ -8449,7 +8473,8 @@ window.lookupManualGscId = lookupManualGscId;
         const rawUsers = snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
         const dbActors = rawUsers.filter(u=>u.status==='active'||u.status===undefined);
         const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
-        const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
+        const hidden = window.__hiddenDemoUids || new Set();
+        const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid)&&!hidden.has(a.uid));
         window.allActors = [...dbActors, ...seedActors];
         _refreshViews();
         _refreshAdminViews(rawUsers);
@@ -8475,12 +8500,14 @@ window.lookupManualGscId = lookupManualGscId;
     if (window._firebaseReady && typeof window.onSnapshot === 'function') {
       startUsersSync();
       startDefaultAvatarsSync();
+      startHiddenDemoActorsSync();
     } else if (window._firebaseReady) {
       // onSnapshot n'a pas été exposé par le bootstrap principal — l'importer.
       import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js").then(function(fs){
         window.onSnapshot = fs.onSnapshot;
         startUsersSync();
         startDefaultAvatarsSync();
+        startHiddenDemoActorsSync();
       }).catch(function(e){ /* silencieux */ });
     } else {
       // Firebase indisponible — l'app fonctionne avec les données locales/seed

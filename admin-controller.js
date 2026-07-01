@@ -121,10 +121,14 @@
   function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || 'Sans nom'; }
   function fmtDate(ts) { try { return ts && ts.toDate ? ts.toDate().toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
 
+  let hiddenDemoUids = new Set();
+
   function mergeWithDemo(realData) {
     const seed = window.GSC_SEED_ACTORS || [];
     const realIds = new Set(realData.map(u => u.uid || u.id));
-    const demoOnly = seed.filter(s => !realIds.has(s.uid)).map(s => ({ ...s, id: s.uid }));
+    const demoOnly = seed
+      .filter(s => !realIds.has(s.uid) && !hiddenDemoUids.has(s.uid))
+      .map(s => ({ ...s, id: s.uid }));
     return [...realData, ...demoOnly];
   }
 
@@ -1375,49 +1379,111 @@
     document.getElementById('btn-reset-partial')?.addEventListener('click', () => executeActorReset('partial'));
   }
 
-  /* ═══ ACTEURS DÉMO (FICTIFS) — RÉINITIALISATION ═══ */
+  /* ═══ ACTEURS DÉMO (FICTIFS) — MASQUAGE + PURGE DES DONNÉES ═══ */
+  const HIDDEN_DEMO_DOC = ['settings', 'hiddenDemoActors'];
+
+  async function loadHiddenDemoUids() {
+    try {
+      const snap = await window.db.collection(HIDDEN_DEMO_DOC[0]).doc(HIDDEN_DEMO_DOC[1]).get();
+      const uids = (snap.exists && snap.data().uids) || [];
+      hiddenDemoUids = new Set(uids);
+    } catch (e) {
+      hiddenDemoUids = new Set();
+    }
+    window.__hiddenDemoUids = hiddenDemoUids;
+    updateDemoCounts();
+    if (hiddenDemoUids.size) {
+      users = mergeWithDemo(realUsers);
+      renderDashboard();
+      renderResetRoleChips();
+    }
+  }
+
+  async function saveHiddenDemoUids() {
+    await withAuth(() => window.db.collection(HIDDEN_DEMO_DOC[0]).doc(HIDDEN_DEMO_DOC[1])
+      .set({ uids: [...hiddenDemoUids], updatedAt: new Date() }));
+    window.__hiddenDemoUids = hiddenDemoUids;
+  }
+
+  function updateDemoCounts() {
+    const totalEl = document.getElementById('demo-actors-count');
+    const hiddenEl = document.getElementById('demo-hidden-count');
+    const seedUids = (window.GSC_SEED_ACTORS || []).map(s => s.uid).filter(Boolean);
+    if (totalEl) totalEl.textContent = seedUids.length;
+    if (hiddenEl) hiddenEl.textContent = seedUids.filter(u => hiddenDemoUids.has(u)).length;
+  }
+
+  async function purgeDemoLinkedData(seedUids) {
+    let deleted = 0;
+    const CHUNK = 10; // limite Firestore pour une clause "in"
+    for (let i = 0; i < seedUids.length; i += CHUNK) {
+      const chunk = seedUids.slice(i, i + CHUNK);
+
+      const reportsSnap = await window.db.collection('signalements').where('targetUid', 'in', chunk).get();
+      if (!reportsSnap.empty) {
+        const batch = window.db.batch();
+        reportsSnap.docs.forEach(d => batch.delete(d.ref));
+        await withAuth(() => batch.commit());
+        deleted += reportsSnap.docs.length;
+      }
+
+      const notifSnap = await window.db.collection('notifications').where('recipientId', 'in', chunk).get();
+      if (!notifSnap.empty) {
+        const batch2 = window.db.batch();
+        notifSnap.docs.forEach(d => batch2.delete(d.ref));
+        await withAuth(() => batch2.commit());
+        deleted += notifSnap.docs.length;
+      }
+    }
+    return deleted;
+  }
+
   async function executeDemoActorsReset() {
     const seedUids = (window.GSC_SEED_ACTORS || []).map(s => s.uid).filter(Boolean);
     if (!seedUids.length) { toast('Aucun acteur démo trouvé (seed-data.js manquant)', 'warn'); return; }
 
     const confirmInput = document.getElementById('reset-demo-confirm-input').value.trim();
     if (confirmInput !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'warn'); return; }
-    if (!confirm(`Supprimer définitivement les données Firestore (signalements, notifications) liées aux ${seedUids.length} acteur(s) démo ? Les fiches démo elles-mêmes restent (définies dans seed-data.js).`)) return;
+    if (!confirm(`Masquer les ${seedUids.length} acteur(s) démo dans toute l'app et supprimer définitivement leurs signalements/notifications ? Les fiches restent réactivables via « Réafficher ».`)) return;
 
     try {
-      toast('Réinitialisation des données démo en cours…', 'info');
-      let deleted = 0;
-      const CHUNK = 10; // limite Firestore pour une clause "in"
-      for (let i = 0; i < seedUids.length; i += CHUNK) {
-        const chunk = seedUids.slice(i, i + CHUNK);
+      toast('Réinitialisation des acteurs démo en cours…', 'info');
+      const deleted = await purgeDemoLinkedData(seedUids);
+      seedUids.forEach(u => hiddenDemoUids.add(u));
+      await saveHiddenDemoUids();
 
-        const reportsSnap = await window.db.collection('signalements').where('targetUid', 'in', chunk).get();
-        if (!reportsSnap.empty) {
-          const batch = window.db.batch();
-          reportsSnap.docs.forEach(d => batch.delete(d.ref));
-          await withAuth(() => batch.commit());
-          deleted += reportsSnap.docs.length;
-        }
+      users = mergeWithDemo(realUsers);
+      renderDashboard();
+      renderResetRoleChips();
+      updateDemoCounts();
 
-        const notifSnap = await window.db.collection('notifications').where('recipientId', 'in', chunk).get();
-        if (!notifSnap.empty) {
-          const batch2 = window.db.batch();
-          notifSnap.docs.forEach(d => batch2.delete(d.ref));
-          await withAuth(() => batch2.commit());
-          deleted += notifSnap.docs.length;
-        }
-      }
       document.getElementById('reset-demo-confirm-input').value = '';
-      toast(`Données démo réinitialisées (${deleted} document(s) supprimé(s))`, 'success');
+      toast(`Acteurs démo masqués (${deleted} document(s) associé(s) supprimé(s))`, 'success');
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  }
+
+  async function restoreDemoActors() {
+    if (!hiddenDemoUids.size) { toast('Aucun acteur démo masqué', 'info'); return; }
+    if (!confirm(`Réafficher les ${hiddenDemoUids.size} acteur(s) démo actuellement masqué(s) ?`)) return;
+    try {
+      hiddenDemoUids.clear();
+      await saveHiddenDemoUids();
+      users = mergeWithDemo(realUsers);
+      renderDashboard();
+      renderResetRoleChips();
+      updateDemoCounts();
+      toast('Acteurs démo réaffichés', 'success');
     } catch (e) {
       toast('Erreur : ' + e.message, 'error');
     }
   }
 
   function wireResetDemoTools() {
-    const countEl = document.getElementById('demo-actors-count');
-    if (countEl) countEl.textContent = (window.GSC_SEED_ACTORS || []).length;
+    loadHiddenDemoUids();
     document.getElementById('btn-reset-demo')?.addEventListener('click', executeDemoActorsReset);
+    document.getElementById('btn-restore-demo')?.addEventListener('click', restoreDemoActors);
   }
 
   /* ═══ MODALES & DIVERS ═══ */
