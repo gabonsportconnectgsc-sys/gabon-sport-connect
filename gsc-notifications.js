@@ -879,7 +879,8 @@
       );
       _firestoreUnsub = onSnapshot(q, (snap)=>{
         const prev = _notifications.length;
-        _notifications = snap.docs.map(d=>({id:d.id,...d.data()}));
+        /* Exclure les notifications que j'ai moi-même émises (ex: diffusion 'all' sur ma propre publication) */
+        _notifications = snap.docs.map(d=>({id:d.id,...d.data()})).filter(n=>n.senderId !== _currentUserId);
         _notifications.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
         /* Convertir timestamps */
         _notifications.forEach(n=>{
@@ -951,8 +952,9 @@
       senderId: _currentUserId || null,
     };
 
-    /* Filtre selon préférences locales — seulement si destinataire = moi */
-    const isMine = recipientId === _currentUserId || recipientId === 'all';
+    /* Filtre selon préférences locales — seulement si destinataire = moi ET pas moi l'expéditeur */
+    const isSelfSent = !!n.senderId && n.senderId === _currentUserId;
+    const isMine = (recipientId === _currentUserId || recipientId === 'all') && !isSelfSent;
     if(isMine && _prefs?.[n.type] === false) return;
 
     /* Afficher localement SEULEMENT si je suis le destinataire ou c'est général */

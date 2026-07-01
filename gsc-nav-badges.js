@@ -277,7 +277,8 @@
         window.limit(100)
       );
       _unsub = window.onSnapshot(q, (snap) => {
-        _items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        /* Exclure mes propres notifications émises (ex: publication diffusée à 'all') */
+        _items = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.senderId !== uid);
         render();
       }, (err) => {
         console.warn('GSC NavBadges Firestore:', err);
@@ -298,7 +299,7 @@
       ? window.GSCNotif.getItems()
       : (window.GSCNotif._items || []);
     if (!Array.isArray(items)) return;
-    _items = items.filter(n => n.recipientId === _uid || n.recipientId === 'all');
+    _items = items.filter(n => (n.recipientId === _uid || n.recipientId === 'all') && n.senderId !== _uid);
     render();
   }
 
@@ -355,6 +356,7 @@
   function onPush(notif) {
     if (!notif || !notif.id) return;
     if (notif.recipientId !== _uid && notif.recipientId !== 'all') return;
+    if (notif.senderId && notif.senderId === _uid) return;
     /* Éviter les doublons */
     if (!_items.find(n => n.id === notif.id)) _items.unshift(notif);
     render();
