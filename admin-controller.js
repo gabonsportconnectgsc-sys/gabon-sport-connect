@@ -1375,6 +1375,51 @@
     document.getElementById('btn-reset-partial')?.addEventListener('click', () => executeActorReset('partial'));
   }
 
+  /* ═══ ACTEURS DÉMO (FICTIFS) — RÉINITIALISATION ═══ */
+  async function executeDemoActorsReset() {
+    const seedUids = (window.GSC_SEED_ACTORS || []).map(s => s.uid).filter(Boolean);
+    if (!seedUids.length) { toast('Aucun acteur démo trouvé (seed-data.js manquant)', 'warn'); return; }
+
+    const confirmInput = document.getElementById('reset-demo-confirm-input').value.trim();
+    if (confirmInput !== 'SUPPRIMER') { toast('Tapez exactement SUPPRIMER pour confirmer', 'warn'); return; }
+    if (!confirm(`Supprimer définitivement les données Firestore (signalements, notifications) liées aux ${seedUids.length} acteur(s) démo ? Les fiches démo elles-mêmes restent (définies dans seed-data.js).`)) return;
+
+    try {
+      toast('Réinitialisation des données démo en cours…', 'info');
+      let deleted = 0;
+      const CHUNK = 10; // limite Firestore pour une clause "in"
+      for (let i = 0; i < seedUids.length; i += CHUNK) {
+        const chunk = seedUids.slice(i, i + CHUNK);
+
+        const reportsSnap = await window.db.collection('signalements').where('targetUid', 'in', chunk).get();
+        if (!reportsSnap.empty) {
+          const batch = window.db.batch();
+          reportsSnap.docs.forEach(d => batch.delete(d.ref));
+          await withAuth(() => batch.commit());
+          deleted += reportsSnap.docs.length;
+        }
+
+        const notifSnap = await window.db.collection('notifications').where('recipientId', 'in', chunk).get();
+        if (!notifSnap.empty) {
+          const batch2 = window.db.batch();
+          notifSnap.docs.forEach(d => batch2.delete(d.ref));
+          await withAuth(() => batch2.commit());
+          deleted += notifSnap.docs.length;
+        }
+      }
+      document.getElementById('reset-demo-confirm-input').value = '';
+      toast(`Données démo réinitialisées (${deleted} document(s) supprimé(s))`, 'success');
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  }
+
+  function wireResetDemoTools() {
+    const countEl = document.getElementById('demo-actors-count');
+    if (countEl) countEl.textContent = (window.GSC_SEED_ACTORS || []).length;
+    document.getElementById('btn-reset-demo')?.addEventListener('click', executeDemoActorsReset);
+  }
+
   /* ═══ MODALES & DIVERS ═══ */
   function closeModal(id) {
     document.getElementById(id)?.classList.remove('open');
@@ -1615,6 +1660,7 @@
     wireMatchTabs();
     wireModals();
     wireResetActorsTools();
+    wireResetDemoTools();
     wireSitesActualites();
     loadDefaultAvatars();
 
