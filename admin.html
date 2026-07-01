@@ -813,7 +813,7 @@ tr.is-demo-row td { opacity: .82; }
           <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
         <div class="dash-grid">
-          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur / Athlète</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
+          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏃 Athlète</span><span style="color:#0891b2">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#0891b2"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
           <div class="dash-card"><div class="dash-card-title">🕐 Activité récente</div><div class="activity-list" id="activity-list"><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">6 membre(s) actif(s)</div><div class="act-time">—</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div></div></div>
           <div class="dash-card"><div class="dash-card-title">📅 Prochain match</div><div id="next-match-preview" style="text-align:center;padding:16px;color:var(--gray-txt);font-size:13px"><div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div></div></div>
           <div class="dash-card"><div class="dash-card-title">⚡ Actions rapides</div><div class="quick-actions">
@@ -883,10 +883,15 @@ tr.is-demo-row td { opacity: .82; }
 
             <!-- Grille des tuiles par catégorie -->
             <div class="role-tiles-grid">
-              <div class="role-tile clickable" style="background:linear-gradient(135deg,#009E60,#00c84a)" onclick="window.gscGoToFiltered({roles:'joueur', title:'Joueurs / Athlètes'})">
+              <div class="role-tile clickable" style="background:linear-gradient(135deg,#009E60,#00c84a)" onclick="window.gscGoToFiltered({roles:'joueur', title:'Joueurs'})">
                 <div class="tile-icon">⚽</div>
                 <div class="tile-count" id="rc-joueur">—</div>
                 <div class="tile-name">Joueurs</div>
+              </div>
+              <div class="role-tile clickable" style="background:linear-gradient(135deg,#0891b2,#22d3ee)" onclick="window.gscGoToFiltered({roles:'athlete', title:'Athlètes'})">
+                <div class="tile-icon">🏃</div>
+                <div class="tile-count" id="rc-athlete">—</div>
+                <div class="tile-name">Athlètes</div>
               </div>
               <div class="role-tile clickable" style="background:linear-gradient(135deg,#f97316,#fb923c)" onclick="window.gscGoToFiltered({roles:'entraineur', title:'Entraîneurs'})">
                 <div class="tile-icon">📋</div>
@@ -959,6 +964,7 @@ tr.is-demo-row td { opacity: .82; }
         <div class="filters-bar">
           <button class="filter-btn role-all active">👥 Tous</button>
           <button class="filter-btn role-joueur">⚽ Joueurs</button>
+          <button class="filter-btn role-athlete">🏃 Athlètes</button>
           <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
           <button class="filter-btn role-arbitre">🟨 Arbitres</button>
           <button class="filter-btn role-club">🏟️ Clubs</button>
@@ -1005,7 +1011,8 @@ tr.is-demo-row td { opacity: .82; }
         <!-- Filters -->
         <div class="filters-bar" id="ph-filter-bar">
           <button class="filter-btn role-all active" data-phfilter="all">📊 Tous</button>
-          <button class="filter-btn role-joueur" data-phfilter="joueur">🏃 Joueurs</button>
+          <button class="filter-btn role-joueur" data-phfilter="joueur">⚽ Joueurs</button>
+          <button class="filter-btn role-athlete" data-phfilter="athlete">🏃 Athlètes</button>
           <button class="filter-btn role-arbitre" data-phfilter="arbitre">🟨 Arbitres</button>
           <button class="filter-btn role-entraineur" data-phfilter="entraineur">📋 Entraîneurs</button>
           <button class="filter-btn role-club" data-phfilter="club">⚽ Clubs</button>
@@ -1222,6 +1229,7 @@ tr.is-demo-row td { opacity: .82; }
         <div class="filters-bar">
           <button class="filter-btn role-all active">👥 Tous</button>
           <button class="filter-btn role-joueur">⚽ Joueurs</button>
+          <button class="filter-btn role-athlete">🏃 Athlètes</button>
           <button class="filter-btn role-entraineur">📋 Entraîneurs</button>
           <button class="filter-btn role-arbitre">🟨 Arbitres</button>
           <button class="filter-btn role-club">🏟️ Clubs</button>
@@ -1544,14 +1552,14 @@ tr.is-demo-row td { opacity: .82; }
   let _reportCharts = {};
 
   const ROLE_LABELS = {
-    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    joueur: '⚽ Joueur', athlete: '🏃 Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
     eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
     ecole_universite: '🏫 École / Université'
   };
   const ROLE_COLORS = {
-    joueur: '#009E60', entraineur: '#f97316', arbitre: '#8b5cf6',
+    joueur: '#009E60', athlete: '#0891b2', entraineur: '#f97316', arbitre: '#8b5cf6',
     club: '#3b82f6', federation: '#f97316', association: '#e11d48', admin: '#0A1628',
     organisateur: '#0d9488', supporter: '#ec4899', independant: '#0ea5e9',
     eleve_etudiant: '#6366f1', sportif_etranger: '#ca8a04', handisport: '#7c3aed',
@@ -2166,13 +2174,13 @@ tr.is-demo-row td { opacity: .82; }
   // le même GSC-ID et le même QR Code, qu'on le consulte depuis le site
   // public ou depuis l'admin.
   const ROLE_CODES_QR = {
-    joueur: 'JOU', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
+    joueur: 'JOU', athlete: 'ATH', arbitre: 'ARB', entraineur: 'ENT', club: 'CLB',
     association: 'ASS', federation: 'FED', independant: 'IND',
     admin: 'ADM', supporter: 'SUP', organisateur: 'ORG',
     eleve_etudiant: 'ELE', sportif_etranger: 'ETR', handisport: 'HAN', ecole_universite: 'ECU'
   };
   const ROLE_LABELS_QR = {
-    joueur: '⚽ Joueur / Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
+    joueur: '⚽ Joueur', athlete: '🏃 Athlète', entraineur: '📋 Entraîneur', arbitre: '🟨 Arbitre',
     club: '🏟️ Club', federation: '🏛️ Fédération', association: '🤝 Association', admin: '⚙️ Administrateur',
     organisateur: '🎪 Organisateur', supporter: '💗 Supporter', independant: '🚴 Indépendant',
     eleve_etudiant: '🎓 Élève / Étudiant', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
@@ -2547,6 +2555,7 @@ tr.is-demo-row td { opacity: .82; }
       // Répartition par rôle (tuiles inférieures)
       const countRole=(r)=>active.filter(u=>u.role===r).length;
       setText('rc-joueur',countRole('joueur'));
+      setText('rc-athlete',countRole('athlete'));
       setText('rc-entraineur',countRole('entraineur'));
       setText('rc-arbitre',countRole('arbitre'));
       setText('rc-club',countRole('club'));
@@ -2565,6 +2574,7 @@ tr.is-demo-row td { opacity: .82; }
       // Barres de répartition (role-bars)
       const barData=[
         {role:'joueur',color:'#009E60'},
+        {role:'athlete',color:'#0891b2'},
         {role:'entraineur',color:'#f97316'},
         {role:'arbitre',color:'#8b5cf6'},
         {role:'club',color:'#3b82f6'},
@@ -2576,7 +2586,7 @@ tr.is-demo-row td { opacity: .82; }
         barContainer.innerHTML=barData.map(b=>{
           const c=countRole(b.role);
           const pct=Math.round((c/totalActive)*100);
-          const labels={'joueur':'⚽ Joueur / Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
+          const labels={'joueur':'⚽ Joueur','athlete':'🏃 Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
           return `<div class="sb-item"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
         }).join('');
       }

@@ -269,7 +269,7 @@
             <div class="type-icon acteur">🏅</div>
             <div class="type-info">
               <div class="type-name">Acteur Sportif</div>
-              <div class="type-desc">Joueur, entraîneur, arbitre, club, fédération ou indépendant : intégrez l'annuaire national.</div>
+              <div class="type-desc">Joueur, athlète, entraîneur, arbitre, club, fédération ou indépendant : intégrez l'annuaire national.</div>
               <div class="type-perms">
                 <div class="prow y"><span>✓</span> Fiche dans l'annuaire national</div>
                 <div class="prow y"><span>✓</span> Carte GSC &amp; QR code officiel</div>
@@ -372,7 +372,8 @@
       <div class="card-body">
         <div class="notice"><span>ℹ️</span><span>Votre rôle détermine les champs de votre profil et vos droits sur la plateforme.</span></div>
         <div class="role-grid">
-          <div class="role-tile" data-role="joueur" onclick="pickRole('joueur',this)"><div class="rt-icon">⚽</div><div class="rt-label">Joueur / Athlète</div><div class="rt-desc">Sport collectif ou individuel</div></div>
+          <div class="role-tile" data-role="joueur" onclick="pickRole('joueur',this)"><div class="rt-icon">⚽</div><div class="rt-label">Joueur</div><div class="rt-desc">Sport collectif (football, basket, handball…)</div></div>
+          <div class="role-tile" data-role="athlete" onclick="pickRole('athlete',this)"><div class="rt-icon">🏃</div><div class="rt-label">Athlète</div><div class="rt-desc">Sport individuel (athlétisme, judo, natation…)</div></div>
           <div class="role-tile" data-role="entraineur" onclick="pickRole('entraineur',this)"><div class="rt-icon">📋</div><div class="rt-label">Entraîneur</div><div class="rt-desc">Coach ou staff technique</div></div>
           <div class="role-tile" data-role="arbitre" onclick="pickRole('arbitre',this)"><div class="rt-icon">🟨</div><div class="rt-label">Arbitre</div><div class="rt-desc">Officiel de match</div></div>
           <div class="role-tile" data-role="club" onclick="pickRole('club',this)"><div class="rt-icon">🏟️</div><div class="rt-label">Club sportif</div><div class="rt-desc">Représentant officiel</div></div>
@@ -423,7 +424,7 @@
         <div class="fg"><label>Mot de passe *</label><div class="fg-icon"><span class="fi">🔒</span><input type="password" id="a-pw" placeholder="6 caractères minimum" autocomplete="new-password"/></div></div>
         <div class="section-sep">Informations sportives</div>
         <div class="fg">
-          <label>Sport principal *</label>
+          <label id="a-sport-label">Sport principal *</label>
           <select id="a-sport">
             <option value="">Choisir un sport</option>
             <option>Football</option><option>Basketball</option><option>Athlétisme</option>
@@ -432,6 +433,7 @@
             <option>Rugby</option><option>Cyclisme</option><option>Taekwondo</option>
             <option>Karaté</option><option>Lutte</option><option>Autre</option>
           </select>
+          <div class="form-hint" id="a-sport-hint" style="display:none;"></div>
         </div>
         <div class="fg">
           <label>Ville / Province *</label>
@@ -771,7 +773,7 @@
   // ── GSC ID — fonction identique à index.html & admin.html ──
   // Déterministe : même uid + même role → même GSC-ID partout dans l'application.
   const ROLE_CODES_QR = {
-    joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
+    joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
     association:'ASS', federation:'FED', independant:'IND',
     admin:'ADM', supporter:'SUP', organisateur:'ORG',
     eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
@@ -790,12 +792,41 @@
   }
 
   const ROLE_LABELS = {
-    joueur:'⚽ Joueur / Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
+    joueur:'⚽ Joueur', athlete:'🏃 Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
     handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
     supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger'
   };
+
+  // Disciplines séparées : sports collectifs pour les Joueurs, sports individuels pour les Athlètes.
+  // Les autres rôles (entraîneur, arbitre, club, indépendant, élève…) gardent la liste complète.
+  const SPORTS_COLLECTIFS = ['Football','Basketball','Handball','Volleyball','Rugby'];
+  const SPORTS_INDIVIDUELS = ['Athlétisme','Judo','Boxe','Natation','Tennis','Cyclisme','Taekwondo','Karaté','Lutte'];
+  const SPORTS_TOUS = ['Football','Basketball','Athlétisme','Judo','Boxe','Natation','Handball','Volleyball','Tennis','Rugby','Cyclisme','Taekwondo','Karaté','Lutte'];
+
+  function updateSportOptions(role) {
+    const sel = document.getElementById('a-sport');
+    const label = document.getElementById('a-sport-label');
+    const hint = document.getElementById('a-sport-hint');
+    if (!sel) return;
+    let list, labelTxt, hintTxt;
+    if (role === 'joueur') {
+      list = SPORTS_COLLECTIFS; labelTxt = 'Sport collectif *';
+      hintTxt = 'Réservé aux sports d\'équipe. Vous pratiquez un sport individuel ? Choisissez plutôt le rôle Athlète.';
+    } else if (role === 'athlete') {
+      list = SPORTS_INDIVIDUELS; labelTxt = 'Sport individuel *';
+      hintTxt = 'Réservé aux sports individuels. Vous pratiquez un sport d\'équipe ? Choisissez plutôt le rôle Joueur.';
+    } else {
+      list = SPORTS_TOUS; labelTxt = 'Sport principal *'; hintTxt = '';
+    }
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Choisir un sport</option>' +
+      list.map(s => `<option${s===current?' selected':''}>${s}</option>`).join('') +
+      '<option' + (current==='Autre'?' selected':'') + '>Autre</option>';
+    if (label) label.textContent = labelTxt;
+    if (hint) { hint.textContent = hintTxt; hint.style.display = hintTxt ? 'block' : 'none'; }
+  }
 
   let selectedRole = null;
 
@@ -821,6 +852,7 @@
     document.querySelectorAll('.role-tile').forEach(t => t.classList.remove('sel'));
     el.classList.add('sel');
     document.getElementById('a-role-err').style.display = 'none';
+    updateSportOptions(role);
   }
 
   function goToActeurForm() {
@@ -832,7 +864,7 @@
     }
     document.getElementById('a-title').textContent = ROLE_LABELS[selectedRole];
     document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
-    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','independant','eleve_etudiant'].includes(selectedRole));
+    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole));
     document.getElementById('ex-org').classList.toggle('show', ['club','federation','association','organisateur'].includes(selectedRole));
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
@@ -938,7 +970,7 @@
     const annee  = document.getElementById('a-annee')?.value || '';
     const licence= document.getElementById('a-licence')?.value || '';
     // Champs enrichis joueur/athlète
-    const isJoueurRole = ['joueur','independant','eleve_etudiant'].includes(selectedRole);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole);
     const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
     const poids        = isJoueurRole ? (document.getElementById('a-poids')?.value || '') : '';
     const piedFort     = isJoueurRole ? (document.getElementById('a-pied')?.value || '') : '';

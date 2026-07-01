@@ -726,6 +726,7 @@
     .actor-filter-btn[data-type="tous"]{grid-column:1 / -1;}
     /* Couleurs au repos — bordure + texte par rôle */
     .actor-filter-btn[data-type="joueur"]      {border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .actor-filter-btn[data-type="athlete"]     {border-color:#0891b2;color:#0e7490;background:rgba(8,145,178,.07);}
     .actor-filter-btn[data-type="arbitre"]     {border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);}
     .actor-filter-btn[data-type="entraineur"]  {border-color:#0d9488;color:#0f766e;background:rgba(13,148,136,.07);}
     .actor-filter-btn[data-type="club"]        {border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);}
@@ -743,6 +744,7 @@
     .actor-filter-btn.active{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);}
     .actor-filter-btn[data-type="tous"].active     {background:linear-gradient(135deg,var(--navy),var(--navy-md));}
     .actor-filter-btn[data-type="joueur"].active   {background:linear-gradient(135deg,#009E60,#007a47);}
+    .actor-filter-btn[data-type="athlete"].active  {background:linear-gradient(135deg,#0891b2,#0e7490);}
     .actor-filter-btn[data-type="arbitre"].active  {background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
     .actor-filter-btn[data-type="entraineur"].active{background:linear-gradient(135deg,#0d9488,#0f766e);}
     .actor-filter-btn[data-type="club"].active     {background:linear-gradient(135deg,#f97316,#c2410c);}
@@ -1279,7 +1281,8 @@
         <!-- Rôle sportif -->
         <div class="form-group"><label>Rôle / Poste *</label>
           <select id="auth-register-role" onchange="toggleSupporterOptIn()">
-            <option value="joueur">⚽ Joueur / Athlète</option>
+            <option value="joueur">⚽ Joueur (sport collectif)</option>
+            <option value="athlete">🏃 Athlète (sport individuel)</option>
             <option value="entraineur">📋 Entraîneur / Coach</option>
             <option value="arbitre">🟨 Arbitre</option>
             <option value="club">🏟️ Club sportif</option>
@@ -1479,12 +1482,20 @@
       </div>
       <div class="stats-grid fade-up" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
 
-        <!-- Joueurs / Athlètes — joueur de football avec ballon -->
+        <!-- Joueurs — joueur de football avec ballon -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
           <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>⚽</span>'">
           <div class="stat-val" id="stat-total-joueurs">—</div>
-          <div class="stat-lbl" style="color:#FFD700;">Joueurs / Athlètes</div>
+          <div class="stat-lbl" style="color:#FFD700;">Joueurs</div>
+        </button>
+
+        <!-- Athlètes — athlète individuel sur piste -->
+        <button class="stat-card" onclick="showView('annuaire');filterActors('athlete')"
+          style="background:linear-gradient(135deg,#0891b2,#0e7490);padding:16px 12px;">
+          <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏃</span>'">
+          <div class="stat-val" id="stat-total-athletes">—</div>
+          <div class="stat-lbl" style="color:#a5f3fc;">Athlètes</div>
         </button>
 
         <!-- Clubs — maillots de football accrochés -->
@@ -1664,7 +1675,8 @@
                 <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-txt);display:block;margin-bottom:4px;">Rôle</label>
                 <select id="sf-role" class="search-input" onchange="applyScoutFilters()" style="font-size:12px;padding:8px 10px;">
                   <option value="">Tous</option>
-                  <option value="joueur">⚽ Joueur/Athlète</option>
+                  <option value="joueur">⚽ Joueur</option>
+                  <option value="athlete">🏃 Athlète</option>
                   <option value="arbitre">🟨 Arbitre</option>
                   <option value="entraineur">📋 Entraîneur</option>
                   <option value="independant">🏃 Indépendant</option>
@@ -1826,6 +1838,9 @@
             </button>
             <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')" style="--abtn-color:#1a2d4a;">
               <span style="font-size:18px;line-height:1;">⚽</span>Joueurs
+            </button>
+            <button class="actor-filter-btn" data-type="athlete" onclick="filterActors('athlete')" style="--abtn-color:#0891b2;">
+              <span style="font-size:18px;line-height:1;">🏃</span>Athlètes
             </button>
             <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')" style="--abtn-color:#8b5cf6;">
               <span style="font-size:18px;line-height:1;">🟨</span>Arbitres
@@ -2129,6 +2144,7 @@
             <select class="search-input" id="srch-role" onchange="filterAdminUsers()">
               <option value="">Tous rôles</option>
               <option value="joueur">Joueur</option>
+              <option value="athlete">Athlète</option>
               <option value="arbitre">Arbitre</option>
               <option value="entraineur">Entraîneur</option>
               <option value="club">Club</option>
@@ -2208,7 +2224,12 @@
               <button class="stat-card" onclick="adminFilterActorsTile('joueur')" style="background:linear-gradient(135deg,#009E60,#007a47);padding:14px 10px;">
                 <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">⚽</span>
                 <div class="stat-val" id="admin-acr-joueur" style="font-size:22px;">—</div>
-                <div class="stat-lbl" style="color:#FFD700;">Joueurs / Athlètes</div>
+                <div class="stat-lbl" style="color:#FFD700;">Joueurs</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('athlete')" style="background:linear-gradient(135deg,#0891b2,#0e7490);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏃</span>
+                <div class="stat-val" id="admin-acr-athlete" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#a5f3fc;">Athlètes</div>
               </button>
               <button class="stat-card" onclick="adminFilterActorsTile('club')" style="background:linear-gradient(135deg,#f97316,#c2410c);padding:14px 10px;">
                 <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🏟️</span>
@@ -2543,8 +2564,8 @@
             <p>Gère les acteurs <strong>professionnels</strong> : enregistre et met à jour les fiches des joueurs pro, arbitres officiels, entraîneurs de clubs professionnels. Saisit les mandats, l'historique des clubs, les licences. Compte accordé sur demande par l'admin GSC.</p>
             <h3>🏟️ Club / Association / Comité</h3>
             <p>Crée et gère sa propre fiche d'organisation : informations du club, équipes, tournois organisés, sites sportifs associés.</p>
-            <h3>⚽ Joueur / Athlète (amateur/individuel)</h3>
-            <p>Crée et gère sa propre fiche sportive. Les joueurs professionnels voient leurs données de mandat gérées par leur fédération, mais conservent la gestion de leur profil personnel.</p>
+            <h3>⚽ Joueur (sport collectif) / 🏃 Athlète (sport individuel)</h3>
+            <p>Crée et gère sa propre fiche sportive. Le rôle <strong>Joueur</strong> est réservé aux sports collectifs (football, basketball, handball…) et le rôle <strong>Athlète</strong> aux sports individuels (athlétisme, judo, natation…). Les joueurs et athlètes professionnels voient leurs données de mandat gérées par leur fédération, mais conservent la gestion de leur profil personnel.</p>
             <h3>🟨 Arbitre / 📋 Entraîneur</h3>
             <p>Crée sa fiche personnelle. Peut être rattaché à une fédération pour validation de sa licence officielle.</p>
             <h3>⚙️ Administrateur GSC</h3>
@@ -2709,7 +2730,8 @@
     <div class="form-group"><label>Nom</label><input type="text" id="admin-edit-nom"></div>
     <div class="form-group"><label>Rôle</label>
       <select id="admin-edit-role">
-        <option value="joueur">⚽ Joueur / Athlète</option>
+        <option value="joueur">⚽ Joueur</option>
+        <option value="athlete">🏃 Athlète</option>
         <option value="arbitre">🟨 Arbitre</option>
         <option value="entraineur">📋 Entraîneur</option>
         <option value="club">🏟️ Club sportif</option>
@@ -2832,7 +2854,7 @@ let currentDetailActorUid = null;
 
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
-  association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
+  association:'🤝 Association', joueur:'⚽ Joueur', athlete:'🏃 Athlète', arbitre:'🟨 Arbitre',
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
@@ -2840,7 +2862,7 @@ const ROLE_LABELS = {
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
-  joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
+  joueur:'⚽', athlete:'🏃', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍',
   handisport:'🦾', ecole_universite:'🏫'
 };
@@ -4160,6 +4182,8 @@ async function loadActors(){
   if(statEl) statEl.textContent=activeAll.length;
   const jEl=document.getElementById('stat-total-joueurs');
   if(jEl) jEl.textContent=activeAll.filter(u=>u.role==='joueur').length;
+  const athEl=document.getElementById('stat-total-athletes');
+  if(athEl) athEl.textContent=activeAll.filter(u=>u.role==='athlete').length;
   const cEl=document.getElementById('stat-total-clubs');
   if(cEl) cEl.textContent=activeAll.filter(u=>['club','association'].includes(u.role)).length;
   const arbEl=document.getElementById('stat-total-arbitres');
@@ -4211,6 +4235,7 @@ function searchAnnuaire(){
 const NIVEAU_ORDER=['International','National','Regional','Amateur'];
 const SECONDARY_GROUP_CONFIG={
   joueur:{ getKey:a=>a.club||a.nomOrganisation, label:v=>'🏟️ '+v, fallback:'Sans club' },
+  athlete:{ getKey:a=>a.sport, label:v=>'🏃 '+v, fallback:'Discipline non précisée' },
   entraineur:{ getKey:a=>a.niveau, label:v=>'🏆 Niveau '+v, fallback:'Niveau non précisé', order:NIVEAU_ORDER },
   arbitre:{ getKey:a=>a.niveau, label:v=>'🏆 Niveau '+v, fallback:'Niveau non précisé', order:NIVEAU_ORDER },
   club:{ getKey:a=>a.division||a.niveau, label:v=>'📊 Division '+v, fallback:'Division non précisée', order:NIVEAU_ORDER },
@@ -4271,8 +4296,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
-    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
+    const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+    const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -4308,8 +4333,8 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','ecole_universite','organisateur','independant','supporter','admin'];
-      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport'};
+      const GROUP_ORDER=['joueur','athlete','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','ecole_universite','organisateur','independant','supporter','admin'];
+      const GROUP_LABELS={joueur:'⚽ Joueurs',athlete:'🏃 Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
       orderedActors=[];
@@ -4391,9 +4416,9 @@ function renderActors(actors){
       const name=escapeHtml([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—');
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ecole_universite:'École / Université'}[roleKey]||roleKey;
+      const roleName={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ecole_universite:'École / Université'}[roleKey]||roleKey;
       const badgeClass='badge-'+roleKey;
-      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+      const typeIcons={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -4510,7 +4535,7 @@ function openActorDetail(uid){
       if(typeof openActorQrZoom==='function') openActorQrZoom(uid,roleKey);
     };
   })();
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
+  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
   const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(a.role);
   // Accès aux données sensibles (CNI, licence, n° de document) : uniquement le
   // propriétaire du profil, son club/association employeur, ou l'administrateur.
@@ -4537,7 +4562,7 @@ function openActorDetail(uid){
       html+=`</div></div>`;
     }
     // Stats — adaptées au sport pratiqué
-    if(a.role==='joueur'){
+    if(a.role==='joueur'||a.role==='athlete'){
       const statSportKey=Object.keys(SPORT_STATS).find(k=>(a.sport||'').includes(k))||'Football';
       const statsList=SPORT_STATS[statSportKey]||SPORT_STATS['Football'];
       html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques (${a.sport||statSportKey})</div>`;
@@ -4730,9 +4755,9 @@ function renderProfile(){
   if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
   const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
-  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
+  const fedManaged=(p.gereParFederation&&(p.role==='joueur'||p.role==='athlete')&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
 
   document.getElementById('fed-notice').style.display=fedManaged?'flex':'none';
@@ -4743,7 +4768,7 @@ function renderProfile(){
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
-  document.getElementById('prof-stats-card').style.display=isPersonnel&&p.role==='joueur'?'':'none';
+  document.getElementById('prof-stats-card').style.display=isPersonnel&&(p.role==='joueur'||p.role==='athlete')?'':'none';
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
 
   // Supporter card
@@ -4762,7 +4787,7 @@ function renderProfile(){
   if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
   // Gallery card — visible pour tous les membres inscrits (rôles acteurs sportifs)
-  const allActorRoles=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','club','association','federation','organisateur','ecole_universite'];
+  const allActorRoles=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','club','association','federation','organisateur','ecole_universite'];
   const gallCard=document.getElementById('prof-gallery-card');
   if(gallCard){
     gallCard.style.display=(!isVisitor && allActorRoles.includes(p.role))?'':'none';
@@ -4846,9 +4871,9 @@ function renderSportStats(p){
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
   const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
-  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
+  const fedManaged=(p.gereParFederation&&(p.role==='joueur'||p.role==='athlete')&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';
 
   // Always: identité
@@ -4924,7 +4949,7 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(p.role==='joueur'){
+    if(p.role==='joueur'||p.role==='athlete'){
       const statSport=Object.keys(SPORT_STATS).find(k=>(p.sport||'').includes(k))||'Football';
       const stats=SPORT_STATS[statSport]||SPORT_STATS['Football'];
       h+=`<div class="section-divider green">📊 Statistiques (${statSport})</div>`;
@@ -5170,9 +5195,9 @@ async function saveProfile(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!currentUser||!userProfile) return;
   const p=userProfile;
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
   const isOrg=['club','association','federation','organisateur','ecole_universite'].includes(p.role);
-  const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
+  const fedManaged=(p.gereParFederation&&(p.role==='joueur'||p.role==='athlete')&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
   const updates={
     prenom:document.getElementById('edit-prenom')?.value.trim()||p.prenom||'',
@@ -5205,7 +5230,7 @@ async function saveProfile(){
       updates.clubsPrecedents=document.getElementById('edit-clubs-prec')?.value.trim()||'';
       updates.mandats=getMandatsFromForm();
     }
-    if(p.role==='joueur'){
+    if(p.role==='joueur'||p.role==='athlete'){
       const statSportKey=Object.keys(SPORT_STATS).find(k=>chosenSport.includes(k))||'Football';
       (SPORT_STATS[statSportKey]||SPORT_STATS['Football']).forEach(([key])=>{
         updates[key]=parseInt(document.getElementById('edit-stat-'+key)?.value)||0;
@@ -5771,7 +5796,7 @@ function loadAdminActorsTab(){
 window.loadAdminActorsTab=loadAdminActorsTab;
 
 function updateAdminActorTiles(){
-  const counts={tous:allActors.length, joueur:0, club:0, arbitre:0, entraineur:0, federation:0,
+  const counts={tous:allActors.length, joueur:0, athlete:0, club:0, arbitre:0, entraineur:0, federation:0,
     organisateur:0, independant:0, eleve_etudiant:0, sportif_etranger:0, supporter:0};
   allActors.forEach(a=>{
     const r=a.role;
@@ -5833,8 +5858,8 @@ function renderActorsAdmin(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
 
-  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
-  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
+  const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ecole_universite:'🏫'};
+  const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ecole_universite:'École/Univ.'};
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
@@ -5884,7 +5909,7 @@ async function loadAdminStats(){
     const snap=await getDocs(collection(db,'users'));
     const users=snap.docs.map(d=>d.data());
     document.getElementById('admin-total-users').textContent=users.length;
-    document.getElementById('admin-total-joueurs').textContent=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+    document.getElementById('admin-total-joueurs').textContent=users.filter(u=>['joueur','athlete','arbitre','entraineur'].includes(u.role)).length;
     document.getElementById('admin-total-clubs').textContent=users.filter(u=>['club','association','federation'].includes(u.role)).length;
   }catch(e){console.error('adminStats:',e);}
 }
@@ -5946,7 +5971,7 @@ function renderAdminUsersTable(users){
         <button class="btn-sm" onclick="adminEditUser('${u.uid||u.id}')">✏️</button>
         <button class="btn-warn" onclick="adminToggleHide('${u.uid||u.id}','${u.status||'active'}')">${u.status==='hidden'?'👁️':'🙈'}</button>
         ${u.role!=='admin'?`<button class="btn-danger" onclick="adminDeleteUser('${u.uid||u.id}')">🗑️</button>`:''}
-        ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
+        ${(u.role==='joueur'||u.role==='athlete')?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
         <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${u.uid||u.id}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
       </div>`}</td>
     </tr>`;
@@ -7864,7 +7889,7 @@ function applyScoutFilters(){
       const fullname = ([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')).toLowerCase();
       if(!fullname.includes(nom)) return false;
     }
-    const isPersonnel = ['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
+    const isPersonnel = ['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
     if(isPersonnel){
       if(a.taille && (a.taille < tailleMin || a.taille > tailleMax)) return false;
       if(a.poids && (a.poids < poidsMin || a.poids > poidsMax)) return false;
@@ -7986,13 +8011,13 @@ window.resetScoutFilters = resetScoutFilters;
 <script>
 // ── GSC QR SYSTEM (public) ──
 const ROLE_CODES_QR = {
-  joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
+  joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
   eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ecole_universite:'ECU'
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport','ecole_universite'];
+const QR_ENABLED_ROLES = ['joueur','athlete','independant','club','association','federation','admin','handisport','ecole_universite'];
 
 function generateGscId(uid, role){
   if(!uid) return null;
@@ -8391,7 +8416,7 @@ window.lookupManualGscId = lookupManualGscId;
       totalEl.textContent = rawUsers.length;
       const joueursEl = document.getElementById('admin-total-joueurs');
       const clubsEl = document.getElementById('admin-total-clubs');
-      if(joueursEl) joueursEl.textContent = rawUsers.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
+      if(joueursEl) joueursEl.textContent = rawUsers.filter(u=>['joueur','athlete','arbitre','entraineur'].includes(u.role)).length;
       if(clubsEl) clubsEl.textContent = rawUsers.filter(u=>['club','association','federation'].includes(u.role)).length;
     }
     if (typeof window.renderAdminUsersTable === 'function' && document.getElementById('admin-users-tbody')){

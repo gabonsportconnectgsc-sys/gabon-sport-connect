@@ -19,7 +19,8 @@
   }
 
   const ROLE_LABELS = {
-    joueur: '⚽ Joueur / Athlète',
+    joueur: '⚽ Joueur',
+    athlete: '🏃 Athlète',
     entraineur: '📋 Entraîneur',
     arbitre: '🟨 Arbitre',
     club: '🏟️ Club',
@@ -35,6 +36,7 @@
   };
   const ROLE_COLORS = {
     joueur: '#009E60',
+    athlete: '#0891b2',
     entraineur: '#f97316',
     arbitre: '#8b5cf6',
     club: '#3b82f6',
@@ -49,18 +51,19 @@
     handisport: '#7c3aed'
   };
   const DASH_ROLES = [
-    'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
+    'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'supporter', 'independant', 'eleve_etudiant',
     'sportif_etranger', 'ecole_universite', 'handisport'
   ];
   const GROUP_ORDER = [
-    'joueur', 'entraineur', 'arbitre', 'club', 'federation', 'association',
+    'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'independant', 'supporter', 'eleve_etudiant',
     'sportif_etranger', 'ecole_universite', 'handisport'
   ];
   const NIVEAU_ORDER = ['International', 'National', 'Regional', 'Amateur'];
   const SECONDARY_GROUP_CONFIG = {
     joueur: { getKey: a => a.club || a.nomOrganisation, label: v => '🏟️ ' + v, fallback: 'Sans club' },
+    athlete: { getKey: a => a.sport, label: v => '🏃 ' + v, fallback: 'Discipline non précisée' },
     entraineur: { getKey: a => a.niveau, label: v => '🏆 Niveau ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
     arbitre: { getKey: a => a.niveau, label: v => '🏆 Niveau ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
     club: { getKey: a => a.division || a.niveau, label: v => '📊 Division ' + v, fallback: 'Division non précisée', order: NIVEAU_ORDER },
