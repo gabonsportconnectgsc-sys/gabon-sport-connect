@@ -213,10 +213,12 @@
     });
   }
 
+  /* Méthode de publication reprise telle quelle de l'ancienne version (publishNews) :
+     on écrit directement dans Firestore sans relancer le pont d'authentification
+     Firebase (ensureFirebaseAuthViaSupabase) à chaque publication. La session
+     Firebase Auth est déjà établie une seule fois au login (onSupabaseSignedIn),
+     ce qui suffisait dans l'ancienne version pour que request.auth.uid soit défini. */
   async function withAuth(fn) {
-    if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
-      try { await window.ensureFirebaseAuthViaSupabase(); } catch (e) {}
-    }
     return fn();
   }
 
