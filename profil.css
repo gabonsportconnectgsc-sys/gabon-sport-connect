@@ -1,0 +1,53 @@
+    /* ── PROFIL EDIT ── */
+    .profile-header-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-md) 100%);border-radius:var(--radius-lg);padding:28px 20px 24px;color:var(--white);text-align:center;margin-bottom:16px;position:relative;}
+    .avatar-upload-wrap{position:relative;display:inline-block;margin-bottom:14px;}
+    .profile-avatar-lg{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--white);border:3px solid rgba(255,255,255,.25);overflow:hidden;}
+    .profile-avatar-lg img{width:100%;height:100%;object-fit:cover;}
+    .avatar-edit-btn{position:absolute;bottom:0;right:0;width:28px;height:28px;border-radius:50%;background:var(--green);border:2px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--white);}
+    .profile-fullname{font-family:var(--font-display);font-size:22px;font-weight:800;}
+    .profile-email-line{font-size:13px;opacity:.65;margin-top:4px;}
+    .profile-chips{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+    .chip{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.15);color:var(--white);}
+    .profile-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-group{margin-bottom:14px;}
+    .pwd-wrap{position:relative;display:flex;align-items:center;}
+    .pwd-wrap input{flex:1;padding-right:42px;}
+    .pwd-eye{position:absolute;right:10px;background:none;border:none;cursor:pointer;font-size:17px;padding:4px;line-height:1;opacity:.5;transition:opacity .2s;}
+    .pwd-eye:hover{opacity:1;}
+    .pwd-eye.visible{opacity:1;}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;color:var(--navy);background:var(--white);transition:border-color .2s,box-shadow .2s;outline:none;}
+    .form-group textarea{resize:vertical;min-height:80px;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,158,96,.12);}
+    /* Section separators in profile */
+    .section-divider{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding-bottom:6px;border-bottom:2px solid;margin:16px 0 12px;}
+    .section-divider.green{color:var(--green);border-color:var(--green-lt);}
+    .section-divider.blue{color:var(--blue);border-color:#eff6ff;}
+    .section-divider.orange{color:var(--orange);border-color:#fff7ed;}
+    .section-divider.purple{color:var(--purple);border-color:#f3e8ff;}
+    .btn-save{width:100%;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:4px;}
+    .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,158,96,.35);}
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .mini-stat{background:var(--gray-bg);border-radius:var(--radius-sm);padding:14px 10px;text-align:center;}
+    .mini-stat .ms-val{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--navy);}
+    .mini-stat .ms-lbl{font-size:11px;color:var(--gray-txt);margin-top:2px;}
+    .phys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+    .phys-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:var(--radius-sm);padding:12px;text-align:center;}
+    .phys-val{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--navy);}
+    .phys-lbl{font-size:10px;color:var(--gray-txt);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+    .sport-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+    .sport-stat-item{background:var(--gray-bg);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;gap:10px;}
+    .sport-stat-icon{font-size:22px;flex-shrink:0;}
+    .sport-stat-val{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--navy);}
+    .sport-stat-lbl{font-size:11px;color:var(--gray-txt);}
+    .position-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:var(--white);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px;}
+
+    /* Mandats section */
+    .mandat-form-item{background:var(--gray-bg);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;position:relative;}
+    .mandat-form-item .remove-mandat{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;}
+    .btn-add-mandat{width:100%;padding:10px;border:2px dashed var(--green);border-radius:var(--radius-sm);background:none;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;}
+    .btn-add-mandat:hover{background:var(--green-lt);}
+
+    /* Club info section (for fédération editing) */
+    .fed-notice{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fdba74;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:13px;color:#9a3412;display:flex;align-items:center;gap:8px;}
+

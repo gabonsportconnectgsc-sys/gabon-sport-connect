@@ -1,0 +1,164 @@
+    /* ── SPORT GABON SECTION ── */
+    .sport-gabon-header{position:relative;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;height:110px;}
+    .sport-header-bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;filter:brightness(.45);}
+    .sport-header-content{position:relative;z-index:1;padding:20px 20px;color:white;}
+    .sport-header-title{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;}
+    .sport-header-sub{font-size:12px;opacity:.8;}
+    .discipline-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 4px;}
+    .disc-tab{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border-radius:20px;border:2px solid var(--gray-bd);background:var(--white);cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-txt);transition:all .2s;white-space:normal;line-height:1.3;min-height:40px;width:100%;box-sizing:border-box;}
+    /* Premier élément (Football) pleine largeur */
+    .disc-tab:first-child{grid-column:1 / -1;}
+    /* Couleurs au repos par sport */
+    .disc-tab[data-sport="Football"]    {border-color:#009E60;color:#007a47;background:rgba(0,158,96,.07);}
+    .disc-tab[data-sport="Basketball"]  {border-color:#f97316;color:#c2410c;background:rgba(249,115,22,.07);}
+    .disc-tab[data-sport="Handball"]    {border-color:#3b82f6;color:#1d4ed8;background:rgba(59,130,246,.07);}
+    .disc-tab[data-sport="Volleyball"]  {border-color:#8b5cf6;color:#6d28d9;background:rgba(139,92,246,.07);}
+    .disc-tab[data-sport="Athlétisme"]  {border-color:#f59e0b;color:#b45309;background:rgba(245,158,11,.07);}
+    .disc-tab[data-sport="Boxe"]        {border-color:#e11d48;color:#be123c;background:rgba(225,29,72,.07);}
+    .disc-tab[data-sport="Judo"]        {border-color:#ec4899;color:#db2777;background:rgba(236,72,153,.07);}
+    .disc-tab[data-sport="Natation"]    {border-color:#0ea5e9;color:#0284c7;background:rgba(14,165,233,.07);}
+    .disc-tab:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    .disc-tab.active{color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(10,22,40,.25);}
+    .disc-tab[data-sport="Football"].active  {background:linear-gradient(135deg,#009E60,#007a47);}
+    .disc-tab[data-sport="Basketball"].active{background:linear-gradient(135deg,#f97316,#c2410c);}
+    .disc-tab[data-sport="Handball"].active  {background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
+    .disc-tab[data-sport="Volleyball"].active{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+    .disc-tab[data-sport="Athlétisme"].active{background:linear-gradient(135deg,#f59e0b,#d97706);color:var(--navy);}
+    .disc-tab[data-sport="Boxe"].active      {background:linear-gradient(135deg,#e11d48,#be123c);}
+    .disc-tab[data-sport="Judo"].active      {background:linear-gradient(135deg,#ec4899,#db2777);}
+    .disc-tab[data-sport="Natation"].active  {background:linear-gradient(135deg,#0ea5e9,#0284c7);}
+    .disc-tab img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+    .fed-card{background:linear-gradient(135deg,var(--navy),var(--navy-md));border-radius:var(--radius-md);padding:18px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;}
+    .fed-card-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3);flex-shrink:0;}
+    .fed-card-info{flex:1;}
+    .fed-card-name{font-family:var(--font-display);font-size:15px;font-weight:800;margin-bottom:2px;}
+    .fed-card-sigle{font-size:11px;opacity:.7;letter-spacing:.5px;}
+    .fed-card-meta{font-size:12px;opacity:.8;margin-top:4px;}
+    .champ-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:10px;overflow:hidden;}
+    .champ-header{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,#f8fafc,#f0f4f8);border-bottom:1px solid var(--gray-bd);cursor:pointer;}
+    .champ-header img{width:32px;height:32px;border-radius:8px;object-fit:cover;}
+    .champ-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--navy);flex:1;}
+    .champ-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;background:var(--green);color:white;letter-spacing:.3px;}
+    .champ-body{padding:0 16px 14px;}
+    .division-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-bg);cursor:pointer;transition:background .15s;}
+    .division-row:last-child{border-bottom:none;}
+    .division-row:hover{background:var(--green-lt);margin:0 -16px;padding-left:16px;padding-right:16px;}
+    .div-num{width:26px;height:26px;border-radius:50%;background:var(--navy);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .div-info{flex:1;}
+    .div-name{font-size:13px;font-weight:700;color:var(--navy);}
+    .div-meta{font-size:11px;color:var(--gray-txt);margin-top:1px;}
+    .div-clubs-count{font-size:11px;font-weight:700;color:var(--green);background:var(--green-lt);padding:2px 8px;border-radius:10px;}
+    .clubs-grid-sport{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    .club-sport-card{background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-md);padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .18s;}
+    .club-sport-card:hover{box-shadow:var(--shadow-sm);border-color:var(--green);transform:translateY(-1px);}
+    .club-sport-card img{width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.15);flex-shrink:0;}
+    .club-sport-name{font-size:12px;font-weight:700;color:var(--navy);}
+    .club-sport-meta{font-size:11px;color:var(--gray-txt);margin-top:1px;}
+
+    /* ── PHOTO GALLERY ── */
+    .photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+    .gallery-item{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
+    .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
+    .gallery-item:hover img{transform:scale(1.05);}
+    .gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
+    .gallery-add:hover{background:#d4f0e4;}
+    .gallery-item-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+    .gallery-item:hover .gallery-item-overlay{display:flex;}
+    .gallery-item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+    .gallery-action-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;transition:background .18s;white-space:nowrap;}
+    .gallery-action-btn:hover{background:rgba(255,255,255,.35);}
+    .gallery-action-btn.danger{border-color:#f87171;color:#f87171;}
+    .gallery-action-btn.danger:hover{background:rgba(248,113,113,.25);}
+    .gallery-is-profile-badge{position:absolute;top:5px;left:5px;background:var(--green);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;pointer-events:none;}
+    .gallery-limit-msg{font-size:11px;color:var(--gray-txt);text-align:center;margin-top:6px;padding:6px;background:var(--gray-bg);border-radius:6px;}
+    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
+    .gallery-modal.open{display:flex;}
+    .gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
+    .gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm);}
+    .gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+    .gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;}
+    .gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
+    .gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
+    .gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
+    .gallery-modal-btn.primary{border-color:var(--green);color:#4ade80;}
+    .gallery-modal-btn.primary:hover{background:rgba(0,158,96,.25);}
+
+    /* Documents personnels (carte d'identité, licence, justificatifs…) */
+    .doc-detail-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;}
+    .doc-detail-link{font-size:12px;font-weight:700;color:var(--navy);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .doc-detail-link:hover{text-decoration:underline;}
+    .doc-detail-lock{font-size:9px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:8px;padding:2px 7px;white-space:nowrap;}
+    .doc-detail-btn{border:none;background:rgba(0,0,0,.06);width:26px;height:26px;border-radius:7px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .doc-detail-btn:disabled{opacity:.35;cursor:not-allowed;}
+    .doc-detail-btn.doc-detail-danger:hover{background:#ef4444;color:#fff;}
+
+    /* ── IMPORT MAPS STYLES (Admin) ── */
+    .import-maps-section{background:linear-gradient(135deg,#f0faf5,#e6f7ef);border:2px solid var(--green);border-radius:var(--radius-md);padding:20px;margin-bottom:20px;}
+    .import-maps-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--green-dk);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+    .maps-tabs{display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--gray-bd);padding-bottom:12px;}
+    .maps-tab{padding:8px 16px;border:none;background:none;cursor:pointer;font-weight:600;color:var(--gray-txt);transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-13px;}
+    .maps-tab.active{color:var(--green);border-bottom-color:var(--green);}
+    .maps-panel{display:none;}.maps-panel.active{display:block;}
+    #osm-map{width:100%;height:360px;border-radius:var(--radius-sm);margin-bottom:12px;border:1px solid var(--gray-bd);}
+.gsc-school-marker{font-size:20px;text-align:center;line-height:22px;}
+    .maps-search{display:flex;gap:8px;margin-bottom:12px;}
+    .maps-search input{flex:1;padding:11px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;}
+    .maps-search input:focus{border-color:var(--green);outline:none;}
+    .maps-filter{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+    .maps-filter select{padding:11px 13px;border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;background:var(--white);cursor:pointer;}
+    .maps-results{max-height:280px;overflow-y:auto;border:1px solid var(--gray-bd);border-radius:var(--radius-sm);background:var(--white);}
+    .maps-result-item{padding:12px;border-bottom:1px solid var(--gray-bd);cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:10px;}
+    .maps-result-item:hover{background:var(--green-lt);}
+    .maps-result-item.selected{background:var(--green-lt);border-left:3px solid var(--green);}
+    .maps-result-name{font-weight:600;color:var(--navy);margin-bottom:3px;}
+    .maps-result-meta{font-size:12px;color:var(--gray-txt);}
+    .maps-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+    .maps-action-btn{padding:12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:none;color:var(--green);font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font-body);}
+    .maps-action-btn:hover{background:var(--green);color:var(--white);}
+    .maps-action-btn.primary{background:var(--green);color:var(--white);}
+    .maps-action-btn.primary:hover{background:var(--green-dk);}
+    .maps-stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+    .maps-stat-chip{background:var(--white);border:1px solid var(--gray-bd);border-radius:var(--radius-sm);padding:12px;text-align:center;}
+    .maps-stat-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--green);}
+    .maps-stat-lbl{font-size:11px;color:var(--gray-txt);margin-top:4px;text-transform:uppercase;font-weight:600;}
+    .libreville-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center;align-items:center;padding:0 8px;}
+    .libreville-badge{background:var(--green);color:var(--white);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+
+    /* ── PROF SUPPORTER CARD ── */
+    .supporter-card{background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1.5px solid #f9a8d4;border-radius:var(--radius-md);padding:16px;margin-bottom:16px;}
+    .supporter-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .supporter-badge-lg{background:linear-gradient(135deg,#ec4899,#db2777);color:white;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+    .supporter-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+    .supporter-stat{background:white;border-radius:var(--radius-sm);padding:10px;text-align:center;border:1px solid #f9a8d4;}
+    .supporter-stat-val{font-family:var(--font-display);font-size:18px;font-weight:800;color:#db2777;}
+    .supporter-stat-lbl{font-size:10px;color:var(--gray-txt);margin-top:2px;}
+    /* ── NEWS FILTER BUTTONS ── */
+    .news-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;}
+    .news-filter-btn{
+      padding:8px 10px;border:2px solid var(--gray-bd);border-radius:20px;
+      background:var(--white);font-size:12px;font-weight:700;color:var(--gray-txt);
+      cursor:pointer;transition:all .22s ease;display:flex;align-items:center;justify-content:center;gap:5px;
+      width:100%;box-sizing:border-box;min-height:38px;text-align:center;white-space:normal;line-height:1.3;
+    }
+    .news-filter-btn:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
+    .news-filter-btn.active{color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.18);background:var(--green);}
+    /* Actu — inline dans #news-cat-filters : "Tout" pleine largeur */
+    #news-cat-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:0 4px;}
+    #news-cat-filters .news-filter-btn:first-child{grid-column:1 / -1;}
+    /* ── ONLINE NEWS CARD ── */
+    .news-online-card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;gap:0;}
+    .news-online-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+    .news-online-accent{width:5px;background:var(--green);flex-shrink:0;}
+    .news-online-accent.football{background:#009E60;}
+    .news-online-accent.basketball{background:#1a2d4a;}
+    .news-online-accent.gabon{background:#FFD700;}
+    .news-online-accent.other{background:#8b5cf6;}
+    .news-online-body{padding:14px 16px;flex:1;}
+    .news-online-source{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-txt);letter-spacing:.5px;margin-bottom:4px;}
+    .news-online-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--navy);line-height:1.3;margin-bottom:6px;}
+    .news-online-excerpt{font-size:12px;color:var(--gray-txt);line-height:1.5;margin-bottom:8px;}
+    .news-online-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .news-online-cat{background:var(--green-lt);color:var(--green-dk);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
+    .news-online-date{font-size:11px;color:var(--gray-txt);}
+  
