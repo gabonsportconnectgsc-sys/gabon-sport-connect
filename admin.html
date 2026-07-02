@@ -690,6 +690,24 @@ tr.is-demo-row td { opacity: .82; }
 .form-section{margin-bottom:18px;}
 .btn-icon-danger{background:none;border:1px solid var(--gray-bd);color:var(--danger);border-radius:6px;width:28px;height:28px;flex-shrink:0;cursor:pointer;font-size:13px;}
 .btn-icon-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+
+/* ── AJOUT MODULE 3 : Infrastructures + galeries ── */
+.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.gallery-item{aspect-ratio:1;border-radius:var(--radius-sm,8px);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
+.gallery-item:hover img{transform:scale(1.05);}
+.gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
+.gallery-add:hover{background:#d4f0e4;}
+.gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
+.gallery-modal.open{display:flex;}
+.gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
+.gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm,8px);}
+.gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+.gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;}
+.gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
+.gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
+.gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
 </style>
 </head>
 <body>
@@ -2955,6 +2973,15 @@ tr.is-demo-row td { opacity: .82; }
   }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
+
+<!-- INFRASTRUCTURE PHOTO MODAL (Module 3) -->
+<div class="gallery-modal" id="infra-media-modal" onclick="if(event.target===this)GSCStructureInfra.closePhotoModal()">
+  <button class="gallery-modal-close" onclick="GSCStructureInfra.closePhotoModal()">✕</button>
+  <div class="gallery-modal-img-wrap">
+    <img id="infra-media-modal-img" src="" alt="Infrastructure">
+  </div>
+  <div class="gallery-modal-toolbar" id="infra-media-modal-toolbar"></div>
+</div>
 
 </body>
 </html>
