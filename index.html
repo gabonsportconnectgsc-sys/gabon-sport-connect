@@ -291,7 +291,14 @@
 
     /* ── DASHBOARD ── */
     .dashboard-hero{border-radius:var(--radius-lg);padding:28px 24px;background:linear-gradient(130deg,var(--navy) 0%,var(--navy-md) 55%,#104d30 100%);color:var(--white);margin-bottom:20px;position:relative;overflow:hidden;text-align:center;}
-    .dashboard-hero::after{content:'🇬🇦';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:70px;opacity:.12;}
+    .hero-flag{position:absolute;right:14px;top:50%;width:100px;height:66px;margin-top:-33px;opacity:.16;border-radius:3px;pointer-events:none;background:linear-gradient(180deg,#009E60 0 33.34%,#FCD116 33.34% 66.67%,#3A75C4 66.67% 100%);filter:url(#gsc-flag-wave);transform-origin:0% 50%;animation:heroFlagSway 4.2s ease-in-out infinite;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset;}
+    @keyframes heroFlagSway{
+      0%{transform:skewY(0deg) rotate(0deg) scaleY(1);}
+      20%{transform:skewY(2deg) rotate(.6deg) scaleY(1.02);}
+      45%{transform:skewY(-1.4deg) rotate(-.4deg) scaleY(.98);}
+      70%{transform:skewY(1.8deg) rotate(.5deg) scaleY(1.015);}
+      100%{transform:skewY(0deg) rotate(0deg) scaleY(1);}
+    }
     .hero-greeting{font-size:13px;opacity:.85;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700;background:linear-gradient(90deg,#FFD700,#fff7cc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
     .hero-name{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px;background:linear-gradient(90deg,#ffffff 0%,#9ee8c0 60%,#FFD700 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));overflow-wrap:break-word;word-break:break-word;hyphens:auto;}
     .hero-sub{font-size:13px;opacity:.75;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
@@ -1091,6 +1098,17 @@
 </style>
 </head>
 <body>
+  <!-- Filtre SVG invisible : donne un effet de tissu qui ondule au drapeau du hero -->
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <defs>
+      <filter id="gsc-flag-wave" x="-30%" y="-30%" width="160%" height="160%">
+        <feTurbulence type="turbulence" baseFrequency="0.015 0.09" numOctaves="2" seed="4" result="turb">
+          <animate attributeName="baseFrequency" dur="4.5s" values="0.015 0.09;0.02 0.11;0.012 0.08;0.015 0.09" repeatCount="indefinite"/>
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="turb" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
 
 <div id="toast-container"></div>
 
@@ -1399,6 +1417,7 @@
       </div>
 
       <div class="dashboard-hero fade-up">
+        <div class="hero-flag" aria-hidden="true"></div>
         <div class="hero-greeting">Bienvenue sur Gabon Sport Connect</div>
         <div class="hero-name" id="hero-name">Bonjour !</div>
         <div class="hero-sub">
