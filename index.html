@@ -25,8 +25,11 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.2/dist/geosearch.css" />
   <script src="https://unpkg.com/leaflet-geosearch@3.11.2/dist/bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <!-- QR Code — génération via image distante (voir drawQrOnCanvas), fiable sans lib JS tierce.
+  <!-- QR Code — génération LOCALE (voir drawQrOnCanvas) : aucune donnée
+       (UID/URL de profil) n'est envoyée à un service tiers, et l'app reste
+       utilisable hors ligne ou en cas de panne réseau externe.
        jsQR reste nécessaire pour le SCAN caméra (lecture de QR, fonction différente). -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
   <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -7551,13 +7554,21 @@ function buildQrUrl(uid){
   return `${base}?actor=${uid}`;
 }
 
-// Cache mémoire des QR déjà chargés : évite de refaire une requête HTTP vers
-// api.qrserver.com pour CHAQUE carte à CHAQUE re-rendu (déclenché par le
-// listener temps réel sur 'users'). Avec 291+ acteurs affichés, sans ce
-// cache chaque validation/rejet d'une fiche pouvait déclencher des centaines
-// de requêtes réseau simultanées vers un service tiers — cause principale
-// des lenteurs d'affichage observées.
-const _qrImageCache = new Map(); // qrUrl -> HTMLImageElement (chargée)
+// Cache mémoire des QR déjà calculés : évite de refaire les calculs de
+// matrice pour CHAQUE carte à CHAQUE re-rendu (déclenché par le listener
+// temps réel sur 'users'). Avec 291+ acteurs affichés, sans ce cache chaque
+// validation/rejet de fiche recalculait des centaines de QR inutilement.
+const _qrMatrixCache = new Map(); // text -> { count, isDark(row,col) }
+
+function _getQrMatrix(text){
+  if (_qrMatrixCache.has(text)) return _qrMatrixCache.get(text);
+  const qr = qrcode(0, 'M'); // type 0 = taille auto-détectée, correction d'erreur niveau M
+  qr.addData(text);
+  qr.make();
+  const matrix = { count: qr.getModuleCount(), isDark: qr.isDark.bind(qr) };
+  _qrMatrixCache.set(text, matrix);
+  return matrix;
+}
 
 function drawQrOnCanvas(canvas, text, size){
   if(!canvas) return;
@@ -7569,28 +7580,30 @@ function drawQrOnCanvas(canvas, text, size){
     ctx.textAlign = 'center';
     ctx.fillText('QR GSC', size/2, size/2 - 6);
   };
-  // Génération via image distante (api.qrserver.com, CORS activé) : pas de
-  // dépendance à une lib JS tierce, donc pas de risque de collision de nom
-  // global ni d'échec de chargement CDN.
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(text)}`;
-  canvas.dataset.qrImgUrl = qrUrl; // dispo immédiatement pour impression/téléchargement
-
-  const cached = _qrImageCache.get(qrUrl);
-  if (cached) {
-    // Déjà chargée précédemment : dessin instantané, aucune requête réseau.
-    ctx.clearRect(0,0,size,size);
-    ctx.drawImage(cached, 0, 0, size, size);
-    return;
+  canvas.dataset.qrText = text; // dispo pour téléchargement/impression (voir downloadProfileQr)
+  try{
+    if (typeof qrcode !== 'function') throw new Error('qrcode-generator non chargé');
+    const { count, isDark } = _getQrMatrix(text);
+    const margin = 1; // marge blanche d'1 module, comme avant
+    const cellSize = size / (count + margin * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#0B1220';
+    for (let row = 0; row < count; row++){
+      for (let col = 0; col < count; col++){
+        if (isDark(row, col)){
+          ctx.fillRect(
+            Math.round((col + margin) * cellSize),
+            Math.round((row + margin) * cellSize),
+            Math.ceil(cellSize),
+            Math.ceil(cellSize)
+          );
+        }
+      }
+    }
+  }catch(e){
+    fallback();
   }
-  const qrImg = new Image();
-  qrImg.crossOrigin = 'anonymous';
-  qrImg.onload = () => {
-    _qrImageCache.set(qrUrl, qrImg);
-    ctx.clearRect(0,0,size,size);
-    ctx.drawImage(qrImg, 0, 0, size, size);
-  };
-  qrImg.onerror = fallback;
-  qrImg.src = qrUrl;
 }
 
 // ─── Show GSC ID + QR button in own profile ───
@@ -7650,25 +7663,25 @@ function printProfileQr(){
   pz.style.display = 'flex';
   setTimeout(()=>{ window.print(); setTimeout(()=>{ pz.style.display = 'none'; }, 800); }, 300);
 }
-async function downloadProfileQr(){
+function downloadProfileQr(){
   const canvas = document.getElementById('qr-prof-canvas');
   const name = document.getElementById('qr-prof-name').textContent.replace(/\s+/g,'_');
-  const qrUrl = canvas?.dataset.qrImgUrl;
-  if(!qrUrl) return;
+  if(!canvas) return;
   try{
-    // Téléchargement via blob : fiable même pour une image cross-origin
-    // (l'attribut download seul est ignoré par la plupart des navigateurs
-    // sur une URL distante).
-    const res = await fetch(qrUrl);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `QR_GSC_${name}.png`;
-    link.href = blobUrl;
-    link.click();
-    setTimeout(()=>URL.revokeObjectURL(blobUrl), 4000);
+    // Génération locale : export direct du canvas, aucune requête réseau nécessaire.
+    canvas.toBlob((blob)=>{
+      if(!blob) return;
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `QR_GSC_${name}.png`;
+      link.href = blobUrl;
+      link.click();
+      setTimeout(()=>URL.revokeObjectURL(blobUrl), 4000);
+    }, 'image/png');
   }catch(e){
-    window.open(qrUrl, '_blank');
+    // Repli très improbable (canvas "tainted") : rien à ouvrir dans un nouvel onglet ici,
+    // le QR étant généré localement il n'existe pas d'URL distante de secours.
+    console.warn('downloadProfileQr:', e);
   }
 }
 
