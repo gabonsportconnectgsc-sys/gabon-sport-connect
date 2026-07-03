@@ -789,6 +789,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-structures">
           <span class="nav-icon">🏢</span><span>Structures</span>
         </button>
+        <button class="nav-item" id="nav-liaison">
+          <span class="nav-icon">🔗</span><span>Liaison</span>
+        </button>
         <button class="nav-item" id="nav-infrastructures">
           <span class="nav-icon">🏗️</span><span>Infrastructures</span>
         </button>
@@ -1302,6 +1305,16 @@ tr.is-demo-row td { opacity: .82; }
   </div>
 </div>
 
+<!-- LIAISON CLUBS (comptes users ↔ fiches structuresSportives) -->
+<div id="liaison" class="section">
+  <div class="page-header">
+    <div class="page-title">🔗 Liaison Clubs (comptes ↔ fiches structures)</div>
+  </div>
+  <div id="liaison-content">
+    <p style="font-size:13px;color:var(--gray-txt);">Chargement…</p>
+  </div>
+</div>
+
 <!-- CONFORMITÉ ADMINISTRATIVE -->
 <div id="conformite" class="section">
   <div class="page-header">
@@ -1794,6 +1807,7 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
   <button class="mn-btn" id="mnav-cms"><span class="mn-icon">🎨</span><span>CMS</span></button>
   <button class="mn-btn" id="mnav-structures"><span class="mn-icon">🏢</span><span>Structures</span></button>
+  <button class="mn-btn" id="mnav-liaison"><span class="mn-icon">🔗</span><span>Liaison</span></button>
   <button class="mn-btn" id="mnav-infrastructures"><span class="mn-icon">🏗️</span><span>Infra.</span></button>
   <button class="mn-btn" id="mnav-conformite"><span class="mn-icon">📋</span><span>Conform.</span></button>
   <button class="mn-btn" id="mnav-archivage"><span class="mn-icon">📚</span><span>Archives</span></button>
@@ -3163,8 +3177,10 @@ tr.is-demo-row td { opacity: .82; }
 <script src="structures-profile-engine.js"></script>
 <script src="structures-form-builder.js"></script>
 <script src="structures-manager.js"></script>
+<script src="structures-link-bridge.js"></script>
 <script src="gsc-structures-compliance.js"></script>
 <script src="gsc-structures-infrastructures.js"></script>
+<script src="structures-infrastructures-fallback.js"></script>
 <script src="gsc-structures-archiving.js"></script>
 <script src="structures-contact-links.js"></script>
 

@@ -2100,10 +2100,10 @@
         </div>
       </div>
       <div class="admin-stats fade-up" id="admin-global-stats">
-        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
-        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-joueurs">—</div><div class="as-lbl">Joueurs</div></div>
-        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-clubs">—</div><div class="as-lbl">Clubs</div></div>
-        <div class="admin-stat"><img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-sites">—</div><div class="as-lbl">Sites</div></div>
+        <div class="admin-stat" role="button" tabindex="0" style="cursor:pointer;" onclick="switchAdminTab('users')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAdminTab('users');}"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-users">—</div><div class="as-lbl">Utilisateurs</div></div>
+        <div class="admin-stat" role="button" tabindex="0" style="cursor:pointer;" onclick="switchAdminTab('acteurs');adminFilterActorsTile('joueur');" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAdminTab('acteurs');adminFilterActorsTile('joueur');}"><img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-joueurs">—</div><div class="as-lbl">Joueurs</div></div>
+        <div class="admin-stat" role="button" tabindex="0" style="cursor:pointer;" onclick="switchAdminTab('acteurs');adminFilterActorsTile('club');" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAdminTab('acteurs');adminFilterActorsTile('club');}"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-clubs">—</div><div class="as-lbl">Clubs</div></div>
+        <div class="admin-stat" role="button" tabindex="0" style="cursor:pointer;" onclick="switchAdminTab('sites')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAdminTab('sites');}"><img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" style="width:28px;height:28px;border-radius:8px;object-fit:cover;margin-bottom:4px;" alt="" onerror="this.style.display='none'"><div class="as-val" id="admin-total-sites">—</div><div class="as-lbl">Sites</div></div>
       </div>
       <div class="admin-tabs fade-up">
         <button class="admin-tab active" onclick="switchAdminTab('users')">👥 Utilisateurs</button>
@@ -3911,7 +3911,7 @@ async function loadActors(){
   const jEl=document.getElementById('stat-total-joueurs');
   if(jEl) jEl.textContent=activeAll.filter(u=>u.role==='joueur').length;
   const cEl=document.getElementById('stat-total-clubs');
-  if(cEl) cEl.textContent=activeAll.filter(u=>['club','association'].includes(u.role)).length;
+  if(cEl) computeUnifiedOrgCount(activeAll,['club','association']).then(n=>{ cEl.textContent=n; });
   const arbEl=document.getElementById('stat-total-arbitres');
   if(arbEl) arbEl.textContent=activeAll.filter(u=>u.role==='arbitre').length;
   const entEl=document.getElementById('stat-total-entraineurs');
@@ -5465,6 +5465,31 @@ function renderActorsAdmin(actors){
 }
 window.renderActorsAdmin=renderActorsAdmin;
 
+// Compte unifié Clubs/Fédé./Assoc. : évite de compter deux fois une même
+// entité quand un compte 'users' (role club/federation/association) est
+// relié à une fiche 'structuresSportives' via le champ structureId
+// (liaison faite dans admin.html, onglet "🔗 Liaison").
+async function computeUnifiedOrgCount(users, roles){
+  const orgUsers=users.filter(u=>roles.includes(u.role));
+  try{
+    if(!db || typeof collection !== 'function') return orgUsers.length;
+    const roleTypeLabels={club:'Club',association:'Association',federation:'Fédération',organisateur:'Organisateur'};
+    const wantedTypes=roles.map(r=>roleTypeLabels[r]).filter(Boolean);
+    const structSnap=await getDocs(collection(db,'structuresSportives'));
+    const structCount=structSnap.docs.filter(d=>wantedTypes.includes(d.data().type)).length;
+    const unlinkedOrgUsers=orgUsers.filter(u=>!u.structureId).length;
+    return structCount+unlinkedOrgUsers;
+  }catch(e){
+    console.warn('computeUnifiedOrgCount:',e);
+    return orgUsers.length;
+  }
+}
+async function computeUnifiedClubsCount(users){
+  return computeUnifiedOrgCount(users,['club','association','federation']);
+}
+window.computeUnifiedOrgCount=computeUnifiedOrgCount;
+window.computeUnifiedClubsCount=computeUnifiedClubsCount;
+
 async function loadAdminStats(){
   if(!db || typeof collection !== 'function'){ return; }
   try{
@@ -5472,7 +5497,7 @@ async function loadAdminStats(){
     const users=snap.docs.map(d=>d.data());
     document.getElementById('admin-total-users').textContent=users.length;
     document.getElementById('admin-total-joueurs').textContent=users.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
-    document.getElementById('admin-total-clubs').textContent=users.filter(u=>['club','association','federation'].includes(u.role)).length;
+    document.getElementById('admin-total-clubs').textContent=await computeUnifiedClubsCount(users);
   }catch(e){console.error('adminStats:',e);}
 }
 
@@ -7898,7 +7923,7 @@ window.lookupManualGscId = lookupManualGscId;
       const joueursEl = document.getElementById('admin-total-joueurs');
       const clubsEl = document.getElementById('admin-total-clubs');
       if(joueursEl) joueursEl.textContent = rawUsers.filter(u=>['joueur','arbitre','entraineur'].includes(u.role)).length;
-      if(clubsEl) clubsEl.textContent = rawUsers.filter(u=>['club','association','federation'].includes(u.role)).length;
+      if(clubsEl) computeUnifiedClubsCount(rawUsers).then(n=>{ clubsEl.textContent = n; });
     }
     if (typeof window.renderAdminUsersTable === 'function' && document.getElementById('admin-users-tbody')){
       window.renderAdminUsersTable(rawUsers);
