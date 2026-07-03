@@ -23,6 +23,7 @@
 <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
+<link rel="stylesheet" href="structures-modules.css">
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -691,7 +692,6 @@ tr.is-demo-row td { opacity: .82; }
 .btn-icon-danger{background:none;border:1px solid var(--gray-bd);color:var(--danger);border-radius:6px;width:28px;height:28px;flex-shrink:0;cursor:pointer;font-size:13px;}
 .btn-icon-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
 </style>
-  <link rel="stylesheet" href="structures-modules.css">
 </head>
 <body>
 
@@ -785,15 +785,15 @@ tr.is-demo-row td { opacity: .82; }
           <span class="nav-icon">🎨</span><span>CMS</span>
         </button>
 
-        <div class="nav-label">📦 Structures</div>
+        <div class="nav-label">Structures sportives</div>
         <button class="nav-item" id="nav-structures">
           <span class="nav-icon">🏢</span><span>Structures</span>
         </button>
-        <button class="nav-item" id="nav-conformite">
-          <span class="nav-icon">📋</span><span>Conformité</span>
-        </button>
         <button class="nav-item" id="nav-infrastructures">
           <span class="nav-icon">🏗️</span><span>Infrastructures</span>
+        </button>
+        <button class="nav-item" id="nav-conformite">
+          <span class="nav-icon">📋</span><span>Conformité</span>
         </button>
         <button class="nav-item" id="nav-archivage">
           <span class="nav-icon">📚</span><span>Archivage</span>
@@ -1381,6 +1381,10 @@ tr.is-demo-row td { opacity: .82; }
     </div>
   </div>
 
+  <div style="margin:16px 0;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="AdminStructures.printGlobalReport()">🖨️ Rapport imprimable — toutes les structures</button>
+  </div>
+
   <div id="archives-timeline" style="margin-top:16px;"></div>
 </div>
 
@@ -1427,12 +1431,18 @@ tr.is-demo-row td { opacity: .82; }
       <div id="detail-tab-archives" class="tab-content" style="display:none;"></div>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="AdminStructures.editCurrentDetail()">✏️ Éditer cette structure</button>
+        <button class="btn btn-secondary" onclick="AdminStructures.printStructure()">🖨️ Version imprimable</button>
         <button class="btn btn-secondary" onclick="AdminStructures.closeDetail()">Fermer</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════
+     CONTRÔLEUR ADMIN STRUCTURES (à ajouter avant fermeture </body>,
+     APRÈS le chargement de structures-manager.js et des modules
+     compliance/infrastructures/archiving)
+     ══════════════════════════════════════════════════════════════════ -->
 
       <!-- SIGNALEMENTS — modération des fiches de l'annuaire -->
       <div id="signalements" class="section">
@@ -1783,6 +1793,10 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
   <button class="mn-btn" id="mnav-cms"><span class="mn-icon">🎨</span><span>CMS</span></button>
+  <button class="mn-btn" id="mnav-structures"><span class="mn-icon">🏢</span><span>Structures</span></button>
+  <button class="mn-btn" id="mnav-infrastructures"><span class="mn-icon">🏗️</span><span>Infra.</span></button>
+  <button class="mn-btn" id="mnav-conformite"><span class="mn-icon">📋</span><span>Conform.</span></button>
+  <button class="mn-btn" id="mnav-archivage"><span class="mn-icon">📚</span><span>Archives</span></button>
 </div>
 
 <!-- Module de synchronisation temps réel -->
@@ -3140,23 +3154,20 @@ tr.is-demo-row td { opacity: .82; }
      les changements en temps réel sans toucher au code.
 ════════════════════════════════════════════════════════════════ -->
 <script src="app-config-loader.js"></script>
-<!-- ══════════════════════════════════════════════════════════════
-     MODULES STRUCTURES ENRICHIES
-     ══════════════════════════════════════════════════════════════ -->
+<script src="admin-cms.js"></script>
+<script src="admin-community.js"></script>
+
+<!-- ═══════════ MODULE STRUCTURES SPORTIVES (structures/conformité/infrastructures/archivage) ═══════════ -->
 <script src="disciplines-config.js"></script>
 <script src="disciplines-config-adapter.js"></script>
 <script src="structures-profile-engine.js"></script>
-<script src="structures-manager.js"></script>
 <script src="structures-form-builder.js"></script>
+<script src="structures-manager.js"></script>
 <script src="gsc-structures-compliance.js"></script>
 <script src="gsc-structures-infrastructures.js"></script>
 <script src="gsc-structures-archiving.js"></script>
+<script src="structures-contact-links.js"></script>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     CONTRÔLEUR ADMIN STRUCTURES (à ajouter avant fermeture </body>,
-     APRÈS le chargement de structures-manager.js et des modules
-     compliance/infrastructures/archiving)
-     ══════════════════════════════════════════════════════════════════ -->
 <script>
 (function () {
   'use strict';
@@ -3367,6 +3378,9 @@ tr.is-demo-row td { opacity: .82; }
         structure, structure.saisonCourante, null, 'admin'
       );
     }
+    if (window.GSCContactLinks) {
+      el.insertAdjacentHTML('beforeend', window.GSCContactLinks.render(structure));
+    }
   }
 
   async function renderDetailInfra(structureId) {
@@ -3381,7 +3395,8 @@ tr.is-demo-row td { opacity: .82; }
         ${window.GSCInfrastructureModule.renderInfrastructureGallery(infras)}
       `;
     } catch (err) {
-      el.innerHTML = '<p>Erreur chargement infrastructures.</p>';
+      console.error('[AdminStructures] renderDetailInfra erreur:', err);
+      el.innerHTML = '<p>Erreur chargement infrastructures. ' + esc(err && err.message || '') + '</p>';
     }
   }
 
@@ -3442,7 +3457,8 @@ tr.is-demo-row td { opacity: .82; }
       const infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       gallery.innerHTML = window.GSCInfrastructureModule.renderInfrastructureGallery(infras);
     } catch (err) {
-      gallery.innerHTML = '<p>Erreur chargement.</p>';
+      console.error('[AdminStructures] loadInfrastructures erreur:', err);
+      gallery.innerHTML = '<p>Erreur chargement. ' + esc(err && err.message || '') + '</p>';
     }
   }
 
@@ -3466,97 +3482,154 @@ tr.is-demo-row td { opacity: .82; }
     el.innerHTML = window.GSCComplianceModule.renderComplianceTable(_allStructures);
   }
 
-  /* ── Archivage ── */
+  /* ── Archivage ──
+     Utilise GSCArchivingModule quand il est chargé. À défaut (module non
+     disponible ou en échec), un archivage minimal mais fonctionnel est
+     effectué directement ici : snapshot de l'état courant de la structure
+     (effectifs, conformité, infrastructures) écrit dans
+     structuresSportives/{id}/archives/{saison}, pour que le bouton
+     "Archiver cette saison" fonctionne réellement dans tous les cas. ── */
   async function archiveSelected() {
     const structureId = document.getElementById('archive-structure-select').value;
     const saison = document.getElementById('archive-season').value.trim();
     if (!structureId || !saison) { alert('Sélectionnez une structure et une saison'); return; }
 
-    const result = await window.GSCArchivingModule.archiveStructureSeason(structureId, saison);
-    if (result.success) {
-      alert('✅ ' + result.message);
-      renderArchivingReport();
-    } else {
-      alert('❌ ' + (result.error || 'Erreur'));
+    try {
+      let result;
+      if (window.GSCArchivingModule && typeof window.GSCArchivingModule.archiveStructureSeason === 'function') {
+        result = await window.GSCArchivingModule.archiveStructureSeason(structureId, saison);
+      } else {
+        result = await archiveStructureSeasonFallback(structureId, saison);
+      }
+      if (result.success) {
+        alert('✅ ' + result.message);
+        renderArchivingReport();
+      } else {
+        alert('❌ ' + (result.error || 'Erreur'));
+      }
+    } catch (err) {
+      // Le module a échoué en cours d'exécution : on retente avec le fallback
+      // plutôt que de laisser l'archivage silencieusement impossible.
+      try {
+        const result = await archiveStructureSeasonFallback(structureId, saison);
+        alert(result.success ? '✅ ' + result.message : '❌ ' + result.error);
+        if (result.success) renderArchivingReport();
+      } catch (err2) {
+        alert('❌ Archivage impossible : ' + (err2.message || err.message));
+      }
     }
+  }
+
+  async function archiveStructureSeasonFallback(structureId, saison) {
+    const structure = _allStructures.find(s => s.id === structureId) || await window.structuresManager.get(structureId);
+    if (!structure) return { success: false, error: 'Structure introuvable' };
+
+    const saisonData = (structure.saisons && structure.saisons[saison]) || {};
+    let infras = [];
+    try {
+      const snap = await window.db.collection('structuresSportives').doc(structureId).collection('infrastructures').get();
+      infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) { /* pas bloquant */ }
+
+    const archiveDoc = {
+      structureId, saison,
+      nom: structure.nom || '', discipline: structure.discipline || '', type: structure.type || '', ville: structure.ville || '',
+      effectifs: window.GSCStructureProfile ? window.GSCStructureProfile.computeEffectifsTotals(saisonData) : null,
+      conformite: saisonData.conformite || {},
+      infrastructures: infras,
+      archivedAt: new Date().toISOString(),
+      archivedBy: 'admin'
+    };
+
+    await window.db.collection('structuresSportives').doc(structureId).collection('archives').doc(saison).set(archiveDoc, { merge: true });
+    return { success: true, message: `Saison ${saison} archivée pour ${structure.nom}` };
   }
 
   async function renderArchivingReport() {
     const el = document.getElementById('archiving-report');
-    if (el && window.GSCArchivingModule) {
-      el.innerHTML = await window.GSCArchivingModule.renderArchivingReport(_allStructures);
+    if (!el) return;
+    if (window.GSCArchivingModule && typeof window.GSCArchivingModule.renderArchivingReport === 'function') {
+      try {
+        el.innerHTML = await window.GSCArchivingModule.renderArchivingReport(_allStructures);
+        return;
+      } catch (err) { /* on retombe sur le rapport minimal ci-dessous */ }
     }
+    el.innerHTML = `<p style="font-size:13px;color:var(--gray-txt);">
+      ${_allStructures.length} structure(s) suivie(s). Utilisez "Archiver une structure" ci-dessous
+      pour créer un instantané horodaté d'une saison, consultable ensuite dans l'onglet
+      📚 Archives de chaque fiche structure.
+    </p>`;
   }
 
-  /* ── Fonctions de navigation — pattern exact repris de showRapportsSection()
-        (chaque section admin.html a sa propre fonction dédiée, il n'existe
-        pas de dispatcher générique switchSection() dans ce projet) ── */
-  function activateSection(sectionId, navId, mNavId, title) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(sectionId);
-    if (target) target.classList.add('active');
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
-    const navBtn = document.getElementById(navId);
-    if (navBtn) navBtn.classList.add('active');
-    if (mNavId) {
-      const mNavBtn = document.getElementById(mNavId);
-      if (mNavBtn) mNavBtn.classList.add('active');
-    }
-
-    const topbarTitle = document.getElementById('topbar-title');
-    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = title;
-
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
+  /* ── Versions imprimables (PDF via impression navigateur) ── */
+  function openPrintWindow(title, bodyHtml) {
+    const w = window.open('', '_blank');
+    if (!w) { alert('Autorisez les fenêtres pop-up pour générer la version imprimable.'); return; }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#111;}
+        h1{font-size:20px;margin-bottom:4px;} h2{font-size:15px;margin-top:24px;border-bottom:1px solid #ccc;padding-bottom:4px;}
+        table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ccc;padding:6px 8px;font-size:12px;text-align:left;}
+        .meta{color:#666;font-size:12px;margin-bottom:16px;}
+      </style></head><body>${bodyHtml}
+      <script>window.onload=function(){window.print();}<\/script></body></html>`);
+    w.document.close();
   }
 
-  function showStructuresSection() {
-    activateSection('structures', 'nav-structures', 'mnav-structures', 'Structures');
-    render();
+  function printStructure() {
+    const structure = _allStructures.find(s => s.id === _currentDetailId);
+    if (!structure) { alert('Ouvrez d\'abord la fiche d\'une structure'); return; }
+    const saison = structure.saisonCourante || (window.GSCStructureProfile ? window.GSCStructureProfile.getCurrentSeasonLabel() : '');
+    const saisonData = (structure.saisons && structure.saisons[saison]) || {};
+    const totals = window.GSCStructureProfile ? window.GSCStructureProfile.computeEffectifsTotals(saisonData) : { total: 0 };
+    const docs = window.GSCDisciplines ? window.GSCDisciplines.getRequiredDocuments(structure.discipline) : [];
+    const fournis = saisonData.conformite || {};
+
+    const html = `
+      <h1>${esc(structure.nom)}</h1>
+      <div class="meta">${esc(structure.type || '')} · ${esc(structure.discipline || '')} · ${esc(structure.ville || '')} · Saison ${esc(saison)}</div>
+      <h2>Effectifs</h2><p>${totals.total} athlète(s) recensé(s)</p>
+      <h2>Conformité administrative</h2>
+      <table><thead><tr><th>Document</th><th>Obligatoire</th><th>Statut</th></tr></thead><tbody>
+        ${docs.map(d => `<tr><td>${esc(d.nom || d.id)}</td><td>${d.obligatoire ? 'Oui' : 'Non'}</td><td>${fournis[d.id] && fournis[d.id].uploadedAt ? '✅ Fourni' : '❌ Manquant'}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="meta">Généré le ${new Date().toLocaleDateString('fr-FR')}</p>`;
+    openPrintWindow('Fiche — ' + structure.nom, html);
   }
 
-  function showConformiteSection() {
-    activateSection('conformite', 'nav-conformite', 'mnav-conformite', 'Conformité');
-    renderComplianceTable();
+  function printGlobalReport() {
+    if (!_allStructures.length) { alert('Aucune structure à imprimer'); return; }
+    const rows = _allStructures.map(s => {
+      const saison = s.saisonCourante || (window.GSCStructureProfile ? window.GSCStructureProfile.getCurrentSeasonLabel() : '');
+      const saisonData = (s.saisons && s.saisons[saison]) || {};
+      const totals = window.GSCStructureProfile ? window.GSCStructureProfile.computeEffectifsTotals(saisonData) : { total: 0 };
+      const docs = window.GSCDisciplines ? window.GSCDisciplines.getRequiredDocuments(s.discipline) : [];
+      const mandatoryTotal = docs.filter(d => d.obligatoire).length;
+      const fournis = saisonData.conformite || {};
+      const fournisCount = docs.filter(d => d.obligatoire && fournis[d.id] && fournis[d.id].uploadedAt).length;
+      const badge = window.GSCDisciplines ? window.GSCDisciplines.computeComplianceBadge(fournisCount, mandatoryTotal) : { label: '—', pct: 0 };
+      return `<tr><td>${esc(s.nom)}</td><td>${esc(s.discipline)}</td><td>${esc(s.type)}</td><td>${esc(s.ville)}</td><td>${totals.total}</td><td>${badge.label} ${badge.pct}%</td></tr>`;
+    }).join('');
+    const html = `
+      <h1>Rapport général — Structures sportives</h1>
+      <div class="meta">${_allStructures.length} structure(s) · Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+      <table><thead><tr><th>Nom</th><th>Discipline</th><th>Type</th><th>Ville</th><th>Effectif</th><th>Conformité</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+    openPrintWindow('Rapport général — Structures', html);
   }
 
-  function showInfrastructuresSection() {
-    activateSection('infrastructures', 'nav-infrastructures', 'mnav-infrastructures', 'Infrastructures');
-  }
+  /* ── Hooks navigation admin existante (switchSection) ── */
+  const _origSwitchSection = window.switchSection;
+  window.switchSection = function (sectionName) {
+    if (typeof _origSwitchSection === 'function') _origSwitchSection(sectionName);
+    if (sectionName === 'structures') render();
+    if (sectionName === 'conformite') renderComplianceTable();
+    if (sectionName === 'archivage') renderArchivingReport();
+  };
 
-  function showArchivageSection() {
-    activateSection('archivage', 'nav-archivage', 'mnav-archivage', 'Archivage');
-    renderArchivingReport();
-  }
-
-  window.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function () {
     initFilters();
     bootstrap();
-
-    const navStruct = document.getElementById('nav-structures');
-    if (navStruct) navStruct.addEventListener('click', showStructuresSection);
-    const mNavStruct = document.getElementById('mnav-structures');
-    if (mNavStruct) mNavStruct.addEventListener('click', showStructuresSection);
-
-    const navConf = document.getElementById('nav-conformite');
-    if (navConf) navConf.addEventListener('click', showConformiteSection);
-    const mNavConf = document.getElementById('mnav-conformite');
-    if (mNavConf) mNavConf.addEventListener('click', showConformiteSection);
-
-    const navInfra = document.getElementById('nav-infrastructures');
-    if (navInfra) navInfra.addEventListener('click', showInfrastructuresSection);
-    const mNavInfra = document.getElementById('mnav-infrastructures');
-    if (mNavInfra) mNavInfra.addEventListener('click', showInfrastructuresSection);
-
-    const navArch = document.getElementById('nav-archivage');
-    if (navArch) navArch.addEventListener('click', showArchivageSection);
-    const mNavArch = document.getElementById('mnav-archivage');
-    if (mNavArch) mNavArch.addEventListener('click', showArchivageSection);
   });
 
   window.AdminStructures = {
@@ -3566,15 +3639,62 @@ tr.is-demo-row td { opacity: .82; }
     loadInfrastructures, openInfraForm,
     renderTemplates, renderComplianceTable,
     archiveSelected, renderArchivingReport,
-    showStructuresSection, showConformiteSection,
-    showInfrastructuresSection, showArchivageSection
+    printStructure, printGlobalReport
   };
 })();
 </script>
 
+<!-- ═══════════ NAVIGATION — Structures/Infrastructures/Conformité/Archivage ═══════════ -->
+<script>
+(function () {
+  'use strict';
 
-<script src="admin-cms.js"></script>
-<script src="admin-community.js"></script>
+  const SECTIONS = {
+    structures:      { id: 'structures',      navId: 'nav-structures',      mnavId: 'mnav-structures',      title: 'Structures',      render: () => window.switchSection && window.switchSection('structures') },
+    infrastructures: { id: 'infrastructures', navId: 'nav-infrastructures', mnavId: 'mnav-infrastructures', title: 'Infrastructures', render: () => {} },
+    conformite:      { id: 'conformite',      navId: 'nav-conformite',      mnavId: 'mnav-conformite',      title: 'Conformité',      render: () => window.switchSection && window.switchSection('conformite') },
+    archivage:       { id: 'archivage',       navId: 'nav-archivage',       mnavId: 'mnav-archivage',       title: 'Archivage',       render: () => window.switchSection && window.switchSection('archivage') }
+  };
+
+  function showStructuresSubSection(key) {
+    const cfg = SECTIONS[key];
+    if (!cfg) return;
+
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(cfg.id);
+    if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById(cfg.navId);
+    if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById(cfg.mnavId);
+    if (mNavBtn) mNavBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = cfg.title;
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    cfg.render();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    Object.keys(SECTIONS).forEach(key => {
+      const cfg = SECTIONS[key];
+      const navBtn = document.getElementById(cfg.navId);
+      if (navBtn) navBtn.addEventListener('click', () => showStructuresSubSection(key));
+      const mNavBtn = document.getElementById(cfg.mnavId);
+      if (mNavBtn) mNavBtn.addEventListener('click', () => showStructuresSubSection(key));
+    });
+  });
+})();
+</script>
+
 <script>
 // --- Accessibilité clavier : rend focusables/activables au clavier tous les
 // éléments <div>/<span onclick=...>, y compris générés dynamiquement
