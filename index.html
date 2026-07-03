@@ -3869,7 +3869,15 @@ if(typeof generateGscId!=='function'){
 }
 
 async function loadGlobalStats(){
-  // Même logique de déduplication que loadActors : Firebase d'abord, puis seed sans doublon
+  // Réutilise les données déjà en mémoire (alimentées en temps réel par le
+  // listener onSnapshot sur 'users') au lieu de refaire un getDocs() complet
+  // à chaque rafraîchissement — évite un aller-retour réseau redondant.
+  if (Array.isArray(window.allActors)) {
+    const el1=document.getElementById('stat-total-acteurs');
+    if(el1) el1.textContent=window.allActors.length;
+    return;
+  }
+  // Repli : sync temps réel pas encore active (ex. tout premier chargement)
   let dbActors=[];
   if(db&&typeof collection==='function'){
     try{
@@ -5469,14 +5477,26 @@ window.renderActorsAdmin=renderActorsAdmin;
 // entité quand un compte 'users' (role club/federation/association) est
 // relié à une fiche 'structuresSportives' via le champ structureId
 // (liaison faite dans admin.html, onglet "🔗 Liaison").
+let _structCountCache = null; // {data:[...], ts:Number}
 async function computeUnifiedOrgCount(users, roles){
   const orgUsers=users.filter(u=>roles.includes(u.role));
   try{
     if(!db || typeof collection !== 'function') return orgUsers.length;
     const roleTypeLabels={club:'Club',association:'Association',federation:'Fédération',organisateur:'Organisateur'};
     const wantedTypes=roles.map(r=>roleTypeLabels[r]).filter(Boolean);
-    const structSnap=await getDocs(collection(db,'structuresSportives'));
-    const structCount=structSnap.docs.filter(d=>wantedTypes.includes(d.data().type)).length;
+    // Cache de courte durée (structuresSportives change rarement comparé aux
+    // écritures fréquentes sur 'users' qui redéclenchent ce calcul) — évite un
+    // getDocs() réseau à chaque validation/rejet de fiche côté admin.
+    const now = Date.now();
+    let structDocsData;
+    if (_structCountCache && (now - _structCountCache.ts) < 30000) {
+      structDocsData = _structCountCache.data;
+    } else {
+      const structSnap=await getDocs(collection(db,'structuresSportives'));
+      structDocsData = structSnap.docs.map(d=>d.data());
+      _structCountCache = { data: structDocsData, ts: now };
+    }
+    const structCount=structDocsData.filter(d=>wantedTypes.includes(d.type)).length;
     const unlinkedOrgUsers=orgUsers.filter(u=>!u.structureId).length;
     return structCount+unlinkedOrgUsers;
   }catch(e){
@@ -7531,6 +7551,14 @@ function buildQrUrl(uid){
   return `${base}?actor=${uid}`;
 }
 
+// Cache mémoire des QR déjà chargés : évite de refaire une requête HTTP vers
+// api.qrserver.com pour CHAQUE carte à CHAQUE re-rendu (déclenché par le
+// listener temps réel sur 'users'). Avec 291+ acteurs affichés, sans ce
+// cache chaque validation/rejet d'une fiche pouvait déclencher des centaines
+// de requêtes réseau simultanées vers un service tiers — cause principale
+// des lenteurs d'affichage observées.
+const _qrImageCache = new Map(); // qrUrl -> HTMLImageElement (chargée)
+
 function drawQrOnCanvas(canvas, text, size){
   if(!canvas) return;
   canvas.width = size; canvas.height = size;
@@ -7546,9 +7574,21 @@ function drawQrOnCanvas(canvas, text, size){
   // global ni d'échec de chargement CDN.
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(text)}`;
   canvas.dataset.qrImgUrl = qrUrl; // dispo immédiatement pour impression/téléchargement
+
+  const cached = _qrImageCache.get(qrUrl);
+  if (cached) {
+    // Déjà chargée précédemment : dessin instantané, aucune requête réseau.
+    ctx.clearRect(0,0,size,size);
+    ctx.drawImage(cached, 0, 0, size, size);
+    return;
+  }
   const qrImg = new Image();
   qrImg.crossOrigin = 'anonymous';
-  qrImg.onload = () => { ctx.clearRect(0,0,size,size); ctx.drawImage(qrImg, 0, 0, size, size); };
+  qrImg.onload = () => {
+    _qrImageCache.set(qrUrl, qrImg);
+    ctx.clearRect(0,0,size,size);
+    ctx.drawImage(qrImg, 0, 0, size, size);
+  };
   qrImg.onerror = fallback;
   qrImg.src = qrUrl;
 }
@@ -7950,17 +7990,23 @@ window.lookupManualGscId = lookupManualGscId;
       return;
     }
     if (_unsubUsers) return; // déjà actif
+    // Anti-rafale : une validation/rejet en admin (ou tout batch d'écritures)
+    // ne doit déclencher qu'un seul rafraîchissement complet, pas un par document.
+    let _syncDebounceTimer = null;
     try{
       _unsubUsers = window.onSnapshot(window.collection(window.db,'users'), function(snap){
-        const rawUsers = snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
-        const dbActors = rawUsers.filter(u=>u.status==='active'||u.status===undefined);
-        const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
-        const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
-        window.allActors = [...dbActors, ...seedActors];
-        _refreshViews();
-        _refreshAdminViews(rawUsers);
-        console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
-        window.dispatchEvent(new Event('gsc-data-synced'));
+        clearTimeout(_syncDebounceTimer);
+        _syncDebounceTimer = setTimeout(function(){
+          const rawUsers = snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
+          const dbActors = rawUsers.filter(u=>u.status==='active'||u.status===undefined);
+          const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
+          const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
+          window.allActors = [...dbActors, ...seedActors];
+          _refreshViews();
+          _refreshAdminViews(rawUsers);
+          console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
+          window.dispatchEvent(new Event('gsc-data-synced'));
+        }, 300);
       }, function(err){
         // sync error — silencieux
       });
