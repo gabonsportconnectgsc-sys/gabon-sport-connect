@@ -935,7 +935,7 @@
       if (error) throw error;
       // Sauvegarder profil Firestore
       const uid = data.user?.id;
-      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'active', ville, sport });
+      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport });
       // Afficher succès
       document.getElementById('sv-prenom').textContent = prenom;
       document.getElementById('sv-name').textContent = prenom + ' ' + nom;
@@ -1061,7 +1061,7 @@
           }),
           gscId,
           club: clubActuel || '',
-          status: 'active'
+          status: 'pending'
         };
         await saveProfile(uid, email, profile);
         // Afficher le GSC-ID généré sur l'écran de succès

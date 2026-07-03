@@ -3341,7 +3341,7 @@ async function onSupabaseSignedIn(user, extra){
       sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
       isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
       clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
-      status:     'active',
+      status:     'pending',
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
     try{
