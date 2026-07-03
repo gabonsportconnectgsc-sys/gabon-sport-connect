@@ -690,25 +690,8 @@ tr.is-demo-row td { opacity: .82; }
 .form-section{margin-bottom:18px;}
 .btn-icon-danger{background:none;border:1px solid var(--gray-bd);color:var(--danger);border-radius:6px;width:28px;height:28px;flex-shrink:0;cursor:pointer;font-size:13px;}
 .btn-icon-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
-
-/* ── AJOUT MODULE 3 : Infrastructures + galeries ── */
-.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
-.gallery-item{aspect-ratio:1;border-radius:var(--radius-sm,8px);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
-.gallery-item:hover img{transform:scale(1.05);}
-.gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
-.gallery-add:hover{background:#d4f0e4;}
-.gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
-.gallery-modal.open{display:flex;}
-.gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
-.gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm,8px);}
-.gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
-.gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;}
-.gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
-.gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
-.gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
 </style>
+  <link rel="stylesheet" href="structures-modules.css">
 </head>
 <body>
 
@@ -800,6 +783,20 @@ tr.is-demo-row td { opacity: .82; }
         </button>
         <button class="nav-item" id="nav-cms">
           <span class="nav-icon">🎨</span><span>CMS</span>
+        </button>
+
+        <div class="nav-label">📦 Structures</div>
+        <button class="nav-item" id="nav-structures">
+          <span class="nav-icon">🏢</span><span>Structures</span>
+        </button>
+        <button class="nav-item" id="nav-conformite">
+          <span class="nav-icon">📋</span><span>Conformité</span>
+        </button>
+        <button class="nav-item" id="nav-infrastructures">
+          <span class="nav-icon">🏗️</span><span>Infrastructures</span>
+        </button>
+        <button class="nav-item" id="nav-archivage">
+          <span class="nav-icon">📚</span><span>Archivage</span>
         </button>
 
         <div class="nav-label">Application</div>
@@ -1231,6 +1228,211 @@ tr.is-demo-row td { opacity: .82; }
           </div>
         </div>
       </div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SECTION STRUCTURES — à insérer dans admin.html juste après la
+     fermeture du <div id="rapports" class="section">...</div>
+     Dépend de (déjà chargés avant ce bloc) :
+       disciplines-config.js, disciplines-config-adapter.js,
+       structures-profile-engine.js, structures-form-builder.js,
+       structures-manager.js, gsc-structures-compliance.js,
+       gsc-structures-infrastructures.js, gsc-structures-archiving.js
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<!-- STRUCTURES -->
+<div id="structures" class="section">
+  <div class="page-header">
+    <div class="page-title">🏢 Gestion des Structures Sportives</div>
+    <button class="btn-add" onclick="AdminStructures.openCreateForm()">➕ Ajouter une structure</button>
+  </div>
+
+  <div class="filters-bar">
+    <button class="filter-btn active" data-struct-filter="all" onclick="AdminStructures.filterByDiscipline('all', this)">📊 Toutes</button>
+    <span id="struct-discipline-filters"><!-- généré par JS depuis GSCDisciplines --></span>
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search-structures" placeholder="Nom, ville, type…" oninput="AdminStructures.search(this.value)">
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card c1">
+      <div class="stat-icon">🏟️</div>
+      <div class="stat-data">
+        <div class="stat-value" id="struct-stat-total">0</div>
+        <div class="stat-label">Structures</div>
+      </div>
+    </div>
+    <div class="stat-card c2">
+      <div class="stat-icon">👥</div>
+      <div class="stat-data">
+        <div class="stat-value" id="struct-stat-effectifs">0</div>
+        <div class="stat-label">Athlètes recensés</div>
+      </div>
+    </div>
+    <div class="stat-card c3">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-data">
+        <div class="stat-value" id="struct-stat-or">0</div>
+        <div class="stat-label">Conformes (Or)</div>
+      </div>
+    </div>
+    <div class="stat-card c4">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-data">
+        <div class="stat-value" id="struct-stat-incomplet">0</div>
+        <div class="stat-label">Profils incomplets</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="structures-list" class="users-table-wrap">
+    <table class="users-table">
+      <thead>
+        <tr><th>Nom</th><th>Discipline</th><th>Type</th><th>Ville</th><th>Conformité</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="structures-tbody"></tbody>
+    </table>
+  </div>
+
+  <div id="structures-empty" class="empty" style="display:none;">
+    <div class="empty-icon">🏢</div>
+    <h3>Aucune structure</h3>
+    <p>Ajoutez votre première structure sportive</p>
+  </div>
+</div>
+
+<!-- CONFORMITÉ ADMINISTRATIVE -->
+<div id="conformite" class="section">
+  <div class="page-header">
+    <div class="page-title">📋 Conformité Administrative</div>
+  </div>
+
+  <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+    Documentation requise par discipline et organisme (Ministère, Fédération, Ligue, FIFA, CAF, etc.).
+    Badges : <span style="color:#CD7F32;font-weight:700;">Bronze</span> &lt;50% •
+    <span style="color:#C0C0C0;font-weight:700;">Argent</span> ≥50% •
+    <span style="color:#FFD700;font-weight:700;">Or</span> 100%
+  </p>
+
+  <div id="conformite-table" class="users-table-wrap"></div>
+
+  <div style="margin-top:24px;">
+    <div class="page-title" style="font-size:15px;margin-bottom:12px;">📄 Modèles Officiels (Admin)</div>
+    <p style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">
+      Sélectionnez une discipline pour gérer ses modèles de documents téléchargeables.
+    </p>
+    <select id="conformite-modeles-discipline" style="padding:7px 10px;border:1.5px solid var(--gray-bd);border-radius:8px;margin-bottom:12px;" onchange="AdminStructures.renderTemplates(this.value)">
+      <option value="">-- Sélectionner une discipline --</option>
+    </select>
+    <div id="conformite-modeles-gallery"></div>
+  </div>
+</div>
+
+<!-- INFRASTRUCTURES -->
+<div id="infrastructures" class="section">
+  <div class="page-header">
+    <div class="page-title">🏗️ Gestion des Infrastructures</div>
+  </div>
+
+  <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+    Installations sportives (stades, terrains, salles) avec galeries photos, aperçus et affichage plein écran.
+  </p>
+
+  <div class="filters-bar">
+    <select id="filter-structure-infra" style="padding:7px 10px;border:1.5px solid var(--gray-bd);border-radius:8px;min-width:220px;" onchange="AdminStructures.loadInfrastructures(this.value)">
+      <option value="">-- Sélectionner une structure --</option>
+    </select>
+    <button class="btn-add" id="btn-add-infra" style="display:none;" onclick="AdminStructures.openInfraForm()">➕ Ajouter une infrastructure</button>
+  </div>
+
+  <div id="infrastructures-gallery" style="margin-top:16px;"></div>
+</div>
+
+<!-- ARCHIVAGE PAR SAISON -->
+<div id="archivage" class="section">
+  <div class="page-header">
+    <div class="page-title">📚 Archivage Historique</div>
+  </div>
+
+  <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
+    Historisation centralisée des structures, dirigeants et joueurs par saison/année/période.
+  </p>
+
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="dash-card-title">📊 Rapport d'archivage</div>
+      <div id="archiving-report" style="min-height:100px;">Chargement…</div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-title">🔍 Archiver une structure</div>
+      <div class="grid2">
+        <div class="field">
+          <label>Structure</label>
+          <select id="archive-structure-select"></select>
+        </div>
+        <div class="field">
+          <label>Saison</label>
+          <input type="text" id="archive-season" placeholder="Ex: 2025-2026">
+        </div>
+      </div>
+      <button class="btn-action green" style="margin-top:8px;" onclick="AdminStructures.archiveSelected()">📦 Archiver cette saison</button>
+    </div>
+  </div>
+
+  <div id="archives-timeline" style="margin-top:16px;"></div>
+</div>
+
+<!-- MODAL — FORMULAIRE CRÉATION/ÉDITION STRUCTURE (structures-form-builder.js) -->
+<div id="structure-form-overlay" class="modal-overlay">
+  <div class="modal" style="max-width:820px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="structure-form-title">Nouvelle structure</div>
+        <div class="modal-subtitle">Formulaire adapté automatiquement à la discipline sélectionnée</div>
+      </div>
+      <button class="modal-close" onclick="AdminStructures.closeForm()">✕</button>
+    </div>
+    <div class="modal-content">
+      <div id="structure-form-body"><!-- rempli par GSCStructureForm.open() --></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="AdminStructures.saveForm()">💾 Enregistrer</button>
+        <button class="btn btn-secondary" onclick="AdminStructures.closeForm()">Annuler</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL — FICHE DÉTAIL STRUCTURE (lecture, structures-profile-engine.js) -->
+<div id="structure-detail-overlay" class="modal-overlay">
+  <div class="modal" style="max-width:820px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="detail-structure-name">Fiche Structure</div>
+        <div class="modal-subtitle" id="detail-structure-sub"></div>
+      </div>
+      <button class="modal-close" onclick="AdminStructures.closeDetail()">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="tabs">
+        <button class="tab active" data-detail-tab="profile" onclick="AdminStructures.switchDetailTab('profile', this)">🪪 Profil</button>
+        <button class="tab" data-detail-tab="infra" onclick="AdminStructures.switchDetailTab('infra', this)">🏗️ Infrastructures</button>
+        <button class="tab" data-detail-tab="conformite" onclick="AdminStructures.switchDetailTab('conformite', this)">📋 Conformité</button>
+        <button class="tab" data-detail-tab="archives" onclick="AdminStructures.switchDetailTab('archives', this)">📚 Archives</button>
+      </div>
+      <div id="detail-tab-profile" class="tab-content"></div>
+      <div id="detail-tab-infra" class="tab-content" style="display:none;"></div>
+      <div id="detail-tab-conformite" class="tab-content" style="display:none;"></div>
+      <div id="detail-tab-archives" class="tab-content" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="AdminStructures.editCurrentDetail()">✏️ Éditer cette structure</button>
+        <button class="btn btn-secondary" onclick="AdminStructures.closeDetail()">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <!-- SIGNALEMENTS — modération des fiches de l'annuaire -->
       <div id="signalements" class="section">
@@ -2938,6 +3140,439 @@ tr.is-demo-row td { opacity: .82; }
      les changements en temps réel sans toucher au code.
 ════════════════════════════════════════════════════════════════ -->
 <script src="app-config-loader.js"></script>
+<!-- ══════════════════════════════════════════════════════════════
+     MODULES STRUCTURES ENRICHIES
+     ══════════════════════════════════════════════════════════════ -->
+<script src="disciplines-config.js"></script>
+<script src="disciplines-config-adapter.js"></script>
+<script src="structures-profile-engine.js"></script>
+<script src="structures-manager.js"></script>
+<script src="structures-form-builder.js"></script>
+<script src="gsc-structures-compliance.js"></script>
+<script src="gsc-structures-infrastructures.js"></script>
+<script src="gsc-structures-archiving.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CONTRÔLEUR ADMIN STRUCTURES (à ajouter avant fermeture </body>,
+     APRÈS le chargement de structures-manager.js et des modules
+     compliance/infrastructures/archiving)
+     ══════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  let _allStructures = [];
+  let _currentFilter = 'all';
+  let _currentSearch = '';
+  let _currentDetailId = null;
+  let _editingId = null;
+
+  function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  /* ── Initialisation des filtres discipline depuis le référentiel ── */
+  function initFilters() {
+    if (!window.GSCDisciplines) return;
+    const container = document.getElementById('struct-discipline-filters');
+    if (!container) return;
+    container.innerHTML = window.GSCDisciplines.list().map(d => `
+      <button class="filter-btn" data-struct-filter="${esc(d)}" onclick="AdminStructures.filterByDiscipline('${esc(d)}', this)">
+        ${window.GSCDisciplines.getIcon(d)} ${esc(d)}
+      </button>
+    `).join('');
+
+    const disciplineSelect = document.getElementById('conformite-modeles-discipline');
+    if (disciplineSelect) {
+      disciplineSelect.innerHTML = '<option value="">-- Sélectionner une discipline --</option>' +
+        window.GSCDisciplines.list().map(d => `<option value="${esc(d)}">${window.GSCDisciplines.getIcon(d)} ${esc(d)}</option>`).join('');
+    }
+  }
+
+  /* ── Chargement liste + abonnement temps réel ── */
+  function bootstrap() {
+    if (!window.structuresManager) {
+      console.warn('[AdminStructures] structuresManager non chargé, nouvelle tentative dans 1s');
+      setTimeout(bootstrap, 1000);
+      return;
+    }
+    window.structuresManager.onUpdate(function (structures) {
+      _allStructures = structures;
+      render();
+      populateStructureSelects();
+    });
+  }
+
+  function populateStructureSelects() {
+    const opts = '<option value="">-- Sélectionner --</option>' +
+      _allStructures.map(s => `<option value="${esc(s.id)}">${esc(s.nom)}</option>`).join('');
+    const infraSel = document.getElementById('filter-structure-infra');
+    const archSel = document.getElementById('archive-structure-select');
+    if (infraSel) infraSel.innerHTML = opts;
+    if (archSel) archSel.innerHTML = opts;
+  }
+
+  /* ── Rendu tableau + stats ── */
+  function render() {
+    let list = _allStructures.slice();
+    if (_currentFilter !== 'all') list = list.filter(s => s.discipline === _currentFilter);
+    if (_currentSearch) {
+      const q = _currentSearch.toLowerCase();
+      list = list.filter(s => (s.nom || '').toLowerCase().includes(q) || (s.ville || '').toLowerCase().includes(q) || (s.type || '').toLowerCase().includes(q));
+    }
+
+    const tbody = document.getElementById('structures-tbody');
+    const wrap = document.getElementById('structures-list');
+    const empty = document.getElementById('structures-empty');
+    if (!tbody) return;
+
+    if (!list.length) {
+      wrap.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    wrap.style.display = 'block';
+    empty.style.display = 'none';
+
+    tbody.innerHTML = list.map(s => {
+      const docs = window.GSCDisciplines ? window.GSCDisciplines.getRequiredDocuments(s.discipline) : [];
+      const mandatoryTotal = docs.filter(d => d.obligatoire).length;
+      const saison = s.saisonCourante || (window.GSCStructureProfile ? window.GSCStructureProfile.getCurrentSeasonLabel() : '2025-2026');
+      const fournis = ((s.saisons && s.saisons[saison] && s.saisons[saison].conformite) || {});
+      const fournisCount = docs.filter(d => d.obligatoire && fournis[d.id] && fournis[d.id].uploadedAt).length;
+      const badge = window.GSCDisciplines ? window.GSCDisciplines.computeComplianceBadge(fournisCount, mandatoryTotal) : { label: '—', pct: 0, color: '#ccc' };
+      const icon = window.GSCDisciplines ? window.GSCDisciplines.getIcon(s.discipline) : '🏅';
+
+      return `
+        <tr onclick="AdminStructures.openDetail('${esc(s.id)}')">
+          <td><strong>${esc(s.nom)}</strong></td>
+          <td>${icon} ${esc(s.discipline)}</td>
+          <td>${esc(s.type)}</td>
+          <td>${esc(s.ville)}</td>
+          <td>
+            <div class="badge-container">
+              <div class="badge-bar"><div class="badge-fill" style="width:${badge.pct}%;background:${badge.color};"></div></div>
+              <span class="badge-label" style="color:${badge.color};">${badge.label} ${badge.pct}%</span>
+            </div>
+          </td>
+          <td>
+            <button class="btn-sm" onclick="event.stopPropagation();AdminStructures.openDetail('${esc(s.id)}')">👁️ Voir</button>
+            <button class="btn-sm" onclick="event.stopPropagation();AdminStructures.openEditForm('${esc(s.id)}')">✏️ Éditer</button>
+            <button class="btn-sm danger" onclick="event.stopPropagation();AdminStructures.deleteStructure('${esc(s.id)}')">🗑️</button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    updateStats(list);
+  }
+
+  function updateStats(list) {
+    let effectifsTotal = 0, orCount = 0, incompletCount = 0;
+    list.forEach(s => {
+      const saison = s.saisonCourante || (window.GSCStructureProfile ? window.GSCStructureProfile.getCurrentSeasonLabel() : '2025-2026');
+      const saisonData = (s.saisons && s.saisons[saison]) || {};
+      if (window.GSCStructureProfile) {
+        effectifsTotal += window.GSCStructureProfile.computeEffectifsTotals(saisonData).total;
+      }
+      const docs = window.GSCDisciplines ? window.GSCDisciplines.getRequiredDocuments(s.discipline) : [];
+      const mandatoryTotal = docs.filter(d => d.obligatoire).length;
+      const fournis = (saisonData.conformite || {});
+      const fournisCount = docs.filter(d => d.obligatoire && fournis[d.id] && fournis[d.id].uploadedAt).length;
+      const badge = window.GSCDisciplines ? window.GSCDisciplines.computeComplianceBadge(fournisCount, mandatoryTotal) : { pct: 0 };
+      if (badge.pct === 100) orCount++;
+      if (!s.nom || !s.discipline || !s.type) incompletCount++;
+    });
+
+    setText('struct-stat-total', list.length);
+    setText('struct-stat-effectifs', effectifsTotal);
+    setText('struct-stat-or', orCount);
+    setText('struct-stat-incomplet', incompletCount);
+  }
+
+  function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+  /* ── Filtres / recherche ── */
+  function filterByDiscipline(discipline, btn) {
+    _currentFilter = discipline;
+    document.querySelectorAll('[data-struct-filter]').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    render();
+  }
+
+  function search(query) {
+    _currentSearch = query;
+    render();
+  }
+
+  /* ── Formulaire création/édition (structures-form-builder.js) ── */
+  function openCreateForm() {
+    _editingId = null;
+    document.getElementById('structure-form-title').textContent = 'Nouvelle structure';
+    document.getElementById('structure-form-overlay').classList.add('open');
+    window.GSCStructureForm.open('structure-form-body', null, 'Football', window.GSCStructureProfile.getCurrentSeasonLabel());
+  }
+
+  function openEditForm(id) {
+    const structure = _allStructures.find(s => s.id === id);
+    if (!structure) return;
+    _editingId = id;
+    document.getElementById('structure-form-title').textContent = 'Éditer : ' + (structure.nom || '');
+    document.getElementById('structure-form-overlay').classList.add('open');
+    window.GSCStructureForm.open('structure-form-body', structure, structure.discipline, structure.saisonCourante);
+  }
+
+  function closeForm() {
+    document.getElementById('structure-form-overlay').classList.remove('open');
+  }
+
+  async function saveForm() {
+    try {
+      const id = await window.GSCStructureForm.save(_editingId);
+      alert('✅ Structure enregistrée');
+      closeForm();
+      if (_currentDetailId === id) openDetail(id);
+    } catch (err) {
+      alert('❌ ' + (err.message || 'Erreur lors de la sauvegarde'));
+    }
+  }
+
+  async function deleteStructure(id) {
+    if (!confirm('Archiver (supprimer) cette structure ?')) return;
+    try {
+      await window.structuresManager.remove(id);
+      alert('✅ Structure archivée');
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  }
+
+  /* ── Fiche détail (lecture) ── */
+  async function openDetail(id) {
+    const structure = await window.structuresManager.get(id);
+    if (!structure) { alert('Structure introuvable'); return; }
+    _currentDetailId = id;
+
+    document.getElementById('detail-structure-name').textContent = structure.nom || '—';
+    document.getElementById('detail-structure-sub').textContent = `${structure.type || ''} — ${structure.discipline || ''}`;
+    document.getElementById('structure-detail-overlay').classList.add('open');
+
+    renderDetailProfile(structure);
+    switchDetailTab('profile', document.querySelector('[data-detail-tab="profile"]'));
+
+    if (window.GSCInfrastructureModule) window.GSCInfrastructureModule.setCurrentStructure(id);
+  }
+
+  function renderDetailProfile(structure) {
+    const el = document.getElementById('detail-tab-profile');
+    if (window.GSCStructureProfile) {
+      el.innerHTML = window.GSCStructureProfile.renderFullProfile(
+        structure, structure.saisonCourante, null, 'admin'
+      );
+    }
+  }
+
+  async function renderDetailInfra(structureId) {
+    const el = document.getElementById('detail-tab-infra');
+    el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement…</p>';
+    try {
+      const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures');
+      const snap = await ref.get();
+      const infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      el.innerHTML = `
+        <button class="btn-add" style="margin-bottom:12px;" onclick="AdminStructures.openInfraForm()">➕ Ajouter une infrastructure</button>
+        ${window.GSCInfrastructureModule.renderInfrastructureGallery(infras)}
+      `;
+    } catch (err) {
+      el.innerHTML = '<p>Erreur chargement infrastructures.</p>';
+    }
+  }
+
+  async function renderDetailConformite(structure) {
+    const el = document.getElementById('detail-tab-conformite');
+    if (window.GSCComplianceModule) {
+      el.innerHTML = window.GSCComplianceModule.renderDocumentChecklist(structure, structure.saisonCourante);
+    }
+  }
+
+  async function renderDetailArchives(structureId) {
+    const el = document.getElementById('detail-tab-archives');
+    el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement…</p>';
+    if (window.GSCArchivingModule) {
+      const archives = await window.GSCArchivingModule.getStructureArchives(structureId);
+      el.innerHTML = window.GSCArchivingModule.renderArchiveTimeline(archives);
+    }
+  }
+
+  function switchDetailTab(tab, btn) {
+    document.querySelectorAll('[data-detail-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#structure-detail-overlay .tab-content').forEach(d => d.style.display = 'none');
+    if (btn) btn.classList.add('active');
+    document.getElementById('detail-tab-' + tab).style.display = 'block';
+
+    const structure = _allStructures.find(s => s.id === _currentDetailId);
+    if (!structure) return;
+    if (tab === 'infra') renderDetailInfra(_currentDetailId);
+    if (tab === 'conformite') renderDetailConformite(structure);
+    if (tab === 'archives') renderDetailArchives(_currentDetailId);
+  }
+
+  function closeDetail() {
+    document.getElementById('structure-detail-overlay').classList.remove('open');
+    _currentDetailId = null;
+  }
+
+  function editCurrentDetail() {
+    if (_currentDetailId) {
+      closeDetail();
+      openEditForm(_currentDetailId);
+    }
+  }
+
+  /* ── Infrastructures (sélecteur indépendant) ── */
+  async function loadInfrastructures(structureId) {
+    const gallery = document.getElementById('infrastructures-gallery');
+    const btnAdd = document.getElementById('btn-add-infra');
+    if (!structureId) { gallery.innerHTML = ''; btnAdd.style.display = 'none'; return; }
+
+    if (window.GSCInfrastructureModule) window.GSCInfrastructureModule.setCurrentStructure(structureId);
+    btnAdd.style.display = 'inline-block';
+
+    gallery.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement…</p>';
+    try {
+      const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures');
+      const snap = await ref.get();
+      const infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      gallery.innerHTML = window.GSCInfrastructureModule.renderInfrastructureGallery(infras);
+    } catch (err) {
+      gallery.innerHTML = '<p>Erreur chargement.</p>';
+    }
+  }
+
+  function openInfraForm() {
+    const structureId = window.GSCInfrastructureModule.getCurrentStructure();
+    const structure = _allStructures.find(s => s.id === structureId);
+    if (!structure) { alert('Sélectionnez d\'abord une structure'); return; }
+    document.body.insertAdjacentHTML('beforeend', window.GSCInfrastructureModule.renderInfraForm(structure.discipline));
+  }
+
+  /* ── Conformité : modèles officiels ── */
+  function renderTemplates(discipline) {
+    const gallery = document.getElementById('conformite-modeles-gallery');
+    if (!discipline) { gallery.innerHTML = ''; return; }
+    gallery.innerHTML = window.GSCComplianceModule.renderTemplateGallery(discipline);
+  }
+
+  async function renderComplianceTable() {
+    const el = document.getElementById('conformite-table');
+    if (!el || !window.GSCComplianceModule) return;
+    el.innerHTML = window.GSCComplianceModule.renderComplianceTable(_allStructures);
+  }
+
+  /* ── Archivage ── */
+  async function archiveSelected() {
+    const structureId = document.getElementById('archive-structure-select').value;
+    const saison = document.getElementById('archive-season').value.trim();
+    if (!structureId || !saison) { alert('Sélectionnez une structure et une saison'); return; }
+
+    const result = await window.GSCArchivingModule.archiveStructureSeason(structureId, saison);
+    if (result.success) {
+      alert('✅ ' + result.message);
+      renderArchivingReport();
+    } else {
+      alert('❌ ' + (result.error || 'Erreur'));
+    }
+  }
+
+  async function renderArchivingReport() {
+    const el = document.getElementById('archiving-report');
+    if (el && window.GSCArchivingModule) {
+      el.innerHTML = await window.GSCArchivingModule.renderArchivingReport(_allStructures);
+    }
+  }
+
+  /* ── Fonctions de navigation — pattern exact repris de showRapportsSection()
+        (chaque section admin.html a sa propre fonction dédiée, il n'existe
+        pas de dispatcher générique switchSection() dans ce projet) ── */
+  function activateSection(sectionId, navId, mNavId, title) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(sectionId);
+    if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById(navId);
+    if (navBtn) navBtn.classList.add('active');
+    if (mNavId) {
+      const mNavBtn = document.getElementById(mNavId);
+      if (mNavBtn) mNavBtn.classList.add('active');
+    }
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = title;
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  function showStructuresSection() {
+    activateSection('structures', 'nav-structures', 'mnav-structures', 'Structures');
+    render();
+  }
+
+  function showConformiteSection() {
+    activateSection('conformite', 'nav-conformite', 'mnav-conformite', 'Conformité');
+    renderComplianceTable();
+  }
+
+  function showInfrastructuresSection() {
+    activateSection('infrastructures', 'nav-infrastructures', 'mnav-infrastructures', 'Infrastructures');
+  }
+
+  function showArchivageSection() {
+    activateSection('archivage', 'nav-archivage', 'mnav-archivage', 'Archivage');
+    renderArchivingReport();
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
+    initFilters();
+    bootstrap();
+
+    const navStruct = document.getElementById('nav-structures');
+    if (navStruct) navStruct.addEventListener('click', showStructuresSection);
+    const mNavStruct = document.getElementById('mnav-structures');
+    if (mNavStruct) mNavStruct.addEventListener('click', showStructuresSection);
+
+    const navConf = document.getElementById('nav-conformite');
+    if (navConf) navConf.addEventListener('click', showConformiteSection);
+    const mNavConf = document.getElementById('mnav-conformite');
+    if (mNavConf) mNavConf.addEventListener('click', showConformiteSection);
+
+    const navInfra = document.getElementById('nav-infrastructures');
+    if (navInfra) navInfra.addEventListener('click', showInfrastructuresSection);
+    const mNavInfra = document.getElementById('mnav-infrastructures');
+    if (mNavInfra) mNavInfra.addEventListener('click', showInfrastructuresSection);
+
+    const navArch = document.getElementById('nav-archivage');
+    if (navArch) navArch.addEventListener('click', showArchivageSection);
+    const mNavArch = document.getElementById('mnav-archivage');
+    if (mNavArch) mNavArch.addEventListener('click', showArchivageSection);
+  });
+
+  window.AdminStructures = {
+    openCreateForm, openEditForm, closeForm, saveForm, deleteStructure,
+    openDetail, closeDetail, switchDetailTab, editCurrentDetail,
+    filterByDiscipline, search,
+    loadInfrastructures, openInfraForm,
+    renderTemplates, renderComplianceTable,
+    archiveSelected, renderArchivingReport,
+    showStructuresSection, showConformiteSection,
+    showInfrastructuresSection, showArchivageSection
+  };
+})();
+</script>
+
+
 <script src="admin-cms.js"></script>
 <script src="admin-community.js"></script>
 <script>
@@ -2973,15 +3608,6 @@ tr.is-demo-row td { opacity: .82; }
   }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
-
-<!-- INFRASTRUCTURE PHOTO MODAL (Module 3) -->
-<div class="gallery-modal" id="infra-media-modal" onclick="if(event.target===this)GSCStructureInfra.closePhotoModal()">
-  <button class="gallery-modal-close" onclick="GSCStructureInfra.closePhotoModal()">✕</button>
-  <div class="gallery-modal-img-wrap">
-    <img id="infra-media-modal-img" src="" alt="Infrastructure">
-  </div>
-  <div class="gallery-modal-toolbar" id="infra-media-modal-toolbar"></div>
-</div>
 
 </body>
 </html>

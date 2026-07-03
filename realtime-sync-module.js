@@ -73,7 +73,10 @@
   };
 
   function bootstrap() {
-    window.realtimeSync.start(['users', 'matchs', 'sitesSportifs', 'actualites']);
+    window.realtimeSync.start([
+      'users', 'matchs', 'sitesSportifs', 'actualites',
+      'structuresSportives', 'archive_structures', 'archive_players', 'conformite-modeles'
+    ]);
   }
 
   if (window._firebaseReady) bootstrap();
