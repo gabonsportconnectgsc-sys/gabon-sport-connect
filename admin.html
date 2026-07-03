@@ -1396,6 +1396,7 @@ tr.is-demo-row td { opacity: .82; }
 
   <div style="margin:16px 0;display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn btn-secondary" onclick="AdminStructures.printGlobalReport()">🖨️ Rapport imprimable — toutes les structures</button>
+    <button class="btn btn-secondary" onclick="AdminStructures.printAllArchivesHistory()">🖨️ Imprimer tout l'historique d'archivage</button>
   </div>
 
   <div id="archives-timeline" style="margin-top:16px;"></div>
@@ -1883,7 +1884,7 @@ tr.is-demo-row td { opacity: .82; }
     });
   }
 
-  function renderReports() {
+  async function renderReports() {
     const users = getUsers();
     const matches = getMatches();
     const now = new Date();
@@ -1932,7 +1933,8 @@ tr.is-demo-row td { opacity: .82; }
     mkChart('chart-buteurs', 'bar', topScorers.map(u => u.nom || '—'), topScorers.map(u => Number(u.buts) || 0), ['#009E60']);
 
     const totalActifs = visible.filter(u => u.status !== 'hidden' && u.status !== 'deleted').length;
-    const totalOrgs = visible.filter(u => ['club', 'federation', 'association'].includes(u.role)).length;
+    // Harmonisé avec le Dashboard et l'onglet Structures (voir computeUnifiedOrgCount)
+    const totalOrgs = await computeUnifiedOrgCount(visible, ['club', 'federation', 'association']);
 
     setText('report-stat-actifs', totalActifs);
     setText('report-stat-clubs', totalOrgs);
@@ -2810,6 +2812,48 @@ tr.is-demo-row td { opacity: .82; }
   // Fix #3 — Charge toutes les statistiques du dashboard depuis Firestore.
   // Source unique de vérité : toutes les valeurs du dashboard (tuiles, barres, répartition par rôle)
   // sont désormais calculées à partir de la même requête Firestore.
+  /* ══════════════════════════════════════════════════════════════════
+   *  COMPTE UNIFIÉ CLUBS / FÉDÉRATIONS / ASSOCIATIONS / ORGANISATEURS
+   *  ──────────────────────────────────────────────────────────────
+   *  Jusqu'ici, chaque écran comptait différemment :
+   *   • Dashboard (tuiles rc-club, app-organisations) : comptait les
+   *     comptes 'users' avec role='club' (etc.) → 1 seul compte trouvé.
+   *   • Rapports (report-stat-clubs) : même logique, sur 'users'.
+   *   • Structures (struct-stat-total) : comptait les fiches
+   *     'structuresSportives' (type='Club' etc.) → 4 fiches trouvées.
+   *  D'où l'écart "Clubs: 1" au Dashboard vs "4 structures" ailleurs.
+   *  On aligne tout sur la même règle que index.html
+   *  (computeUnifiedOrgCount) : une fiche structuresSportives déjà créée
+   *  compte pour 1, et un compte 'users' avec un rôle organisation qui
+   *  n'est PAS encore relié à une fiche (structureId absent) compte
+   *  aussi pour 1, afin de ne rien perdre pendant la migration vers le
+   *  nouveau module Structures.
+   * ══════════════════════════════════════════════════════════════════ */
+  const ROLE_TYPE_LABELS = { club: 'Club', association: 'Association', federation: 'Fédération', organisateur: 'Organisateur' };
+
+  async function computeUnifiedOrgCount(users, roles) {
+    const orgUsers = users.filter(u => roles.includes(u.role));
+    try {
+      const wantedTypes = roles.map(r => ROLE_TYPE_LABELS[r]).filter(Boolean);
+      let structDocs = [];
+      if (window.structuresManager && typeof window.structuresManager.list === 'function' && window.structuresManager.list().length) {
+        structDocs = window.structuresManager.list();
+      } else if (window.firebase && firebase.firestore) {
+        const snap = await firebase.firestore().collection('structuresSportives').get();
+        structDocs = snap.docs.map(d => d.data()).filter(s => s.status !== 'deleted');
+      } else {
+        return orgUsers.length;
+      }
+      const structCount = structDocs.filter(s => wantedTypes.includes(s.type)).length;
+      const unlinkedOrgUsers = orgUsers.filter(u => !u.structureId).length;
+      return structCount + unlinkedOrgUsers;
+    } catch (e) {
+      console.warn('[GSC Admin] computeUnifiedOrgCount:', e);
+      return orgUsers.length;
+    }
+  }
+  window.computeUnifiedOrgCount = computeUnifiedOrgCount;
+
   async function loadDashboardStats(){
     const setText=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
     try{
@@ -2828,17 +2872,19 @@ tr.is-demo-row td { opacity: .82; }
       setText('app-total-membres',total);
       setText('app-actifs',totalActive);
       const orgs=active.filter(u=>['club','federation','association'].includes(u.role));
-      setText('app-organisations',orgs.length);
+      const unifiedOrgCount = await computeUnifiedOrgCount(active, ['club','federation','association']);
+      setText('app-organisations',unifiedOrgCount);
       // Répartition par rôle (tuiles inférieures)
       const countRole=(r)=>active.filter(u=>u.role===r).length;
       setText('rc-joueur',countRole('joueur'));
       setText('rc-athlete',countRole('athlete'));
       setText('rc-entraineur',countRole('entraineur'));
       setText('rc-arbitre',countRole('arbitre'));
-      setText('rc-club',countRole('club'));
-      setText('rc-federation',countRole('federation'));
-      setText('rc-association',countRole('association'));
-      setText('rc-organisateur',countRole('organisateur'));
+      // Comptes harmonisés avec l'onglet Structures (voir computeUnifiedOrgCount)
+      setText('rc-club', await computeUnifiedOrgCount(active, ['club']));
+      setText('rc-federation', await computeUnifiedOrgCount(active, ['federation']));
+      setText('rc-association', await computeUnifiedOrgCount(active, ['association']));
+      setText('rc-organisateur', await computeUnifiedOrgCount(active, ['organisateur']));
       setText('rc-supporter',countRole('supporter'));
       setText('rc-independant',countRole('independant'));
       setText('rc-eleve-etudiant',countRole('eleve_etudiant'));
@@ -2858,10 +2904,15 @@ tr.is-demo-row td { opacity: .82; }
         {role:'federation',color:'#f97316'},
         {role:'association',color:'#e11d48'},
       ];
+      const unifiedCounts = {
+        club: await computeUnifiedOrgCount(active, ['club']),
+        federation: await computeUnifiedOrgCount(active, ['federation']),
+        association: await computeUnifiedOrgCount(active, ['association'])
+      };
       const barContainer=document.getElementById('role-bars');
       if(barContainer&&totalActive>0){
         barContainer.innerHTML=barData.map(b=>{
-          const c=countRole(b.role);
+          const c = (b.role in unifiedCounts) ? unifiedCounts[b.role] : countRole(b.role);
           const pct=Math.round((c/totalActive)*100);
           const labels={'joueur':'⚽ Joueur','athlete':'🏃 Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
           return `<div class="sb-item"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
@@ -3399,6 +3450,26 @@ tr.is-demo-row td { opacity: .82; }
     }
   }
 
+  /* ── Rendu de secours de la galerie d'infrastructures, utilisé si
+     GSCInfrastructureModule n'a pas pu se charger (script lent/absent).
+     Évite que "Ajouter une infrastructure" échoue systématiquement. ── */
+  function inlineInfraGallery(infras) {
+    if (!Array.isArray(infras) || infras.length === 0) {
+      return '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Aucune infrastructure ajoutée.</p>';
+    }
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">
+      ${infras.map(i => `
+        <div class="ph-actor-card">
+          <div class="ph-info">
+            <div class="ph-name">${esc(i.nom)}</div>
+            <div class="ph-role" style="text-transform:none;">${esc(i.type || '')}</div>
+            <p style="font-size:11px;color:var(--gray-txt);margin:6px 0;">${esc((i.description || '').substring(0, 60))}</p>
+            <button class="btn-sm danger" onclick="AdminStructures.deleteInfraFallback('${esc(i.id)}')">🗑️ Supprimer</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
   async function renderDetailInfra(structureId) {
     const el = document.getElementById('detail-tab-infra');
     el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement…</p>';
@@ -3406,9 +3477,12 @@ tr.is-demo-row td { opacity: .82; }
       const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures');
       const snap = await ref.get();
       const infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const galleryHtml = window.GSCInfrastructureModule
+        ? window.GSCInfrastructureModule.renderInfrastructureGallery(infras)
+        : inlineInfraGallery(infras);
       el.innerHTML = `
         <button class="btn-add" style="margin-bottom:12px;" onclick="AdminStructures.openInfraForm()">➕ Ajouter une infrastructure</button>
-        ${window.GSCInfrastructureModule.renderInfrastructureGallery(infras)}
+        ${galleryHtml}
       `;
     } catch (err) {
       console.error('[AdminStructures] renderDetailInfra erreur:', err);
@@ -3418,8 +3492,15 @@ tr.is-demo-row td { opacity: .82; }
 
   async function renderDetailConformite(structure) {
     const el = document.getElementById('detail-tab-conformite');
-    if (window.GSCComplianceModule) {
-      el.innerHTML = window.GSCComplianceModule.renderDocumentChecklist(structure, structure.saisonCourante);
+    if (!window.GSCComplianceModule) return;
+    el.innerHTML = window.GSCComplianceModule.renderDocumentChecklist(structure, structure.saisonCourante);
+    // Ajoute, sous la checklist, la liste des modèles officiels
+    // téléchargeables correspondant à la discipline de cette structure —
+    // c'est la vue "structure" (lecture seule) des modèles gérés par
+    // l'admin dans l'onglet Conformité > Modèles Officiels.
+    if (structure.discipline && typeof window.GSCComplianceModule.renderStructureTemplatesList === 'function') {
+      const templatesHtml = await window.GSCComplianceModule.renderStructureTemplatesList(structure.discipline);
+      el.insertAdjacentHTML('beforeend', templatesHtml);
     }
   }
 
@@ -3458,11 +3539,14 @@ tr.is-demo-row td { opacity: .82; }
   }
 
   /* ── Infrastructures (sélecteur indépendant) ── */
+  let _currentInfraStructureId = null;
+
   async function loadInfrastructures(structureId) {
     const gallery = document.getElementById('infrastructures-gallery');
     const btnAdd = document.getElementById('btn-add-infra');
-    if (!structureId) { gallery.innerHTML = ''; btnAdd.style.display = 'none'; return; }
+    if (!structureId) { gallery.innerHTML = ''; btnAdd.style.display = 'none'; _currentInfraStructureId = null; return; }
 
+    _currentInfraStructureId = structureId;
     if (window.GSCInfrastructureModule) window.GSCInfrastructureModule.setCurrentStructure(structureId);
     btnAdd.style.display = 'inline-block';
 
@@ -3471,25 +3555,98 @@ tr.is-demo-row td { opacity: .82; }
       const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures');
       const snap = await ref.get();
       const infras = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      gallery.innerHTML = window.GSCInfrastructureModule.renderInfrastructureGallery(infras);
+      gallery.innerHTML = window.GSCInfrastructureModule
+        ? window.GSCInfrastructureModule.renderInfrastructureGallery(infras)
+        : inlineInfraGallery(infras);
     } catch (err) {
       console.error('[AdminStructures] loadInfrastructures erreur:', err);
       gallery.innerHTML = '<p>Erreur chargement. ' + esc(err && err.message || '') + '</p>';
     }
   }
 
-  function openInfraForm() {
-    const structureId = window.GSCInfrastructureModule.getCurrentStructure();
-    const structure = _allStructures.find(s => s.id === structureId);
-    if (!structure) { alert('Sélectionnez d\'abord une structure'); return; }
-    document.body.insertAdjacentHTML('beforeend', window.GSCInfrastructureModule.renderInfraForm(structure.discipline));
+  /* Formulaire de secours (si GSCInfrastructureModule indisponible) : mêmes
+     champs que renderInfraForm, écrit directement dans Firestore avec le
+     bon nom de collection ('structuresSportives'). */
+  function inlineInfraForm(discipline) {
+    const types = window.GSCDisciplines ? window.GSCDisciplines.getInfrastructures(discipline) : ['Stade', 'Terrain', 'Salle', 'Autre'];
+    const typeOptions = types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    return `
+      <div class="modal-overlay open" id="infra-form-modal-fb" onclick="this.classList.remove('open')">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">Ajouter une infrastructure</div>
+            <button class="modal-close" onclick="document.getElementById('infra-form-modal-fb').remove()">✕</button>
+          </div>
+          <div class="modal-content">
+            <div class="grid2">
+              <div class="field"><label>Nom</label><input type="text" id="infra-nom-fb" placeholder="Ex: Stade Omnisports"></div>
+              <div class="field"><label>Type</label><select id="infra-type-fb">${typeOptions}</select></div>
+            </div>
+            <div class="field"><label>Description</label><input type="text" id="infra-desc-fb" placeholder="Détails, caractéristiques…"></div>
+            <div class="grid2">
+              <div class="field"><label>Capacité (places)</label><input type="number" id="infra-capacite-fb" min="0" placeholder="2000"></div>
+              <div class="field"><label>Adresse</label><input type="text" id="infra-adresse-fb" placeholder="Localisation"></div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-primary" onclick="AdminStructures.saveInfraFallback()">💾 Ajouter</button>
+              <button class="btn btn-secondary" onclick="document.getElementById('infra-form-modal-fb').remove()">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
   }
 
-  /* ── Conformité : modèles officiels ── */
+  async function saveInfraFallback() {
+    const structureId = _currentInfraStructureId;
+    if (!structureId) { alert('Sélectionnez d\'abord une structure'); return; }
+    const nom = document.getElementById('infra-nom-fb').value.trim();
+    if (!nom) { alert('❌ Le nom de l\'infrastructure est obligatoire.'); return; }
+    const type = document.getElementById('infra-type-fb').value;
+    const description = document.getElementById('infra-desc-fb').value;
+    const capacite = document.getElementById('infra-capacite-fb').value;
+    const adresse = document.getElementById('infra-adresse-fb').value;
+    try {
+      const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures').doc();
+      await ref.set({ id: ref.id, nom, type, description, capacite, adresse, photos: [], createdAt: new Date(), updatedAt: new Date() });
+      alert('✅ Infrastructure ajoutée');
+      location.reload();
+    } catch (err) {
+      alert('❌ Erreur : ' + (err && err.message ? err.message : 'échec de l\'enregistrement'));
+    }
+  }
+
+  async function deleteInfraFallback(infraId) {
+    if (!_currentInfraStructureId || !confirm('Supprimer cette infrastructure ?')) return;
+    try {
+      await window.db.collection('structuresSportives').doc(_currentInfraStructureId).collection('infrastructures').doc(infraId).delete();
+      alert('✅ Infrastructure supprimée');
+      location.reload();
+    } catch (err) {
+      alert('❌ Erreur suppression : ' + (err && err.message ? err.message : ''));
+    }
+  }
+
+  function openInfraForm() {
+    const structureId = window.GSCInfrastructureModule ? window.GSCInfrastructureModule.getCurrentStructure() : _currentInfraStructureId;
+    const structure = _allStructures.find(s => s.id === structureId);
+    if (!structure) { alert('Sélectionnez d\'abord une structure'); return; }
+    if (window.GSCInfrastructureModule) {
+      document.body.insertAdjacentHTML('beforeend', window.GSCInfrastructureModule.renderInfraForm(structure.discipline));
+    } else {
+      console.warn('[AdminStructures] GSCInfrastructureModule non chargé, utilisation du formulaire de secours');
+      document.body.insertAdjacentHTML('beforeend', inlineInfraForm(structure.discipline));
+    }
+  }
+
+  /* ── Conformité : modèles officiels ──
+     Affiche pour chaque document requis de la discipline sélectionnée un
+     "cadre" indiquant si le modèle officiel a déjà été chargé (avec
+     aperçu/remplacement/suppression) ou s'il reste à ajouter. ── */
   function renderTemplates(discipline) {
     const gallery = document.getElementById('conformite-modeles-gallery');
     if (!discipline) { gallery.innerHTML = ''; return; }
-    gallery.innerHTML = window.GSCComplianceModule.renderTemplateGallery(discipline);
+    if (!window.GSCComplianceModule) { gallery.innerHTML = '<p style="color:var(--gray-txt);">Module conformité indisponible.</p>'; return; }
+    window.GSCComplianceModule.renderTemplatesInto('conformite-modeles-gallery', discipline);
   }
 
   async function renderComplianceTable() {
@@ -3520,6 +3677,7 @@ tr.is-demo-row td { opacity: .82; }
       if (result.success) {
         alert('✅ ' + result.message);
         renderArchivingReport();
+        renderArchivesTimeline();
       } else {
         alert('❌ ' + (result.error || 'Erreur'));
       }
@@ -3529,7 +3687,7 @@ tr.is-demo-row td { opacity: .82; }
       try {
         const result = await archiveStructureSeasonFallback(structureId, saison);
         alert(result.success ? '✅ ' + result.message : '❌ ' + result.error);
-        if (result.success) renderArchivingReport();
+        if (result.success) { renderArchivingReport(); renderArchivesTimeline(); }
       } catch (err2) {
         alert('❌ Archivage impossible : ' + (err2.message || err.message));
       }
@@ -3575,6 +3733,40 @@ tr.is-demo-row td { opacity: .82; }
       pour créer un instantané horodaté d'une saison, consultable ensuite dans l'onglet
       📚 Archives de chaque fiche structure.
     </p>`;
+  }
+
+  /* ── Historique complet des archivages (liste + impression/téléchargement) ──
+     Jusqu'ici #archives-timeline restait vide en permanence : rien ne
+     l'alimentait. On y affiche maintenant toutes les archives déjà
+     effectuées (structures + joueurs), avec pour chacune la possibilité
+     de consulter, imprimer ou télécharger, en plus d'un bouton d'impression
+     globale de tout l'historique. ── */
+  async function renderArchivesTimeline() {
+    const el = document.getElementById('archives-timeline');
+    if (!el) return;
+    el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement de l\'historique…</p>';
+    try {
+      if (!window.GSCArchivingModule || typeof window.GSCArchivingModule.getAllArchives !== 'function') {
+        el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Module d\'archivage indisponible.</p>';
+        return;
+      }
+      const archives = await window.GSCArchivingModule.getAllArchives();
+      el.innerHTML = `
+        <div class="dash-card-title" style="margin-bottom:10px;">📜 Historique des archivages (${archives.length})</div>
+        ${window.GSCArchivingModule.renderArchiveTimeline(archives)}
+      `;
+    } catch (err) {
+      console.error('[AdminStructures] renderArchivesTimeline erreur:', err);
+      el.innerHTML = '<p>Erreur chargement historique. ' + esc(err && err.message || '') + '</p>';
+    }
+  }
+
+  function printAllArchivesHistory() {
+    if (window.GSCArchivingModule && typeof window.GSCArchivingModule.printAllArchives === 'function') {
+      window.GSCArchivingModule.printAllArchives();
+    } else {
+      alert('Module d\'archivage indisponible pour l\'impression.');
+    }
   }
 
   /* ── Versions imprimables (PDF via impression navigateur) ── */
@@ -3640,7 +3832,7 @@ tr.is-demo-row td { opacity: .82; }
     if (typeof _origSwitchSection === 'function') _origSwitchSection(sectionName);
     if (sectionName === 'structures') render();
     if (sectionName === 'conformite') renderComplianceTable();
-    if (sectionName === 'archivage') renderArchivingReport();
+    if (sectionName === 'archivage') { renderArchivingReport(); renderArchivesTimeline(); }
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -3652,10 +3844,10 @@ tr.is-demo-row td { opacity: .82; }
     openCreateForm, openEditForm, closeForm, saveForm, deleteStructure,
     openDetail, closeDetail, switchDetailTab, editCurrentDetail,
     filterByDiscipline, search,
-    loadInfrastructures, openInfraForm,
+    loadInfrastructures, openInfraForm, saveInfraFallback, deleteInfraFallback,
     renderTemplates, renderComplianceTable,
-    archiveSelected, renderArchivingReport,
-    printStructure, printGlobalReport
+    archiveSelected, renderArchivingReport, renderArchivesTimeline,
+    printStructure, printGlobalReport, printAllArchivesHistory
   };
 })();
 </script>

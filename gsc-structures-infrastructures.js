@@ -333,10 +333,23 @@
       const cap = document.getElementById('infra-capacite').value;
       const addr = document.getElementById('infra-adresse').value;
 
+      if (!_currentStructureId) {
+        alert('❌ Aucune structure sélectionnée. Sélectionnez d\'abord une structure avant d\'ajouter une infrastructure.');
+        return;
+      }
+      if (!nom || !nom.trim()) {
+        alert('❌ Le nom de l\'infrastructure est obligatoire.');
+        return;
+      }
+
       createInfrastructure(_currentStructureId, { nom, type, description: desc, capacite: cap, adresse: addr })
         .then(() => { alert('✅ Infrastructure ajoutée'); location.reload(); })
-        .catch(() => alert('❌ Erreur'));
+        .catch((err) => alert('❌ Erreur : ' + (err && err.message ? err.message : 'échec de l\'enregistrement')));
     }
   };
+
+  // Signale que le module est prêt : permet aux écrans admin d'attendre
+  // son chargement au lieu de planter si le <script> se termine après eux.
+  try { document.dispatchEvent(new CustomEvent('gsc-infrastructure-module-ready')); } catch (e) { /* no-op */ }
 
 })();

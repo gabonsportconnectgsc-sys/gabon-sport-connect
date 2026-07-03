@@ -28,6 +28,8 @@
 
   function getComplianceRef(structureId) {
     if (!window.db) return null;
+    // ⚠️ FIX (juillet 2026) : collection canonique = 'structuresSportives'
+    // (alignée sur structures-manager.js). Voir aussi gsc-structures-infrastructures.js.
     return window.db.collection('structuresSportives').doc(structureId).collection('conformite');
   }
 
@@ -245,22 +247,103 @@
     input.click();
   }
 
-  function renderTemplateGallery(discipline) {
-    const docs = D().getDocuments(discipline);
-    const cards = docs.map(d => `
-      <div class="dash-card" style="text-align:center;padding:16px;">
-        <div style="font-size:32px;margin-bottom:8px;">📄</div>
-        <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${esc(d.label)}</div>
-        <div style="font-size:11px;color:var(--gray-txt);margin-bottom:10px;">Modèle officiel</div>
-        <button class="btn-sm" onclick="GSCComplianceModule.uploadTemplate('${esc(d.id)}','${esc(discipline)}')">📤 Ajouter modèle</button>
-      </div>
-    `).join('');
+  /* Récupère les modèles déjà uploadés pour une discipline donnée,
+     indexés par documentId, pour savoir quelles cases sont déjà pourvues. */
+  async function getTemplatesForDiscipline(discipline) {
+    const modelsRef = getModelsRef();
+    if (!modelsRef) return {};
+    try {
+      const snap = await modelsRef.where('discipline', '==', discipline).get();
+      const byDoc = {};
+      snap.docs.forEach(d => { const data = d.data(); byDoc[data.documentId] = { docId: d.id, ...data }; });
+      return byDoc;
+    } catch (err) {
+      console.error('[ComplianceModule] getTemplatesForDiscipline erreur:', err);
+      return {};
+    }
+  }
 
+  async function deleteTemplate(discipline, documentId) {
+    if (!confirm('Supprimer ce modèle officiel ?')) return;
+    try {
+      const modelsRef = getModelsRef();
+      if (modelsRef) {
+        await modelsRef.doc(`${discipline}_${documentId}`).delete();
+        alert('✅ Modèle supprimé');
+        renderTemplatesInto('conformite-modeles-gallery', discipline);
+      }
+    } catch (err) {
+      alert('❌ Erreur suppression : ' + (err && err.message ? err.message : ''));
+    }
+  }
+
+  /* Cadre (frame) par document requis de la discipline : affiche l'état
+     "déjà fourni" (avec aperçu, remplacement, suppression) ou "à ajouter"
+     (upload). C'est ce qui manquait pour que l'admin voie d'un coup d'œil
+     quels modèles restent à charger, discipline par discipline. */
+  function renderTemplateCards(discipline, existing, editable) {
+    const docs = D().getDocuments(discipline);
+    if (!docs.length) return '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Aucun document requis configuré pour cette discipline.</p>';
+
+    const cards = docs.map(d => {
+      const model = existing[d.id];
+      if (model) {
+        return `
+          <div class="dash-card" style="text-align:center;padding:16px;border:1.5px solid var(--green,#009E60);">
+            <div style="font-size:32px;margin-bottom:8px;">✅</div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${esc(d.label)}</div>
+            <div style="font-size:10px;color:var(--gray-txt);margin-bottom:10px;">${esc(model.fileName || 'Modèle disponible')}</div>
+            <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+              <a class="btn-sm" href="${esc(model.url)}" target="_blank">📄 Voir</a>
+              ${editable ? `
+                <button class="btn-sm" onclick="GSCComplianceModule.uploadTemplate('${esc(d.id)}','${esc(discipline)}')">🔄 Remplacer</button>
+                <button class="btn-sm danger" onclick="GSCComplianceModule.deleteTemplate('${esc(discipline)}','${esc(d.id)}')">🗑️</button>
+              ` : ''}
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="dash-card" style="text-align:center;padding:16px;">
+          <div style="font-size:32px;margin-bottom:8px;">📄</div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${esc(d.label)}</div>
+          <div style="font-size:11px;color:var(--gray-txt);margin-bottom:10px;">${editable ? 'Modèle officiel manquant' : 'Non disponible pour le moment'}</div>
+          ${editable ? `<button class="btn-sm" onclick="GSCComplianceModule.uploadTemplate('${esc(d.id)}','${esc(discipline)}')">📤 Ajouter modèle</button>` : ''}
+        </div>`;
+    }).join('');
+
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">${cards}</div>`;
+  }
+
+  /* Vue Admin (éditable : upload/remplacement/suppression) */
+  function renderTemplateGallery(discipline) {
+    // Rendu synchrone immédiat en état "chargement", complété par renderTemplatesInto().
+    return '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement des modèles…</p>';
+  }
+
+  async function renderTemplatesInto(containerId, discipline) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Chargement des modèles…</p>';
+    const existing = await getTemplatesForDiscipline(discipline);
+    el.innerHTML = renderTemplateCards(discipline, existing, true);
+  }
+
+  /* Vue Structures (lecture seule) : liste des modèles officiels
+     téléchargeables, filtrés automatiquement par la discipline/secteur de
+     la structure connectée. Utilisable depuis l'onglet Conformité d'une
+     fiche structure, ou depuis l'espace public d'une structure. */
+  async function renderStructureTemplatesList(discipline) {
+    const existing = await getTemplatesForDiscipline(discipline);
     return `
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
-        ${cards}
-      </div>
+      <div class="dash-card-title" style="margin:14px 0 8px;">📄 Modèles officiels — ${D() ? D().getIcon(discipline) : ''} ${esc(discipline)}</div>
+      ${renderTemplateCards(discipline, existing, false)}
     `;
+  }
+
+  async function renderStructureTemplatesInto(containerId, discipline) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = await renderStructureTemplatesList(discipline);
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -298,6 +381,11 @@
     renderComplianceTable,
     renderDocumentChecklist,
     renderTemplateGallery,
+    renderTemplatesInto,
+    renderStructureTemplatesList,
+    renderStructureTemplatesInto,
+    getTemplatesForDiscipline,
+    deleteTemplate,
     computeBadge,
     uploadDocument,
     uploadTemplate,
