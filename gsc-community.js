@@ -213,12 +213,23 @@
     });
   }
 
-  /* Méthode de publication reprise telle quelle de l'ancienne version (publishNews) :
-     on écrit directement dans Firestore sans relancer le pont d'authentification
-     Firebase (ensureFirebaseAuthViaSupabase) à chaque publication. La session
-     Firebase Auth est déjà établie une seule fois au login (onSupabaseSignedIn),
-     ce qui suffisait dans l'ancienne version pour que request.auth.uid soit défini. */
+  /* FIX : withAuth relance désormais le pont d'authentification Firebase
+     (ensureFirebaseAuthViaSupabase) avant CHAQUE écriture Firestore du fil
+     communautaire. La fonction est sûre à appeler souvent : si la session
+     Firebase est déjà valide pour le bon uid, elle retourne immédiatement
+     sans rien refaire (voir index.html). Sans ça, dès que la session
+     Firebase établie une seule fois au login expirait ou devenait invalide
+     (navigation prolongée, perte de token, etc.), toute réaction/commentaire/
+     publication échouait avec "Missing or insufficient permissions" — même
+     sur un compte actif et des règles Firestore correctes. */
   async function withAuth(fn) {
+    try {
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
+    } catch (e) {
+      console.warn('GSC Community: pont Firebase Auth indisponible avant écriture —', e);
+    }
     return fn();
   }
 
