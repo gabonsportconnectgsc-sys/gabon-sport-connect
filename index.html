@@ -1143,6 +1143,7 @@
       <button class="side-menu-item" onclick="showView('annuaire');closeMenu()"><span class="smi-ico">📋</span>Annuaire des acteurs</button>
       <button class="side-menu-item" onclick="showView('sport');closeMenu()"><span class="smi-ico">⚽</span>Sport Gabon</button>
       <button class="side-menu-item" onclick="showView('stades');closeMenu()"><span class="smi-ico">🗺️</span>Carte sportive</button>
+      <button class="side-menu-item" onclick="showView('structures');closeMenu()"><span class="smi-ico">🏢</span>Structures &amp; Clubs</button>
       <button class="side-menu-item" onclick="showView('actualites');closeMenu()"><span class="smi-ico">📰</span>Actualités</button>
 
       <!-- MON COMPTE -->
@@ -2032,6 +2033,37 @@
       </div>
     </section>
 
+    <section class="view" id="view-structures">
+      <div class="card mb-16 fade-up">
+        <div class="card-header">
+          <div class="card-title">🏢 Structures sportives <span id="structures-public-count" style="font-weight:500;color:var(--gray-txt);font-size:12px;"></span></div>
+        </div>
+        <div class="card-body" style="padding-bottom:0">
+          <div class="sites-filters" id="structures-public-filters"></div>
+          <div style="display:flex;gap:10px;margin:12px 0;">
+            <input class="search-input" id="structures-public-search"
+                   placeholder="🔍 Nom, ville, type…" oninput="GSCPublicStructures.search(this.value)" style="flex:1;">
+          </div>
+        </div>
+      </div>
+
+      <div class="card fade-up">
+        <div class="card-body">
+          <div class="sites-list" id="structures-public-list">
+            <div class="empty-state"><h3>Chargement…</h3></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal" id="structure-public-modal" onclick="if(event.target===this)closeModal('structure-public-modal')">
+      <div class="modal-card">
+        <button class="modal-close-x" onclick="closeModal('structure-public-modal')">✕</button>
+        <div class="modal-title" id="structure-public-modal-title">Fiche structure</div>
+        <div id="structure-public-modal-body"></div>
+      </div>
+    </div>
+
     <!-- ── ACTUALITÉS ── -->
     <section class="view" id="view-actualites">
       <div class="card fade-up mb-16">
@@ -2712,16 +2744,6 @@
     <button class="gallery-modal-btn danger" onclick="galleryDelete()">🗑️ Supprimer</button>
   </div>
 </div>
-
-<!-- INFRASTRUCTURE PHOTO MODAL (Module 3) -->
-<div class="gallery-modal" id="infra-media-modal" onclick="if(event.target===this)GSCStructureInfra.closePhotoModal()">
-  <button class="gallery-modal-close" onclick="GSCStructureInfra.closePhotoModal()">✕</button>
-  <div class="gallery-modal-img-wrap">
-    <img id="infra-media-modal-img" src="" alt="Infrastructure">
-  </div>
-  <div class="gallery-modal-toolbar" id="infra-media-modal-toolbar"></div>
-</div>
-
 
 <!-- ACTOR DETAIL MODAL -->
 <div class="actor-detail-modal" id="actor-detail-modal" onclick="if(event.target===this)closeActorDetail()">
@@ -8128,5 +8150,10 @@ window.lookupManualGscId = lookupManualGscId;
 
 <!-- ══ GSC PROFILE ENGINE — Fiches dynamiques par sport & rôle ══ -->
 <script src="gsc-profile-engine.js"></script>
+<script src="disciplines-config.js"></script>
+<script src="disciplines-config-adapter.js"></script>
+<script src="structures-profile-engine.js"></script>
+<script src="structures-public-view.js"></script>
+<link rel="stylesheet" href="structures-modules.css">
 </body>
 </html>
