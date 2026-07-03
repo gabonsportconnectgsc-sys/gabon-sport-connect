@@ -354,8 +354,15 @@
     document.querySelectorAll('.image-upload-input').forEach(function(inp) {
       var imageId = inp.getAttribute('data-image');
       if (imageId) {
+        var rawSrc = inp.getAttribute('data-src') || '';
+        // Sécurité : un base64 (data:...) ne doit jamais partir vers Firestore —
+        // c'est exactement ce qui causait "invalid nested entity" à la sauvegarde.
+        if (rawSrc.indexOf('data:') === 0) {
+          console.warn('[AdminCMS] Image "' + imageId + '" ignorée (base64 non uploadé) — réuploadez-la.');
+          rawSrc = '';
+        }
         theme.images[imageId] = {
-          src: inp.getAttribute('data-src') || '',
+          src: rawSrc,
           size: (document.querySelector(`.image-size-slider[data-image="${imageId}"]`)?.value || 40) + '%',
           opacity: (document.querySelector(`.image-opacity-slider[data-image="${imageId}"]`)?.value || 100) + '%',
           radius: (document.querySelector(`.image-radius-slider[data-image="${imageId}"]`)?.value || 0) + 'px',
@@ -734,26 +741,48 @@
         var imageId = this.getAttribute('data-image');
         var file = this.files[0];
         if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var src = e.target.result;
-          var inp = document.querySelector(`.image-upload-input[data-image="${imageId}"]`);
-          if (inp) inp.setAttribute('data-src', src);
-          var thumb = document.querySelector(`.image-preview-thumb[data-image="${imageId}"]`);
-          var noPreview = document.querySelector(`.image-no-preview[data-image="${imageId}"]`);
-          if (thumb) {
-            thumb.src = src;
-            thumb.style.display = 'block';
-          }
+
+        var thumb = document.querySelector(`.image-preview-thumb[data-image="${imageId}"]`);
+        var noPreview = document.querySelector(`.image-no-preview[data-image="${imageId}"]`);
+        var badge = document.getElementById('image-status-' + imageId);
+
+        // Aperçu local immédiat (base64) — jamais envoyé à Firestore, juste pour l'affichage.
+        var previewReader = new FileReader();
+        previewReader.onload = function(e) {
+          if (thumb) { thumb.src = e.target.result; thumb.style.display = 'block'; }
           if (noPreview) noPreview.style.display = 'none';
           applyImagePreviewStyle(imageId);
-          var badge = document.getElementById('image-status-' + imageId);
-          if (badge) {
-            badge.textContent = '⏳ En attente';
-            badge.className = 'cms-status-badge cms-status-pending';
-          }
         };
-        reader.readAsDataURL(file);
+        previewReader.readAsDataURL(file);
+
+        if (badge) {
+          badge.textContent = '⏳ Envoi en cours…';
+          badge.className = 'cms-status-badge cms-status-pending';
+        }
+
+        // Upload réel vers Firebase Storage : Firestore ne stocke ensuite QUE l'URL
+        // (courte). Stocker le base64 complet dans le document theme est ce qui
+        // provoquait l'erreur "invalid nested entity" à la sauvegarde.
+        var storageRef = window.storage || (typeof firebase !== 'undefined' && firebase.storage ? firebase.storage() : null);
+        if (!storageRef) {
+          console.error('[AdminCMS] Firebase Storage indisponible — image non envoyée.');
+          showToast('❌ Firebase Storage indisponible — image non envoyée.', 'error');
+          if (badge) { badge.textContent = '❌ Erreur'; badge.className = 'cms-status-badge cms-status-pending'; }
+          return;
+        }
+        var path = 'theme-images/' + imageId + '_' + Date.now() + '_' + file.name;
+        storageRef.ref(path).put(file).then(function(snapshot) {
+          return snapshot.ref.getDownloadURL();
+        }).then(function(url) {
+          var fileInput = document.querySelector(`.image-upload-input[data-image="${imageId}"]`);
+          if (fileInput) fileInput.setAttribute('data-src', url);
+          if (badge) { badge.textContent = '⏳ En attente'; badge.className = 'cms-status-badge cms-status-pending'; }
+          livePreview();
+        }).catch(function(err) {
+          console.error('[AdminCMS] Échec upload image :', err);
+          showToast('❌ Échec de l\'envoi de l\'image : ' + (err.message || err), 'error');
+          if (badge) { badge.textContent = '❌ Erreur'; badge.className = 'cms-status-badge cms-status-pending'; }
+        });
       });
     });
 

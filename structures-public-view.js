@@ -43,7 +43,8 @@
    * ══════════════════════════════════════════════════════════════════ */
   async function load() {
     if (!window.db || !window.collection) {
-      console.warn('[StructuresPublicView] Firebase modulaire indisponible');
+      console.warn('[StructuresPublicView] Firebase modulaire indisponible — nouvelle tentative après firebase-ready');
+      document.addEventListener('firebase-ready', load, { once: true });
       return;
     }
     try {
