@@ -4215,7 +4215,9 @@ function renderActors(actors){
 }
 
 function openActorDetail(uid){
-  const a=allActors.find(x=>(x.uid||x.id)===uid)||allAdminUsers.find(x=>(x.uid||x.id)===uid);
+  const a=allActors.find(x=>(x.uid||x.id)===uid)
+    ||allAdminUsers.find(x=>(x.uid||x.id)===uid)
+    ||(window.allActorsRaw||[]).find(x=>(x.uid||x.id)===uid);
   if(!a) return;
   currentDetailActorUid=uid;
   const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
@@ -7801,7 +7803,12 @@ let _qrScannerScanning = false;
 
 function findActorByScan(payload){
   if(!payload) return null;
-  const list = (window.allActors && window.allActors.length) ? window.allActors : (allActors||[]);
+  // Recherche dans la liste complète (tous statuts) : un compte en attente de
+  // validation ou masqué doit être identifié comme tel, pas confondu avec un
+  // QR invalide/inconnu.
+  const list = (window.allActorsRaw && window.allActorsRaw.length)
+    ? window.allActorsRaw
+    : ((window.allActors && window.allActors.length) ? window.allActors : (allActors||[]));
   // 1) Payload = URL avec ?actor=UID (format émis par nos propres QR)
   try{
     const url = new URL(payload, window.location.origin);
@@ -7835,7 +7842,16 @@ function showScanResult(actor){
   document.getElementById('qr-scanner-result-name').textContent = name;
   document.getElementById('qr-scanner-result-role').textContent = roleLabel;
   document.getElementById('qr-scanner-result').classList.add('show');
-  document.getElementById('qr-scanner-status').textContent = '✅ Acteur identifié';
+  const statusEl = document.getElementById('qr-scanner-status');
+  if(actor.status === 'pending'){
+    statusEl.textContent = '⏳ Compte identifié mais en attente de validation admin';
+  } else if(actor.status === 'hidden'){
+    statusEl.textContent = '🚫 Compte identifié mais masqué de l\'annuaire';
+  } else if(actor.status === 'banned'){
+    statusEl.textContent = '⛔ Compte identifié mais banni de la plateforme';
+  } else {
+    statusEl.textContent = '✅ Acteur identifié';
+  }
   stopQrScannerLoop();
 }
 
@@ -8015,6 +8031,10 @@ window.lookupManualGscId = lookupManualGscId;
           const dbUids = new Set(dbActors.map(a=>a.uid||a.id));
           const seedActors = (window.GSC_SEED_ACTORS||[]).filter(a=>!dbUids.has(a.uid));
           window.allActors = [...dbActors, ...seedActors];
+          // Liste complète (tous statuts) : nécessaire pour le scan QR, qui doit
+          // pouvoir distinguer "compte en attente de validation" d'un QR réellement
+          // invalide, plutôt que de traiter les deux cas comme "non reconnu".
+          window.allActorsRaw = rawUsers;
           _refreshViews();
           _refreshAdminViews(rawUsers);
           console.log('✅ GSC: users synchronisé en temps réel —', dbActors.length, 'depuis Firestore');
