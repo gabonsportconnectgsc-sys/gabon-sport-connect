@@ -200,6 +200,7 @@
     .role-badge.visiteur{background:#94a3b8;color:white;}
     .role-badge.eleve_etudiant{background:#6366f1;color:white;}
     .role-badge.sportif_etranger{background:#ca8a04;color:white;}
+    .role-badge.ancien_sportif{background:#9f1239;color:white;}
     .role-badge.handisport{background:#7c3aed;color:white;}
     .btn-icon{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-sizing:border-box;}
     .btn-icon:hover{background:rgba(255,255,255,.16);}
@@ -353,7 +354,8 @@
     .actor-type-dot.federation,.actor-type-dot.organisateur{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
     .actor-type-dot.eleve_etudiant{background:linear-gradient(135deg,#6366f1,#4338ca);}
     .actor-type-dot.sportif_etranger{background:linear-gradient(135deg,#ca8a04,#92660a);}
-    .actor-type-dot.handisport{background:linear-gradient(135deg,#7c3aed,#5b21b6);}
+    .actor-type-dot.ancien_sportif{background:linear-gradient(135deg,#9f1239,#4c0519);}
+    .actor-type-dot.handisport{background:linear-gradient(135deg,#b45309,#78350f);}
     .actor-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--white);text-align:center;line-height:1.2;}
     .actor-gscid-pill{margin-top:4px;font-family:monospace;font-size:9.5px;font-weight:700;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:2px 9px;letter-spacing:.4px;}
     .actor-card-qr{width:30px;height:30px;border-radius:7px;border:1px solid var(--gray-bd);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s;}
@@ -370,6 +372,7 @@
     .badge-independant{background:#e0f2fe;color:#075985;}
     .badge-eleve_etudiant{background:#e0e7ff;color:#3730a3;}
     .badge-sportif_etranger{background:#fef9c3;color:#854d0e;}
+    .badge-ancien_sportif{background:#ffe4e6;color:#881337;}
     .badge-handisport{background:#ede9fe;color:#5b21b6;}
 
     /* Actor detail modal */
@@ -703,7 +706,8 @@
     .actor-filter-btn[data-type="independant"] {border-color:#0ea5e9;color:#0284c7;background:rgba(14,165,233,.07);}
     .actor-filter-btn[data-type="eleve_etudiant"]{border-color:#6366f1;color:#4338ca;background:rgba(99,102,241,.07);}
     .actor-filter-btn[data-type="sportif_etranger"]{border-color:#ca8a04;color:#92660a;background:rgba(202,138,4,.07);}
-    .actor-filter-btn[data-type="handisport"]  {border-color:#7c3aed;color:#5b21b6;background:rgba(124,58,237,.07);}
+    .actor-filter-btn[data-type="ancien_sportif"]{border-color:#9f1239;color:#881337;background:rgba(159,18,57,.07);}
+    .actor-filter-btn[data-type="handisport"]  {border-color:#7c3aed;color:#5b21b6;background:rgba(180,83,9,.07);}
     /* Hover */
     .actor-filter-btn:hover{box-shadow:var(--shadow-sm);filter:brightness(.95);}
     /* Actif */
@@ -720,7 +724,8 @@
     .actor-filter-btn[data-type="independant"].active{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
     .actor-filter-btn[data-type="eleve_etudiant"].active{background:linear-gradient(135deg,#6366f1,#4338ca);}
     .actor-filter-btn[data-type="sportif_etranger"].active{background:linear-gradient(135deg,#ca8a04,#92660a);}
-    .actor-filter-btn[data-type="handisport"].active{background:linear-gradient(135deg,#7c3aed,#5b21b6);}
+    .actor-filter-btn[data-type="ancien_sportif"].active{background:linear-gradient(135deg,#b45309,#78350f);}
+    .actor-filter-btn[data-type="handisport"].active{background:linear-gradient(135deg,#b45309,#78350f);}
 
     /* ── CARTE / SITES FILTER BUTTONS ── */
     .sites-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:0 4px;align-items:stretch;}
@@ -1052,6 +1057,7 @@
 .acr-badge.supporter{background:#fce7f3;color:#9d174d;}
 .acr-badge.eleve_etudiant{background:#e0e7ff;color:#3730a3;}
 .acr-badge.sportif_etranger{background:#fef9c3;color:#854d0e;}
+.acr-badge.ancien_sportif{background:#ffe4e6;color:#881337;}
 .acr-badge.handisport{background:#ede9fe;color:#5b21b6;}
 .acr-badge.admin{background:#fef9c3;color:#78350f;}
 
@@ -1266,6 +1272,7 @@
             <option value="independant">🏃 Sportif indépendant</option>
             <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
             <option value="sportif_etranger">🌍 Sportif étranger</option>
+            <option value="ancien_sportif">🎖️ Ancien Sportif</option>
             <option value="handisport">🦾 Sportif handisport</option>
           </select>
         </div>
@@ -1467,7 +1474,7 @@
 
         <!-- Arbitres — carton jaune / sifflet -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
-          style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
+          style="background:linear-gradient(135deg,#b45309,#78350f);padding:16px 12px;">
           <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🟨</span>'">
           <div class="stat-val" id="stat-total-arbitres">—</div>
           <div class="stat-lbl" style="color:#e9d8ff;">Arbitres</div>
@@ -1523,10 +1530,18 @@
 
         <!-- Sportifs handisport -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('handisport')"
-          style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:16px 12px;">
+          style="background:linear-gradient(135deg,#b45309,#78350f);padding:16px 12px;">
           <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🦾</span>
           <div class="stat-val" id="stat-total-handisport">—</div>
           <div class="stat-lbl" style="color:#ede9fe;">Sportifs handisport</div>
+        </button>
+
+        <!-- Anciens Sportifs -->
+        <button class="stat-card" onclick="showView('annuaire');filterActors('ancien_sportif')"
+          style="background:linear-gradient(135deg,#9f1239,#4c0519);padding:16px 12px;">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🎖️</span>
+          <div class="stat-val" id="stat-total-anciens">—</div>
+          <div class="stat-lbl" style="color:#ffe4e6;">Anciens Sportifs</div>
         </button>
 
         <!-- Mon niveau -->
@@ -1829,6 +1844,9 @@
             </button>
             <button class="actor-filter-btn" data-type="handisport" onclick="filterActors('handisport')" style="--abtn-color:#7c3aed;">
               <span style="font-size:18px;line-height:1;">🦾</span>Sportifs handisport
+            </button>
+            <button class="actor-filter-btn" data-type="ancien_sportif" onclick="filterActors('ancien_sportif')" style="--abtn-color:#9f1239;">
+              <span style="font-size:18px;line-height:1;">🎖️</span>Anciens Sportifs
             </button>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
@@ -2139,6 +2157,7 @@
               <option value="independant">Sportif indépendant</option>
               <option value="eleve_etudiant">Élève / Étudiant</option>
               <option value="sportif_etranger">Sportif étranger</option>
+              <option value="ancien_sportif">Ancien Sportif</option>
               <option value="handisport">Sportif handisport</option>
               <option value="admin">Admin</option>
               <option value="supporter">💗 Supporters</option>
@@ -2215,7 +2234,7 @@
                 <div class="stat-val" id="admin-acr-club" style="font-size:22px;">—</div>
                 <div class="stat-lbl" style="color:#ffe9c2;">Clubs</div>
               </button>
-              <button class="stat-card" onclick="adminFilterActorsTile('arbitre')" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:14px 10px;">
+              <button class="stat-card" onclick="adminFilterActorsTile('arbitre')" style="background:linear-gradient(135deg,#b45309,#78350f);padding:14px 10px;">
                 <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🟨</span>
                 <div class="stat-val" id="admin-acr-arbitre" style="font-size:22px;">—</div>
                 <div class="stat-lbl" style="color:#e9d8ff;">Arbitres</div>
@@ -2249,6 +2268,11 @@
                 <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🌍</span>
                 <div class="stat-val" id="admin-acr-sportif_etranger" style="font-size:22px;">—</div>
                 <div class="stat-lbl" style="color:#1a2d4a;text-shadow:none;">Sportifs étrangers</div>
+              </button>
+              <button class="stat-card" onclick="adminFilterActorsTile('ancien_sportif')" style="background:linear-gradient(135deg,#9f1239,#4c0519);padding:14px 10px;">
+                <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">🎖️</span>
+                <div class="stat-val" id="admin-acr-ancien_sportif" style="font-size:22px;">—</div>
+                <div class="stat-lbl" style="color:#ffe4e6;">Anciens Sportifs</div>
               </button>
               <button class="stat-card" onclick="adminFilterActorsTile('supporter')" style="background:linear-gradient(135deg,#db2777,#9d174d);padding:14px 10px;">
                 <span style="font-size:34px;margin-bottom:8px;display:inline-block;align-self:flex-end;">💗</span>
@@ -2707,6 +2731,7 @@
         <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
         <option value="sportif_etranger">🌍 Sportif étranger</option>
         <option value="handisport">🦾 Sportif handisport</option>
+        <option value="ancien_sportif">🎖️ Ancien Sportif</option>
         <option value="admin">⚙️ Admin</option>
       </select>
     </div>
@@ -2789,13 +2814,13 @@ const ROLE_LABELS = {
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
-  handisport:'🦾 Sportif handisport'
+  handisport:'🦾 Sportif handisport', ancien_sportif:'🎖️ Ancien Sportif'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
   joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍',
-  handisport:'🦾'
+  handisport:'🦾', ancien_sportif:'🎖️'
 };
 
 // Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
@@ -3939,6 +3964,8 @@ async function loadActors(){
   if(etrEl) etrEl.textContent=activeAll.filter(u=>u.role==='sportif_etranger').length;
   const hanEl=document.getElementById('stat-total-handisport');
   if(hanEl) hanEl.textContent=activeAll.filter(u=>u.role==='handisport').length;
+  const ancEl=document.getElementById('stat-total-anciens');
+  if(ancEl) ancEl.textContent=activeAll.filter(u=>u.role==='ancien_sportif').length;
 }
 
 function filterActors(type,btn){
@@ -3982,6 +4009,7 @@ const SECONDARY_GROUP_CONFIG={
   eleve_etudiant:{ getKey:a=>a.etablissement, label:v=>'🎓 '+v, fallback:'Établissement non précisé' },
   sportif_etranger:{ getKey:a=>a.nationalite, label:v=>'🌍 '+v, fallback:'Nationalité non précisée' },
   handisport:{ getKey:a=>a.disciplineParaSport, label:v=>'🦾 '+v, fallback:'Discipline non précisée' },
+  ancien_sportif:{ getKey:a=>a.sport, label:v=>'🎖️ '+v, fallback:'Discipline non précisée' },
   supporter:{ getKey:a=>a.club||a.ville, label:v=>'💗 '+v, fallback:'Non précisé' }
 };
 
@@ -4032,8 +4060,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+    const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️'};
+    const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -4069,8 +4097,8 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','club','federation','association','organisateur','independant','supporter','admin'];
-      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport'};
+      const GROUP_ORDER=['joueur','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','club','federation','association','organisateur','independant','supporter','admin'];
+      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport',ancien_sportif:'🎖️ Anciens Sportifs'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
       orderedActors=[];
@@ -4152,9 +4180,9 @@ function renderActors(actors){
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
-      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport'}[roleKey]||roleKey;
+      const roleName={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ancien_sportif:'Ancien Sportif'}[roleKey]||roleKey;
       const badgeClass='badge-'+roleKey;
-      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
+      const typeIcons={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -4267,7 +4295,7 @@ function openActorDetail(uid){
       if(typeof openActorQrZoom==='function') openActorQrZoom(uid,roleKey);
     };
   })();
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif'].includes(a.role);
   const isOrg=['club','association','federation','organisateur'].includes(a.role);
   // Accès aux données sensibles (CNI, licence, n° de document) : uniquement le
   // propriétaire du profil, son club/association employeur, ou l'administrateur.
@@ -4377,6 +4405,23 @@ function openActorDetail(uid){
     </div>`;
     html+=`</div>`;
   }
+  // Ancien Sportif — carrière terminée, palmarès et reconversion
+  if(a.role==='ancien_sportif'){
+    html+=`<div class="adm-section"><div class="adm-section-title">🎖️ Carrière sportive</div>`;
+    if(a.poste) html+=`<div class="adm-info-row"><span class="adm-info-label">Poste / Spécialité</span><span class="adm-info-val">${a.poste}</span></div>`;
+    if(a.niveauCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau atteint</span><span class="adm-info-val">${a.niveauCarriere}</span></div>`;
+    if(a.anneeDebutCarriere||a.anneeFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Période</span><span class="adm-info-val">${a.anneeDebutCarriere||'?'} – ${a.anneeFinCarriere||'?'}</span></div>`;
+    if(a.clubsRepresentes) html+=`<div class="adm-info-row"><span class="adm-info-label">Clubs représentés</span><span class="adm-info-val">${a.clubsRepresentes}</span></div>`;
+    if(a.selectionNationale) html+=`<div class="adm-info-row"><span class="adm-info-label">Sélection nationale</span><span class="adm-info-val">✅ ${a.nbSelections?a.nbSelections+' sélections':'Oui'}</span></div>`;
+    if(a.raisonFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Fin de carrière</span><span class="adm-info-val">${a.raisonFinCarriere}</span></div>`;
+    if(a.faitsMarquants) html+=`<div class="adm-info-row"><span class="adm-info-label">Faits marquants</span><span class="adm-info-val">${a.faitsMarquants}</span></div>`;
+    html+=`</div>`;
+    html+=`<div class="adm-section"><div class="adm-section-title">🔄 Reconversion</div>`;
+    if(a.reconversionActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Activité actuelle</span><span class="adm-info-val">${a.reconversionActuelle}</span></div>`;
+    if(a.structureActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Structure actuelle</span><span class="adm-info-val">${a.structureActuelle}</span></div>`;
+    html+=`<div class="adm-info-row"><span class="adm-info-label">Disponible mentorat</span><span class="adm-info-val">${a.disponibiliteMentorat?'✅ Oui':'—'}</span></div>`;
+    html+=`</div>`;
+  }
   if(a.bio){
     html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.bio}</p></div>`;
   }
@@ -4429,7 +4474,7 @@ function renderProfile(){
   if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   const isSupporter=p.isSupporter===true||p.role==='supporter';
@@ -4442,7 +4487,7 @@ function renderProfile(){
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
-  document.getElementById('prof-stats-card').style.display=isPersonnel?'':'none'; // élargi à tous rôles personnels via gsc-profile-engine
+  document.getElementById('prof-stats-card').style.display=(isPersonnel&&p.role!=='ancien_sportif')?'':'none'; // élargi à tous rôles personnels via gsc-profile-engine ; anciens sportifs ont leur propre section carrière
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
 
   // Supporter card
@@ -4461,7 +4506,7 @@ function renderProfile(){
   if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
   // Gallery card — visible pour tous les membres inscrits (rôles acteurs sportifs)
-  const allActorRoles=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','club','association','federation','organisateur'];
+  const allActorRoles=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','club','association','federation','organisateur'];
   const gallCard=document.getElementById('prof-gallery-card');
   if(gallCard){
     gallCard.style.display=(!isVisitor && allActorRoles.includes(p.role))?'':'none';
@@ -4557,7 +4602,7 @@ function renderSportStats(p){
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';
@@ -4785,6 +4830,43 @@ function buildEditForm(p){
     </div>`;
   }
 
+  // Profil Ancien Sportif — carrière terminée, palmarès, reconversion
+  if(p.role==='ancien_sportif'){
+    h+=`<div class="section-divider" style="border-color:#9f1239;">🎖️ Carrière sportive</div>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Poste / Spécialité</label><input type="text" id="edit-anc-poste" value="${p.poste||''}" placeholder="ex: Attaquant, 100m…"></div>
+      <div class="form-group"><label>Niveau atteint</label>
+        <select id="edit-anc-niveau">
+          <option value="">—</option>
+          ${['Amateur','Semi-pro','Professionnel','National','International'].map(v=>`<option${p.niveauCarriere===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Année de début</label><input type="number" id="edit-anc-debut" value="${p.anneeDebutCarriere||''}" min="1930" max="2026"></div>
+      <div class="form-group"><label>Année de fin</label><input type="number" id="edit-anc-fin" value="${p.anneeFinCarriere||''}" min="1930" max="2026"></div>
+    </div>
+    <div class="form-group"><label>Club(s) / équipe(s) représenté(s)</label><input type="text" id="edit-anc-clubs" value="${p.clubsRepresentes||''}" placeholder="ex: FC 105 Libreville, AS Stade Mandji…"></div>
+    <div class="form-group"><label class="cb-inline"><input type="checkbox" id="edit-anc-selection" ${p.selectionNationale?'checked':''}> A représenté une sélection nationale</label></div>
+    <div class="form-group"><label>Nombre de sélections</label><input type="number" id="edit-anc-nbselections" value="${p.nbSelections||''}" min="0"></div>
+    <div class="form-group"><label>Raison de fin de carrière</label>
+      <select id="edit-anc-raison">
+        <option value="">—</option>
+        ${['Retraite sportive','Blessure','Reconversion professionnelle','Fin de contrat','Autre'].map(v=>`<option${p.raisonFinCarriere===v?' selected':''}>${v}</option>`).join('')}
+      </select>
+    </div>
+    <div class="section-divider" style="border-color:#9f1239;">🔄 Reconversion</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Activité actuelle</label><input type="text" id="edit-anc-reconversion" value="${p.reconversionActuelle||''}" placeholder="ex: Consultant, entraîneur…"></div>
+      <div class="form-group"><label>Structure actuelle (optionnel)</label><input type="text" id="edit-anc-structure" value="${p.structureActuelle||''}" placeholder="ex: club, fédération…"></div>
+    </div>
+    <div class="form-group"><label class="cb-inline"><input type="checkbox" id="edit-anc-mentorat" ${p.disponibiliteMentorat?'checked':''}> Disponible pour du mentorat / des interventions</label></div>
+    <div class="section-divider" style="border-color:#9f1239;">✍️ Présentation</div>
+    <div class="form-group"><label>Bio / Parcours</label><textarea id="edit-anc-bio" placeholder="Décrivez votre carrière…">${p.bio||''}</textarea></div>
+    <div class="form-group"><label>Palmarès / Distinctions</label><textarea id="edit-anc-palmares" placeholder="ex: Champion national 1999…">${p.palmares||''}</textarea></div>
+    <div class="form-group"><label>Faits marquants / records</label><textarea id="edit-anc-faits" placeholder="ex: Meilleur buteur du championnat 2004…">${p.faitsMarquants||''}</textarea></div>`;
+  }
+
   // Bio (tous)
   h+=`<div class="section-divider purple">📝 Présentation</div>`;
   h+=`<div class="form-group"><label>Biographie / Présentation</label><textarea id="edit-bio" placeholder="${isOrg?'Présentation de l\'organisation…':'Votre parcours sportif, ambitions…'}">${p.bio||''}</textarea></div>`;
@@ -4841,7 +4923,7 @@ async function saveProfile(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!currentUser||!userProfile) return;
   const p=userProfile;
-  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(p.role);
+  const isPersonnel=['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
@@ -4914,6 +4996,24 @@ async function saveProfile(){
       nomGuide:document.getElementById('edit-hs-guide-nom')?.value.trim()||'',
       licenceFegoph:document.getElementById('edit-hs-licence-num')?.value.trim()||'',
       carteInvalidite:(document.getElementById('edit-hs-carte')?.value||'non')==='oui',
+    });
+  }
+  if(p.role==='ancien_sportif'){
+    Object.assign(updates,{
+      poste:document.getElementById('edit-anc-poste')?.value.trim()||'',
+      niveauCarriere:document.getElementById('edit-anc-niveau')?.value||'',
+      anneeDebutCarriere:document.getElementById('edit-anc-debut')?.value||'',
+      anneeFinCarriere:document.getElementById('edit-anc-fin')?.value||'',
+      clubsRepresentes:document.getElementById('edit-anc-clubs')?.value.trim()||'',
+      selectionNationale:document.getElementById('edit-anc-selection')?.checked||false,
+      nbSelections:document.getElementById('edit-anc-nbselections')?.value||'',
+      raisonFinCarriere:document.getElementById('edit-anc-raison')?.value||'',
+      reconversionActuelle:document.getElementById('edit-anc-reconversion')?.value.trim()||'',
+      structureActuelle:document.getElementById('edit-anc-structure')?.value.trim()||'',
+      disponibiliteMentorat:document.getElementById('edit-anc-mentorat')?.checked||false,
+      bio:(document.getElementById('edit-anc-bio')?.value.trim()||'').slice(0,500),
+      palmares:document.getElementById('edit-anc-palmares')?.value.trim()||'',
+      faitsMarquants:document.getElementById('edit-anc-faits')?.value.trim()||'',
     });
   }
   try{
@@ -5412,7 +5512,7 @@ window.loadAdminActorsTab=loadAdminActorsTab;
 
 function updateAdminActorTiles(){
   const counts={tous:allActors.length, joueur:0, club:0, arbitre:0, entraineur:0, federation:0,
-    organisateur:0, independant:0, eleve_etudiant:0, sportif_etranger:0, supporter:0};
+    organisateur:0, independant:0, eleve_etudiant:0, sportif_etranger:0, ancien_sportif:0, supporter:0};
   allActors.forEach(a=>{
     const r=a.role;
     if(r==='club'||r==='association') counts.club++;
@@ -5473,8 +5573,8 @@ function renderActorsAdmin(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
 
-  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾'};
-  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport'};
+  const ROLE_ICONS_MAP={joueur:'⚽',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️'};
+  const ROLE_SHORT={joueur:'Joueur',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif'};
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
@@ -7449,7 +7549,7 @@ function applyScoutFilters(){
       const fullname = ([a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')).toLowerCase();
       if(!fullname.includes(nom)) return false;
     }
-    const isPersonnel = ['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport'].includes(a.role);
+    const isPersonnel = ['joueur','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif'].includes(a.role);
     if(isPersonnel){
       if(a.taille && (a.taille < tailleMin || a.taille > tailleMax)) return false;
       if(a.poids && (a.poids < poidsMin || a.poids > poidsMax)) return false;
@@ -7574,10 +7674,10 @@ const ROLE_CODES_QR = {
   joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
-  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
+  eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP'
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport'];
+const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport','ancien_sportif'];
 
 function generateGscId(uid, role){
   if(!uid) return null;

@@ -32,7 +32,8 @@
     eleve_etudiant: '🎓 Élève / Étudiant',
     sportif_etranger: '🌍 Sportif étranger',
     ecole_universite: '🏫 École/Université',
-    handisport: '🦾 Sportif handisport'
+    handisport: '🦾 Sportif handisport',
+    ancien_sportif: '🎖️ Ancien Sportif'
   };
   const ROLE_COLORS = {
     joueur: '#009E60',
@@ -48,17 +49,18 @@
     eleve_etudiant: '#6366f1',
     sportif_etranger: '#ca8a04',
     ecole_universite: '#059669',
-    handisport: '#7c3aed'
+    handisport: '#7c3aed',
+    ancien_sportif: '#9f1239'
   };
   const DASH_ROLES = [
     'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'supporter', 'independant', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite', 'handisport'
+    'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif'
   ];
   const GROUP_ORDER = [
     'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'independant', 'supporter', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite', 'handisport'
+    'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif'
   ];
   const NIVEAU_ORDER = ['International', 'National', 'Regional', 'Amateur'];
   const SECONDARY_GROUP_CONFIG = {
@@ -74,6 +76,7 @@
     eleve_etudiant: { getKey: a => a.etablissement, label: v => '🎓 ' + v, fallback: 'Établissement non précisé' },
     sportif_etranger: { getKey: a => a.nationalite, label: v => '🌍 ' + v, fallback: 'Nationalité non précisée' },
     handisport: { getKey: a => a.disciplineParaSport, label: v => '🦾 ' + v, fallback: 'Discipline non précisée' },
+    ancien_sportif: { getKey: a => a.sport, label: v => '🎖️ ' + v, fallback: 'Discipline non précisée' },
     supporter: { getKey: a => a.club || a.ville, label: v => '💗 ' + v, fallback: 'Non précisé' }
   };
 

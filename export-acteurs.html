@@ -325,6 +325,7 @@
       <button class="filter-btn" onclick="setFilter('arbitre')">🟨 Arbitres</button>
       <button class="filter-btn" onclick="setFilter('club')">🏟️ Clubs</button>
       <button class="filter-btn" onclick="setFilter('federation')">🏛️ Fédérations</button>
+      <button class="filter-btn" onclick="setFilter('ancien_sportif')">🎖️ Anciens Sportifs</button>
       <button class="filter-btn" onclick="setFilter('verified')">✅ Vérifiés uniquement</button>
     </div>
   </div>
@@ -421,6 +422,21 @@
       </div>
     </div>
     
+    <!-- ANCIENS SPORTIFS -->
+    <div class="export-card">
+      <span class="card-icon">🎖️</span>
+      <div class="card-title">Anciens Sportifs</div>
+      <div class="card-desc">Carrières terminées, palmarès et reconversion</div>
+      <div class="card-stats">
+        Profils: 3 | Sélections nationales: 2 | Vérifiés: 2
+      </div>
+      <div class="btn-group">
+        <button class="btn-csv" onclick="exportData('ancien_sportif', 'csv')">📥 CSV</button>
+        <button class="btn-json" onclick="exportData('ancien_sportif', 'json')">📋 JSON</button>
+        <button class="btn-pdf" onclick="exportData('ancien_sportif', 'pdf')">📄 PDF</button>
+      </div>
+    </div>
+    
     <!-- EXPORT COMPLET -->
     <div class="export-card">
       <span class="card-icon">📦</span>
@@ -503,6 +519,11 @@
     ],
     association: [
       {id: 501, nom: 'Association Gabon Sport Développement', type: 'Association', presidente: 'Nkoghe Evouna', membres: 8, projets: 3, status: 'active', verified: true},
+    ],
+    ancien_sportif: [
+      {id: 601, nom: 'Ntoutoume', prenom: 'Pierre', role: 'Ancien Sportif', poste: 'Attaquant', sport: 'Football', anneeDebutCarriere: 1995, anneeFinCarriere: 2012, selectionNationale: true, nbSelections: 34, reconversionActuelle: 'Consultant sportif', status: 'active', verified: true},
+      {id: 602, nom: 'Assoumou', prenom: 'Léa', role: 'Ancien Sportif', poste: '100m / 200m', sport: 'Athlétisme', anneeDebutCarriere: 1998, anneeFinCarriere: 2010, selectionNationale: true, nbSelections: 12, reconversionActuelle: 'Entraîneure', status: 'active', verified: true},
+      {id: 603, nom: 'Moussavou', prenom: 'Guy', role: 'Ancien Sportif', poste: 'Gardien', sport: 'Handball', anneeDebutCarriere: 1990, anneeFinCarriere: 2005, selectionNationale: false, nbSelections: 0, reconversionActuelle: 'Entrepreneur', status: 'pending', verified: false},
     ]
   };
   

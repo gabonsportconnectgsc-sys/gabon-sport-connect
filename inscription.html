@@ -385,6 +385,7 @@
           <div class="role-tile" data-role="organisateur" onclick="pickRole('organisateur',this)"><div class="rt-icon">🎪</div><div class="rt-label">Organisateur</div><div class="rt-desc">Événements et compétitions sportives</div></div>
           <div class="role-tile" data-role="supporter" onclick="pickRole('supporter',this)"><div class="rt-icon">💗</div><div class="rt-label">Supporter</div><div class="rt-desc">Fan d'un club ou d'une discipline</div></div>
           <div class="role-tile" data-role="sportif_etranger" onclick="pickRole('sportif_etranger',this)"><div class="rt-icon">🌍</div><div class="rt-label">Sportif étranger</div><div class="rt-desc">Pratique au Gabon, nationalité étrangère</div></div>
+          <div class="role-tile" data-role="ancien_sportif" onclick="pickRole('ancien_sportif',this)"><div class="rt-icon">🎖️</div><div class="rt-label">Ancien Sportif</div><div class="rt-desc">Carrière terminée, palmarès et reconversion</div></div>
         </div>
         <div id="a-role-err" class="err-msg" style="margin-top:8px;"></div>
         <div style="margin-top:14px;"><button class="btn-p" onclick="goToActeurForm()">Continuer →</button></div>
@@ -645,6 +646,43 @@
           <div class="fg"><label>Bio / Parcours sportif (optionnel)</label><textarea id="a-hs-bio" placeholder="Votre parcours, vos ambitions, vos performances…"></textarea></div>
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-hs-palmares" placeholder="ex: Médaillé Jeux Africains 2023, Sélection paralympique…"></textarea></div>
         </div>
+        <!-- Champs ancien sportif (carrière terminée) -->
+        <div class="extra" id="ex-ancien">
+          <div class="notice"><span>🎖️</span><span>Ce profil met en avant votre carrière passée : palmarès, clubs représentés et reconversion. Il n'inclut pas de statistiques de saison en cours.</span></div>
+
+          <!-- CARRIÈRE -->
+          <div class="subsection">📋 Carrière sportive</div>
+          <div class="form-row">
+            <div class="fg"><label>Poste / Spécialité *</label><input type="text" id="a-anc-poste" placeholder="ex: Attaquant, 100m, Poids lourd…"/></div>
+            <div class="fg"><label>Niveau atteint</label>
+              <select id="a-anc-niveau"><option value="">Niveau</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Année de début de carrière</label><input type="number" id="a-anc-debut" placeholder="ex: 1998" min="1930" max="2026"/></div>
+            <div class="fg"><label>Année de fin de carrière</label><input type="number" id="a-anc-fin" placeholder="ex: 2018" min="1930" max="2026"/></div>
+          </div>
+          <div class="fg"><label>Club(s) / équipe(s) représenté(s)</label><input type="text" id="a-anc-clubs" placeholder="ex: FC 105 Libreville, AS Stade Mandji…"/></div>
+          <div class="cb-row"><input type="checkbox" id="a-anc-selection" onchange="onAncienSelectionChange()"/><label for="a-anc-selection">A représenté une sélection nationale</label></div>
+          <div class="fg" id="anc-selection-wrap" style="display:none;"><label>Nombre de sélections</label><input type="number" id="a-anc-nbselections" placeholder="ex: 24" min="0"/></div>
+          <div class="fg"><label>Raison de fin de carrière</label>
+            <select id="a-anc-raison"><option value="">—</option><option>Retraite sportive</option><option>Blessure</option><option>Reconversion professionnelle</option><option>Fin de contrat</option><option>Autre</option></select>
+          </div>
+
+          <!-- RECONVERSION -->
+          <div class="subsection">🔄 Reconversion</div>
+          <div class="form-row">
+            <div class="fg"><label>Activité actuelle</label><input type="text" id="a-anc-reconversion" placeholder="ex: Consultant, entraîneur, entrepreneur…"/></div>
+            <div class="fg"><label>Structure actuelle (optionnel)</label><input type="text" id="a-anc-structure" placeholder="ex: club, fédération, ambassadeur…"/></div>
+          </div>
+          <div class="cb-row"><input type="checkbox" id="a-anc-mentorat"/><label for="a-anc-mentorat">Disponible pour du mentorat / des interventions auprès des jeunes sportifs</label></div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-anc-bio" placeholder="Décrivez votre carrière, vos moments marquants…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-anc-palmares" placeholder="ex: Champion national 1999, Vainqueur Coupe du Gabon 2005…"></textarea></div>
+          <div class="fg"><label>Faits marquants / records</label><textarea id="a-anc-faits" placeholder="ex: Meilleur buteur du championnat 2004, record national du 100m…"></textarea></div>
+        </div>
         <div class="cb-row"><input type="checkbox" id="a-cgu" checked/><label for="a-cgu">J'accepte les <a style="color:var(--green-dk);font-weight:600;">Conditions Générales</a> et la <a style="color:var(--green-dk);font-weight:600;">Politique de confidentialité</a>.</label></div>
         <div class="cb-row"><input type="checkbox" id="a-exact"/><label for="a-exact">Je certifie que les informations fournies sont exactes et me concernent personnellement.</label></div>
         <div id="a-err" class="err-msg"></div>
@@ -784,7 +822,7 @@
     joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
     association:'ASS', federation:'FED', independant:'IND',
     admin:'ADM', supporter:'SUP', organisateur:'ORG',
-    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN'
+    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP'
   };
 
   function generateGscId(uid, role) {
@@ -804,7 +842,7 @@
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
     handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
-    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger'
+    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif'
   };
 
   // Disciplines séparées : sports collectifs pour les Joueurs, sports individuels pour les Athlètes.
@@ -876,6 +914,7 @@
     document.getElementById('ex-org').classList.toggle('show', ['club','federation','association','organisateur'].includes(selectedRole));
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
+    document.getElementById('ex-ancien').classList.toggle('show', selectedRole === 'ancien_sportif');
     if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
       loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
     }
@@ -953,6 +992,13 @@
     if (wrap) wrap.style.display = cat ? 'block' : 'none';
   }
   window.onHandisportCategorieChange = onHandisportCategorieChange;
+
+  function onAncienSelectionChange() {
+    const checked = document.getElementById('a-anc-selection')?.checked;
+    const wrap = document.getElementById('anc-selection-wrap');
+    if (wrap) wrap.style.display = checked ? 'block' : 'none';
+  }
+  window.onAncienSelectionChange = onAncienSelectionChange;
 
   function toast(msg, type='success') {
     const t = document.getElementById('toast');
@@ -1079,6 +1125,22 @@
     const hsCarte          = isHandisportRole ? (document.getElementById('a-hs-carte')?.value || '') : '';
     const hsBio            = isHandisportRole ? (document.getElementById('a-hs-bio')?.value?.trim() || '').slice(0,500) : '';
     const hsPalmares       = isHandisportRole ? (document.getElementById('a-hs-palmares')?.value?.trim() || '') : '';
+    // Champs enrichis ancien sportif (carrière terminée)
+    const isAncienSportifRole = selectedRole === 'ancien_sportif';
+    const ancPoste          = isAncienSportifRole ? (document.getElementById('a-anc-poste')?.value?.trim() || '') : '';
+    const ancNiveau         = isAncienSportifRole ? (document.getElementById('a-anc-niveau')?.value || '') : '';
+    const ancDebut          = isAncienSportifRole ? (document.getElementById('a-anc-debut')?.value || '') : '';
+    const ancFin            = isAncienSportifRole ? (document.getElementById('a-anc-fin')?.value || '') : '';
+    const ancClubs          = isAncienSportifRole ? (document.getElementById('a-anc-clubs')?.value?.trim() || '') : '';
+    const ancSelection      = isAncienSportifRole ? (document.getElementById('a-anc-selection')?.checked || false) : false;
+    const ancNbSelections   = isAncienSportifRole && ancSelection ? (document.getElementById('a-anc-nbselections')?.value || '') : '';
+    const ancRaison         = isAncienSportifRole ? (document.getElementById('a-anc-raison')?.value || '') : '';
+    const ancReconversion   = isAncienSportifRole ? (document.getElementById('a-anc-reconversion')?.value?.trim() || '') : '';
+    const ancStructure      = isAncienSportifRole ? (document.getElementById('a-anc-structure')?.value?.trim() || '') : '';
+    const ancMentorat       = isAncienSportifRole ? (document.getElementById('a-anc-mentorat')?.checked || false) : false;
+    const ancBio            = isAncienSportifRole ? (document.getElementById('a-anc-bio')?.value?.trim() || '').slice(0,500) : '';
+    const ancPalmares       = isAncienSportifRole ? (document.getElementById('a-anc-palmares')?.value?.trim() || '') : '';
+    const ancFaits          = isAncienSportifRole ? (document.getElementById('a-anc-faits')?.value?.trim() || '') : '';
     if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
@@ -1088,6 +1150,8 @@
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
     if (isHandisportRole && !hsCategorie) {
                            errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
+    if (isAncienSportifRole && !ancPoste) {
+                           errMsg('a-err','Veuillez indiquer votre poste / spécialité durant votre carrière.'); return; }
     if (!cgu)            { errMsg('a-err','Vous devez accepter les conditions d\'utilisation.'); return; }
     if (!exact)          { errMsg('a-err','Veuillez certifier l\'exactitude de vos informations.'); return; }
     if (!_sb)            { errMsg('a-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
@@ -1134,6 +1198,16 @@
             besoinGuide: hsGuide === 'oui', nomGuide: hsGuideNom,
             licenceFegoph: hsLicenceNum, carteInvalidite: hsCarte === 'oui',
             bio: hsBio, palmares: hsPalmares
+          }),
+          // Champs enrichis ancien sportif (vides pour les autres rôles)
+          ...(isAncienSportifRole && {
+            poste: ancPoste, niveauCarriere: ancNiveau,
+            anneeDebutCarriere: ancDebut, anneeFinCarriere: ancFin,
+            clubsRepresentes: ancClubs, selectionNationale: ancSelection,
+            nbSelections: ancNbSelections, raisonFinCarriere: ancRaison,
+            reconversionActuelle: ancReconversion, structureActuelle: ancStructure,
+            disponibiliteMentorat: ancMentorat,
+            bio: ancBio, palmares: ancPalmares, faitsMarquants: ancFaits
           }),
           gscId,
           club: clubActuel || '',
