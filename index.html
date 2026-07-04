@@ -3981,7 +3981,7 @@ async function loadActors(){
   const statEl=document.getElementById('stat-total-acteurs');
   if(statEl) statEl.textContent=activeAll.length;
   const jEl=document.getElementById('stat-total-joueurs');
-  if(jEl) jEl.textContent=activeAll.filter(u=>u.role==='joueur').length;
+  if(jEl) jEl.textContent=activeAll.filter(u=>['joueur','athlete'].includes(u.role)).length;
   const cEl=document.getElementById('stat-total-clubs');
   if(cEl) computeUnifiedOrgCount(activeAll,['club','association']).then(n=>{ cEl.textContent=n; });
   const arbEl=document.getElementById('stat-total-arbitres');
@@ -4020,6 +4020,7 @@ function searchAnnuaire(){
   let filtered=allActors;
   if(currentActorType!=='tous'){
     if(currentActorType==='association') filtered=filtered.filter(u=>['club','association'].includes(u.role));
+    else if(currentActorType==='joueur') filtered=filtered.filter(u=>['joueur','athlete'].includes(u.role));
     else if(currentActorType==='supporter') filtered=filtered.filter(u=>u.isSupporter===true||u.role==='supporter');
     else filtered=filtered.filter(u=>u.role===currentActorType);
   }
@@ -7774,13 +7775,13 @@ window.resetScoutFilters = resetScoutFilters;
 <script>
 // ── GSC QR SYSTEM (public) ──
 const ROLE_CODES_QR = {
-  joueur:'JOU', arbitre:'ARB', entraineur:'ENT', club:'CLB',
+  joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
   association:'ASS', federation:'FED', independant:'IND',
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
   eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP', formateur:'FOR'
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','independant','club','association','federation','admin','handisport','ancien_sportif','formateur'];
+const QR_ENABLED_ROLES = ['joueur','athlete','independant','club','association','federation','admin','handisport','ancien_sportif','formateur'];
 
 function generateGscId(uid, role){
   if(!uid) return null;
