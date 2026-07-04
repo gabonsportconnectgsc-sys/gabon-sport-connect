@@ -44,6 +44,7 @@
      une reconnaissance visuelle immédiate et cohérente dans toute l'app. */
   const ROLE_CATS = [
     { key: 'joueur', icon: '⚽', label: 'Joueurs', color: '#009E60', colorDk: '#007a47' },
+    { key: 'athlete', icon: '🏃', label: 'Athlètes', color: '#0891b2', colorDk: '#0e7490' },
     { key: 'arbitre', icon: '🟨', label: 'Arbitres', color: '#f59e0b', colorDk: '#d97706' },
     { key: 'entraineur', icon: '📋', label: 'Entraîneurs', color: '#0d9488', colorDk: '#0f766e' },
     { key: 'club', icon: '🏟️', label: 'Clubs', color: '#f97316', colorDk: '#c2410c' },
@@ -54,7 +55,9 @@
     { key: 'independant', icon: '🧍', label: 'Indépendants', color: '#0ea5e9', colorDk: '#0284c7' },
     { key: 'eleve_etudiant', icon: '🎓', label: 'Élèves/Étudiants', color: '#6366f1', colorDk: '#4338ca' },
     { key: 'sportif_etranger', icon: '🌍', label: 'Sportifs étrangers', color: '#ca8a04', colorDk: '#92660a' },
-    { key: 'handisport', icon: '🦾', label: 'Sportifs handisport', color: '#7c3aed', colorDk: '#5b21b6' }
+    { key: 'handisport', icon: '🦾', label: 'Sportifs handisport', color: '#7c3aed', colorDk: '#5b21b6' },
+    { key: 'ancien_sportif', icon: '🎖️', label: 'Anciens Sportifs', color: '#9f1239', colorDk: '#881337' },
+    { key: 'formateur', icon: '🧑‍🏫', label: 'Formateurs', color: '#a21caf', colorDk: '#701a75' }
   ];
 
   const REPORT_REASONS = [
