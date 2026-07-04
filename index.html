@@ -4588,14 +4588,14 @@ function buildEditForm(p){
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      ${p.sport==='Football'?`<div class="form-group"><label>Pied fort</label>
+      <div class="form-group"><label>Pied fort</label>
         <select id="edit-pied">
           <option value="">—</option>
           <option${p.pied==='Droit'?' selected':''}>Droit</option>
           <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
           <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
         </select>
-      </div>`:`<input type="hidden" id="edit-pied" value="${p.pied||''}">`}
+      </div>
       <div class="form-group"><label>Main</label>
         <select id="edit-main">
           <option value="">—</option>
