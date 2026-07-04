@@ -1099,7 +1099,7 @@ tr.is-demo-row td { opacity: .82; }
           <div class="dash-card"><div class="dash-card-title">🥧 Répartition par rôle</div><div class="report-canvas-wrap"><canvas id="chart-roles"></canvas></div></div>
           <div class="dash-card"><div class="dash-card-title">✅ Répartition par statut</div><div class="report-canvas-wrap"><canvas id="chart-statuts"></canvas></div></div>
           <div class="dash-card"><div class="dash-card-title">🏟️ Membres par club</div><div class="report-canvas-wrap"><canvas id="chart-clubs"></canvas></div></div>
-          <div class="dash-card"><div class="dash-card-title">⚽ Top buteurs</div><div class="report-canvas-wrap"><canvas id="chart-buteurs"></canvas></div></div>
+          <div class="dash-card"><div class="dash-card-title">🏆 Top buteurs / marqueurs</div><div class="report-canvas-wrap"><canvas id="chart-buteurs"></canvas></div></div>
         </div>
 
         <div class="dash-card" style="margin-top:16px;">
@@ -1922,8 +1922,9 @@ tr.is-demo-row td { opacity: .82; }
     const byClub = {};
     visible.forEach(u => { const c = (u.club || '').trim(); if (c) byClub[c] = (byClub[c] || 0) + 1; });
 
+    const BALL_TEAM_SPORTS_RPT = ['Football','Basketball','Handball','Volleyball','Rugby'];
     const topScorers = visible
-      .filter(u => Number(u.buts) > 0)
+      .filter(u => u.role === 'joueur' && BALL_TEAM_SPORTS_RPT.includes(u.sport) && Number(u.buts) > 0)
       .sort((a, b) => (Number(b.buts) || 0) - (Number(a.buts) || 0))
       .slice(0, 8);
 
@@ -1944,8 +1945,8 @@ tr.is-demo-row td { opacity: .82; }
       ['Fiches actives', totalActifs],
       ['Clubs / Fédérations / Associations', totalOrgs],
       ['Matchs enregistrés', matches.length],
-      ['Buts marqués (cumulés)', visible.reduce((s, u) => s + (Number(u.buts) || 0), 0)],
-      ['Passes décisives (cumulées)', visible.reduce((s, u) => s + (Number(u.passes) || 0), 0)]
+      ['Buts marqués (cumulés)', visible.filter(u => u.role === 'joueur' && BALL_TEAM_SPORTS_RPT.includes(u.sport)).reduce((s, u) => s + (Number(u.buts) || 0), 0)],
+      ['Passes décisives (cumulées)', visible.filter(u => u.role === 'joueur' && BALL_TEAM_SPORTS_RPT.includes(u.sport)).reduce((s, u) => s + (Number(u.passes) || 0), 0)]
     ];
     const tbody = document.getElementById('report-summary-tbody');
     if (tbody) tbody.innerHTML = rows.map((r, i) =>
@@ -2026,6 +2027,8 @@ tr.is-demo-row td { opacity: .82; }
     const statusKey = u.status || 'active';
     const HS_CAT_LABELS_RPT = {visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
     const isHandisportRpt = u.role === 'handisport';
+    const BALL_TEAM_SPORTS_DOSSIER = ['Football','Basketball','Handball','Volleyball','Rugby'];
+    const isBallPlayerRpt = u.role === 'joueur' && BALL_TEAM_SPORTS_DOSSIER.includes(u.sport);
     body.innerHTML = `
       <div class="report-meta-line">Émis le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')} · GSC-ID ${esc(indivGscId(u))}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;">
@@ -2049,10 +2052,12 @@ tr.is-demo-row td { opacity: .82; }
               ` : `
               <tr><td style="font-weight:700">Taille</td><td>${esc(u.taille || '—')}</td></tr>
               <tr><td style="font-weight:700">Poids</td><td>${esc(u.poids || '—')}</td></tr>
-              <tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>
-              <tr><td style="font-weight:700">Matchs joués</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
-              <tr><td style="font-weight:700">Buts marqués</td><td>${esc(u.buts || 0)}</td></tr>
+              ${u.sport==='Football' ? `<tr><td style="font-weight:700">Pied fort</td><td>${esc(u.pied || '—')}</td></tr>` : ''}
+              <tr><td style="font-weight:700">${u.role==='arbitre'?'Matchs arbitrés':(u.role==='entraineur'?'Matchs encadrés':'Matchs joués')}</td><td>${esc(u.matchsJoues || u.matchsJ || 0)}</td></tr>
+              ${isBallPlayerRpt ? `
+              <tr><td style="font-weight:700">${u.sport==='Basketball'?'Points marqués':'Buts marqués'}</td><td>${esc(u.buts || 0)}</td></tr>
               <tr><td style="font-weight:700">Passes décisives</td><td>${esc(u.passes || 0)}</td></tr>
+              ` : ''}
               `}
             </tbody>
           </table>
@@ -3385,7 +3390,11 @@ tr.is-demo-row td { opacity: .82; }
     _editingId = null;
     document.getElementById('structure-form-title').textContent = 'Nouvelle structure';
     document.getElementById('structure-form-overlay').classList.add('open');
-    window.GSCStructureForm.open('structure-form-body', null, 'Football', window.GSCStructureProfile.getCurrentSeasonLabel());
+    // Ne plus imposer "Football" par défaut : on reprend la discipline du filtre actif
+    // (s'il en existe un précis), sinon on laisse le formulaire sans discipline présélectionnée
+    // pour que l'admin choisisse la discipline réelle de la nouvelle structure.
+    const defaultDiscipline = (_currentFilter && _currentFilter !== 'all') ? _currentFilter : null;
+    window.GSCStructureForm.open('structure-form-body', null, defaultDiscipline, window.GSCStructureProfile.getCurrentSeasonLabel());
   }
 
   function openEditForm(id) {

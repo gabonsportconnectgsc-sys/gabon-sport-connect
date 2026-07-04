@@ -496,7 +496,15 @@
           <!-- CONTRATS / MANDATS -->
           <div class="subsection">📄 Contrat / Mandat actuel</div>
           <div class="form-row">
-            <div class="fg"><label>Club / Structure actuel(le)</label><input type="text" id="a-club-actuel" placeholder="Nom du club ou structure"/></div>
+            <div class="fg">
+              <label>Club / Structure actuel(le)</label>
+              <select id="a-club-select" onchange="onClubSelectChange()">
+                <option value="">Sélectionner un club existant…</option>
+                <option value="__autre__">➕ Club non listé / autre</option>
+              </select>
+              <input type="text" id="a-club-actuel" placeholder="Nom du club ou structure" style="margin-top:8px;display:none;"/>
+              <div class="form-hint" id="a-club-hint" style="display:none;"></div>
+            </div>
             <div class="fg"><label>Type de contrat</label>
               <select id="a-contrat-type"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
             </div>
@@ -868,8 +876,76 @@
     document.getElementById('ex-org').classList.toggle('show', ['club','federation','association','organisateur'].includes(selectedRole));
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
+    if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
+      loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
+    }
     show('s2a');
   }
+
+  // ── SÉLECTION D'UN CLUB EXISTANT (liste déployable des clubs déjà enregistrés) ──
+  let _clubsCache = {}; // { sport: [{id,nom,ville}] }
+
+  async function loadClubOptionsForSport(sport) {
+    const sel = document.getElementById('a-club-select');
+    const hint = document.getElementById('a-club-hint');
+    const input = document.getElementById('a-club-actuel');
+    if (!sel) return;
+    const fallbackHtml = '<option value="">Sélectionner un club existant…</option><option value="__autre__">➕ Club non listé / autre</option>';
+    if (!sport) { sel.innerHTML = fallbackHtml; if (hint) hint.style.display = 'none'; return; }
+    sel.innerHTML = '<option value="">Chargement des clubs…</option>';
+    if (!db || typeof _getDocs !== 'function') {
+      // Firestore pas encore prêt : réessayer une fois après un court délai
+      setTimeout(() => { if (db && typeof _getDocs === 'function') loadClubOptionsForSport(sport); else sel.innerHTML = fallbackHtml; }, 800);
+      return;
+    }
+    try {
+      let clubs = _clubsCache[sport];
+      if (!clubs) {
+        const snap = await _getDocs(_query(_collection(db, 'structuresSportives'), _where('discipline', '==', sport), _where('type', '==', 'Club')));
+        clubs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+        _clubsCache[sport] = clubs;
+      }
+      sel.innerHTML = '<option value="">Sélectionner un club existant…</option>' +
+        clubs.map(c => `<option value="${(c.nom || '').replace(/"/g, '&quot;')}">${c.nom || 'Club sans nom'}${c.ville ? ' — ' + c.ville : ''}</option>`).join('') +
+        '<option value="__autre__">➕ Club non listé / autre</option>';
+      if (hint) {
+        hint.style.display = clubs.length ? 'none' : 'block';
+        hint.textContent = 'Votre club n\'apparaît pas ? Choisissez « Club non listé / autre » pour saisir son nom manuellement.';
+      }
+      // Si un club avait déjà été saisi manuellement et correspond à la liste, le pré-sélectionner
+      if (input && input.value && clubs.some(c => c.nom === input.value)) {
+        sel.value = input.value;
+        input.style.display = 'none';
+      }
+    } catch (e) {
+      console.warn('loadClubOptionsForSport:', e);
+      sel.innerHTML = fallbackHtml;
+      if (hint) { hint.style.display = 'block'; hint.textContent = 'Liste des clubs indisponible pour le moment — saisissez le nom manuellement.'; }
+    }
+  }
+  window.loadClubOptionsForSport = loadClubOptionsForSport;
+
+  function onClubSelectChange() {
+    const sel = document.getElementById('a-club-select');
+    const input = document.getElementById('a-club-actuel');
+    if (!sel || !input) return;
+    if (sel.value === '__autre__') {
+      input.style.display = 'block';
+      input.value = '';
+      input.focus();
+    } else {
+      input.style.display = 'none';
+      input.value = sel.value;
+    }
+  }
+  window.onClubSelectChange = onClubSelectChange;
+
+  // Recharger la liste des clubs quand le sport change
+  document.getElementById('a-sport')?.addEventListener('change', function() {
+    if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
+      loadClubOptionsForSport(this.value);
+    }
+  });
 
   function onHandisportCategorieChange() {
     const cat = document.getElementById('a-hs-categorie')?.value || '';
@@ -1143,7 +1219,7 @@
         <div class="fg"><label>Poste</label><input type="text" id="c${id}-poste" placeholder="Poste occupé"/></div>
         <div class="fg"><label>Matchs joués</label><input type="number" id="c${id}-matchs" placeholder="ex: 24" min="0"/></div>
       </div>
-      <div class="fg"><label>Statistiques clés</label><input type="text" id="c${id}-stats" placeholder="ex: 12 buts, 8 passes décisives"/></div>
+      <div class="fg"><label>Statistiques clés</label><input type="text" id="c${id}-stats" placeholder="ex: 12 victoires, 3 titres — adapté à votre discipline"/></div>
     `;
     list.appendChild(div);
   }
@@ -1176,14 +1252,20 @@
     'Basketball':  ['Tir','Passes','Dribble','Défense','Vision du jeu'],
     'Handball':    ['Tir','Passes','Feinte','Défense','Jeu collectif'],
     'Volleyball':  ['Service','Passe','Smash','Réception','Lecture du jeu'],
+    'Rugby':       ['Plaquage','Passes','Percussion','Défense','Jeu au pied'],
     'Athlétisme':  ['Départ réaction','Allure de course','Technique de saut','Lancer','Résistance'],
     'Judo':        ['Attaque','Défense','Projection','Sol','Stratégie'],
     'Boxe':        ['Jab','Cross','Crochet','Uppercut','Défense'],
     'Natation':    ['Départ','Virage','Nage libre','Endurance','Technique bras'],
     'Tennis':      ['Service','Revers','Coup droit','Vollée','Mental'],
+    'Cyclisme':    ['Sprint','Endurance','Technique de descente','Gestion de l\'effort','Positionnement'],
+    'Taekwondo':   ['Coups de pied','Défense','Enchaînements','Esquive','Stratégie'],
+    'Karaté':      ['Kata','Kumite','Défense','Précision','Stratégie'],
+    'Lutte':       ['Prise / Amenée au sol','Défense','Retournement','Contrôle','Stratégie'],
+    'Autre':       ['Technique 1','Technique 2','Technique 3','Technique 4','Stratégie'],
   };
   document.getElementById('a-sport')?.addEventListener('change', function() {
-    const labels = TECH_LABELS_BY_SPORT[this.value];
+    const labels = TECH_LABELS_BY_SPORT[this.value] || TECH_LABELS_BY_SPORT['Autre'];
     if (!labels) return;
     const container = document.getElementById('tech-ratings');
     const rows = container?.querySelectorAll('.rating-row');

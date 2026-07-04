@@ -216,6 +216,8 @@
           description: data.description || '',
           capacite: data.capacite || 0,
           adresse: data.adresse || '',
+          lat: data.lat ?? null,
+          lng: data.lng ?? null,
           photos: [],
           createdAt: new Date(),
           updatedAt: new Date()
@@ -242,6 +244,70 @@
       console.error('Delete infra erreur:', err);
       alert('❌ Erreur suppression');
     }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+   * 6bis. GÉOLOCALISATION — GPS natif, lien Google Maps / WhatsApp
+   * ══════════════════════════════════════════════════════════════════ */
+  function setInfraGeoHint(msg, isError) {
+    const el = document.getElementById('infra-geo-hint');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? '#dc2626' : 'var(--gray-txt)';
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) { setInfraGeoHint('⚠️ Géolocalisation non disponible sur cet appareil/navigateur.', true); return; }
+    setInfraGeoHint('📡 Récupération de la position en cours…');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latEl = document.getElementById('infra-lat');
+        const lngEl = document.getElementById('infra-lng');
+        if (latEl) latEl.value = pos.coords.latitude.toFixed(6);
+        if (lngEl) lngEl.value = pos.coords.longitude.toFixed(6);
+        setInfraGeoHint('✅ Position GPS récupérée et remplie automatiquement.');
+      },
+      (err) => setInfraGeoHint('❌ Impossible de récupérer la position : ' + (err.message || 'accès refusé.'), true),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  // Même logique que pour les structures : accepte les liens Google Maps classiques
+  // et les liens que WhatsApp affiche/génère lors du partage d'une position.
+  function extractLatLngFromLink() {
+    const link = document.getElementById('infra-maps-link')?.value?.trim() || '';
+    if (!link) { setInfraGeoHint('⚠️ Collez d\'abord un lien Google Maps ou WhatsApp.', true); return; }
+    const m = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if (!m) {
+      setInfraGeoHint('⚠️ Coordonnées introuvables dans ce lien. Si c\'est un lien court (maps.app.goo.gl ou lien WhatsApp raccourci), ouvrez-le d\'abord dans le navigateur puis collez l\'adresse complète qui s\'affiche.', true);
+      return;
+    }
+    const lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+    const latEl = document.getElementById('infra-lat');
+    const lngEl = document.getElementById('infra-lng');
+    if (latEl) latEl.value = lat;
+    if (lngEl) lngEl.value = lng;
+    setInfraGeoHint(`✅ Coordonnées extraites du lien : ${lat}, ${lng}`);
+  }
+
+  function openInMaps() {
+    const lat = document.getElementById('infra-lat')?.value;
+    const lng = document.getElementById('infra-lng')?.value;
+    if (!lat || !lng) { setInfraGeoHint('⚠️ Renseignez d\'abord la latitude/longitude (ou utilisez le GPS).', true); return; }
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  }
+
+  function shareLocationWhatsApp() {
+    const lat = document.getElementById('infra-lat')?.value;
+    const lng = document.getElementById('infra-lng')?.value;
+    if (!lat || !lng) { setInfraGeoHint('⚠️ Renseignez d\'abord la latitude/longitude (ou utilisez le GPS).', true); return; }
+    const nom = document.getElementById('infra-nom')?.value?.trim() || 'Infrastructure GSC';
+    const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+    const text = encodeURIComponent(`📍 ${nom} — Localisation : ${mapsUrl}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -282,6 +348,29 @@
                 <label>Adresse</label>
                 <input type="text" id="infra-adresse" placeholder="Localisation">
               </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Latitude GPS</label>
+                <input type="number" id="infra-lat" step="any" placeholder="ex: 0.4162">
+              </div>
+              <div class="field">
+                <label>Longitude GPS</label>
+                <input type="number" id="infra-lng" step="any" placeholder="ex: 9.4673">
+              </div>
+            </div>
+            <div class="field" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-top:4px;">
+              <label>📍 Localisation rapide</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;">
+                <button type="button" class="btn-sm" onclick="GSCInfrastructureModule.useMyLocation()">📡 Utiliser ma position GPS</button>
+                <button type="button" class="btn-sm" onclick="GSCInfrastructureModule.openInMaps()">🗺️ Voir sur Google Maps</button>
+                <button type="button" class="btn-sm" onclick="GSCInfrastructureModule.shareLocationWhatsApp()">💬 Partager via WhatsApp</button>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="infra-maps-link" placeholder="Coller un lien Google Maps ou WhatsApp (localisation partagée)…" style="flex:1;">
+                <button type="button" class="btn-sm" onclick="GSCInfrastructureModule.extractLatLngFromLink()">Extraire</button>
+              </div>
+              <div id="infra-geo-hint" style="font-size:11px;color:var(--gray-txt);margin-top:6px;">Astuce : sur WhatsApp, partagez la position du lieu, copiez le lien Google Maps généré, puis collez-le ci-dessus.</div>
             </div>
             <div class="modal-actions">
               <button class="btn btn-primary" onclick="GSCInfrastructureModule.saveInfra()">💾 Ajouter</button>
@@ -326,12 +415,15 @@
     createInfrastructure,
     prevPhoto() { console.log('prev'); },
     nextPhoto() { console.log('next'); },
+    useMyLocation, extractLatLngFromLink, openInMaps, shareLocationWhatsApp,
     saveInfra() {
       const nom = document.getElementById('infra-nom').value;
       const type = document.getElementById('infra-type').value;
       const desc = document.getElementById('infra-desc').value;
       const cap = document.getElementById('infra-capacite').value;
       const addr = document.getElementById('infra-adresse').value;
+      const lat = document.getElementById('infra-lat')?.value;
+      const lng = document.getElementById('infra-lng')?.value;
 
       if (!_currentStructureId) {
         alert('❌ Aucune structure sélectionnée. Sélectionnez d\'abord une structure avant d\'ajouter une infrastructure.');
@@ -342,7 +434,10 @@
         return;
       }
 
-      createInfrastructure(_currentStructureId, { nom, type, description: desc, capacite: cap, adresse: addr })
+      createInfrastructure(_currentStructureId, {
+        nom, type, description: desc, capacite: cap, adresse: addr,
+        lat: lat ? parseFloat(lat) : null, lng: lng ? parseFloat(lng) : null
+      })
         .then(() => { alert('✅ Infrastructure ajoutée'); location.reload(); })
         .catch((err) => alert('❌ Erreur : ' + (err && err.message ? err.message : 'échec de l\'enregistrement')));
     }

@@ -80,6 +80,7 @@
           nom: player.nom,
           prenom: player.prenom,
           role: player.role,
+          sport: player.sport || '',
           club: player.club,
           email: player.email,
           telephone: player.telephone,
@@ -248,6 +249,9 @@
       `;
     } else {
       const stats = archive.stats || {};
+      const BALL_TEAM_SPORTS_ARC = ['Football','Basketball','Handball','Volleyball','Rugby'];
+      const CARD_SPORTS_ARC = ['Football','Handball','Rugby'];
+      const isBallArchive = BALL_TEAM_SPORTS_ARC.includes(archive.sport);
 
       return `
         <div class="dash-card">
@@ -256,17 +260,19 @@
             <div><strong>Nom</strong><br>${esc(archive.prenom)} ${esc(archive.nom)}</div>
             <div><strong>Club</strong><br>${esc(archive.club) || '—'}</div>
             <div><strong>Rôle</strong><br>${esc(archive.role)}</div>
+            ${archive.sport ? `<div><strong>Discipline</strong><br>${D() ? D().getIcon(archive.sport) : ''} ${esc(archive.sport)}</div>` : ''}
           </div>
         </div>
 
         <div class="dash-card">
-          <div class="dash-card-title">⚽ Statistiques ${archive.saison}</div>
+          <div class="dash-card-title">📊 Statistiques ${archive.saison}</div>
           <div class="detail-grid">
             <div><strong>Matchs</strong><br>${stats.matchsJoues || 0}</div>
-            <div><strong>Buts</strong><br>${stats.buts || 0}</div>
-            <div><strong>Passes</strong><br>${stats.passes || 0}</div>
+            ${isBallArchive ? `<div><strong>${archive.sport==='Basketball'?'Points':'Buts'}</strong><br>${stats.buts || 0}</div>` : ''}
+            ${isBallArchive ? `<div><strong>Passes</strong><br>${stats.passes || 0}</div>` : ''}
+            ${isBallArchive && CARD_SPORTS_ARC.includes(archive.sport) ? `
             <div><strong>Cartons J.</strong><br>${stats.cartonsJaunes || 0}</div>
-            <div><strong>Cartons R.</strong><br>${stats.cartonsRouges || 0}</div>
+            <div><strong>Cartons R.</strong><br>${stats.cartonsRouges || 0}</div>` : ''}
           </div>
         </div>
       `;

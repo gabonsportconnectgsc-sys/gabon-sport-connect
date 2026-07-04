@@ -1888,7 +1888,7 @@
             <div class="phys-card"><div class="phys-val" id="prof-taille">—</div><div class="phys-lbl">Taille (cm)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-poids">—</div><div class="phys-lbl">Poids (kg)</div></div>
             <div class="phys-card"><div class="phys-val" id="prof-age">—</div><div class="phys-lbl">Âge</div></div>
-            <div class="phys-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
+            <div class="phys-card" id="prof-pied-card"><div class="phys-val" id="prof-pied">—</div><div class="phys-lbl">Pied fort</div></div>
           </div>
         </div>
       </div>
@@ -1901,9 +1901,9 @@
         </div>
         <div class="card-body">
           <div class="stats-row" style="margin-bottom:14px;">
-            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl">Matchs</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl">Buts/Pts</div></div>
-            <div class="mini-stat"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl">Passes</div></div>
+            <div class="mini-stat"><div class="ms-val" id="prof-matchs">0</div><div class="ms-lbl" id="prof-matchs-lbl">Matchs</div></div>
+            <div class="mini-stat" id="prof-buts-card"><div class="ms-val" id="prof-buts">0</div><div class="ms-lbl" id="prof-buts-lbl">Buts/Pts</div></div>
+            <div class="mini-stat" id="prof-passes-card"><div class="ms-val" id="prof-passes">0</div><div class="ms-lbl">Passes</div></div>
           </div>
           <div class="sport-stats-grid" id="sport-stats-display"></div>
         </div>
@@ -3341,7 +3341,7 @@ async function onSupabaseSignedIn(user, extra){
       nationalite: extra?.nationalite || user.user_metadata?.nationalite || 'Gabonaise',
       statut:     extra?.statut     || user.user_metadata?.statut     || 'libre',
       employeur:  extra?.employeur  || user.user_metadata?.employeur  || '',
-      sport:      extra?.sport      || user.user_metadata?.sport      || 'Football',
+      sport:      extra?.sport      || user.user_metadata?.sport      || '',
       isSupporter: extra?.isSupporter ?? user.user_metadata?.isSupporter ?? false,
       clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
       status:     'pending',
@@ -3791,9 +3791,9 @@ async function loadUserProfile(uid){
   try{
     const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }catch(e){
-    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'Football',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }
 }
 
@@ -4295,10 +4295,13 @@ function openActorDetail(uid){
     }
     // Stats
     if(a.role==='joueur'){
+      const BALL_TEAM_SPORTS_ADM=['Football','Basketball','Handball','Volleyball','Rugby'];
       html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
       html+=`<div class="adm-stats-grid">`;
       html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">Buts/Pts</div></div>`;
+      if(BALL_TEAM_SPORTS_ADM.includes(a.sport)){
+        html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">${a.sport==='Basketball'?'Points':'Buts'}</div></div>`;
+      }
       html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
       html+=`</div></div>`;
     }
@@ -4478,6 +4481,24 @@ function renderProfile(){
     document.getElementById('prof-matchs').textContent=p.matchsJoues??0;
     document.getElementById('prof-buts').textContent=p.buts??0;
     document.getElementById('prof-passes').textContent=p.passes??0;
+    // ── Éviter les anomalies "football" hors contexte : n'afficher "Pied fort",
+    // "Buts/Pts" et "Passes" que pour les rôles/disciplines où ces notions existent
+    // réellement (sports collectifs avec ballon). Pour la boxe, le judo, l'athlétisme,
+    // les arbitres/entraîneurs, etc., ces cartes sont masquées plutôt que d'afficher "0".
+    const BALL_TEAM_SPORTS=['Football','Basketball','Handball','Volleyball','Rugby'];
+    const SCORING_ROLES=['joueur','independant','eleve_etudiant','sportif_etranger','handisport'];
+    const isBallSport=BALL_TEAM_SPORTS.includes(p.sport);
+    const canScore=isBallSport && SCORING_ROLES.includes(p.role);
+    const piedCard=document.getElementById('prof-pied-card');
+    if(piedCard) piedCard.style.display=(p.sport==='Football')?'':'none';
+    const butsCard=document.getElementById('prof-buts-card');
+    const passesCard=document.getElementById('prof-passes-card');
+    if(butsCard) butsCard.style.display=canScore?'':'none';
+    if(passesCard) passesCard.style.display=canScore?'':'none';
+    const butsLbl=document.getElementById('prof-buts-lbl');
+    if(butsLbl) butsLbl.textContent=(p.sport==='Basketball')?'Points':'Buts';
+    const matchsLbl=document.getElementById('prof-matchs-lbl');
+    if(matchsLbl) matchsLbl.textContent=(p.role==='arbitre')?'Matchs arbitrés':(p.role==='entraineur')?'Matchs encadrés':'Matchs';
     const pb=document.getElementById('prof-position-badge');
     if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
     else pb.innerHTML='';
@@ -4518,9 +4539,11 @@ function renderProfile(){
 function renderSportStats(p){
   const container=document.getElementById('sport-stats-display');
   if(!container) return;
-  const sport=p.sport||'Football';
+  const sport=p.sport||'';
   let items=[];
-  if(sport==='Football'){
+  if(!sport){
+    items=[{icon:'🎯',val:p.matchsJoues??0,lbl:'Matchs'},{icon:'🏆',val:p.trophees??0,lbl:'Trophées'}];
+  } else if(sport==='Football'){
     items=p.poste==='Gardien'
       ?[{icon:'✋',val:p.arrets??0,lbl:'Arrêts'},{icon:'🧤',val:p.cleanSheets??0,lbl:'Clean sheets'},{icon:'🥅',val:p.butsEncaissés??0,lbl:'Buts enc.'},{icon:'📊',val:(p.pctArrets??0)+'%',lbl:'% Arrêts'}]
       :[{icon:'🥅',val:p.buts??0,lbl:'Buts'},{icon:'🅰️',val:p.passes??0,lbl:'Passes déc.'},{icon:'🟨',val:p.cartonsJaunes??0,lbl:'C. jaunes'},{icon:'🟥',val:p.cartonsRouges??0,lbl:'C. rouges'}];
@@ -4564,15 +4587,15 @@ function buildEditForm(p){
       <div class="form-group"><label>Taille (cm)</label><input type="number" id="edit-taille" value="${p.taille||''}" placeholder="175"></div>
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>Pied fort</label>
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      ${p.sport==='Football'?`<div class="form-group"><label>Pied fort</label>
         <select id="edit-pied">
           <option value="">—</option>
           <option${p.pied==='Droit'?' selected':''}>Droit</option>
           <option${p.pied==='Gauche'?' selected':''}>Gauche</option>
           <option${p.pied==='Les deux'?' selected':''}>Les deux</option>
         </select>
-      </div>
+      </div>`:`<input type="hidden" id="edit-pied" value="${p.pied||''}">`}
       <div class="form-group"><label>Main</label>
         <select id="edit-main">
           <option value="">—</option>
@@ -4629,20 +4652,37 @@ function buildEditForm(p){
       h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
     }
 
-    if(p.role==='joueur'){
+    const BALL_TEAM_SPORTS=['Football','Basketball','Handball','Volleyball','Rugby'];
+    const CARD_SPORTS=['Football','Handball','Rugby']; // sports where cartons jaunes/rouges existent réellement
+    if(p.role==='joueur' && BALL_TEAM_SPORTS.includes(p.sport)){
+      const butsLabel=(p.sport==='Basketball')?'Points':'Buts';
       h+=`<div class="section-divider green">📊 Statistiques</div>`;
       h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group"><label>Matchs joués</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
-        <div class="form-group"><label>Buts / Points</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
+        <div class="form-group"><label>${butsLabel}</label><input type="number" id="edit-buts" value="${p.buts??0}" min="0"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group"><label>Passes déc.</label><input type="number" id="edit-passes" value="${p.passes??0}" min="0"></div>
         <div class="form-group"><label>Trophées</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
-        <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
       </div>`;
+      if(CARD_SPORTS.includes(p.sport)){
+        h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>Cartons jaunes</label><input type="number" id="edit-cartons-j" value="${p.cartonsJaunes??0}" min="0"></div>
+          <div class="form-group"><label>Cartons rouges</label><input type="number" id="edit-cartons-r" value="${p.cartonsRouges??0}" min="0"></div>
+        </div>`;
+      } else {
+        h+=`<input type="hidden" id="edit-cartons-j" value="${p.cartonsJaunes??0}"><input type="hidden" id="edit-cartons-r" value="${p.cartonsRouges??0}">`;
+      }
+    } else if(p.role==='joueur' || p.role==='independant' || p.role==='eleve_etudiant' || p.role==='sportif_etranger' || p.role==='handisport'){
+      // Discipline individuelle / combat (judo, boxe, natation, athlétisme…) : pas de buts/passes/cartons,
+      // seulement des statistiques génériques pertinentes pour ce type de pratique.
+      h+=`<div class="section-divider green">📊 Statistiques</div>`;
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Matchs / Compétitions</label><input type="number" id="edit-matchs" value="${p.matchsJoues??0}" min="0"></div>
+        <div class="form-group"><label>Trophées / Médailles</label><input type="number" id="edit-trophees" value="${p.trophees??0}" min="0"></div>
+      </div>
+      <input type="hidden" id="edit-buts" value="${p.buts??0}"><input type="hidden" id="edit-passes" value="${p.passes??0}">
+      <input type="hidden" id="edit-cartons-j" value="${p.cartonsJaunes??0}"><input type="hidden" id="edit-cartons-r" value="${p.cartonsRouges??0}">`;
     }
   }
 
@@ -4777,10 +4817,10 @@ function addMandatField(){
 function removeMandatField(id){ document.getElementById(id)?.remove(); }
 window.updatePosteOptions=updatePosteOptions;
 function updatePosteOptions(){
-  const sport=(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim();
+  const sport=(document.getElementById('edit-sport')?.value||userProfile?.sport||'').replace(/^[^\w]+/,'').trim();
   const sel=document.getElementById('edit-poste');
   if(!sel) return;
-  const sportKey=Object.keys(POSTES).find(k=>sport.includes(k))||'Football';
+  const sportKey=Object.keys(POSTES).find(k=>sport.includes(k));
   const opts=(POSTES[sportKey]||['Joueur']);
   const cur=userProfile?.poste||'';
   sel.innerHTML=opts.map(p=>`<option${p===cur?' selected':''}>${p}</option>`).join('');
@@ -4821,7 +4861,7 @@ async function saveProfile(){
       poids:parseInt(document.getElementById('edit-poids')?.value)||0,
       pied:document.getElementById('edit-pied')?.value||'',
       main:document.getElementById('edit-main')?.value||'',
-      sport:(document.getElementById('edit-sport')?.value||'Football').replace(/^[^\w]+/,'').trim(),
+      sport:(document.getElementById('edit-sport')?.value||p.sport||'').replace(/^[^\w]+/,'').trim(),
       poste:document.getElementById('edit-poste')?.value||'',
       niveau:document.getElementById('edit-niveau')?.value||'Amateur',
       licenceNumero:document.getElementById('edit-licence-num')?.value.trim()||'',
@@ -5718,7 +5758,7 @@ function adminEditUser(uid){
   document.getElementById('admin-edit-prenom').value=user.prenom||user.nomOrganisation||'';
   document.getElementById('admin-edit-nom').value=user.nom||'';
   document.getElementById('admin-edit-role').value=user.role||'joueur';
-  document.getElementById('admin-edit-sport').value=user.sport||user.sports?.[0]||'Football';
+  document.getElementById('admin-edit-sport').value=user.sport||user.sports?.[0]||'';
   document.getElementById('admin-edit-niveau').value=user.niveau||'Amateur';
   document.getElementById('admin-edit-status').value=user.status||'active';
   document.getElementById('modal-edit-user').classList.add('open');

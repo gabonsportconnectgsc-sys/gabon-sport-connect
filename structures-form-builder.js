@@ -27,7 +27,7 @@
   /* ══════════════════════════════════════════════════════════════════
    * 1. SECTIONS STATIQUES
    * ══════════════════════════════════════════════════════════════════ */
-  function sectionIdentity(s, sport) {
+  function sectionIdentity(s, sport, sportChosen) {
     const disciplines = D().list();
     const types = D().getStructureTypes(sport);
     return `
@@ -40,7 +40,8 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label>Discipline principale</label>
           <select id="sf-discipline" onchange="GSCStructureForm.onDisciplineChange(this.value)">
-            ${disciplines.map(d => `<option value="${esc(d)}" ${d === sport ? 'selected' : ''}>${D().getIcon(d)} ${esc(d)}</option>`).join('')}
+            ${sportChosen ? '' : '<option value="" disabled selected>-- Choisir une discipline --</option>'}
+            ${disciplines.map(d => `<option value="${esc(d)}" ${d === sportChosen ? 'selected' : ''}>${D().getIcon(d)} ${esc(d)}</option>`).join('')}
           </select></div>
         <div class="form-group"><label>Type de structure</label>
           <select id="sf-type">
@@ -55,6 +56,19 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label>Latitude GPS</label><input type="number" id="sf-lat" step="any" value="${s.lat ?? ''}"></div>
         <div class="form-group"><label>Longitude GPS</label><input type="number" id="sf-lng" step="any" value="${s.lng ?? ''}"></div>
+      </div>
+      <div class="form-group" style="background:#f8fafc;border:1px solid var(--gray-bd,#e2e8f0);border-radius:10px;padding:10px 12px;margin-top:4px;">
+        <label>📍 Localisation rapide</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;">
+          <button type="button" class="btn-sm" onclick="GSCStructureForm.useMyLocation()">📡 Utiliser ma position GPS</button>
+          <button type="button" class="btn-sm" onclick="GSCStructureForm.openInMaps()">🗺️ Voir sur Google Maps</button>
+          <button type="button" class="btn-sm" onclick="GSCStructureForm.shareLocationWhatsApp()">💬 Partager via WhatsApp</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="sf-maps-link" placeholder="Coller un lien Google Maps ou WhatsApp (localisation partagée)…" style="flex:1;">
+          <button type="button" class="btn-sm" onclick="GSCStructureForm.extractLatLngFromLink()">Extraire</button>
+        </div>
+        <div id="sf-geo-hint" style="font-size:11px;color:var(--gray-txt);margin-top:6px;">Astuce : sur WhatsApp, partagez la position du lieu, copiez le lien Google Maps généré, puis collez-le ci-dessus.</div>
       </div>
     </div>`;
   }
@@ -120,15 +134,16 @@
     </div>`;
   }
 
-  function sectionAffiliations(s) {
+  function sectionAffiliations(s, sportChosen) {
     const list = Array.isArray(s.affiliations) ? s.affiliations : [];
     const rows = list.map(a => dynRow(
       [{ key: 'organisme', label: 'Organisme' }, { key: 'numeroAffiliation', label: 'N° affiliation' }, { key: 'dateAffiliation', label: 'Date (AAAA-MM-JJ)' }], a
     )).join('');
+    const disciplineForSuggestions = sportChosen || s.discipline || '';
     return `
     <div class="form-section">
       <div class="section-divider">🔗 Affiliations</div>
-      <p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">Organismes suggérés : ${D().getOrganismes(s.discipline || 'Football').join(', ')}</p>
+      ${disciplineForSuggestions ? `<p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">Organismes suggérés : ${D().getOrganismes(disciplineForSuggestions).join(', ')}</p>` : `<p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">Choisissez d'abord une discipline ci-dessus pour voir les organismes suggérés.</p>`}
       <div id="sf-affiliations-rows">${rows}</div>
       <button type="button" class="btn-sm" onclick="GSCStructureForm.addRow('sf-affiliations-rows',['organisme','numeroAffiliation','dateAffiliation'])">+ Ajouter une affiliation</button>
     </div>`;
@@ -216,7 +231,8 @@
    * 4. ASSEMBLAGE DU FORMULAIRE
    * ══════════════════════════════════════════════════════════════════ */
   function build(structure, sport, saison) {
-    sport = sport || structure.discipline || 'Football';
+    const sportChosen = sport || structure.discipline || '';
+    sport = sportChosen || 'Football'; // secours interne uniquement pour générer catégories/rôles/organismes
     saison = saison || structure.saisonCourante || P().getCurrentSeasonLabel();
     const saisonData = P().ensureSeason(structure, saison, sport);
 
@@ -232,10 +248,10 @@
         </div>
         <button type="button" class="btn-sm" onclick="GSCStructureForm.newSeason()">+ Nouvelle saison</button>
       </div>
-      ${sectionIdentity(structure, sport)}
+      ${sectionIdentity(structure, sport, sportChosen)}
       ${sectionLegal(structure)}
       ${sectionGovernance(structure)}
-      ${sectionAffiliations(structure)}
+      ${sectionAffiliations(structure, sportChosen)}
       ${sectionEffectifs(saisonData, sport)}
       ${sectionRoster(saisonData, sport, saison)}
       ${sectionEncadrement(saisonData, sport)}
@@ -245,7 +261,7 @@
 
   function open(container, structure, sport, saison) {
     _currentStructure = structure ? JSON.parse(JSON.stringify(structure)) : {
-      nom: '', sigle: '', type: '', discipline: sport || 'Football',
+      nom: '', sigle: '', type: '', discipline: sport || '',
       ville: 'Libreville', lat: null, lng: null, statutJuridique: {},
       gouvernance: { bureau: [] }, affiliations: [], saisons: {}, status: 'active'
     };
@@ -287,6 +303,71 @@
     const label = prompt('Nouvelle saison (ex : 2026-2027) :', P().getCurrentSeasonLabel());
     if (!label) return;
     onSeasonChange(label.trim());
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+   * 5bis. GÉOLOCALISATION — GPS natif, lien Google Maps / WhatsApp
+   * ══════════════════════════════════════════════════════════════════ */
+  function setGeoHint(msg, isError) {
+    const el = document.getElementById('sf-geo-hint');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? '#dc2626' : 'var(--gray-txt)';
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) { setGeoHint('⚠️ Géolocalisation non disponible sur cet appareil/navigateur.', true); return; }
+    setGeoHint('📡 Récupération de la position en cours…');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latEl = document.getElementById('sf-lat');
+        const lngEl = document.getElementById('sf-lng');
+        if (latEl) latEl.value = pos.coords.latitude.toFixed(6);
+        if (lngEl) lngEl.value = pos.coords.longitude.toFixed(6);
+        setGeoHint('✅ Position GPS récupérée et remplie automatiquement.');
+      },
+      (err) => setGeoHint('❌ Impossible de récupérer la position : ' + (err.message || 'accès refusé.'), true),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  // Extrait lat/lng d'un lien Google Maps (formats @lat,lng / ?q=lat,lng / ?ll=lat,lng /
+  // !3dlat!4dlng) — c'est aussi le format que WhatsApp génère quand on partage une position
+  // et que le destinataire copie le lien "Voir la position" dans son navigateur.
+  function extractLatLngFromLink() {
+    const link = document.getElementById('sf-maps-link')?.value?.trim() || '';
+    if (!link) { setGeoHint('⚠️ Collez d\'abord un lien Google Maps ou WhatsApp.', true); return; }
+    const m = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || link.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if (!m) {
+      setGeoHint('⚠️ Coordonnées introuvables dans ce lien. Si c\'est un lien court (maps.app.goo.gl ou lien WhatsApp raccourci), ouvrez-le d\'abord dans le navigateur puis collez l\'adresse complète qui s\'affiche.', true);
+      return;
+    }
+    const lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+    const latEl = document.getElementById('sf-lat');
+    const lngEl = document.getElementById('sf-lng');
+    if (latEl) latEl.value = lat;
+    if (lngEl) lngEl.value = lng;
+    setGeoHint(`✅ Coordonnées extraites du lien : ${lat}, ${lng}`);
+  }
+
+  function openInMaps() {
+    const lat = document.getElementById('sf-lat')?.value;
+    const lng = document.getElementById('sf-lng')?.value;
+    if (!lat || !lng) { setGeoHint('⚠️ Renseignez d\'abord la latitude/longitude (ou utilisez le GPS).', true); return; }
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  }
+
+  function shareLocationWhatsApp() {
+    const lat = document.getElementById('sf-lat')?.value;
+    const lng = document.getElementById('sf-lng')?.value;
+    if (!lat || !lng) { setGeoHint('⚠️ Renseignez d\'abord la latitude/longitude (ou utilisez le GPS).', true); return; }
+    const nom = document.getElementById('sf-nom')?.value?.trim() || 'Structure GSC';
+    const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+    const text = encodeURIComponent(`📍 ${nom} — Localisation : ${mapsUrl}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -403,6 +484,7 @@
   window.GSCStructureForm = {
     open, build, addRow, addRosterRow,
     onDisciplineChange, onSeasonChange, newSeason,
+    useMyLocation, extractLatLngFromLink, openInMaps, shareLocationWhatsApp,
     collect, save
   };
 
