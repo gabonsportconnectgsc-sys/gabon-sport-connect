@@ -7852,6 +7852,23 @@ function injectActorQr(uid, role, containerSelector){
 
 // Zoom QR depuis fiche acteur
 function openActorQrZoom(uid, role){
+  // Sécurité anti-fraude : seuls le propriétaire du QR, un admin, ou l'employeur
+  // (club/association/fédération du joueur, pour imprimer ses badges) peuvent l'agrandir.
+  // Les autres membres ne voient que la miniature (aucune action au clic).
+  const isQrOwnerGuard = currentUser && currentUser.uid === uid;
+  const isAdminGuard = userProfile && userProfile.role === 'admin';
+  const isEmployerGuard = userProfile
+    && ['club','association','federation'].includes(userProfile.role)
+    && (() => {
+        const targetActor = (allActors.find(a=>(a.id||a.uid)===uid))||{};
+        const clubName = (userProfile.nomOrganisation||'').trim().toLowerCase();
+        const actorClub = (targetActor.club||'').trim().toLowerCase();
+        return clubName && actorClub && actorClub === clubName;
+      })();
+  if(!isQrOwnerGuard && !isAdminGuard && !isEmployerGuard){
+    if(typeof toast==='function') toast("Vous ne pouvez consulter que votre propre QR Code en grand format.", 'info');
+    return;
+  }
   const actor = allActors.find(a=>(a.id||a.uid)===uid)||{};
   const gscId = generateGscId(uid, role);
   const name = [actor.prenom,actor.nom,actor.nomOrganisation].filter(Boolean).join(' ')||uid.slice(0,8);
