@@ -35,6 +35,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/qr-scanner.css">
   <style>
     :root {
       --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -2786,7 +2787,7 @@
       <label class="adm-cover-hint" id="adm-cover-hint" for="adm-cover-input" style="display:none;">📷 Couverture</label>
       <input type="file" id="adm-cover-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadCoverPhoto(this)">
       <div class="adm-hero-content">
-        <div class="adm-avatar" id="adm-avatar">?</div>
+        <div class="adm-avatar" id="adm-avatar" onclick="openProfilePhotoZoom()" title="Agrandir la photo" style="cursor:pointer;">?</div>
         <div class="adm-name" id="adm-name">—</div>
         <div class="adm-sub" id="adm-sub">—</div>
         <div class="adm-gscid-block" id="adm-gscid-block" style="display:none;">
@@ -7658,6 +7659,11 @@ window.resetScoutFilters = resetScoutFilters;
     <canvas id="qr-scanner-canvas" style="display:none;"></canvas>
     <div class="qr-scanner-status" id="qr-scanner-status">Pointez la caméra vers un QR Code GSC…</div>
     <div class="qr-scanner-result" id="qr-scanner-result">
+      <div class="qr-scanner-result-photo-wrap" id="qr-scanner-result-photo-wrap" onclick="openScanPhotoZoom()" title="Agrandir la photo pour vérification">
+        <img id="qr-scanner-result-photo" alt="" style="display:none;">
+        <div id="qr-scanner-result-photo-fallback" style="display:none;">👤</div>
+        <div class="qr-scanner-result-photo-hint">🔍</div>
+      </div>
       <div class="qr-scanner-result-name" id="qr-scanner-result-name">—</div>
       <div class="qr-scanner-result-role" id="qr-scanner-result-role">—</div>
       <button class="qr-scanner-result-btn" id="qr-scanner-result-btn" onclick="goToScannedActor()">👤 Voir la fiche complète</button>
@@ -7667,6 +7673,13 @@ window.resetScoutFilters = resetScoutFilters;
       <button onclick="lookupManualGscId()">🔎</button>
     </div>
   </div>
+</div>
+
+<!-- ── ZOOM PLEIN ÉCRAN — photo de vérification faciale post-scan QR ── -->
+<div class="scan-photo-zoom-modal" id="scan-photo-zoom-modal" onclick="closeScanPhotoZoom()">
+  <button class="scan-photo-zoom-close" onclick="closeScanPhotoZoom()">✕</button>
+  <div class="scan-photo-zoom-caption" id="scan-photo-zoom-caption">—</div>
+  <img id="scan-photo-zoom-img" src="" alt="Photo de vérification">
 </div>
 
 <script>
@@ -7999,6 +8012,22 @@ function showScanResult(actor){
   const roleLabel = (typeof ROLE_LABELS!=='undefined' ? ROLE_LABELS[actor.role] : null) || actor.role || '—';
   document.getElementById('qr-scanner-result-name').textContent = name;
   document.getElementById('qr-scanner-result-role').textContent = roleLabel;
+  // Photo de vérification faciale — même logique de résolution que le reste de l'app
+  const uid = actor.uid || actor.id;
+  let localPhoto = null;
+  try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhoto=d.photos?.[uid]||null;}}catch(e){}
+  const scanPhotoSrc = actor.photoURL || (actor.photo && actor.photo.startsWith('data:') ? actor.photo : null) || localPhoto || (window.GSC_DEFAULT_AVATARS && window.GSC_DEFAULT_AVATARS[actor.role]) || null;
+  const imgEl = document.getElementById('qr-scanner-result-photo');
+  const fallbackEl = document.getElementById('qr-scanner-result-photo-fallback');
+  if(scanPhotoSrc){
+    imgEl.src = scanPhotoSrc;
+    imgEl.style.display = 'block';
+    fallbackEl.style.display = 'none';
+  } else {
+    imgEl.style.display = 'none';
+    fallbackEl.textContent = (typeof ROLE_ICONS!=='undefined' && ROLE_ICONS[actor.role]) || (name[0]||'?').toUpperCase();
+    fallbackEl.style.display = 'flex';
+  }
   document.getElementById('qr-scanner-result').classList.add('show');
   const statusEl = document.getElementById('qr-scanner-status');
   if(actor.status === 'pending'){
@@ -8012,6 +8041,38 @@ function showScanResult(actor){
   }
   stopQrScannerLoop();
 }
+
+// Zoom plein écran de la photo — vérification faciale post-scan QR (cérémonies, accès).
+// Volontairement disponible uniquement à ce niveau (résultat de scan), pas ailleurs dans l'app.
+function openScanPhotoZoom(){
+  if(!_qrScannerLastResult) return;
+  const imgEl = document.getElementById('qr-scanner-result-photo');
+  if(!imgEl || imgEl.style.display==='none' || !imgEl.src) return; // pas de photo à zoomer
+  const name = [_qrScannerLastResult.prenom, _qrScannerLastResult.nom, _qrScannerLastResult.nomOrganisation].filter(Boolean).join(' ') || '—';
+  const roleLabel = (typeof ROLE_LABELS!=='undefined' ? ROLE_LABELS[_qrScannerLastResult.role] : null) || _qrScannerLastResult.role || '';
+  document.getElementById('scan-photo-zoom-img').src = imgEl.src;
+  document.getElementById('scan-photo-zoom-caption').textContent = name + (roleLabel ? ' · ' + roleLabel : '');
+  document.getElementById('scan-photo-zoom-modal').classList.add('open');
+}
+function closeScanPhotoZoom(){
+  document.getElementById('scan-photo-zoom-modal').classList.remove('open');
+}
+window.openScanPhotoZoom = openScanPhotoZoom;
+window.closeScanPhotoZoom = closeScanPhotoZoom;
+
+// Zoom plein écran de la photo de profil depuis la fiche publique complète (adm-avatar).
+// Vérification faciale (ex: contrôle d'accès après scan QR) — refermable après vérification.
+function openProfilePhotoZoom(){
+  const avatarEl = document.getElementById('adm-avatar');
+  const imgEl = avatarEl ? avatarEl.querySelector('img') : null;
+  if(!imgEl || !imgEl.src) return; // pas de photo (icône/initiale par défaut) : rien à zoomer
+  const name = document.getElementById('adm-name')?.textContent || '—';
+  const roleLabel = document.getElementById('adm-sub')?.textContent || '';
+  document.getElementById('scan-photo-zoom-img').src = imgEl.src;
+  document.getElementById('scan-photo-zoom-caption').textContent = name + (roleLabel ? ' · ' + roleLabel : '');
+  document.getElementById('scan-photo-zoom-modal').classList.add('open');
+}
+window.openProfilePhotoZoom = openProfilePhotoZoom;
 
 function goToScannedActor(){
   if(!_qrScannerLastResult) return;
@@ -8072,6 +8133,8 @@ async function openQrScanner(){
   document.getElementById('qr-scanner-result').classList.remove('show');
   const manualInput = document.getElementById('qr-scanner-manual-input');
   if(manualInput) manualInput.value = '';
+  const resultImg = document.getElementById('qr-scanner-result-photo');
+  if(resultImg){ resultImg.src=''; resultImg.style.display='none'; }
   modal.classList.add('open');
   statusEl.textContent = 'Activation de la caméra…';
 
