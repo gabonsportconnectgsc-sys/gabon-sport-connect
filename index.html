@@ -1626,15 +1626,16 @@
 
       <!-- ══ SYSTÈME RECHERCHE RECRUTEURS / SÉLECTIONNEURS (public) ══ -->
       <div class="card mb-16 fade-up" id="scout-search-panel">
-        <div class="card-header" style="background:linear-gradient(135deg,#0A1628,#1a2d4a);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;">
-          <div style="display:flex;align-items:center;gap:10px;width:100%;">
-            <span style="font-size:20px;flex-shrink:0;">🎯</span>
-            <div style="min-width:0;flex:1;">
-              <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#fff;line-height:1.25;">Recherche Sélectionneur / Recruteur</div>
-              <div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;">Filtres avancés par profil physique, technique & sportif</div>
+        <div class="card-header" style="background:linear-gradient(135deg,#0A1628,#1a2d4a);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:14px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;overflow:hidden;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;text-align:center;">
+            <span style="font-size:20px;">🎯</span>
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#fff;line-height:1.3;">
+              <div>Recherche</div>
+              <div>Sélectionneur / Recruteur</div>
             </div>
+            <div style="font-size:10px;color:rgba(255,255,255,.55);">Filtres avancés par profil physique, technique & sportif</div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;width:100%;">
+          <div style="display:flex;gap:6px;align-items:center;justify-content:center;width:100%;">
             <button id="btn-view-grid" onclick="setViewMode('grid')" title="Vue cartes" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">⊞</button>
             <button id="btn-view-list" onclick="setViewMode('list')" title="Liste compacte" style="width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.15);color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;">☰</button>
             <button onclick="toggleScoutPanel()" id="scout-toggle-btn" style="padding:5px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">▼ Filtres</button>
