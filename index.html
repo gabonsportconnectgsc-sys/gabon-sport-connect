@@ -4587,7 +4587,7 @@ function buildEditForm(p){
       <div class="form-group"><label>Taille (cm)</label><input type="number" id="edit-taille" value="${p.taille||''}" placeholder="175"></div>
       <div class="form-group"><label>Poids (kg)</label><input type="number" id="edit-poids" value="${p.poids||''}" placeholder="70"></div>
     </div>
-    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       ${p.sport==='Football'?`<div class="form-group"><label>Pied fort</label>
         <select id="edit-pied">
           <option value="">—</option>
