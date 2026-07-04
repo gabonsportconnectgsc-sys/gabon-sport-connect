@@ -386,6 +386,7 @@
           <div class="role-tile" data-role="supporter" onclick="pickRole('supporter',this)"><div class="rt-icon">💗</div><div class="rt-label">Supporter</div><div class="rt-desc">Fan d'un club ou d'une discipline</div></div>
           <div class="role-tile" data-role="sportif_etranger" onclick="pickRole('sportif_etranger',this)"><div class="rt-icon">🌍</div><div class="rt-label">Sportif étranger</div><div class="rt-desc">Pratique au Gabon, nationalité étrangère</div></div>
           <div class="role-tile" data-role="ancien_sportif" onclick="pickRole('ancien_sportif',this)"><div class="rt-icon">🎖️</div><div class="rt-label">Ancien Sportif</div><div class="rt-desc">Carrière terminée, palmarès et reconversion</div></div>
+          <div class="role-tile" data-role="formateur" onclick="pickRole('formateur',this)"><div class="rt-icon">🧑‍🏫</div><div class="rt-label">Formateur</div><div class="rt-desc">Formation, certification et transmission de savoir sportif</div></div>
         </div>
         <div id="a-role-err" class="err-msg" style="margin-top:8px;"></div>
         <div style="margin-top:14px;"><button class="btn-p" onclick="goToActeurForm()">Continuer →</button></div>
@@ -683,6 +684,33 @@
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-anc-palmares" placeholder="ex: Champion national 1999, Vainqueur Coupe du Gabon 2005…"></textarea></div>
           <div class="fg"><label>Faits marquants / records</label><textarea id="a-anc-faits" placeholder="ex: Meilleur buteur du championnat 2004, record national du 100m…"></textarea></div>
         </div>
+        <!-- Champs formateur (formation, certification, transmission) -->
+        <div class="extra" id="ex-formateur">
+          <div class="notice"><span>🧑‍🏫</span><span>Ce profil met en avant votre activité de formation : spécialité, certifications et disponibilité pour de nouvelles sessions.</span></div>
+
+          <!-- SPÉCIALITÉ & CERTIFICATION -->
+          <div class="subsection">🧑‍🏫 Profil formateur</div>
+          <div class="form-row">
+            <div class="fg"><label>Spécialité de formation *</label><input type="text" id="a-for-specialite" placeholder="ex: Préparation physique, Arbitrage, Coaching jeunes…"/></div>
+            <div class="fg"><label>Niveau de certification</label>
+              <select id="a-for-niveau"><option value="">Niveau</option><option>Local</option><option>Régional</option><option>National</option><option>International</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Organisme certificateur</label><input type="text" id="a-for-organisme" placeholder="ex: DTN, Fédération, CNOSF…"/></div>
+            <div class="fg"><label>Structure de rattachement</label><input type="text" id="a-for-structure" placeholder="ex: club, fédération, indépendant…"/></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Années d'expérience</label><input type="number" id="a-for-experience" placeholder="ex: 8" min="0"/></div>
+            <div class="fg"><label>Nombre d'apprenants formés</label><input type="number" id="a-for-apprenants" placeholder="ex: 150" min="0"/></div>
+          </div>
+          <div class="cb-row"><input type="checkbox" id="a-for-dispo"/><label for="a-for-dispo">Disponible pour de nouvelles sessions de formation</label></div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-for-bio" placeholder="Décrivez votre parcours de formateur…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / Certifications</label><textarea id="a-for-palmares" placeholder="ex: Certifié CAF B, formateur DTN depuis 2015…"></textarea></div>
+        </div>
         <div class="cb-row"><input type="checkbox" id="a-cgu" checked/><label for="a-cgu">J'accepte les <a style="color:var(--green-dk);font-weight:600;">Conditions Générales</a> et la <a style="color:var(--green-dk);font-weight:600;">Politique de confidentialité</a>.</label></div>
         <div class="cb-row"><input type="checkbox" id="a-exact"/><label for="a-exact">Je certifie que les informations fournies sont exactes et me concernent personnellement.</label></div>
         <div id="a-err" class="err-msg"></div>
@@ -822,7 +850,7 @@
     joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
     association:'ASS', federation:'FED', independant:'IND',
     admin:'ADM', supporter:'SUP', organisateur:'ORG',
-    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP'
+    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP', formateur:'FOR'
   };
 
   function generateGscId(uid, role) {
@@ -842,7 +870,8 @@
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
     handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
-    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif'
+    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
+    formateur:'🧑‍🏫 Formateur'
   };
 
   // Disciplines séparées : sports collectifs pour les Joueurs, sports individuels pour les Athlètes.
@@ -915,6 +944,7 @@
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
     document.getElementById('ex-ancien').classList.toggle('show', selectedRole === 'ancien_sportif');
+    document.getElementById('ex-formateur').classList.toggle('show', selectedRole === 'formateur');
     if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
       loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
     }
@@ -1141,6 +1171,17 @@
     const ancBio            = isAncienSportifRole ? (document.getElementById('a-anc-bio')?.value?.trim() || '').slice(0,500) : '';
     const ancPalmares       = isAncienSportifRole ? (document.getElementById('a-anc-palmares')?.value?.trim() || '') : '';
     const ancFaits          = isAncienSportifRole ? (document.getElementById('a-anc-faits')?.value?.trim() || '') : '';
+    // Champs enrichis formateur (formation, certification)
+    const isFormateurRole   = selectedRole === 'formateur';
+    const forSpecialite     = isFormateurRole ? (document.getElementById('a-for-specialite')?.value?.trim() || '') : '';
+    const forNiveau         = isFormateurRole ? (document.getElementById('a-for-niveau')?.value || '') : '';
+    const forOrganisme      = isFormateurRole ? (document.getElementById('a-for-organisme')?.value?.trim() || '') : '';
+    const forStructure      = isFormateurRole ? (document.getElementById('a-for-structure')?.value?.trim() || '') : '';
+    const forExperience     = isFormateurRole ? (document.getElementById('a-for-experience')?.value || '') : '';
+    const forApprenants     = isFormateurRole ? (document.getElementById('a-for-apprenants')?.value || '') : '';
+    const forDispo          = isFormateurRole ? (document.getElementById('a-for-dispo')?.checked || false) : false;
+    const forBio            = isFormateurRole ? (document.getElementById('a-for-bio')?.value?.trim() || '').slice(0,500) : '';
+    const forPalmares       = isFormateurRole ? (document.getElementById('a-for-palmares')?.value?.trim() || '') : '';
     if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
@@ -1152,6 +1193,8 @@
                            errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
     if (isAncienSportifRole && !ancPoste) {
                            errMsg('a-err','Veuillez indiquer votre poste / spécialité durant votre carrière.'); return; }
+    if (isFormateurRole && !forSpecialite) {
+                           errMsg('a-err','Veuillez indiquer votre spécialité de formation.'); return; }
     if (!cgu)            { errMsg('a-err','Vous devez accepter les conditions d\'utilisation.'); return; }
     if (!exact)          { errMsg('a-err','Veuillez certifier l\'exactitude de vos informations.'); return; }
     if (!_sb)            { errMsg('a-err','Service d\'inscription indisponible. Réessayez plus tard.'); return; }
@@ -1208,6 +1251,14 @@
             reconversionActuelle: ancReconversion, structureActuelle: ancStructure,
             disponibiliteMentorat: ancMentorat,
             bio: ancBio, palmares: ancPalmares, faitsMarquants: ancFaits
+          }),
+          // Champs enrichis formateur (vides pour les autres rôles)
+          ...(isFormateurRole && {
+            specialiteFormation: forSpecialite, niveauFormateur: forNiveau,
+            organismeCertificateur: forOrganisme, structureRattachement: forStructure,
+            anneesExperienceFormation: forExperience, nbApprenantsFormes: forApprenants,
+            disponibilitePourFormation: forDispo,
+            bio: forBio, palmares: forPalmares
           }),
           gscId,
           club: clubActuel || '',
