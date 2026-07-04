@@ -164,20 +164,40 @@ window.reportsModule = (function () {
 
     const roleLabels = {
       joueur: '⚽ Joueurs',
+      athlete: '🏃 Athlètes',
       entraineur: '📋 Entraîneurs',
       arbitre: '🟨 Arbitres',
       club: '🏟️ Clubs',
       federation: '🏛️ Fédérations',
-      association: '🤝 Associations'
+      association: '🤝 Associations',
+      organisateur: '🎪 Organisateurs',
+      independant: '🚴 Indépendants',
+      supporter: '💗 Supporters',
+      eleve_etudiant: '🎓 Élèves / Étudiants',
+      sportif_etranger: '🌍 Sportifs étrangers',
+      ecole_universite: '🏫 Écoles / Universités',
+      handisport: '🦾 Sportifs handisport',
+      ancien_sportif: '🎖️ Anciens Sportifs',
+      formateur: '🧑‍🏫 Formateurs'
     };
 
     const roleColors = {
       joueur: '#009E60',
+      athlete: '#0891b2',
       entraineur: '#f97316',
       arbitre: '#8b5cf6',
       club: '#3b82f6',
       federation: '#f97316',
-      association: '#e11d48'
+      association: '#e11d48',
+      organisateur: '#0d9488',
+      independant: '#64748b',
+      supporter: '#ec4899',
+      eleve_etudiant: '#6366f1',
+      sportif_etranger: '#ca8a04',
+      ecole_universite: '#059669',
+      handisport: '#7c3aed',
+      ancien_sportif: '#9f1239',
+      formateur: '#0284c7'
     };
 
     const labels = Object.keys(roleDistribution).map(r => roleLabels[r] || r);
