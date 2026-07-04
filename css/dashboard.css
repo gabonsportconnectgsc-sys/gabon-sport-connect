@@ -12,18 +12,19 @@
 
 @keyframes gsc-border-blink {
   0%, 100% {
-    border-color: var(--green);
-    box-shadow: 0 0 0 0 rgba(0, 158, 96, 0.45);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
   }
   50% {
-    border-color: var(--yellow);
-    box-shadow: 0 0 0 7px rgba(0, 158, 96, 0);
+    border-color: var(--navy);
+    box-shadow: 0 0 0 7px rgba(239, 68, 68, 0);
   }
 }
 
+/* Respecte les preferences d'accessibilite des utilisateurs sensibles au mouvement */
 @media (prefers-reduced-motion: reduce) {
   #visitor-become-actor-card.pulse-attract {
     animation: none !important;
-    border-color: var(--green) !important;
+    border-color: var(--danger) !important;
   }
 }
