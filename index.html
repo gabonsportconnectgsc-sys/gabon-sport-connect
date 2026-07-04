@@ -34,6 +34,7 @@
   <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
+  <link rel="stylesheet" href="css/dashboard.css">
   <style>
     :root {
       --green:#009E60;--green-dk:#007a47;--green-lt:#e6f7ef;
@@ -1554,6 +1555,17 @@
 
       </div>
 
+      <div class="card fade-up mb-16 pulse-attract" style="background:linear-gradient(135deg,#f0faf5,#e6f7ef);border-color:var(--green);" id="visitor-become-actor-card">
+        <div class="card-body" style="display:flex;align-items:center;gap:14px;">
+          <div style="font-size:32px;flex-shrink:0;">🏅</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--navy);margin-bottom:2px;">Vous pratiquez un sport au Gabon ?</div>
+            <div style="font-size:12px;color:var(--gray-txt);">Joueur, club, arbitre, entraîneur, organisateur ou sportif indépendant : intégrez l'annuaire national.</div>
+          </div>
+          <button class="btn-sm" style="border-color:var(--green);color:var(--green-dk);flex-shrink:0;" onclick="goToAuth('register')">S'inscrire</button>
+        </div>
+      </div>
+
       <div class="quick-actions fade-up" id="quick-actions-auth" style="display:none;">
         <button class="quick-btn" onclick="showView('profil')"><img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>👤</span>'">Mon profil</button>
         <button class="quick-btn" onclick="showView('annuaire')"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📋</span>'">Annuaire</button>
@@ -1566,17 +1578,6 @@
         <button class="quick-btn" onclick="showView('actualites')"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📰</span>'">Actualités</button>
         <button class="quick-btn" onclick="goToAuth('register')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🏅</span>'">Intégrer comme acteur sportif</button>
         <button class="quick-btn" onclick="goToAuth('login')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🔑</span>'">Se connecter</button>
-      </div>
-
-      <div class="card fade-up mb-16" style="background:linear-gradient(135deg,#f0faf5,#e6f7ef);border-color:var(--green);" id="visitor-become-actor-card">
-        <div class="card-body" style="display:flex;align-items:center;gap:14px;">
-          <div style="font-size:32px;flex-shrink:0;">🏅</div>
-          <div style="flex:1;">
-            <div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--navy);margin-bottom:2px;">Vous pratiquez un sport au Gabon ?</div>
-            <div style="font-size:12px;color:var(--gray-txt);">Joueur, club, arbitre, entraîneur, organisateur ou sportif indépendant : intégrez l'annuaire national.</div>
-          </div>
-          <button class="btn-sm" style="border-color:var(--green);color:var(--green-dk);flex-shrink:0;" onclick="goToAuth('register')">S'inscrire</button>
-        </div>
       </div>
 
       <div class="card fade-up mb-16">

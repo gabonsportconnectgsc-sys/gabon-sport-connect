@@ -1,0 +1,30 @@
+/* ==========================================================================
+   dashboard.css — Tableau de bord / Accueil / Stat cards
+   ========================================================================== */
+
+/* Carte "Vous pratiquez un sport au Gabon ?" — contour clignotant
+   pour capter l'attention du visiteur non connecté. */
+#visitor-become-actor-card.pulse-attract {
+  position: relative;
+  border-width: 2px;
+  animation: gsc-border-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes gsc-border-blink {
+  0%, 100% {
+    border-color: var(--green);
+    box-shadow: 0 0 0 0 rgba(0, 158, 96, 0.45);
+  }
+  50% {
+    border-color: var(--yellow);
+    box-shadow: 0 0 0 6px rgba(0, 158, 96, 0);
+  }
+}
+
+/* Respecte les préférences d'accessibilité des utilisateurs sensibles au mouvement */
+@media (prefers-reduced-motion: reduce) {
+  #visitor-become-actor-card.pulse-attract {
+    animation: none;
+    border-color: var(--green);
+  }
+}
