@@ -894,7 +894,15 @@
         updateBadge();
         updateZoneBadges();
         if(_panelOpen) renderList(_currentTab);
-      }, ()=>{});
+      }, (err)=>{
+        // FIX : cette erreur était silencieusement avalée. Elle se déclenche
+        // systématiquement pour tout utilisateur ayant un rôle, tant que la
+        // règle Firestore 'notifications' n'autorise pas recipientId de la
+        // forme 'role:xxx' (voir requête ci-dessus : where('recipientId','in',
+        // [uid,'all','role:xxx'])) — Firestore rejette alors la requête
+        // ENTIÈRE, pas seulement les docs role:xxx. Voir firestore.rules.
+        console.error('[GSCNotif] onSnapshot notifications refusé — vérifier la règle Firestore (recipientId role:xxx) :', err);
+      });
     }catch(e){}
   }
 

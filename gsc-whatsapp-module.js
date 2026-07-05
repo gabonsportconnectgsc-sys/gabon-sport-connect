@@ -494,7 +494,18 @@
   function bootPublic() {
     injectStyles();
     injectPublicUI();
-    if (!window.db) return;
+    // FIX : index.html initialise Firebase de façon asynchrone (script type="module"
+    // avec import() dynamiques) et dispatch 'firebase-ready' une fois window.db prêt.
+    // Ce script (non-module, synchrone) tournait presque toujours AVANT que window.db
+    // n'existe : bootPublic() abandonnait silencieusement et n'attachait JAMAIS les
+    // écouteurs Firestore — d'où "Aucun contact trouvé" en permanence, quel que soit
+    // le nombre d'acteurs rendus publics côté admin. On réessaie maintenant dès que
+    // l'événement est reçu (idempotent : injectStyles/injectPublicUI ont déjà leurs
+    // propres gardes anti-doublon).
+    if (!window.db) {
+      document.addEventListener('firebase-ready', bootPublic, { once: true });
+      return;
+    }
     fsOnSnapshotCollection(
       COLLECTION,
       (snap) => { _publicManualContacts = snap.docs.map(d => ({ id: d.id, ...d.data() })); refreshAllPublicViews(); },
