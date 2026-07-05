@@ -118,6 +118,7 @@
             <input type="text" id="acc-search" class="search-input" placeholder="🔍 Nom, email, téléphone…" style="max-width:280px;">
             <span id="acc-count" style="font-size:12px;color:var(--gray-txt);"></span>
           </div>
+          <div id="acc-purge-banner"></div>
           <div id="acc-table"></div>
         </div>
       </div>
@@ -163,8 +164,20 @@
 
   let _allRows = [];
 
+  // Même convention de suppression douce que partout ailleurs dans l'app
+  // (admin.html Joueurs, index.html Annuaire / adminDeleteUser) : un
+  // acteur "supprimé" n'est jamais retiré de Firestore, seul son champ
+  // status/statut passe à 'deleted'. Comptes & Accès doit respecter la
+  // même règle de visibilité, sinon les comptes supprimés depuis
+  // l'Annuaire admin continuent d'apparaître ici.
+  function isDeleted(u) {
+    const s = (u.status || u.statut || '').toString().toLowerCase();
+    return s === 'deleted' || s === 'supprimé' || s === 'supprime';
+  }
+
   function computeRows() {
     return getUsers()
+      .filter(u => !isDeleted(u))
       .map(u => ({ u }))
       .sort((a, b) => actorName(a.u).localeCompare(actorName(b.u)));
   }
@@ -235,8 +248,54 @@
 
   function render() {
     _allRows = computeRows();
+    renderPurgeBanner();
     const search = document.getElementById('acc-search');
     renderTable(search ? search.value : '');
+  }
+
+  function renderPurgeBanner() {
+    const el = document.getElementById('acc-purge-banner');
+    if (!el) return;
+    const stale = getUsers().filter(isDeleted);
+    if (!stale.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:12.5px;color:#991b1b;">
+          🗑️ ${stale.length} compte(s) marqué(s) supprimé(s) subsistent encore en base (ancien mode de suppression douce). Ils ne sont plus affichés ici mais n'ont pas encore été effacés définitivement.
+        </span>
+        <button type="button" class="btn-sm" style="background:#dc2626;color:#fff;" onclick="GSCAccounts.purgeDeleted()">Purger définitivement</button>
+      </div>
+      <div class="gsc-acc-status-msg" id="purge-status"></div>
+    `;
+  }
+
+  async function purgeDeleted() {
+    const statusEl = document.getElementById('purge-status');
+    const stale = getUsers().filter(isDeleted);
+    if (!stale.length) return;
+    if (!confirm(`Effacer définitivement ${stale.length} compte(s) marqué(s) "supprimé" ?\n\nCette action est irréversible : les documents seront retirés de Firestore.`)) return;
+    if (!window.db) {
+      if (statusEl) { statusEl.textContent = 'Firestore indisponible.'; statusEl.className = 'gsc-acc-status-msg err'; }
+      return;
+    }
+    if (statusEl) { statusEl.textContent = '⏳ Purge en cours…'; statusEl.className = 'gsc-acc-status-msg'; }
+    let ok = 0, fail = 0;
+    for (const u of stale) {
+      const uid = u.id || u.uid;
+      if (!uid) continue;
+      try {
+        await window.db.collection('users').doc(uid).delete();
+        ok++;
+      } catch (err) {
+        console.error('[GSCAccounts] purge erreur pour', uid, err);
+        fail++;
+      }
+    }
+    if (statusEl) {
+      statusEl.textContent = fail ? `⚠️ ${ok} supprimé(s), ${fail} échec(s).` : `✅ ${ok} compte(s) purgé(s) définitivement.`;
+      statusEl.className = 'gsc-acc-status-msg ' + (fail ? 'err' : 'ok');
+    }
+    render();
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -373,6 +432,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 
-  window.GSCAccounts = { showSection, render, editPhone, savePhone, copyToClipboard, resetPassword };
+  window.GSCAccounts = { showSection, render, editPhone, savePhone, copyToClipboard, resetPassword, purgeDeleted };
 
 })(window);
