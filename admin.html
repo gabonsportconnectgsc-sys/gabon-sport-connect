@@ -841,7 +841,7 @@ tr.is-demo-row td { opacity: .82; }
           <div class="stat-card c4 clickable" onclick="window.gscGoToMatches()" style="cursor:pointer;"><div class="stat-icon">📅</div><div class="stat-data"><div class="stat-value" id="stat-matchs">0</div><div class="stat-label">Matchs</div><div class="stat-trend">Enregistrés</div></div></div>
         </div>
         <div class="dash-grid">
-          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item"><div class="sb-label"><span>⚽ Joueur</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏃 Athlète</span><span style="color:#0891b2">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#0891b2"></div></div></div><div class="sb-item"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
+          <div class="dash-card"><div class="dash-card-title">📈 Répartition des membres</div><div class="status-bars" id="role-bars"><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'joueur', title:'Joueurs'})"><div class="sb-label"><span>⚽ Joueur</span><span style="color:#009E60">4</span></div><div class="sb-track"><div class="sb-fill" style="width:67%;background:#009E60"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'athlete', title:'Athlètes'})"><div class="sb-label"><span>🏃 Athlète</span><span style="color:#0891b2">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#0891b2"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'entraineur', title:'Entraîneurs'})"><div class="sb-label"><span>📋 Entraîneur</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'arbitre', title:'Arbitres'})"><div class="sb-label"><span>🟨 Arbitre</span><span style="color:#8b5cf6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#8b5cf6"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'club', title:'Clubs'})"><div class="sb-label"><span>🏟️ Club</span><span style="color:#3b82f6">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#3b82f6"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'federation', title:'Fédérations'})"><div class="sb-label"><span>🏛️ Fédération</span><span style="color:#f97316">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#f97316"></div></div></div><div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'association', title:'Associations'})"><div class="sb-label"><span>🤝 Association</span><span style="color:#e11d48">0</span></div><div class="sb-track"><div class="sb-fill" style="width:0%;background:#e11d48"></div></div></div></div></div>
           <div class="dash-card"><div class="dash-card-title">🕐 Activité récente</div><div class="activity-list" id="activity-list"><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">6 membre(s) actif(s)</div><div class="act-time">—</div></div><div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">Panneau chargé</div><div class="act-time">maintenant</div></div></div></div>
           <div class="dash-card"><div class="dash-card-title">📅 Prochain match</div><div id="next-match-preview" style="text-align:center;padding:16px;color:var(--gray-txt);font-size:13px"><div style="text-align:center;color:var(--gray-txt);font-size:13px;padding:10px">Aucun match à venir</div></div></div>
           <div class="dash-card"><div class="dash-card-title">⚡ Actions rapides</div><div class="quick-actions">
@@ -900,8 +900,8 @@ tr.is-demo-row td { opacity: .82; }
             <h4 style="margin-bottom:14px;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:6px;">🏆 Acteurs réels &amp; catégories</h4>
 
             <!-- Tuile spéciale : acteurs réels -->
-            <div style="margin-bottom:14px;">
-              <div class="tile-real-count clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Acteurs réels'})" style="max-width:180px;">
+            <div style="margin-bottom:14px;display:flex;justify-content:center;">
+              <div class="tile-real-count clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Acteurs réels'})" style="max-width:180px;width:100%;">
                 <div class="tile-icon">🏅</div>
                 <div class="tile-count" id="rc-reels">—</div>
                 <div class="tile-name">Acteurs réels</div>
@@ -1283,28 +1283,28 @@ tr.is-demo-row td { opacity: .82; }
   </div>
 
   <div class="stats-grid">
-    <div class="stat-card c1">
+    <div class="stat-card c1 clickable" style="cursor:pointer;" onclick="AdminStructures.filterByDiscipline('all', document.querySelector('[data-struct-filter=all]'))">
       <div class="stat-icon">🏟️</div>
       <div class="stat-data">
         <div class="stat-value" id="struct-stat-total">0</div>
         <div class="stat-label">Structures</div>
       </div>
     </div>
-    <div class="stat-card c2">
+    <div class="stat-card c2 clickable" style="cursor:pointer;" onclick="AdminStructures.filterByDiscipline('all', document.querySelector('[data-struct-filter=all]'))">
       <div class="stat-icon">👥</div>
       <div class="stat-data">
         <div class="stat-value" id="struct-stat-effectifs">0</div>
         <div class="stat-label">Athlètes recensés</div>
       </div>
     </div>
-    <div class="stat-card c3">
+    <div class="stat-card c3 clickable" style="cursor:pointer;" onclick="window.switchSection && window.switchSection('conformite')">
       <div class="stat-icon">🏆</div>
       <div class="stat-data">
         <div class="stat-value" id="struct-stat-or">0</div>
         <div class="stat-label">Conformes (Or)</div>
       </div>
     </div>
-    <div class="stat-card c4">
+    <div class="stat-card c4 clickable" style="cursor:pointer;" onclick="window.switchSection && window.switchSection('conformite')">
       <div class="stat-icon">🚫</div>
       <div class="stat-data">
         <div class="stat-value" id="struct-stat-incomplet">0</div>
@@ -2952,11 +2952,13 @@ tr.is-demo-row td { opacity: .82; }
       };
       const barContainer=document.getElementById('role-bars');
       if(barContainer&&totalActive>0){
+        const barTitles={'joueur':'Joueurs','athlete':'Athlètes','entraineur':'Entraîneurs','arbitre':'Arbitres','club':'Clubs','federation':'Fédérations','association':'Associations'};
         barContainer.innerHTML=barData.map(b=>{
           const c = (b.role in unifiedCounts) ? unifiedCounts[b.role] : countRole(b.role);
           const pct=Math.round((c/totalActive)*100);
           const labels={'joueur':'⚽ Joueur','athlete':'🏃 Athlète','entraineur':'📋 Entraîneur','arbitre':'🟨 Arbitre','club':'🏟️ Club','federation':'🏛️ Fédération','association':'🤝 Association'};
-          return `<div class="sb-item"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
+          const title=barTitles[b.role]||b.role;
+          return `<div class="sb-item clickable" onclick="window.gscGoToFiltered({roles:'${b.role}', title:'${title}'})" style="cursor:pointer;"><div class="sb-label"><span>${labels[b.role]||b.role}</span><span style="color:${b.color}">${c}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${b.color}"></div></div></div>`;
         }).join('');
       }
       // Activité récente
