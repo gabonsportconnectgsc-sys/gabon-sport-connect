@@ -16,6 +16,55 @@
 
   function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+  /* Libellés lisibles pour les codes organisme (affichage uniquement,
+     n'affecte pas la logique de calcul). 'federation_feminine' est le
+     code utilisé par disciplines-config-feminin.js pour les documents
+     propres au championnat/registre des joueuses licenciées. */
+  const ORG_LABELS = {
+    ministere: 'Ministère',
+    federation: 'Fédération',
+    ligue: 'Ligue',
+    fifa: 'FIFA',
+    caf: 'CAF',
+    federation_feminine: 'Fédération — Secteur Féminin 🚺',
+    autre: 'Autre'
+  };
+  function orgLabel(code) { return ORG_LABELS[code] || code; }
+
+  /**
+   * Une structure est considérée "à effectif féminin" pour une saison
+   * donnée si son roster de joueuses (saisons[saison].effectifs.femmes)
+   * est > 0. ⚠️ Ceci ne concerne QUE les effectifs de joueuses inscrites
+   * dans une équipe/catégorie féminine d'une structure — pas les actrices
+   * individuelles (arbitres, entraîneures, officielles) qui peuvent très
+   * bien exercer au sein d'une structure ou d'une compétition de secteur
+   * masculin (ex. une arbitre officiant des matchs de football masculin).
+   * Ces actrices sont comptabilisées ailleurs (voir admin-secteur-feminin.js,
+   * répartition par rôle) et ne déclenchent PAS d'exigence de documents
+   * "féminin" pour la structure masculine à laquelle elles sont rattachées.
+   */
+  function hasFeminineRoster(structure, saison) {
+    const saisons = structure.saisons || {};
+    const saisonData = saisons[saison] || {};
+    const eff = saisonData.effectifs || {};
+    return (eff.femmes || 0) > 0;
+  }
+
+  /**
+   * Documents requis pour une structure donnée : documents génériques de
+   * la discipline + documents spécifiques "secteur féminin" UNIQUEMENT si
+   * la structure a un roster de joueuses féminin déclaré pour la saison.
+   * Fonctionne même si disciplines-config-feminin.js n'est pas chargé
+   * (retombe alors sur les documents génériques uniquement).
+   */
+  function getDocumentsForStructure(structure, saison) {
+    const base = D().getDocuments(structure.discipline);
+    if (hasFeminineRoster(structure, saison) && typeof D().getFeminineDocuments === 'function') {
+      return base.concat(D().getFeminineDocuments(structure.discipline));
+    }
+    return base;
+  }
+
   /* ══════════════════════════════════════════════════════════════════
    * 1. MODÈLE CONFORMITÉ
    * ══════════════════════════════════════════════════════════════════ */
@@ -44,7 +93,7 @@
   function computeBadge(structure, saison) {
     if (!structure || !structure.discipline) return { badge: '—', color: '#ccc', pct: 0 };
 
-    const docs = D().getDocuments(structure.discipline);
+    const docs = getDocumentsForStructure(structure, saison);
     const mandatory = docs.filter(d => d.obligatoire).length;
 
     const saisons = structure.saisons || {};
@@ -67,11 +116,13 @@
     }
 
     const rows = structures.map(s => {
-      const badge = computeBadge(s, s.saisonCourante || '2025-2026');
+      const saison = s.saisonCourante || '2025-2026';
+      const badge = computeBadge(s, saison);
+      const femBadge = hasFeminineRoster(s, saison) ? ' <span title="Roster féminin déclaré — documents secteur féminin inclus" style="font-size:11px;">🚺</span>' : '';
       return `
         <tr onclick="GSCComplianceModule.openStructure('${esc(s.id)}')">
           <td>${esc(s.nom)}</td>
-          <td>${D().getIcon(s.discipline)} ${esc(s.discipline)}</td>
+          <td>${D().getIcon(s.discipline)} ${esc(s.discipline)}${femBadge}</td>
           <td>${esc(s.type)}</td>
           <td>
             <div style="display:flex;align-items:center;gap:8px;">
@@ -102,7 +153,7 @@
   function renderDocumentChecklist(structure, saison) {
     if (!structure || !structure.discipline) return '<p>Structure invalide.</p>';
 
-    const docs = D().getDocuments(structure.discipline);
+    const docs = getDocumentsForStructure(structure, saison);
     const saisons = structure.saisons || {};
     const saisonData = saisons[saison] || {};
     const compl = saisonData.conformite || {};
@@ -138,7 +189,7 @@
 
       return `
         <div class="dash-card" style="margin-bottom:16px;">
-          <div class="dash-card-title">${org} — ${uploaded}/${mandatory} documents</div>
+          <div class="dash-card-title">${esc(orgLabel(org))} — ${uploaded}/${mandatory} documents</div>
           <div style="margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
@@ -282,7 +333,9 @@
      (upload). C'est ce qui manquait pour que l'admin voie d'un coup d'œil
      quels modèles restent à charger, discipline par discipline. */
   function renderTemplateCards(discipline, existing, editable) {
-    const docs = D().getDocuments(discipline);
+    const docs = (typeof D().getCombinedDocuments === 'function')
+      ? D().getCombinedDocuments(discipline)
+      : D().getDocuments(discipline);
     if (!docs.length) return '<p style="text-align:center;color:var(--gray-txt);padding:20px;">Aucun document requis configuré pour cette discipline.</p>';
 
     const cards = docs.map(d => {
@@ -387,6 +440,8 @@
     getTemplatesForDiscipline,
     deleteTemplate,
     computeBadge,
+    hasFeminineRoster,
+    getDocumentsForStructure,
     uploadDocument,
     uploadTemplate,
     archiveSeasonCompliance,

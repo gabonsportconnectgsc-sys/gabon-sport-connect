@@ -56,6 +56,14 @@
 
   /* ══════════════════════════════════════════════════════════════════
    * 2. COMPTAGE
+   *  ⚠️ Filtrage volontairement basé sur `sexe === 'F'` de l'ACTRICE,
+   *  et non sur la discipline/structure/rôle. Une actrice peut être
+   *  arbitre, entraîneure ou formatrice au sein d'une structure ou
+   *  d'une compétition de secteur masculin (ex. arbitrage de matchs de
+   *  football masculin) : elle doit rester visible ici. Ne PAS remplacer
+   *  ce filtre par une logique basée sur les effectifs de structure
+   *  (saisons[saison].effectifs.femmes), qui ne reflète que les rosters
+   *  de joueuses et exclurait ces actrices à tort.
    * ══════════════════════════════════════════════════════════════════ */
   function countFeminine() {
     const list = Array.isArray(window.allActors) ? window.allActors : [];
