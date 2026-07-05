@@ -8533,11 +8533,31 @@ window.lookupManualGscId = lookupManualGscId;
     navigator.serviceWorker.addEventListener('message', function(event){
       if(!event.data) return;
       if(event.data.type === 'NOTIF_CLICK' && event.data.link){
-        const view = event.data.link.replace('index.html','').replace('#','').replace('/','');
-        if(view && typeof showView === 'function') showView(view);
+        handleNotifLink(event.data.link);
       }
     });
   }
+
+  /* Route un lien de notification vers l'endroit exact qu'il désigne.
+     Formats gérés :
+       - 'fil:postId'            → ouvre le fil communautaire sur ce post
+       - 'fil:postId:commentId'  → idem + scrolle/surligne le commentaire précis
+       - 'index.html#vue' / '#vue' / 'vue' → navigation générique (comportement existant) */
+  function handleNotifLink(link){
+    if(!link) return;
+    if(link.indexOf('fil:') === 0){
+      const parts = link.slice(4).split(':');
+      const postId = parts[0];
+      const commentId = parts[1] || null;
+      if(postId && window.GSCCommunity && typeof window.GSCCommunity.openPost === 'function'){
+        window.GSCCommunity.openPost(postId, commentId);
+      }
+      return;
+    }
+    const view = link.replace('index.html','').replace('#','').replace('/','');
+    if(view && typeof showView === 'function') showView(view);
+  }
+  window.handleNotifLink = handleNotifLink;
 
   /* Notification de bienvenue système au premier lancement */
   window.addEventListener('load', function(){

@@ -201,17 +201,22 @@
 
   /* Notifie chaque membre mentionné dans un post ou un commentaire :
      "X a publié/commenté sur vous" — une seule notification par mention, via pushNotif
-     (qui retombe lui-même sur Firestore si GSCNotif n'est pas chargé). */
-  function notifyMentions(text, { authorProfile, action, excludeUid }) {
+     (qui retombe lui-même sur Firestore si GSCNotif n'est pas chargé).
+     FIX : le lien pointait auparavant vers 'fil:'+excludeUid (l'auteur, pas le post !),
+     ce qui ne menait nulle part au clic. Il pointe maintenant vers le post (et le
+     commentaire précis si fourni), au même format que les autres notifs du fil
+     ('fil:postId' ou 'fil:postId:commentId'), lisible par GSCCommunity.openPost(). */
+  function notifyMentions(text, { authorProfile, action, excludeUid, postId, commentId }) {
     const mentions = extractMentions(text);
     const verb = action === 'comment' ? 'a commenté sur vous' : 'a publié sur vous';
+    const link = postId ? ('fil:' + postId + (commentId ? (':' + commentId) : '')) : null;
     mentions.forEach(({ id }) => {
       if (!id || id === excludeUid) return;
       pushNotif({
         type: 'mention', recipientId: id, personal: true,
         title: `${authorName(authorProfile)} ${verb}`,
         body: (text || '').slice(0, 100),
-        link: 'fil:' + (excludeUid || 'all')
+        link
       });
     });
   }
@@ -354,6 +359,16 @@
 .gsc-mention-item:hover,.gsc-mention-item.active{background:var(--gray-bg);}
 .gsc-mention-item .gsc-avatar{width:24px;height:24px;font-size:10px;}
 .gsc-mention-item small{color:var(--gray-txt);font-weight:600;margin-left:auto;}
+
+/* Mise en surbrillance temporaire du post/commentaire ciblé par un clic sur notification */
+.gsc-post.gsc-highlight,.gsc-comment.gsc-highlight .gsc-comment-body{
+  animation:gscHighlightPulse 2.2s ease;
+  border-radius:14px;
+}
+@keyframes gscHighlightPulse{
+  0%{box-shadow:0 0 0 3px var(--green,#009E60);}
+  100%{box-shadow:0 0 0 0 transparent;}
+}
 .gsc-composer-head,.gsc-comment-composer{position:relative;}
 `;
     document.head.appendChild(s);
@@ -713,7 +728,7 @@
       /* ── Écriture Firestore ── */
       setPublishBtnState('💾 Enregistrement…', true);
       const profile = window.userProfile || {};
-      await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), {
+      const postRef = await withAuth(() => window.addDoc(window.collection(window.db, POSTS_COL), {
         authorId: window.currentUser.uid,
         authorName: authorName(profile),
         authorRole: profile.role || 'membre',
@@ -729,11 +744,13 @@
         status: 'visible',
         createdAt: window.serverTimestamp()
       }));
+      const newPostId = postRef?.id || null;
 
       /* Notifier les membres mentionnés via @Nom : "X a publié sur vous" */
-      notifyMentions(text, { authorProfile: profile, action: 'post', excludeUid: window.currentUser.uid });
+      notifyMentions(text, { authorProfile: profile, action: 'post', excludeUid: window.currentUser.uid, postId: newPostId });
 
-      /* Notifier les membres ciblés ou tous (général) */
+      /* Notifier les membres ciblés ou tous (général) — FIX : lien 'fil:new' remplacé
+         par l'id réel du post, sinon impossible de l'ouvrir au clic. */
       const postRecipient = targetRole ? ('role:' + targetRole) : 'all';
       pushNotif({
         type: 'system',
@@ -741,7 +758,7 @@
         personal: false,
         title: (authorName(profile) || 'Un membre') + ' a publié dans le fil communautaire',
         body: (cat ? '[' + cat + '] ' : '') + text.slice(0, 100),
-        link: 'fil:new'
+        link: newPostId ? ('fil:' + newPostId) : null
       });
 
       if (ta) ta.value = '';
@@ -1011,11 +1028,11 @@
           type: 'comment', recipientId: post.authorId, personal: true,
           title: `${authorName(profile)} a commenté votre publication`,
           body: text.slice(0, 100),
-          link: 'fil:' + postId
+          link: 'fil:' + postId + ':' + ref.id
         });
       }
       /* Notifier les membres mentionnés via @Nom : "X a commenté sur vous" */
-      notifyMentions(text, { authorProfile: profile, action: 'comment', excludeUid: window.currentUser.uid });
+      notifyMentions(text, { authorProfile: profile, action: 'comment', excludeUid: window.currentUser.uid, postId, commentId: ref.id });
     } catch (e) { console.error('GSC Community addComment:', e); toastMsg('Erreur lors de l\'envoi du commentaire : ' + (e.message || e), 'error'); }
   }
 
@@ -1130,6 +1147,64 @@
     } catch (e) { console.error('GSC Community submitReport:', e); toastMsg('Erreur lors du signalement : ' + (e.message || e), 'error'); }
   }
 
+  /* ═══ NAVIGATION DEPUIS UNE NOTIFICATION (clic push/cloche) ═══
+     Ouvre le fil communautaire, retire les filtres actifs pour être sûr que le
+     post ciblé soit visible, ouvre ses commentaires si besoin, puis scrolle et
+     surligne brièvement l'élément exact (post ou commentaire). Appelé par
+     index.html via GSCCommunity.openPost(postId, commentId) quand un lien de
+     notification au format 'fil:postId' ou 'fil:postId:commentId' est cliqué. */
+  function openPost(postId, commentId) {
+    if (!postId) return;
+
+    if (typeof window.showView === 'function') window.showView('actualites');
+
+    const activateFeed = () => {
+      const tabCommunity = document.getElementById('gsc-tab-community');
+      const tabActu = document.getElementById('gsc-tab-actu');
+      const communityPane = document.getElementById('gsc-community-root');
+      const actuWrap = document.getElementById('gsc-actu-pane');
+      if (communityPane) communityPane.style.display = '';
+      if (actuWrap) actuWrap.style.display = 'none';
+      tabCommunity?.classList.add('active');
+      tabActu?.classList.remove('active');
+
+      /* Réinitialiser les filtres catégorie/rôle : le post ciblé pourrait être masqué sinon */
+      _currentCat = 'all';
+      _currentRoleCat = 'all';
+      document.querySelectorAll('#gsc-cat-row .news-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+      document.querySelectorAll('#gsc-role-row .news-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.role === 'all'));
+
+      ensureSubscribed();
+      if (!_openComments.has(postId)) toggleComments(postId);
+      else if (!_commentsCache[postId]) toggleComments(postId);
+      else renderFeed();
+    };
+
+    /* mountUI() est asynchrone au premier chargement (DOMContentLoaded) — on
+       attend que le fil existe avant d'agir dessus. */
+    if (document.getElementById('gsc-community-root')) activateFeed();
+    else setTimeout(activateFeed, 150);
+
+    /* Le post peut ne pas encore être rendu (chargement Firestore/comment en cours) :
+       on retente pendant ~4s au lieu d'un scroll figé sur un délai fixe. */
+    let tries = 0;
+    const tryScroll = () => {
+      tries++;
+      const target = commentId
+        ? document.querySelector(`.gsc-comment[data-comment-id="${commentId}"]`)
+        : document.querySelector(`.gsc-post[data-post-id="${postId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('gsc-highlight');
+        setTimeout(() => target.classList.remove('gsc-highlight'), 2300);
+        return;
+      }
+      if (tries < 16) setTimeout(tryScroll, 250);
+      else toastMsg('Publication introuvable (peut-être supprimée ou trop ancienne).', 'info');
+    };
+    setTimeout(tryScroll, 300);
+  }
+
   /* ═══ INITIALISATION ═══ */
   function init() {
     mountUI();
@@ -1139,6 +1214,6 @@
   else document.addEventListener('DOMContentLoaded', init);
   document.addEventListener('firebase-ready', () => { renderComposer(); });
 
-  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed, refreshComposer: renderComposer };
+  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed, refreshComposer: renderComposer, openPost };
 
 })(window);

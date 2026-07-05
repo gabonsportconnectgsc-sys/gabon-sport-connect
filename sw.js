@@ -2,7 +2,7 @@
    SW.JS — Service Worker Gabon Sport Connect v4
    + Badge PWA temps réel + Push Notifications
    ═══════════════════════════════════════════════════════════════ */
-const CACHE_NAME = 'gsc-v4';
+const CACHE_NAME = 'gsc-v5';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -80,6 +80,60 @@ self.addEventListener('fetch', event => {
   );
 });
 
+/* ── BADGE PERSISTANT (app fermée) ──
+   navigator.setAppBadge() ne fonctionne que depuis une page ouverte. Pour que
+   le badge de l'icône continue de s'incrémenter quand l'app est totalement
+   fermée (comme WhatsApp/TikTok), le SW garde son propre compteur dans
+   IndexedDB : +1 à chaque push reçu, -1 quand la notif est ouverte, et
+   resynchronisé sur la vraie valeur (Firestore) dès que l'app rouvre et
+   envoie SET_BADGE. */
+const BADGE_DB = 'gsc-sw-badge';
+const BADGE_STORE = 'state';
+
+function openBadgeDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(BADGE_DB, 1);
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(BADGE_STORE)) req.result.createObjectStore(BADGE_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getBadgeCount() {
+  try {
+    const db = await openBadgeDB();
+    return await new Promise(resolve => {
+      const r = db.transaction(BADGE_STORE, 'readonly').objectStore(BADGE_STORE).get('unread');
+      r.onsuccess = () => resolve(r.result || 0);
+      r.onerror = () => resolve(0);
+    });
+  } catch (e) { return 0; }
+}
+
+/* Écrit le compteur en base ET met à jour le badge visible sur l'icône. */
+async function setBadgeCount(n) {
+  const count = Math.max(0, n | 0);
+  try {
+    const db = await openBadgeDB();
+    await new Promise(resolve => {
+      const tx = db.transaction(BADGE_STORE, 'readwrite');
+      tx.objectStore(BADGE_STORE).put(count, 'unread');
+      tx.oncomplete = resolve;
+      tx.onerror = resolve;
+    });
+  } catch (e) {}
+  if ('setAppBadge' in self) {
+    if (count > 0) self.setAppBadge(count).catch(() => {});
+    else self.clearAppBadge().catch(() => {});
+  }
+  return count;
+}
+
+async function incrementBadge(delta) {
+  const current = await getBadgeCount();
+  return setBadgeCount(current + delta);
+}
+
 /* ── MESSAGES depuis la page ── */
 self.addEventListener('message', event => {
   if (!event.data) return;
@@ -90,13 +144,11 @@ self.addEventListener('message', event => {
     return;
   }
 
-  /* Badge PWA — fallback via postMessage si navigator.setAppBadge indispo */
+  /* Badge PWA — la page envoie systématiquement le vrai compte (Firestore),
+     ce qui resynchronise/écrase le compteur approximatif du SW à chaque
+     ouverture de l'app ou changement de notifications lues. */
   if (event.data.type === 'SET_BADGE') {
-    const count = parseInt(event.data.count) || 0;
-    if ('setAppBadge' in self) {
-      if (count > 0) self.setAppBadge(count).catch(() => {});
-      else self.clearAppBadge().catch(() => {});
-    }
+    event.waitUntil ? event.waitUntil(setBadgeCount(event.data.count)) : setBadgeCount(event.data.count);
     return;
   }
 });
@@ -113,16 +165,21 @@ self.addEventListener('push', event => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Gabon Sport Connect', {
-      body: data.body,
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      tag: data.type || 'general',
-      data: { link: data.link || 'index.html', type: data.type },
-      actions: data.actions || [],
-      vibrate: [200, 100, 200],
-      requireInteraction: data.type === 'alert' || data.type === 'message',
-    })
+    (async () => {
+      await self.registration.showNotification('Gabon Sport Connect', {
+        body: data.body,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        tag: data.type || 'general',
+        data: { link: data.link || 'index.html', type: data.type },
+        actions: data.actions || [],
+        vibrate: [200, 100, 200],
+        requireInteraction: data.type === 'alert' || data.type === 'message',
+      });
+      /* App fermée = pas de page pour appeler setAppBadge : le SW incrémente
+         lui-même son compteur persistant et met à jour l'icône. */
+      await incrementBadge(1);
+    })()
   );
 });
 
@@ -132,15 +189,21 @@ self.addEventListener('notificationclick', event => {
   const link = event.notification.data?.link || 'index.html';
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      const existing = clients.find(c => c.url.includes('index.html') || c.url.endsWith('/'));
+    (async () => {
+      /* La notif est désormais "traitée" — on décrémente le compteur local.
+         Il sera de toute façon resynchronisé sur la vraie valeur dès que
+         l'app envoie SET_BADGE au chargement. */
+      await incrementBadge(-1);
+
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const existing = clientList.find(c => c.url.includes('index.html') || c.url.endsWith('/'));
       if (existing) {
         existing.focus();
         existing.postMessage({ type: 'NOTIF_CLICK', link });
       } else {
         self.clients.openWindow(link);
       }
-    })
+    })()
   );
 });
 

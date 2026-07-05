@@ -490,26 +490,19 @@
     }
     closeAll();
     if(n.link){
-      const parts = n.link.split(':');
-      const view = parts[0];   // ex: 'fil', 'profil', 'actualites'
-      const param = parts[1];  // ex: postId ou uid
-
-      /* Naviguer vers la vue et scroller vers le post si besoin */
-      if(typeof window.showView === 'function'){
-        window.showView(view === 'fil' ? 'actualites' : view);
-        /* Scroller vers le post ciblé après rendu */
-        if(view === 'fil' && param && param !== 'new'){
-          setTimeout(()=>{
-            const el = document.getElementById('gsc-post-' + param)
-                    || document.querySelector('[data-post-id="' + param + '"]');
-            if(el) el.scrollIntoView({ behavior:'smooth', block:'center' });
-          }, 600);
-        }
+      /* FIX : cette navigation dupliquait (en plus simple, sans ouvrir les
+         commentaires ni gérer un commentId précis) la logique déjà écrite pour
+         le clic sur notification push. On délègue maintenant à handleNotifLink
+         (défini dans index.html), identique que le clic vienne de la cloche
+         in-app ou d'une notification système reçue via le service worker. */
+      if(typeof window.handleNotifLink === 'function'){
+        window.handleNotifLink(n.link);
+      } else if(typeof window.showView === 'function'){
+        const parts = n.link.split(':');
+        const view = parts[0] === 'fil' ? 'actualites' : parts[0];
+        window.showView(view);
       } else {
-        /* Fallback événement global */
-        window.dispatchEvent(new CustomEvent('gsc-navigate', {
-          detail: { view: view === 'fil' ? 'actualites' : view, param }
-        }));
+        window.dispatchEvent(new CustomEvent('gsc-navigate', { detail: { link: n.link } }));
       }
     }
   }
