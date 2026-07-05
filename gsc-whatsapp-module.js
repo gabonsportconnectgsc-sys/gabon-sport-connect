@@ -70,6 +70,55 @@
   };
   const ROLE_ORDER = Object.keys(ROLE_LABELS);
 
+  /* ══════════════════════════════════════════════════════════════════
+   * COUCHE FIRESTORE AGNOSTIQUE (compat vs modulaire)
+   * ──────────────────────────────────────────────────────────────────
+   * FIX CRITIQUE : ce module est chargé À LA FOIS par admin.html
+   * (Firebase SDK COMPAT → window.db.collection(...).doc(...).where(...)
+   * fonctionne) ET par index.html (Firebase SDK MODULAIRE → window.db =
+   * getFirestore(app), qui N'A PAS de méthode .collection() : tout appel
+   * `window.db.collection(...)` y lève immédiatement une TypeError).
+   * Résultat observé : côté admin, les écritures (toggleActor) réussissent
+   * (compat), mais côté public (index.html), TOUTES les lectures
+   * (onSnapshot sur whatsapp_contacts et sur users/whatsappPublic==true)
+   * échouaient silencieusement au démarrage → la modale affichait
+   * "Aucun contact trouvé" en permanence, quel que soit ce que l'admin
+   * avait coché. Ce n'était pas un problème de droits Firestore : les
+   * règles autorisent déjà `allow read: if true`.
+   * Ces petits wrappers détectent quel style d'API est disponible et
+   * utilisent le bon, pour que le module fonctionne dans les deux pages.
+   * ══════════════════════════════════════════════════════════════════ */
+  function fsIsModular() {
+    return typeof window.collection === 'function' && typeof window.doc === 'function';
+  }
+  function fsOnSnapshotCollection(path, onNext, onErr) {
+    if (fsIsModular()) return window.onSnapshot(window.collection(window.db, path), onNext, onErr);
+    return window.db.collection(path).onSnapshot(onNext, onErr);
+  }
+  function fsOnSnapshotWhere(path, field, op, value, onNext, onErr) {
+    if (fsIsModular()) {
+      const q = window.query(window.collection(window.db, path), window.where(field, op, value));
+      return window.onSnapshot(q, onNext, onErr);
+    }
+    return window.db.collection(path).where(field, op, value).onSnapshot(onNext, onErr);
+  }
+  async function fsUpdateDoc(path, id, data) {
+    if (fsIsModular()) return window.updateDoc(window.doc(window.db, path, id), data);
+    return window.db.collection(path).doc(id).update(data);
+  }
+  async function fsSetDocMerge(path, id, data) {
+    if (fsIsModular()) return window.setDoc(window.doc(window.db, path, id), data, { merge: true });
+    return window.db.collection(path).doc(id).set(data, { merge: true });
+  }
+  async function fsAddDoc(path, data) {
+    if (fsIsModular()) return window.addDoc(window.collection(window.db, path), data);
+    return window.db.collection(path).add(data);
+  }
+  async function fsDeleteDoc(path, id) {
+    if (fsIsModular()) return window.deleteDoc(window.doc(window.db, path, id));
+    return window.db.collection(path).doc(id).delete();
+  }
+
   function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function roleLabel(r) { return ROLE_LABELS[r] || r || 'Autre'; }
   function actorName(u) {
@@ -141,11 +190,13 @@
 .gsc-wa-modal-head { padding:14px 16px 10px; border-bottom:1px solid #eee; display:flex; flex-direction:column; gap:8px; }
 .gsc-wa-modal-title { font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:space-between; }
 .gsc-wa-close { background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; }
+
+/* ── Recherche/filtres/liste — partagés par le FAB modal et l'onglet cloche ── */
 .gsc-wa-search { border:1.5px solid #e2e8f0; border-radius:10px; padding:8px 10px; font-size:13px; width:100%; box-sizing:border-box; }
 .gsc-wa-chips { display:flex; gap:6px; flex-wrap:wrap; }
 .gsc-wa-chip { border:1.5px solid #e2e8f0; border-radius:20px; padding:4px 10px; font-size:11.5px; cursor:pointer; background:#fff; color:#334155; }
 .gsc-wa-chip.active { background:#009E60; border-color:#009E60; color:#fff; }
-.gsc-wa-list { overflow-y:auto; padding:8px 10px 16px; }
+.gsc-wa-list { overflow-y:auto; padding:8px 10px 16px; max-height:280px; flex:1; }
 .gsc-wa-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 6px; border-bottom:1px solid #f1f5f9; }
 .gsc-wa-row-name { font-weight:600; font-size:13.5px; color:#0A1628; }
 .gsc-wa-row-cat { font-size:11px; color:#64748b; }
@@ -199,117 +250,62 @@
     </svg>`;
 
   /* ══════════════════════════════════════════════════════════════════
-   * CÔTÉ PUBLIC (index.html) — FAB déplaçable + modale filtrable
+   * CÔTÉ PUBLIC (index.html) — DEUX points d'entrée pour la même donnée :
+   *   1. Le FAB flottant déplaçable historique (modale dédiée).
+   *   2. L'onglet "💬 WhatsApp" fusionné dans le panneau de la cloche
+   *      de notifications (voir renderWhatsAppTab plus bas).
+   * Les deux partagent le même état (_publicManualContacts/_publicActors)
+   * et la même logique de filtre/recherche ; chacun a ses propres ids
+   * DOM (préfixés) pour ne jamais se marcher dessus s'ils sont ouverts
+   * en même temps.
+   *
+   * Appui long sur le FAB (≈550ms sans glisser) : masque le bouton pour
+   * la session en cours (jusqu'au prochain rafraîchissement de la page —
+   * rien n'est écrit en localStorage, donc il réapparaît normalement au
+   * prochain chargement). Le contact WhatsApp reste accessible via la
+   * cloche pendant ce temps.
    * ══════════════════════════════════════════════════════════════════ */
   let _publicManualContacts = [];
   let _publicActors = [];
-  let _activeCategory = null;
+  const FAB_LONG_PRESS_MS = 550;
 
-  function injectPublicUI() {
-    if (document.getElementById('gsc-wa-fab')) return;
-    document.body.insertAdjacentHTML('beforeend', `
-      <button class="gsc-wa-fab" id="gsc-wa-fab" title="Nous contacter sur WhatsApp">${PHONE_BUBBLE_SVG}</button>
-      <div class="gsc-wa-modal-overlay" id="gsc-wa-overlay">
-        <div class="gsc-wa-modal">
-          <div class="gsc-wa-modal-head">
-            <div class="gsc-wa-modal-title">💬 Contacts WhatsApp <button class="gsc-wa-close" id="gsc-wa-close">✕</button></div>
-            <input type="text" class="gsc-wa-search" id="gsc-wa-search" placeholder="🔍 Rechercher un contact…">
-            <div class="gsc-wa-chips" id="gsc-wa-chips"></div>
-          </div>
-          <div class="gsc-wa-list" id="gsc-wa-list"></div>
-        </div>
-      </div>
-    `);
-    positionFabDefault();
-    makeFabDraggable();
-    document.getElementById('gsc-wa-close').addEventListener('click', closePublicModal);
-    document.getElementById('gsc-wa-overlay').addEventListener('click', (e) => {
-      if (e.target.id === 'gsc-wa-overlay') closePublicModal();
-    });
-    document.getElementById('gsc-wa-search').addEventListener('input', renderPublicList);
-
-    const chips = document.getElementById('gsc-wa-chips');
-    const allChipLabels = ['Tous', ...CATEGORIES, ...Object.values(ROLE_LABELS)];
-    chips.innerHTML = '<button type="button" class="gsc-wa-chip active" data-cat="">Tous</button>' +
-      CATEGORIES.map(c => `<button type="button" class="gsc-wa-chip" data-cat="${esc(c)}">${esc(c)}</button>`).join('') +
-      Object.keys(ROLE_LABELS).map(r => `<button type="button" class="gsc-wa-chip" data-cat="role:${esc(r)}">${esc(ROLE_LABELS[r])}</button>`).join('');
-    chips.querySelectorAll('.gsc-wa-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        chips.querySelectorAll('.gsc-wa-chip').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        _activeCategory = btn.dataset.cat || null;
-        renderPublicList();
-      });
-    });
+  function buildFilterBlockHtml(prefix) {
+    return `
+      <input type="text" class="gsc-wa-search" id="${prefix}-search" placeholder="🔍 Rechercher un contact…">
+      <div class="gsc-wa-chips" id="${prefix}-chips"></div>
+    `;
   }
 
-  // Position par défaut : bas-droite, au-dessus de la barre de nav mobile.
-  function positionFabDefault() {
-    const fab = document.getElementById('gsc-wa-fab');
-    if (!fab) return;
-    let pos = null;
-    try { pos = JSON.parse(localStorage.getItem(FAB_POS_KEY) || 'null'); } catch (e) { pos = null; }
-    const vw = window.innerWidth, vh = window.innerHeight;
-    if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
-      pos = { x: vw - 46 - 14, y: vh - 46 - 128 };
+  function wireFilterBlock(root, prefix) {
+    const searchEl = root.querySelector(`#${prefix}-search`);
+    if (searchEl && !searchEl._gscBound) {
+      searchEl._gscBound = true;
+      searchEl.addEventListener('input', () => renderContactsList(prefix));
     }
-    // Reclamp si la fenêtre a changé de taille depuis le dernier enregistrement.
-    pos.x = Math.min(Math.max(6, pos.x), vw - 46 - 6);
-    pos.y = Math.min(Math.max(6, pos.y), vh - 46 - 6);
-    fab.style.left = pos.x + 'px';
-    fab.style.top = pos.y + 'px';
+    const chips = root.querySelector(`#${prefix}-chips`);
+    if (chips && !chips._gscBound) {
+      chips._gscBound = true;
+      chips.innerHTML = '<button type="button" class="gsc-wa-chip active" data-cat="">Tous</button>' +
+        CATEGORIES.map(c => `<button type="button" class="gsc-wa-chip" data-cat="${esc(c)}">${esc(c)}</button>`).join('') +
+        Object.keys(ROLE_LABELS).map(r => `<button type="button" class="gsc-wa-chip" data-cat="role:${esc(r)}">${esc(ROLE_LABELS[r])}</button>`).join('');
+      chips.querySelectorAll('.gsc-wa-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          chips.querySelectorAll('.gsc-wa-chip').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderContactsList(prefix);
+        });
+      });
+    }
   }
 
-  function makeFabDraggable() {
-    const fab = document.getElementById('gsc-wa-fab');
-    if (!fab) return;
-    let dragging = false, moved = false, startX = 0, startY = 0, origX = 0, origY = 0;
-
-    fab.addEventListener('pointerdown', (e) => {
-      dragging = true; moved = false;
-      startX = e.clientX; startY = e.clientY;
-      const rect = fab.getBoundingClientRect();
-      origX = rect.left; origY = rect.top;
-      fab.setPointerCapture(e.pointerId);
-    });
-    fab.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - startX, dy = e.clientY - startY;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
-      if (!moved) return;
-      const vw = window.innerWidth, vh = window.innerHeight;
-      const nx = Math.min(Math.max(6, origX + dx), vw - 46 - 6);
-      const ny = Math.min(Math.max(6, origY + dy), vh - 46 - 6);
-      fab.style.left = nx + 'px';
-      fab.style.top = ny + 'px';
-    });
-    fab.addEventListener('pointerup', (e) => {
-      dragging = false;
-      if (moved) {
-        try {
-          localStorage.setItem(FAB_POS_KEY, JSON.stringify({
-            x: parseFloat(fab.style.left), y: parseFloat(fab.style.top)
-          }));
-        } catch (err) { /* ignore */ }
-      } else {
-        openPublicModal();
-      }
-    });
-  }
-
-  function openPublicModal() {
-    document.getElementById('gsc-wa-overlay').classList.add('open');
-    renderPublicList();
-  }
-  function closePublicModal() {
-    document.getElementById('gsc-wa-overlay').classList.remove('open');
-  }
-
-  function renderPublicList() {
-    const listEl = document.getElementById('gsc-wa-list');
+  // Rendu générique — `prefix` distingue l'instance (FAB modal vs onglet
+  // cloche) pour lire/écrire dans les bons ids DOM sans collision.
+  function renderContactsList(prefix) {
+    const listEl = document.getElementById(`${prefix}-list`);
     if (!listEl) return;
-    const q = (document.getElementById('gsc-wa-search')?.value || '').trim().toLowerCase();
-    const cat = _activeCategory || '';
+    const q = (document.getElementById(`${prefix}-search`)?.value || '').trim().toLowerCase();
+    const chipsWrap = document.getElementById(`${prefix}-chips`);
+    const cat = chipsWrap?.querySelector('.gsc-wa-chip.active')?.dataset.cat || '';
     const isRoleFilter = cat.startsWith('role:');
     const roleFilter = isRoleFilter ? cat.slice(5) : null;
 
@@ -349,16 +345,164 @@
       </div>`).join('');
   }
 
+  // Rafraîchit toutes les vues publiques actuellement montées (FAB modal
+  // et/ou onglet cloche) quand les données Firestore changent.
+  function refreshAllPublicViews() {
+    ['gsc-wa-modal', 'gsc-wa-bell'].forEach(p => {
+      if (document.getElementById(`${p}-list`)) renderContactsList(p);
+    });
+  }
+
+  /* ── Instance 1 : le FAB flottant + sa modale dédiée ── */
+  function injectPublicUI() {
+    if (document.getElementById('gsc-wa-fab')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <button class="gsc-wa-fab" id="gsc-wa-fab" title="Nous contacter sur WhatsApp (appui long : masquer)">${PHONE_BUBBLE_SVG}</button>
+      <div class="gsc-wa-modal-overlay" id="gsc-wa-overlay">
+        <div class="gsc-wa-modal">
+          <div class="gsc-wa-modal-head">
+            <div class="gsc-wa-modal-title">💬 Contacts WhatsApp <button class="gsc-wa-close" id="gsc-wa-close">✕</button></div>
+            ${buildFilterBlockHtml('gsc-wa-modal')}
+          </div>
+          <div class="gsc-wa-list" id="gsc-wa-modal-list"></div>
+        </div>
+      </div>
+    `);
+    positionFabDefault();
+    makeFabDraggable();
+    document.getElementById('gsc-wa-close').addEventListener('click', closePublicModal);
+    document.getElementById('gsc-wa-overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'gsc-wa-overlay') closePublicModal();
+    });
+    wireFilterBlock(document.getElementById('gsc-wa-overlay'), 'gsc-wa-modal');
+  }
+
+  // Position par défaut : bas-droite, au-dessus de la barre de nav mobile.
+  function positionFabDefault() {
+    const fab = document.getElementById('gsc-wa-fab');
+    if (!fab) return;
+    let pos = null;
+    try { pos = JSON.parse(localStorage.getItem(FAB_POS_KEY) || 'null'); } catch (e) { pos = null; }
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
+      pos = { x: vw - 46 - 14, y: vh - 46 - 128 };
+    }
+    // Reclamp si la fenêtre a changé de taille depuis le dernier enregistrement.
+    pos.x = Math.min(Math.max(6, pos.x), vw - 46 - 6);
+    pos.y = Math.min(Math.max(6, pos.y), vh - 46 - 6);
+    fab.style.left = pos.x + 'px';
+    fab.style.top = pos.y + 'px';
+  }
+
+  // Petit indicateur transitoire au-dessus du FAB, pour confirmer le
+  // masquage sans utiliser alert() (bloquant et peu élégant en mobile).
+  function showFabHiddenHint(fab) {
+    const rect = fab.getBoundingClientRect();
+    const hint = document.createElement('div');
+    hint.textContent = '💬 Bouton masqué jusqu\'au rechargement de la page';
+    hint.style.cssText = `position:fixed;z-index:401;background:#0A1628;color:#fff;font-size:11.5px;
+      font-weight:600;padding:8px 12px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.25);
+      max-width:220px;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;
+      left:${Math.max(8, Math.min(rect.left - 90, window.innerWidth - 236))}px;
+      top:${Math.max(8, rect.top - 46)}px;`;
+    document.body.appendChild(hint);
+    requestAnimationFrame(() => { hint.style.opacity = '1'; });
+    setTimeout(() => {
+      hint.style.opacity = '0';
+      setTimeout(() => hint.remove(), 250);
+    }, 2000);
+  }
+
+  function makeFabDraggable() {
+    const fab = document.getElementById('gsc-wa-fab');
+    if (!fab) return;
+    let dragging = false, moved = false, startX = 0, startY = 0, origX = 0, origY = 0;
+    let longPressTimer = null, longPressFired = false;
+
+    fab.addEventListener('pointerdown', (e) => {
+      dragging = true; moved = false; longPressFired = false;
+      startX = e.clientX; startY = e.clientY;
+      const rect = fab.getBoundingClientRect();
+      origX = rect.left; origY = rect.top;
+      fab.setPointerCapture(e.pointerId);
+      longPressTimer = setTimeout(() => {
+        if (dragging && !moved) {
+          longPressFired = true;
+          showFabHiddenHint(fab);
+          fab.style.display = 'none';
+          closePublicModal();
+        }
+      }, FAB_LONG_PRESS_MS);
+    });
+    fab.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        moved = true;
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      }
+      if (!moved) return;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const nx = Math.min(Math.max(6, origX + dx), vw - 46 - 6);
+      const ny = Math.min(Math.max(6, origY + dy), vh - 46 - 6);
+      fab.style.left = nx + 'px';
+      fab.style.top = ny + 'px';
+    });
+    fab.addEventListener('pointerup', (e) => {
+      dragging = false;
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      if (longPressFired) { longPressFired = false; return; }
+      if (moved) {
+        try {
+          localStorage.setItem(FAB_POS_KEY, JSON.stringify({
+            x: parseFloat(fab.style.left), y: parseFloat(fab.style.top)
+          }));
+        } catch (err) { /* ignore */ }
+      } else {
+        openPublicModal();
+      }
+    });
+    fab.addEventListener('pointercancel', () => {
+      dragging = false;
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    });
+  }
+
+  function openPublicModal() {
+    document.getElementById('gsc-wa-overlay')?.classList.add('open');
+    renderContactsList('gsc-wa-modal');
+  }
+  function closePublicModal() {
+    document.getElementById('gsc-wa-overlay')?.classList.remove('open');
+  }
+
+  /* ── Instance 2 : l'onglet "💬 WhatsApp" fusionné dans la cloche ── */
+  // Rendu appelé par gsc-notifications.js quand cet onglet est actif.
+  // `container` = élément fourni par le panneau (id="gsc-notif-list").
+  function renderWhatsAppTab(container) {
+    if (!container) return;
+    if (!container.querySelector('#gsc-wa-bell-search')) {
+      container.innerHTML = `
+        <div style="padding:10px 14px 6px;">${buildFilterBlockHtml('gsc-wa-bell')}</div>
+        <div class="gsc-wa-list" id="gsc-wa-bell-list"></div>
+      `;
+      wireFilterBlock(container, 'gsc-wa-bell');
+    }
+    renderContactsList('gsc-wa-bell');
+  }
+
   function bootPublic() {
     injectStyles();
     injectPublicUI();
     if (!window.db) return;
-    window.db.collection(COLLECTION).onSnapshot(
-      (snap) => { _publicManualContacts = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderPublicList(); },
+    fsOnSnapshotCollection(
+      COLLECTION,
+      (snap) => { _publicManualContacts = snap.docs.map(d => ({ id: d.id, ...d.data() })); refreshAllPublicViews(); },
       (err) => console.error('[GSCWhatsApp] lecture contacts publique erreur:', err)
     );
-    window.db.collection('users').where('whatsappPublic', '==', true).onSnapshot(
-      (snap) => { _publicActors = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.role !== 'admin'); renderPublicList(); },
+    fsOnSnapshotWhere(
+      'users', 'whatsappPublic', '==', true,
+      (snap) => { _publicActors = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.role !== 'admin'); refreshAllPublicViews(); },
       (err) => console.error('[GSCWhatsApp] lecture acteurs publique erreur:', err)
     );
   }
@@ -550,7 +694,7 @@
   async function toggleActor(uid, value) {
     if (!window.db || !uid) return;
     try {
-      await window.db.collection('users').doc(uid).update({ whatsappPublic: value });
+      await fsUpdateDoc('users', uid, { whatsappPublic: value });
     } catch (err) {
       console.error('[GSCWhatsApp] toggleActor erreur:', err);
       alert('Erreur : ' + (err.message || err));
@@ -564,7 +708,7 @@
     if (!window.db) return;
     let ok = 0, fail = 0;
     for (const u of users) {
-      try { await window.db.collection('users').doc(u.id || u.uid).update({ whatsappPublic: value }); ok++; }
+      try { await fsUpdateDoc('users', u.id || u.uid, { whatsappPublic: value }); ok++; }
       catch (err) { console.error('[GSCWhatsApp] toggleRole erreur pour', u.id, err); fail++; }
     }
     alert(fail ? `${ok} mis à jour, ${fail} échec(s).` : `${ok} acteur(s) mis à jour.`);
@@ -690,10 +834,10 @@
     };
     try {
       if (_editingContactId) {
-        await window.db.collection(COLLECTION).doc(_editingContactId).set(payload, { merge: true });
+        await fsSetDocMerge(COLLECTION, _editingContactId, payload);
       } else {
         payload.createdAt = new Date();
-        await window.db.collection(COLLECTION).add(payload);
+        await fsAddDoc(COLLECTION, payload);
       }
       if (statusEl) { statusEl.textContent = '✅ Enregistré'; statusEl.className = 'gsc-wa-status-msg ok'; setTimeout(() => { statusEl.textContent = ''; }, 2000); }
       resetContactForm();
@@ -707,7 +851,7 @@
     const c = _adminContacts.find(x => x.id === id);
     if (!confirm(`Supprimer le contact "${c ? c.nom : id}" ? Cette action est irréversible.`)) return;
     if (!window.db) return;
-    try { await window.db.collection(COLLECTION).doc(id).delete(); }
+    try { await fsDeleteDoc(COLLECTION, id); }
     catch (err) { console.error('[GSCWhatsApp] deleteContact erreur:', err); alert('Erreur : ' + (err.message || err)); }
   }
 
@@ -813,10 +957,10 @@
     };
     try {
       if (_editingTemplateId) {
-        await window.db.collection(TEMPLATES_COLLECTION).doc(_editingTemplateId).set(payload, { merge: true });
+        await fsSetDocMerge(TEMPLATES_COLLECTION, _editingTemplateId, payload);
       } else {
         payload.createdAt = new Date();
-        await window.db.collection(TEMPLATES_COLLECTION).add(payload);
+        await fsAddDoc(TEMPLATES_COLLECTION, payload);
       }
       if (statusEl) { statusEl.textContent = '✅ Enregistré'; statusEl.className = 'gsc-wa-status-msg ok'; setTimeout(() => { statusEl.textContent = ''; }, 2000); }
       resetTemplateForm();
@@ -830,7 +974,7 @@
     const t = _adminTemplates.find(x => x.id === id);
     if (!confirm(`Supprimer le modèle "${t ? t.titre : id}" ?`)) return;
     if (!window.db) return;
-    try { await window.db.collection(TEMPLATES_COLLECTION).doc(id).delete(); }
+    try { await fsDeleteDoc(TEMPLATES_COLLECTION, id); }
     catch (err) { alert('Erreur : ' + (err.message || err)); }
   }
 
@@ -972,7 +1116,8 @@
         if (document.getElementById(SECTION_ID)?.classList.contains('active') && _activeTab === 'acteurs') renderActeursTab();
       });
     } else if (window.db) {
-      window.db.collection('users').onSnapshot(
+      fsOnSnapshotCollection(
+        'users',
         (snap) => {
           _adminUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           if (document.getElementById(SECTION_ID)?.classList.contains('active') && _activeTab === 'acteurs') renderActeursTab();
@@ -982,14 +1127,16 @@
     }
 
     if (!window.db) return;
-    window.db.collection(COLLECTION).onSnapshot(
+    fsOnSnapshotCollection(
+      COLLECTION,
       (snap) => {
         _adminContacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (document.getElementById(SECTION_ID)?.classList.contains('active') && _activeTab === 'contacts') renderAdminTable();
       },
       (err) => console.error('[GSCWhatsApp] lecture contacts admin erreur:', err)
     );
-    window.db.collection(TEMPLATES_COLLECTION).onSnapshot(
+    fsOnSnapshotCollection(
+      TEMPLATES_COLLECTION,
       (snap) => {
         _adminTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (document.getElementById(SECTION_ID)?.classList.contains('active') && (_activeTab === 'templates' || _activeTab === 'diffusion')) {
@@ -1012,7 +1159,7 @@
     saveContact, editContact, cancelEdit, deleteContact,
     saveTemplate, editTemplate, cancelTemplateEdit, deleteTemplate,
     toggleActor, toggleRole, buildDiffusion,
-    showAdminSection, openPublicModal, closePublicModal
+    showAdminSection, openPublicModal, closePublicModal, renderWhatsAppTab
   };
 
 })(window);
