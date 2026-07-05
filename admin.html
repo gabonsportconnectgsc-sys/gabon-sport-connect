@@ -3013,6 +3013,22 @@ tr.is-demo-row td { opacity: .82; }
           return;
         }
       }
+      // FIX : le pont Firebase Auth (nécessaire pour que request.auth soit
+      // non-null côté Firestore rules) n'était appelé que dans checkSession()
+      // (rechargement de page avec session existante), jamais ici après un
+      // login classique. Résultat : firebase.auth().currentUser restait null
+      // après connexion via le formulaire, donc TOUTE écriture Firestore
+      // échouait avec "Missing or insufficient permissions" — peu importe
+      // l'UID ou isAdmin(), puisque request.auth lui-même était null.
+      btn.textContent='Connexion Firestore…';
+      try{ await ensureFirebaseAuthViaSupabase(); }
+      catch(e){
+        console.error('[GSC Admin] Pont Firebase indisponible (login):', e);
+        errEl.textContent = '⚠️ Connexion Firestore impossible — ' + (e&&e.message?e.message:'réessayez.');
+        errEl.style.display='block';
+        btn.disabled=false; btn.textContent='Se connecter';
+        return;
+      }
       showApp();
     }catch(e){
       const msg=(e&&e.message)||'';
