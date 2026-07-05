@@ -5995,13 +5995,15 @@ async function adminToggleHide(uid,currentStatus){
 }
 async function adminDeleteUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
-  if(!confirm('Supprimer définitivement cet utilisateur ?')) return;
+  if(!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès…).\n\n⚠️ Le compte de connexion Firebase Auth associé n\'est pas supprimé automatiquement (nécessite un accès Admin SDK côté serveur) — seul l\'accès à ce backend applicatif est retiré.')) return;
   try{
-    await updateDoc(doc(db,'users',uid),{status:'deleted',updatedAt:serverTimestamp()});
+    await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
-    if(idx>=0) allAdminUsers[idx].status='deleted';
+    if(idx>=0) allAdminUsers.splice(idx,1);
     renderAdminUsersTable(allAdminUsers);
-    toast('🗑️ Utilisateur marqué supprimé.','info');
+    updatePendingBanner();
+    await loadActors();
+    toast('🗑️ Utilisateur supprimé définitivement.','info');
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 async function loadAdminSites(){
