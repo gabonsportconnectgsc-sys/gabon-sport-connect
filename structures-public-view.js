@@ -32,6 +32,7 @@
   let _structures = [];
   let _currentFilter = 'all';
   let _currentSearch = '';
+  let _currentFeminineOnly = false;
   let _unsub = null;
 
   function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -49,12 +50,9 @@
     }
     try {
       if (typeof window.onSnapshot === 'function' && !_unsub) {
-        const ref = window.query(
-          window.collection(window.db, COLLECTION),
-          window.where('status', '==', 'active')
-        );
+        const ref = window.collection(window.db, COLLECTION);
         _unsub = window.onSnapshot(ref, (snap) => {
-          _structures = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          _structures = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(isVisible);
           render();
         }, (err) => {
           console.error('[StructuresPublicView] onSnapshot erreur:', err);
@@ -69,14 +67,21 @@
     }
   }
 
+  // Une structure est visible publiquement tant qu'elle n'est pas explicitement
+  // archivée/désactivée. Avant, seul status === 'active' était accepté, ce qui
+  // masquait toute structure créée sans ce champ (désynchro avec l'admin, qui
+  // affiche TOUTES les structures sans ce filtre). On aligne donc le public
+  // sur l'admin : tout ce qui n'est pas 'archived'/'inactive'/'disabled' compte.
+  function isVisible(s) {
+    const st = (s.status || 'active').toLowerCase();
+    return st !== 'archived' && st !== 'inactive' && st !== 'disabled' && st !== 'deleted';
+  }
+
   async function loadOnce() {
     try {
-      const ref = window.query(
-        window.collection(window.db, COLLECTION),
-        window.where('status', '==', 'active')
-      );
+      const ref = window.collection(window.db, COLLECTION);
       const snap = await window.getDocs(ref);
-      _structures = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _structures = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(isVisible);
       render();
     } catch (err) {
       console.error('[StructuresPublicView] loadOnce() erreur:', err);
@@ -111,6 +116,22 @@
     render();
   }
 
+  /* Effectif féminin (saison en cours) d'une structure — même modèle de
+     données que structures-form-builder.js / structures-manager.js :
+     s.saisons[saison].effectifs.femmes. */
+  function feminineCount(s) {
+    const saison = s.saisonCourante || (P() ? P().getCurrentSeasonLabel() : '');
+    const saisonData = (s.saisons && s.saisons[saison]) || {};
+    return (saisonData.effectifs && saisonData.effectifs.femmes) || 0;
+  }
+
+  function setFeminineOnly(active) {
+    _currentFeminineOnly = !!active;
+    render();
+  }
+
+  function isFeminineOnly() { return _currentFeminineOnly; }
+
   function initFilters() {
     const container = document.getElementById('structures-public-filters');
     if (!container || !D()) return;
@@ -141,6 +162,7 @@
         (s.type || '').toLowerCase().includes(_currentSearch)
       );
     }
+    if (_currentFeminineOnly) list = list.filter(s => feminineCount(s) > 0);
 
     if (countEl) countEl.textContent = list.length ? `(${list.length})` : '';
 
@@ -148,7 +170,7 @@
       container.innerHTML = `
         <div class="empty-state">
           <h3>Aucune structure trouvée</h3>
-          <p>Modifiez vos filtres ou votre recherche.</p>
+          <p>${_currentFeminineOnly ? 'Aucune structure avec effectif féminin pour ces filtres.' : 'Modifiez vos filtres ou votre recherche.'}</p>
         </div>`;
       return;
     }
@@ -158,6 +180,7 @@
       const saison = s.saisonCourante || (P() ? P().getCurrentSeasonLabel() : '');
       const saisonData = (s.saisons && s.saisons[saison]) || {};
       const totals = P() ? P().computeEffectifsTotals(saisonData) : { total: 0 };
+      const femmes = feminineCount(s);
 
       return `
         <div class="site-item" onclick="GSCPublicStructures.openDetail('${esc(s.id)}')" style="cursor:pointer;">
@@ -167,7 +190,7 @@
           }
           <div class="site-info">
             <div class="site-name">${esc(s.nom)}</div>
-            <div class="site-meta">${esc(s.type)} · ${icon} ${esc(s.discipline)} · ${esc(s.ville) || '—'} · 👥 ${totals.total}</div>
+            <div class="site-meta">${esc(s.type)} · ${icon} ${esc(s.discipline)} · ${esc(s.ville) || '—'} · 👥 ${totals.total}${femmes > 0 ? ` · 🚺 ${femmes}` : ''}</div>
           </div>
           <button class="btn-sm" onclick="event.stopPropagation();GSCPublicStructures.openDetail('${esc(s.id)}')">Voir 📋</button>
         </div>`;
@@ -198,6 +221,11 @@
       body.innerHTML = P().renderFullProfile(structure, structure.saisonCourante, null, 'public');
     } else {
       body.innerHTML = '<p>Moteur de profil indisponible.</p>';
+    }
+
+    // Google Maps / WhatsApp (détection auto GPS + téléphone)
+    if (window.GSCContactLinks) {
+      body.insertAdjacentHTML('beforeend', window.GSCContactLinks.render(structure));
     }
 
     // Infrastructures (lecture seule, sous-collection)
@@ -286,6 +314,7 @@
    * ══════════════════════════════════════════════════════════════════ */
   window.GSCPublicStructures = {
     load, filterByDiscipline, search,
+    setFeminineOnly, isFeminineOnly, feminineCount,
     openDetail, closeDetail, openFullscreenPhoto
   };
 
