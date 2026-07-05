@@ -7780,19 +7780,29 @@ const ROLE_CODES_QR = {
   admin:'ADM', supporter:'SUP', organisateur:'ORG',
   eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP', formateur:'FOR'
 };
+// Numéro de catégorie court (3 chiffres), identique dans index.html / admin.html / inscription.html.
+// Pratiquants: 001-009 · Structures: 010-013 · Autres: 014-016
+const CATEGORY_NUM = {
+  joueur:'001', athlete:'002', arbitre:'003', entraineur:'004', independant:'005',
+  eleve_etudiant:'006', sportif_etranger:'007', handisport:'008', ancien_sportif:'009',
+  club:'010', federation:'011', association:'012', organisateur:'013',
+  formateur:'014', supporter:'015', admin:'016',
+  ecole_universite:'006' // fusionné avec Élève/Étudiant : sous-type, pas une catégorie à part
+};
 // Rôles autorisés à avoir un QR imprimable
 const QR_ENABLED_ROLES = ['joueur','athlete','independant','club','association','federation','admin','handisport','ancien_sportif','formateur'];
 
 function generateGscId(uid, role){
   if(!uid) return null;
   const roleCode = ROLE_CODES_QR[role] || 'ACT';
+  const catNum = CATEGORY_NUM[role] || '000';
   let hash = 0;
   for(let i = 0; i < uid.length; i++){
     hash = ((hash << 5) - hash) + uid.charCodeAt(i);
     hash |= 0;
   }
   const abs = Math.abs(hash).toString(36).toUpperCase().padStart(6,'0').slice(-6);
-  return `GSC-${roleCode}-${abs}`;
+  return `GSC-${catNum}-${roleCode}-${abs}`;
 }
 
 function buildQrUrl(uid){

@@ -547,6 +547,25 @@
     ]
   };
   
+  // Numéro de catégorie court (3 chiffres), identique à index.html / admin.html / inscription.html.
+  const CATEGORY_NUM = {
+    joueur:'001', athlete:'002', arbitre:'003', entraineur:'004', independant:'005',
+    eleve_etudiant:'006', sportif_etranger:'007', handisport:'008', ancien_sportif:'009',
+    club:'010', federation:'011', association:'012', organisateur:'013',
+    formateur:'014', supporter:'015', admin:'016',
+    ecole_universite:'006' // fusionné avec Élève/Étudiant : sous-type, pas une catégorie à part
+  };
+
+  // Ajoute le numéro de catégorie (dérivé de la clé SPORTS_ACTORS) à chaque enregistrement,
+  // sans dupliquer les données ni modifier les tableaux SPORTS_ACTORS existants.
+  function withCategoryNum(categoryKey, arr) {
+    return arr.map(item => ({ categorie: CATEGORY_NUM[categoryKey] || '000', ...item }));
+  }
+
+  function getAllActorsWithCategory() {
+    return Object.entries(SPORTS_ACTORS).flatMap(([key, arr]) => withCategoryNum(key, arr));
+  }
+
   let currentFilter = 'all';
   
   function setFilter(filter) {
@@ -556,17 +575,17 @@
   }
   
   function getFilteredData() {
-    const allData = Object.values(SPORTS_ACTORS).flat();
+    const allData = getAllActorsWithCategory();
     
     if (currentFilter === 'all') return allData;
     if (currentFilter === 'verified') return allData.filter(d => d.verified === true);
-    return SPORTS_ACTORS[currentFilter] || [];
+    return withCategoryNum(currentFilter, SPORTS_ACTORS[currentFilter] || []);
   }
   
   function exportData(category, format) {
     const data = category === 'all' 
-      ? Object.values(SPORTS_ACTORS).flat()
-      : SPORTS_ACTORS[category] || [];
+      ? getAllActorsWithCategory()
+      : withCategoryNum(category, SPORTS_ACTORS[category] || []);
     
     if (!data.length) {
       showToast('Aucune donnée à exporter', 'error');
