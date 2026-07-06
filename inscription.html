@@ -1124,6 +1124,24 @@
     await ensureFirebaseAuthViaSupabase(uid);
     try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() }); }
     catch(e) { console.warn('Firestore save failed:', e); }
+
+    // ── Migration en douceur (étape 1/5 — sécurité) : miroir des champs
+    // sensibles vers users/{uid}/private/contact (lecture restreinte au
+    // propriétaire + admin, voir firestore.rules). Le document principal
+    // ci-dessus garde ENCORE ces champs pour compatibilité tant que les
+    // autres fichiers (admin-actors-accounts.js, gsc-club-validation*.js,
+    // vue admin) n'ont pas été basculés sur private/contact. Ils seront
+    // retirés du doc principal à l'étape finale du plan de migration.
+    try {
+      const { telephone, status, clubValidation } = profile;
+      await _setDoc(_doc(db, 'users', uid, 'private', 'contact'), {
+        email,
+        ...(telephone !== undefined ? { telephone } : {}),
+        ...(status !== undefined ? { status } : {}),
+        ...(clubValidation !== undefined ? { clubValidation } : {}),
+        updatedAt: _serverTimestamp ? _serverTimestamp() : new Date()
+      }, { merge: true });
+    } catch(e) { console.warn('Firestore private save failed:', e); }
   }
 
   // ── INSCRIPTION VISITEUR ──
