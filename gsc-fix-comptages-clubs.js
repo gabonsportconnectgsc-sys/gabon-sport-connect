@@ -33,10 +33,19 @@
     else dashboard.insertBefore(panel, dashboard.firstChild);
   }
 
+  // Même périmètre de rôles/types que computeUnifiedOrgCount (index.html et
+  // admin.html) et que le panneau "Liaison Clubs". Avant ce fix, ce panneau
+  // ne regardait que club/association : un compte lié avec le rôle
+  // federation/organisateur (ex: une fédération) était invisible ici et
+  // affichait "Comptes: 0" alors que le panneau Liaison, juste en dessous,
+  // affichait "Comptes liés: 1" pour ce même compte — d'où l'incohérence.
+  const ORG_ROLES = ['club', 'association', 'federation', 'organisateur'];
+  const ORG_TYPES = ['Club', 'Association', 'Fédération', 'Organisateur'];
+
   function updateDisplay(users) {
     if (!window.structuresManager) return;
     
-    const clubUsers = users.filter(u => ['club', 'association'].includes(u.role));
+    const clubUsers = users.filter(u => ORG_ROLES.includes(u.role));
     const allStructures = window.structuresManager.list();
     
     if (!allStructures || allStructures.length === 0) return;
@@ -44,11 +53,11 @@
     const linkedIds = new Set(clubUsers.map(u => u.structureId).filter(Boolean));
     
     const linked = allStructures.filter(s => 
-      s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && linkedIds.has(s.id)
+      s.status !== 'deleted' && ORG_TYPES.includes(s.type) && linkedIds.has(s.id)
     ).length;
     
     const orphaned = allStructures.filter(s =>
-      s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && !linkedIds.has(s.id)
+      s.status !== 'deleted' && ORG_TYPES.includes(s.type) && !linkedIds.has(s.id)
     ).length;
 
     const activeEl = document.getElementById('sync-active');

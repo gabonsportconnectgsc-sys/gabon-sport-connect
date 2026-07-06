@@ -152,10 +152,17 @@
     return { total: _cache.length, byDiscipline, byType };
   }
 
-  function countByState() {
+  // NOTE : la liaison compte↔fiche se stocke sur le COMPTE (champ
+  // `structureId`), jamais sur la fiche structure elle-même. Un ancien
+  // champ `s.linkedUserId` était vérifié ici mais n'est renseigné nulle
+  // part dans l'app ; countByState() renvoyait donc toujours linked=0.
+  // On passe désormais la liste des comptes (users) pour reconstituer le
+  // lien dans le bon sens, comme le fait gsc-fix-comptages-clubs.js.
+  function countByState(users) {
+    const linkedIds = new Set((users || []).map(u => u.structureId).filter(Boolean));
     let linked = 0, orphaned = 0;
     _cache.forEach(s => {
-      if (s.linkedUserId) linked++;
+      if (linkedIds.has(s.id)) linked++;
       else orphaned++;
     });
     return { linked, orphaned, total: _cache.length };

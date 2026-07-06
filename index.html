@@ -5753,7 +5753,11 @@ async function computeUnifiedOrgCount(users, roles){
       structDocsData = _structCountCache.data;
     } else {
       const structSnap=await getDocs(collection(db,'structuresSportives'));
-      structDocsData = structSnap.docs.map(d=>d.data());
+      // FIX: d.data() ne contient pas l'id du document Firestore (doc.id est
+      // porté par le QueryDocumentSnapshot, pas par data()). Sans ceci,
+      // linkedStructIds.has(d.id) valait toujours false → linkedStructCount
+      // toujours 0, et l'app publique sous-comptait les structures liées.
+      structDocsData = structSnap.docs.map(d=>({ id: d.id, ...d.data() }));
       _structCountCache = { data: structDocsData, ts: now };
     }
     // FIX: Compter seulement les structures liées à des comptes actifs
