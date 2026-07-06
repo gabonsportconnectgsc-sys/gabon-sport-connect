@@ -46,22 +46,36 @@
   const ORG_TYPE_TO_ROLE = { 'Club': 'club', 'Association': 'association', 'Fédération': 'federation', 'Organisateur': 'organisateur' };
 
   function injectButton() {
-    const host = document.getElementById('liaison-content') || document.querySelector('.main-content') || document.body;
-    if (!host || document.getElementById('gsc-sync-wrap')) return;
+    // #liaison-content ne contient au chargement qu'un texte "Chargement…" ;
+    // son vrai contenu (cartes Total unifié / Comptes liés / etc.) est
+    // réécrit en entier (innerHTML) un peu plus tard par un autre script
+    // une fois les données Firestore prêtes. Sans observer, notre bouton
+    // injecté une seule fois au DOMContentLoaded se faisait donc effacer
+    // dès que ce rendu asynchrone arrivait. On observe #liaison-content et
+    // on réinjecte à chaque fois que son contenu est remplacé.
+    const liaisonEl = document.getElementById('liaison-content');
+    const host = liaisonEl || document.querySelector('.main-content') || document.body;
+    if (!host) return;
+    if (!document.getElementById('gsc-sync-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.id = 'gsc-sync-wrap';
+      wrap.className = 'gsc-sync-wrap';
+      wrap.innerHTML = `
+        <button id="gsc-sync-btn" class="gsc-sync-btn" type="button">
+          <span class="gsc-sync-icon">🔄</span>
+          <span class="gsc-sync-label">Synchroniser les acteurs sportifs</span>
+        </button>
+        <span id="gsc-sync-status" class="gsc-sync-status"></span>
+      `;
+      host.insertBefore(wrap, host.firstChild);
+      document.getElementById('gsc-sync-btn').addEventListener('click', runSync);
+    }
 
-    const wrap = document.createElement('div');
-    wrap.id = 'gsc-sync-wrap';
-    wrap.className = 'gsc-sync-wrap';
-    wrap.innerHTML = `
-      <button id="gsc-sync-btn" class="gsc-sync-btn" type="button">
-        <span class="gsc-sync-icon">🔄</span>
-        <span class="gsc-sync-label">Synchroniser les acteurs sportifs</span>
-      </button>
-      <span id="gsc-sync-status" class="gsc-sync-status"></span>
-    `;
-    host.insertBefore(wrap, host.firstChild);
-
-    document.getElementById('gsc-sync-btn').addEventListener('click', runSync);
+    if (liaisonEl && !liaisonEl.__gscSyncObserved) {
+      liaisonEl.__gscSyncObserved = true;
+      const obs = new MutationObserver(() => injectButton());
+      obs.observe(liaisonEl, { childList: true });
+    }
   }
 
   function setStatus(text, kind) {
