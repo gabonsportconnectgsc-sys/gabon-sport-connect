@@ -5747,9 +5747,6 @@ async function computeUnifiedOrgCount(users, roles){
     if(!db || typeof collection !== 'function') return orgUsers.length;
     const roleTypeLabels={club:'Club',association:'Association',federation:'Fédération',organisateur:'Organisateur'};
     const wantedTypes=roles.map(r=>roleTypeLabels[r]).filter(Boolean);
-    // Cache de courte durée (structuresSportives change rarement comparé aux
-    // écritures fréquentes sur 'users' qui redéclenchent ce calcul) — évite un
-    // getDocs() réseau à chaque validation/rejet de fiche côté admin.
     const now = Date.now();
     let structDocsData;
     if (_structCountCache && (now - _structCountCache.ts) < 30000) {
@@ -5759,9 +5756,11 @@ async function computeUnifiedOrgCount(users, roles){
       structDocsData = structSnap.docs.map(d=>d.data());
       _structCountCache = { data: structDocsData, ts: now };
     }
-    const structCount=structDocsData.filter(d=>wantedTypes.includes(d.type)).length;
+    // FIX: Compter seulement les structures liées à des comptes actifs
+    const linkedStructIds=new Set(orgUsers.map(u=>u.structureId).filter(Boolean));
+    const linkedStructCount=structDocsData.filter(d=>d.status!=='deleted' && wantedTypes.includes(d.type) && linkedStructIds.has(d.id)).length;
     const unlinkedOrgUsers=orgUsers.filter(u=>!u.structureId).length;
-    return structCount+unlinkedOrgUsers;
+    return linkedStructCount+unlinkedOrgUsers;
   }catch(e){
     console.warn('computeUnifiedOrgCount:',e);
     return orgUsers.length;

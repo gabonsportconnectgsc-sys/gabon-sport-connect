@@ -152,12 +152,21 @@
     return { total: _cache.length, byDiscipline, byType };
   }
 
+  function countByState() {
+    let linked = 0, orphaned = 0;
+    _cache.forEach(s => {
+      if (s.linkedUserId) linked++;
+      else orphaned++;
+    });
+    return { linked, orphaned, total: _cache.length };
+  }
+
   /* ══════════════════════════════════════════════════════════════════
    * 6. EXPORT
    * ══════════════════════════════════════════════════════════════════ */
   window.structuresManager = {
     create, update, remove, get, list,
-    uploadLogo, onUpdate, stats
+    uploadLogo, onUpdate, stats, countByState
   };
 
 })(window);
