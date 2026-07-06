@@ -4,42 +4,6 @@
 (function() {
   'use strict';
 
-  const originalUpdateStats = window.updateStats;
-  
-  window.updateStats = function(users) {
-    if (originalUpdateStats) originalUpdateStats(users);
-    
-    const clubUsers = users.filter(u => ['club', 'association'].includes(u.role));
-    
-    if (window.structuresManager && typeof window.structuresManager.list === 'function') {
-      const allStructures = window.structuresManager.list();
-      const linkedStructIds = new Set(clubUsers.map(u => u.structureId).filter(Boolean));
-      
-      const linkedStructures = allStructures.filter(s => 
-        s.status !== 'deleted' && 
-        ['Club', 'Association'].includes(s.type) && 
-        linkedStructIds.has(s.id)
-      );
-      
-      const orphanedStructures = allStructures.filter(s =>
-        s.status !== 'deleted' && 
-        ['Club', 'Association'].includes(s.type) && 
-        !linkedStructIds.has(s.id)
-      );
-
-      const clubStatEl = document.getElementById('stat-clubs-active');
-      if (clubStatEl) clubStatEl.textContent = clubUsers.length;
-
-      const clubFichesEl = document.getElementById('stat-clubs-fiches');
-      if (clubFichesEl) clubFichesEl.textContent = linkedStructures.length;
-
-      const orphanedEl = document.getElementById('stat-clubs-orphaned');
-      if (orphanedEl) orphanedEl.textContent = orphanedStructures.length;
-
-      console.log(`[GSC FIX] Clubs: ${clubUsers.length} comptes, ${linkedStructures.length} liées, ${orphanedStructures.length} orphelines`);
-    }
-  };
-
   function injectClubsInfoPanel() {
     const dashboard = document.querySelector('.main-content') || document.body;
     if (!dashboard) return;
@@ -69,32 +33,73 @@
     else dashboard.insertBefore(panel, dashboard.firstChild);
   }
 
-  window.fixClubSync = {
-    updateDisplay(users) {
-      if (window.structuresManager && typeof window.structuresManager.list === 'function') {
-        const clubUsers = users.filter(u => ['club', 'association'].includes(u.role));
-        const allStructures = window.structuresManager.list();
-        const linkedIds = new Set(clubUsers.map(u => u.structureId).filter(Boolean));
-        
-        const linked = allStructures.filter(s => 
-          s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && linkedIds.has(s.id)
-        ).length;
-        const orphaned = allStructures.filter(s =>
-          s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && !linkedIds.has(s.id)
-        ).length;
+  function updateDisplay(users) {
+    if (!window.structuresManager) return;
+    
+    const clubUsers = users.filter(u => ['club', 'association'].includes(u.role));
+    const allStructures = window.structuresManager.list();
+    
+    if (!allStructures || allStructures.length === 0) return;
+    
+    const linkedIds = new Set(clubUsers.map(u => u.structureId).filter(Boolean));
+    
+    const linked = allStructures.filter(s => 
+      s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && linkedIds.has(s.id)
+    ).length;
+    
+    const orphaned = allStructures.filter(s =>
+      s.status !== 'deleted' && ['Club', 'Association'].includes(s.type) && !linkedIds.has(s.id)
+    ).length;
 
-        document.getElementById('sync-active').textContent = clubUsers.length;
-        document.getElementById('sync-linked').textContent = linked;
-        document.getElementById('sync-orphaned').textContent = orphaned;
-      }
+    const activeEl = document.getElementById('sync-active');
+    const linkedEl = document.getElementById('sync-linked');
+    const orphanedEl = document.getElementById('sync-orphaned');
+
+    if (activeEl) activeEl.textContent = clubUsers.length;
+    if (linkedEl) linkedEl.textContent = linked;
+    if (orphanedEl) orphanedEl.textContent = orphaned;
+
+    console.log(`[GSC FIX] Clubs: ${clubUsers.length} comptes, ${linked} liées, ${orphaned} orphelines`);
+  }
+
+  function waitForStructures() {
+    if (!window.structuresManager) {
+      setTimeout(waitForStructures, 100);
+      return;
     }
-  };
+
+    // S'abonner aux mises à jour
+    if (typeof window.structuresManager.onUpdate === 'function') {
+      window.structuresManager.onUpdate(() => {
+        const users = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
+        updateDisplay(users);
+      });
+    }
+
+    // Aussi s'abonner aux utilisateurs
+    if (window.realtimeSync && typeof window.realtimeSync.onUpdate === 'function') {
+      window.realtimeSync.onUpdate('users', (users) => {
+        updateDisplay(users);
+      });
+    }
+  }
+
+  function init() {
+    injectClubsInfoPanel();
+    waitForStructures();
+  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectClubsInfoPanel);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    injectClubsInfoPanel();
+    init();
   }
+
+  // Fallback si les événements n'arrivent pas
+  setTimeout(() => {
+    const users = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
+    updateDisplay(users);
+  }, 2000);
 
   console.log('[GSC FIX] Synchronisation clubs chargée');
 })();
