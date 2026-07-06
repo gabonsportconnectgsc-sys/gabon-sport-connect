@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════════════════════════════
+ * SYNC-COMPTES.CSS — Bouton "Synchroniser les comptes réels"
+ * Gabon Sport Connect
+ * Si un css/buttons.css existe déjà dans le projet, ces règles peuvent
+ * y être fusionnées ; ce fichier est séparé pour ne rien écraser.
+ * ══════════════════════════════════════════════════════════════════ */
+
+.gsc-sync-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.gsc-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background: #009E60;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.gsc-sync-btn:hover:not(:disabled) { background: #007a4a; }
+.gsc-sync-btn:active:not(:disabled) { transform: scale(0.98); }
+
+.gsc-sync-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.gsc-sync-btn .gsc-sync-icon {
+  display: inline-block;
+}
+
+.gsc-sync-btn.is-loading .gsc-sync-icon {
+  animation: gsc-sync-spin 0.9s linear infinite;
+}
+
+@keyframes gsc-sync-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.gsc-sync-status {
+  font-size: 13px;
+  color: #333;
+}
+
+.gsc-sync-status.is-ok { color: #007a4a; }
+.gsc-sync-status.is-error { color: #dc2626; }
