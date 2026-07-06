@@ -5748,8 +5748,14 @@ async function computeUnifiedOrgCount(users, roles){
     const roleTypeLabels={club:'Club',association:'Association',federation:'Fédération',organisateur:'Organisateur'};
     const wantedTypes=roles.map(r=>roleTypeLabels[r]).filter(Boolean);
     const now = Date.now();
+    // Le bouton "Synchroniser les comptes" de l'admin écrit ce timestamp dans
+    // localStorage (même origine GitHub Pages). S'il est plus récent que le
+    // cache local, on force un refetch même si les 30s ne sont pas écoulées.
+    let forceSyncTs = 0;
+    try { forceSyncTs = parseInt(localStorage.getItem('gsc_force_resync_ts') || '0', 10); } catch(e) {}
+    const cacheIsStale = !_structCountCache || (now - _structCountCache.ts) >= 30000 || (forceSyncTs > _structCountCache.ts);
     let structDocsData;
-    if (_structCountCache && (now - _structCountCache.ts) < 30000) {
+    if (!cacheIsStale) {
       structDocsData = _structCountCache.data;
     } else {
       const structSnap=await getDocs(collection(db,'structuresSportives'));

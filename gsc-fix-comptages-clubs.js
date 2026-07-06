@@ -111,4 +111,8 @@
   }, 2000);
 
   console.log('[GSC FIX] Synchronisation clubs chargée');
+  window.gscRefreshClubsSyncPanel = function() {
+    const users = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
+    updateDisplay(users);
+  };
 })();
