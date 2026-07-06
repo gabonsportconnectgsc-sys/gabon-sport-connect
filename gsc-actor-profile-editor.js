@@ -9,7 +9,7 @@
  * gsc-sync-comptes-reels.js — une case "Réclamé par un responsable"
  * pour tracer la prise en main progressive.
  *
- * Fonctionne par MutationObserver sur #acc-table : reste valide même
+ * Fonctionne par MutationObserver sur #players-grid : reste valide même
  * si admin-actors-accounts.js se re-rend tout seul (temps réel).
  */
 (function () {
@@ -156,25 +156,32 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════
-   * Injection du bouton "✏️ Profil" sur chaque ligne de Comptes & Accès
+   * Injection du bouton "✏️ Profil" sur chaque ligne de la table des
+   * comptes (#players-grid dans admin-controller.js). Les lignes portent
+   * `data-id` (pas `data-uid`) et ont déjà un handler de clic global qui
+   * ouvre openPlayerModal() — d'où le stopPropagation() sur notre bouton
+   * pour ne pas ouvrir les deux modales en même temps.
    * ══════════════════════════════════════════════════════════════════ */
   function injectEditButtons() {
-    document.querySelectorAll('#acc-table tr[data-uid]').forEach(tr => {
+    document.querySelectorAll('#players-grid tr[data-id]').forEach(tr => {
       if (tr.querySelector('.gsc-profile-edit-btn')) return;
-      const uid = tr.getAttribute('data-uid');
+      const uid = tr.getAttribute('data-id');
       const lastTd = tr.querySelector('td:last-child');
       if (!lastTd) return;
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn-sm gsc-profile-edit-btn';
       btn.textContent = '✏️ Profil';
-      btn.addEventListener('click', () => openProfileEditor(uid));
+      btn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        openProfileEditor(uid);
+      });
       lastTd.appendChild(btn);
     });
   }
 
   function startObserver() {
-    const table = document.getElementById('acc-table');
+    const table = document.getElementById('players-grid');
     if (!table) { setTimeout(startObserver, 400); return; }
     injectEditButtons();
     const obs = new MutationObserver(() => injectEditButtons());
