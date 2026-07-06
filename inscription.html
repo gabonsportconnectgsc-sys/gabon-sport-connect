@@ -505,7 +505,8 @@
                 <option value="__autre__">➕ Club non listé / autre</option>
               </select>
               <input type="text" id="a-club-actuel" placeholder="Nom du club ou structure" style="margin-top:8px;display:none;"/>
-              <div class="form-hint" id="a-club-hint" style="display:none;"></div>
+              <input type="hidden" id="a-club-structure-id" value=""/>
+              <div class="form-hint" id="a-club-hint" style="display:none;"></div></div>
             </div>
             <div class="fg"><label>Type de contrat</label>
               <select id="a-contrat-type"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
@@ -983,16 +984,21 @@
         _clubsCache[sport] = clubs;
       }
       sel.innerHTML = '<option value="">Sélectionner un club existant…</option>' +
-        clubs.map(c => `<option value="${(c.nom || '').replace(/"/g, '&quot;')}">${c.nom || 'Club sans nom'}${c.ville ? ' — ' + c.ville : ''}</option>`).join('') +
+        clubs.map(c => `<option value="${c.id}" data-nom="${(c.nom || '').replace(/"/g, '&quot;')}">${c.nom || 'Club sans nom'}${c.ville ? ' — ' + c.ville : ''}</option>`).join('') +
         '<option value="__autre__">➕ Club non listé / autre</option>';
       if (hint) {
         hint.style.display = clubs.length ? 'none' : 'block';
         hint.textContent = 'Votre club n\'apparaît pas ? Choisissez « Club non listé / autre » pour saisir son nom manuellement.';
       }
       // Si un club avait déjà été saisi manuellement et correspond à la liste, le pré-sélectionner
-      if (input && input.value && clubs.some(c => c.nom === input.value)) {
-        sel.value = input.value;
-        input.style.display = 'none';
+      if (input && input.value) {
+        const match = clubs.find(c => c.nom === input.value);
+        if (match) {
+          sel.value = match.id;
+          input.style.display = 'none';
+          const structIdField = document.getElementById('a-club-structure-id');
+          if (structIdField) structIdField.value = match.id;
+        }
       }
     } catch (e) {
       console.warn('loadClubOptionsForSport:', e);
@@ -1005,17 +1011,69 @@
   function onClubSelectChange() {
     const sel = document.getElementById('a-club-select');
     const input = document.getElementById('a-club-actuel');
+    const structIdField = document.getElementById('a-club-structure-id');
     if (!sel || !input) return;
     if (sel.value === '__autre__') {
+      // Nouveau club à créer : le nom sera saisi librement, sans id existant.
       input.style.display = 'block';
       input.value = '';
       input.focus();
-    } else {
+      if (structIdField) structIdField.value = '';
+    } else if (sel.value === '') {
       input.style.display = 'none';
-      input.value = sel.value;
+      input.value = '';
+      if (structIdField) structIdField.value = '';
+    } else {
+      // Club existant choisi dans la liste : on connaît déjà son id réel.
+      const opt = sel.options[sel.selectedIndex];
+      input.style.display = 'none';
+      input.value = opt?.dataset.nom || '';
+      if (structIdField) structIdField.value = sel.value;
     }
   }
   window.onClubSelectChange = onClubSelectChange;
+
+  // ── Résolution du lien club ↔ structuresSportives à la soumission ──
+  // Si un club existant a été choisi dans la liste, son id est déjà connu
+  // (a-club-structure-id). Si "➕ Club non listé / autre" a été utilisé, on
+  // crée une nouvelle fiche structuresSportives (même forme que
+  // structures-manager.js) pour que ce club apparaisse ensuite partout —
+  // liaison admin, annuaire public, futurs joueurs du même club — au lieu
+  // de rester un simple nom en texte libre. La création d'un nouveau club
+  // reste donc toujours possible, elle est juste maintenant reliée.
+  async function resolveClubStructureId(uid, nom, sport, ville) {
+    if (!nom || !db || !_getDocs || !_setDoc || !_doc || !_collection || !_query || !_where) return null;
+    try {
+      await ensureFirebaseAuthViaSupabase(uid);
+
+      const structIdField = document.getElementById('a-club-structure-id');
+      if (structIdField && structIdField.value) return structIdField.value;
+
+      // Nouveau club : on vérifie d'abord qu'aucune fiche du même nom n'existe
+      // déjà (ex: cache de la liste périmé) avant d'en créer une, pour éviter
+      // les doublons.
+      const dupSnap = await _getDocs(_query(
+        _collection(db, 'structuresSportives'),
+        _where('nom', '==', nom),
+        _where('type', '==', 'Club')
+      ));
+      if (!dupSnap.empty) return dupSnap.docs[0].id;
+
+      const ref = _doc(_collection(db, 'structuresSportives'));
+      await _setDoc(ref, {
+        nom, type: 'Club', discipline: sport || '', ville: ville || '',
+        status: 'active',
+        createdAt: _serverTimestamp ? _serverTimestamp() : new Date(),
+        updatedAt: _serverTimestamp ? _serverTimestamp() : new Date(),
+        addedBy: uid, addedVia: 'inscription-club-autre'
+      });
+      return ref.id;
+    } catch (e) {
+      console.warn('resolveClubStructureId:', e);
+      return null; // Échec silencieux : l'inscription continue avec le nom texte seul
+    }
+  }
+  window.resolveClubStructureId = resolveClubStructureId;
 
   // Recharger la liste des clubs quand le sport change
   document.getElementById('a-sport')?.addEventListener('change', function() {
@@ -1229,6 +1287,12 @@
         // → même uid + même role = même code QR partout dans l'application
         const gscId = generateGscId(uid, selectedRole);
 
+        // Relie (ou crée) la fiche structuresSportives du club déclaré, pour que
+        // le lien joueur ↔ club soit réel et pas seulement un nom en texte libre.
+        const clubStructureId = (isJoueurRole && clubActuel)
+          ? await resolveClubStructureId(uid, clubActuel, sport, ville)
+          : null;
+
         const profile = {
           prenom, nom, role: selectedRole, accountType: 'acteur',
           sport, ville, telephone: tel, sexe, dateNaissance: ddn,
@@ -1238,6 +1302,7 @@
             taille, poids, piedFort, poste2, numMaillot,
             physique, technique, carriere,
             contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
+            structureId: clubStructureId || null,
             bio, palmares
           }),
           // Champs enrichis sportif en situation de handicap (vides pour les autres rôles)
