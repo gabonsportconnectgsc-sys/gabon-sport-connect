@@ -311,6 +311,9 @@
   async function deletePost(postId) {
     try {
       const { doc, deleteDoc } = window;
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
       await deleteDoc(doc(window.db, POSTS_COLLECTION, postId));
       delete _posts[postId];
       renderPostsTable();
@@ -325,6 +328,9 @@
   async function updateReportStatus(reportId, status) {
     try {
       const { doc, updateDoc } = window;
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
       await updateDoc(doc(window.db, REPORTS_COLLECTION, reportId), { status });
       _reports[reportId].status = status;
       renderReportsTable();
@@ -338,6 +344,9 @@
   async function blockUser(userId) {
     try {
       const { collection, addDoc, serverTimestamp } = window;
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
       await addDoc(collection(window.db, BLOCKS_COLLECTION), {
         blockerId: 'admin',
         blockedId: userId,
@@ -491,7 +500,15 @@
   }
 
   window.GSCAdminCommunity = {
-    init() {
+    async init() {
+      /* FIX : ces 4 listeners lisent des collections réservées à l'admin.
+         Sans request.auth.uid valide (pont Supabase → Firebase), Firestore
+         refuse la requête entière avec "Missing or insufficient permissions". */
+      try {
+        if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+          await window.ensureFirebaseAuthViaSupabase();
+        }
+      } catch (e) { console.warn('[GSC Admin Community] pont Firebase Auth indisponible —', e); }
       subscribeToPosts();
       subscribeToComments();
       subscribeToReactions();

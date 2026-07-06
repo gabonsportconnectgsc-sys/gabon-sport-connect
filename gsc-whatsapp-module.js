@@ -91,6 +91,20 @@
   function fsIsModular() {
     return typeof window.collection === 'function' && typeof window.doc === 'function';
   }
+  /* FIX : relance le pont Firebase Auth (ensureFirebaseAuthViaSupabase, défini dans
+     index.html/admin.html) avant chaque écriture. Sans ça, dès que la session
+     Firebase Auth expire ou n'a jamais été établie côté admin, toggleActor/
+     saveContact/saveTemplate/deleteContact/deleteTemplate échouent avec
+     "Missing or insufficient permissions" (les lectures publiques ne sont pas
+     concernées : elles sont en `allow read: if true`). */
+  async function withAuth(fn) {
+    try {
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
+    } catch (e) { console.warn('[GSC WhatsApp] pont Firebase Auth indisponible —', e); }
+    return fn();
+  }
   function fsOnSnapshotCollection(path, onNext, onErr) {
     if (fsIsModular()) return window.onSnapshot(window.collection(window.db, path), onNext, onErr);
     return window.db.collection(path).onSnapshot(onNext, onErr);
@@ -103,20 +117,24 @@
     return window.db.collection(path).where(field, op, value).onSnapshot(onNext, onErr);
   }
   async function fsUpdateDoc(path, id, data) {
-    if (fsIsModular()) return window.updateDoc(window.doc(window.db, path, id), data);
-    return window.db.collection(path).doc(id).update(data);
+    return withAuth(() => fsIsModular()
+      ? window.updateDoc(window.doc(window.db, path, id), data)
+      : window.db.collection(path).doc(id).update(data));
   }
   async function fsSetDocMerge(path, id, data) {
-    if (fsIsModular()) return window.setDoc(window.doc(window.db, path, id), data, { merge: true });
-    return window.db.collection(path).doc(id).set(data, { merge: true });
+    return withAuth(() => fsIsModular()
+      ? window.setDoc(window.doc(window.db, path, id), data, { merge: true })
+      : window.db.collection(path).doc(id).set(data, { merge: true }));
   }
   async function fsAddDoc(path, data) {
-    if (fsIsModular()) return window.addDoc(window.collection(window.db, path), data);
-    return window.db.collection(path).add(data);
+    return withAuth(() => fsIsModular()
+      ? window.addDoc(window.collection(window.db, path), data)
+      : window.db.collection(path).add(data));
   }
   async function fsDeleteDoc(path, id) {
-    if (fsIsModular()) return window.deleteDoc(window.doc(window.db, path, id));
-    return window.db.collection(path).doc(id).delete();
+    return withAuth(() => fsIsModular()
+      ? window.deleteDoc(window.doc(window.db, path, id))
+      : window.db.collection(path).doc(id).delete());
   }
 
   function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }

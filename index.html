@@ -3430,7 +3430,7 @@ async function onSupabaseSignedIn(user, extra){
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
     try{
-      if(db && typeof setDoc==='function') await setDoc(doc(db,'users',user.id), userProfile);
+      if(db && typeof setDoc==='function'){ await ensureFirebaseAuthViaSupabase(); await setDoc(doc(db,'users',user.id), userProfile); }
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
   }
   try{
@@ -3488,6 +3488,7 @@ async function handleCompleteProfile(){
   // Tentative Firestore (silencieuse en cas d'échec)
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
+      await ensureFirebaseAuthViaSupabase();
       await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
     }
   }catch(e){
@@ -3608,6 +3609,7 @@ async function enregistrerConnexion(user){
   try{
     const loc = await getApproxLocationByIP();
     const nom = user.displayName || user.email || 'Utilisateur';
+    await ensureFirebaseAuthViaSupabase();
     await window.addDoc(window.collection(db, LOGIN_HISTORY_COLLECTION), {
       uid: user.uid || '',
       nom: nom,
@@ -3779,7 +3781,7 @@ async function togglePushNotifications(){
       toast('🔔 Notifications activées !','success');
       // Enregistre la préférence sur le profil si l'utilisateur est connecté
       if(currentUser && !isVisitor && db){
-        try{ await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
+        try{ await ensureFirebaseAuthViaSupabase(); await updateDoc(doc(db,'users',currentUser.uid),{notificationsEnabled:true}); }catch(e){}
       }
     }else{
       toast('Notifications refusées.','info');
@@ -5377,6 +5379,7 @@ async function saveSite(){
     createdAt:serverTimestamp()
   };
   try{
+    await ensureFirebaseAuthViaSupabase();
     await addDoc(collection(db,'sitesSportifs'),site);
     toast('✅ Site enregistré !','success');
     closeModal('modal-site');
@@ -5526,6 +5529,7 @@ async function publishNews(){
   const tag=document.getElementById('news-tag').value.trim();
   if(!title) return toast('Veuillez entrer un titre.','error');
   try{
+    await ensureFirebaseAuthViaSupabase();
     const ref=await addDoc(collection(db,'actualites'),{cat,title,excerpt,tag,date:'Aujourd\'hui',createdAt:serverTimestamp(),publishedBy:currentUser.uid,source:'GSC Admin'});
     const newItem={id:ref.id,cat,title,excerpt,tag,date:'Aujourd\'hui',source:'GSC Admin'};
     newsDb.unshift(newItem);
@@ -5541,6 +5545,7 @@ async function deleteNews(id){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer cette actualité ?')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await deleteDoc(doc(db,'actualites',id));
     newsDb=newsDb.filter(n=>n.id!==id);
     allNewsItems=allNewsItems.filter(n=>n.id!==id);
@@ -5846,6 +5851,7 @@ function renderAdminUsersTable(users){
 async function adminApproveUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='active';
@@ -5861,6 +5867,7 @@ async function adminRejectUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='hidden';
@@ -5934,6 +5941,7 @@ async function adminToggleFederation(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{gereParFederation:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].gereParFederation=newVal;
@@ -6005,6 +6013,7 @@ async function adminToggleHide(uid,currentStatus){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newStatus=currentStatus==='hidden'?'active':'hidden';
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:newStatus,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status=newStatus;
@@ -6018,6 +6027,7 @@ async function adminDeleteUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès…).\n\n⚠️ Le compte de connexion Firebase Auth associé n\'est pas supprimé automatiquement (nécessite un accès Admin SDK côté serveur) — seul l\'accès à ce backend applicatif est retiré.')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers.splice(idx,1);
@@ -6054,6 +6064,7 @@ async function adminDeleteSite(id){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer ce site sportif ?')) return;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await deleteDoc(doc(db,'sitesSportifs',id));
     loadAdminSites();loadSites();
     toast('🗑️ Site supprimé.','info');
@@ -6065,6 +6076,7 @@ async function adminToggleSupporter(uid,current){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{isSupporter:newVal,updatedAt:serverTimestamp()});
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].isSupporter=newVal;
@@ -6091,6 +6103,7 @@ async function handleBecomeSupporter(){
   const btn=document.getElementById('become-supporter-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',userProfile.uid),{isSupporter:true,clubSupporte:club,supporterSaisons:1,supporterMatchs:0,supporterAbonnement:'Nouveau supporter',updatedAt:serverTimestamp()});
     userProfile.isSupporter=true;
     userProfile.clubSupporte=club;
@@ -6296,6 +6309,7 @@ async function uploadOwnDocument(input){
     const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
     const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
     const updatedDocs=[...existingDocs,newDoc];
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',targetUid),{documents:updatedDocs,updatedAt:serverTimestamp()});
     if(targetUid===currentUser?.uid){ userProfile.documents=updatedDocs; renderOwnDocuments(); }
     await loadActors();
@@ -6316,6 +6330,7 @@ async function removeOwnDocument(uid,idx){
   if(!confirm('Supprimer ce document ?')) return;
   const updated=docs.filter((_,i)=>i!==idx);
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documents:updated,updatedAt:serverTimestamp()});
     if(currentUser&&uid===currentUser.uid){ userProfile.documents=updated; renderOwnDocuments(); }
     await loadActors();
@@ -6328,6 +6343,7 @@ window.removeOwnDocument=removeOwnDocument;
 async function toggleDocumentVerifie(uid,value){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
   try{
+    await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{documentVerifie:value,updatedAt:serverTimestamp()});
     await loadActors();
     toast(value?'✅ Document marqué comme vérifié.':'Document marqué comme non vérifié.','success');
@@ -6473,6 +6489,7 @@ async function importSelectedOsm(){
   if(selectedOsmPlaces.size===0){toast('Sélectionnez au moins un site.','info');return;}
   const allResults=[...librevilleSportsData.stadiums,...librevilleSportsData.clubs];
   let imported=0;
+  await ensureFirebaseAuthViaSupabase();
   for(const idx of selectedOsmPlaces){
     const s=allResults[idx];
     if(!s) continue;
@@ -6507,6 +6524,7 @@ window.resetPreloadSelection=resetPreloadSelection;
 async function importPreloadedData(){
   if(!db || typeof collection !== 'function'){ return; }
   if(!currentUser){toast('Connexion requise.','error');return;}
+  await ensureFirebaseAuthViaSupabase();
   const selected=[];
   let imported=0;
   if(document.getElementById('preload-stadiums-chk')?.checked){

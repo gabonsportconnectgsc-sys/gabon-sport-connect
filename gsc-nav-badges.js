@@ -267,8 +267,15 @@
   /* ═══ CHARGEMENT DES NOTIFICATIONS ═══ */
 
   /* Depuis Firestore (temps réel) */
-  function subscribeFirestore(uid) {
+  async function subscribeFirestore(uid) {
     if (!window.db || typeof window.query !== 'function') return false;
+    /* FIX : sans pont Firebase Auth valide, ce listener échoue avec
+       "Missing or insufficient permissions" (request.auth.uid absent). */
+    try {
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
+    } catch (e) { console.warn('[GSC NavBadges] pont Firebase Auth indisponible —', e); }
     try {
       const q = window.query(
         window.collection(window.db, NOTIFS_COL),
@@ -327,8 +334,9 @@
     if (!uid) { render(); return; }
 
     /* Essayer Firestore d'abord, sinon polling */
-    const firestoreOk = subscribeFirestore(uid);
-    if (!firestoreOk) startPolling();
+    subscribeFirestore(uid).then((firestoreOk) => {
+      if (!firestoreOk) startPolling();
+    });
   }
 
   function onLogout() {

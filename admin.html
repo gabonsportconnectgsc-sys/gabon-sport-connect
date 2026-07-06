@@ -2292,6 +2292,7 @@ tr.is-demo-row td { opacity: .82; }
     if (action === 'ban' && !confirm("Bannir cet utilisateur de la plateforme ? Cette action est forte et bloquera sa connexion.")) return;
 
     try {
+      await ensureFirebaseAuthViaSupabase();
       if (action === 'hide' && targetUid) {
         await d.collection('users').doc(targetUid).update({ status: 'hidden' });
       }
@@ -2398,6 +2399,7 @@ tr.is-demo-row td { opacity: .82; }
   async function toggleVerifie(uid, value) {
     try {
       if (window.firebase && firebase.firestore) {
+        await ensureFirebaseAuthViaSupabase();
         await firebase.firestore().collection('users').doc(uid).update({ documentVerifie: value });
       }
     } catch (e) { console.warn('toggleVerifie:', e); }
@@ -3701,6 +3703,7 @@ tr.is-demo-row td { opacity: .82; }
     const capacite = document.getElementById('infra-capacite-fb').value;
     const adresse = document.getElementById('infra-adresse-fb').value;
     try {
+      await ensureFirebaseAuthViaSupabase();
       const ref = window.db.collection('structuresSportives').doc(structureId).collection('infrastructures').doc();
       await ref.set({ id: ref.id, nom, type, description, capacite, adresse, photos: [], createdAt: new Date(), updatedAt: new Date() });
       alert('✅ Infrastructure ajoutée');
@@ -3713,6 +3716,7 @@ tr.is-demo-row td { opacity: .82; }
   async function deleteInfraFallback(infraId) {
     if (!_currentInfraStructureId || !confirm('Supprimer cette infrastructure ?')) return;
     try {
+      await ensureFirebaseAuthViaSupabase();
       await window.db.collection('structuresSportives').doc(_currentInfraStructureId).collection('infrastructures').doc(infraId).delete();
       alert('✅ Infrastructure supprimée');
       location.reload();
@@ -3810,6 +3814,7 @@ tr.is-demo-row td { opacity: .82; }
       archivedBy: 'admin'
     };
 
+    await ensureFirebaseAuthViaSupabase();
     await window.db.collection('structuresSportives').doc(structureId).collection('archives').doc(saison).set(archiveDoc, { merge: true });
     return { success: true, message: `Saison ${saison} archivée pour ${structure.nom}` };
   }

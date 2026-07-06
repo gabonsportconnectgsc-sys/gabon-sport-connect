@@ -27,6 +27,22 @@
   /* ── WORKER PUSH URL ── */
   const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
 
+  /* FIX : relance le pont d'authentification Firebase (ensureFirebaseAuthViaSupabase,
+     défini dans index.html/admin.html) avant CHAQUE écriture Firestore de ce module.
+     Sans ça, dès que la session Firebase Auth établie au login expire ou devient
+     invalide, toute écriture (prefs, read, dismiss, push) échoue avec
+     "Missing or insufficient permissions" — même avec des règles Firestore correctes. */
+  async function withAuth(fn) {
+    try {
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
+    } catch (e) {
+      console.warn('[GSCNotif] pont Firebase Auth indisponible avant écriture —', e);
+    }
+    return fn();
+  }
+
   /* ── ÉTAT INTERNE ── */
   let _notifications   = [];
   let _unreadCount     = 0;
@@ -824,7 +840,7 @@
       try{
         const {doc, setDoc} = window;
         if(typeof setDoc === 'function'){
-          setDoc(doc(window.db, PREFS_COLLECTION, _currentUserId), _prefs, {merge:true}).catch(()=>{});
+          withAuth(()=>setDoc(doc(window.db, PREFS_COLLECTION, _currentUserId), _prefs, {merge:true})).catch(()=>{});
         }
       }catch(e){}
     }
@@ -844,7 +860,7 @@
       try{
         const {doc, getDoc} = window;
         if(typeof getDoc === 'function'){
-          const snap = await getDoc(doc(window.db, PREFS_COLLECTION, uid));
+          const snap = await withAuth(()=>getDoc(doc(window.db, PREFS_COLLECTION, uid)));
           if(snap.exists()) _prefs = {...DEFAULT_PREFS, ...snap.data()};
         }
       }catch(e){}
@@ -854,9 +870,13 @@
   /* ═══════════════════════════════════════════════════════════════
      FIRESTORE REALTIME LISTENER
   ══════════════════════════════════════════════════════════════════ */
-  function subscribeFirestore(uid){
+  async function subscribeFirestore(uid){
     if(!window.db || !uid) return;
     if(_firestoreUnsub) { _firestoreUnsub(); _firestoreUnsub=null; }
+    /* FIX : le listener temps réel a besoin d'un request.auth.uid valide dès
+       l'ouverture, sinon Firestore refuse la requête entière avec
+       "Missing or insufficient permissions". */
+    try{ await withAuth(()=>Promise.resolve()); }catch(e){}
     try{
       const {collection, query, where, orderBy, limit, onSnapshot} = window;
       if(typeof onSnapshot !== 'function') return;
@@ -911,7 +931,7 @@
     try{
       const {doc, updateDoc} = window;
       if(typeof updateDoc === 'function'){
-        updateDoc(doc(window.db, NOTIF_COLLECTION, id),{read:true, readAt: new Date()}).catch(()=>{});
+        withAuth(()=>updateDoc(doc(window.db, NOTIF_COLLECTION, id),{read:true, readAt: new Date()})).catch(()=>{});
       }
     }catch(e){}
     /* localStorage fallback */
@@ -926,7 +946,7 @@
     try{
       const {doc, deleteDoc} = window;
       if(typeof deleteDoc === 'function'){
-        deleteDoc(doc(window.db, NOTIF_COLLECTION, id)).catch(()=>{});
+        withAuth(()=>deleteDoc(doc(window.db, NOTIF_COLLECTION, id))).catch(()=>{});
       }
     }catch(e){}
   }
@@ -972,12 +992,12 @@
       try{
         const {collection, addDoc, serverTimestamp} = window;
         if(typeof addDoc === 'function'){
-          await addDoc(collection(window.db, NOTIF_COLLECTION),{
+          await withAuth(()=>addDoc(collection(window.db, NOTIF_COLLECTION),{
             ...n,
             createdAt: serverTimestamp(),
             id: undefined,
             actionCallbacks: undefined
-          });
+          }));
         }
       }catch(e){ console.error('Notif Firestore error:', e); }
     }
