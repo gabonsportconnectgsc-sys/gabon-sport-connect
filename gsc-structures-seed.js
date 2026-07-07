@@ -12,6 +12,11 @@
  *  normalisés) — peut être relancé sans risque pour "rafraîchir" la
  *  saison en cours des clubs déjà existants.
  *
+ *  v1.1 (juillet 2026) : pour les fédérations, complète aussi (sans
+ *  jamais écraser une valeur déjà saisie) le bureau (président/SG),
+ *  l'adresse, le téléphone, l'email et le site web à partir des
+ *  données officielles publiques ajoutées dans gsc-gabon-sports-data.js.
+ *
  *  Utilisation (une fois connecté en admin, avec structures-manager.js
  *  et gsc-gabon-sports-data.js déjà chargés) :
  *
@@ -71,6 +76,17 @@
     };
   }
 
+  /* Construit le bureau (gouvernance.bureau) à partir des champs réels
+     président/secrétaireGeneral connus dans gsc-gabon-sports-data.js.
+     N'ajoute une ligne que si le nom est réellement renseigné (jamais
+     de placeholder inventé). */
+  function federationBureau(f) {
+    const bureau = [];
+    if (f.president) bureau.push({ role: 'Président', nom: f.president });
+    if (f.secretaireGeneral) bureau.push({ role: 'Secrétaire Général', nom: f.secretaireGeneral });
+    return bureau;
+  }
+
   function federationPayload(f) {
     return {
       nom: f.nom,
@@ -80,9 +96,11 @@
       ville: 'Libreville',
       lat: null, lng: null,
       statutJuridique: {},
-      gouvernance: { bureau: [] },
+      gouvernance: { bureau: federationBureau(f) },
       affiliations: [],
-      adresse: '', telephone: '', contact: '', email: '',
+      adresse: f.adresse || '', telephone: f.telephone || '', contact: '', email: f.email || '',
+      siteWeb: f.siteWeb || '',
+      sourceNote: f.sourceNote || '',
       capacite: 0,
       saisonCourante: '2025-2026',
       saisons: {},
@@ -100,7 +118,27 @@
 
     d.FEDERATIONS.forEach(f => {
       const existing = findExisting(f.nom, f.sigle);
-      if (!existing) toCreate.push({ payload: federationPayload(f), label: `🏛️ ${f.nom}` });
+      if (!existing) {
+        toCreate.push({ payload: federationPayload(f), label: `🏛️ ${f.nom}` });
+        return;
+      }
+      // Fédération déjà présente : on ne complète QUE les champs
+      // actuellement vides (jamais d'écrasement d'une donnée déjà
+      // saisie manuellement — bureau, contact, etc.).
+      const patch = {};
+      const existingBureau = (existing.gouvernance && existing.gouvernance.bureau) || [];
+      const newBureau = federationBureau(f);
+      if (!existingBureau.length && newBureau.length) {
+        patch.gouvernance = Object.assign({}, existing.gouvernance, { bureau: newBureau });
+      }
+      if (!existing.adresse && f.adresse) patch.adresse = f.adresse;
+      if (!existing.telephone && f.telephone) patch.telephone = f.telephone;
+      if (!existing.email && f.email) patch.email = f.email;
+      if (!existing.siteWeb && f.siteWeb) patch.siteWeb = f.siteWeb;
+      if (!existing.sourceNote && f.sourceNote) patch.sourceNote = f.sourceNote;
+      if (Object.keys(patch).length) {
+        toRefresh.push({ id: existing.id, label: `🔄 ${f.nom} — complément infos officielles (bureau/contact)`, payload: patch });
+      }
     });
 
     d.CLUBS_D1_FOOTBALL_2025_2026.concat(d.AUTRES_STRUCTURES.filter(s => s.type === 'club')).forEach(c => {

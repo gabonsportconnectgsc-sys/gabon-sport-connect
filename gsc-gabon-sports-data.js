@@ -1,7 +1,7 @@
 /**
  * ══════════════════════════════════════════════════════════════════════
  *  GSC GABON SPORTS DATA — Référentiel réel des acteurs sportifs gabonais
- *  Gabon Sport Connect · v1.0 · 2026
+ *  Gabon Sport Connect · v1.1 · 2026
  *
  *  Source de vérité pour :
  *   - la liste déroulante "Club / Structure" du formulaire d'inscription
@@ -18,7 +18,18 @@
  *
  *  Ne bloque rien si absent : tous les modules qui le consomment
  *  vérifient sa présence avant de l'utiliser.
- * ══════════════════════════════════════════════════════════════════════
+ *
+ *  ─────────────────────────────────────────────────────────────────
+ *  MISE À JOUR v1.1 (juillet 2026) — Champs officiels ajoutés :
+ *  président, secrétaire général, adresse/siège, contact (tél/email
+ *  officiels), site web, quand publiquement disponibles et vérifiables
+ *  (presse gabonaise, sites fédéraux/olympiques officiels, FIFA/FIBA/
+ *  IHF/FIVB, ANOC/Olympics.com). Champ vide = information non trouvée
+ *  de façon fiable → À NE PAS INVENTER, à compléter par la suite via
+ *  la prise en main manuelle (panneau admin Structures).
+ *  Ces mandats/bureaux peuvent changer (élections, démissions) : à
+ *  vérifier périodiquement.
+ *  ─────────────────────────────────────────────────────────────────
  */
 (function (window) {
   'use strict';
@@ -27,16 +38,103 @@
    * 1. FÉDÉRATIONS SPORTIVES GABONAISES
    * ══════════════════════════════════════════════════════════════════ */
   const FEDERATIONS = [
-    { id: 'FEGAFOOT',   nom: 'Fédération Gabonaise de Football',              sigle: 'FEGAFOOT',  sport: 'Football',    type: 'federation' },
-    { id: 'FEGABASKET', nom: 'Fédération Gabonaise de Basketball',            sigle: 'FEGABASKET',sport: 'Basketball',  type: 'federation' },
-    { id: 'FGHAND',      nom: 'Fédération Gabonaise de Handball',              sigle: 'FGHAND',     sport: 'Handball',    type: 'federation' },
-    { id: 'FGVOLLEY',    nom: 'Fédération Gabonaise de Volleyball',            sigle: 'FGVOLLEY',   sport: 'Volleyball',  type: 'federation' },
-    { id: 'FGA',         nom: "Fédération Gabonaise d'Athlétisme",             sigle: 'FGA',        sport: 'Athlétisme',  type: 'federation' },
-    { id: 'FGBOXE',      nom: 'Fédération Gabonaise de Boxe',                  sigle: 'FGBOXE',     sport: 'Boxe',        type: 'federation' },
-    { id: 'FGNAT',       nom: 'Fédération Gabonaise de Natation',              sigle: 'FGNAT',      sport: 'Natation',    type: 'federation' },
-    { id: 'FGJUDO',      nom: 'Fédération Gabonaise de Judo',                  sigle: 'FGJUDO',     sport: 'Judo',        type: 'federation' },
-    { id: 'FGTKD',       nom: 'Fédération Gabonaise de Taekwondo',             sigle: 'FGTKD',      sport: 'Taekwondo',   type: 'federation' },
-    { id: 'CNOSG',       nom: 'Comité National Olympique et Sportif Gabonais',  sigle: 'CNOSG',      sport: 'Multisports', type: 'federation' },
+    {
+      id: 'FEGAFOOT', nom: 'Fédération Gabonaise de Football', sigle: 'FEGAFOOT', sport: 'Football', type: 'federation',
+      president: 'Pierre Alain Mounguengui',
+      secretaireGeneral: '',
+      adresse: 'Owendo (Maison Alexandre Sambat), Libreville',
+      telephone: '', email: '', siteWeb: 'https://fegafoot.ga',
+      sourceNote: "Comité exécutif maintenu en fonction par la FIFA/CAF jusqu'aux élections, échéance au plus tard le 31/12/2026.",
+    },
+    {
+      id: 'FEGABASKET', nom: 'Fédération Gabonaise de Basketball', sigle: 'FEGABAB', sport: 'Basketball', type: 'federation',
+      president: 'Willy Conrad Asseko',
+      secretaireGeneral: '',
+      adresse: 'B.P. 679, Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: '',
+    },
+    {
+      id: 'FGHAND', nom: 'Fédération Gabonaise de Handball', sigle: 'FEGAHAND', sport: 'Handball', type: 'federation',
+      president: 'Général Sylvain Florient Pangou Mbembo',
+      secretaireGeneral: '',
+      adresse: 'Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Réélu le 02/08/2025 pour un 2e mandat de 4 ans. Occupe aussi la présidence du CNOSG depuis mai 2026.',
+    },
+    {
+      id: 'FGVOLLEY', nom: 'Fédération Gabonaise de Volleyball', sigle: 'FEGAVOLLEY', sport: 'Volleyball', type: 'federation',
+      president: 'Raymond Bernard Bivigou',
+      secretaireGeneral: '',
+      adresse: 'Angondjè, Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Réélu candidat unique, mandat depuis le 13/01/2024 (4 ans).',
+    },
+    {
+      id: 'FGA', nom: "Fédération Gabonaise d'Athlétisme", sigle: 'FGA', sport: 'Athlétisme', type: 'federation',
+      president: 'Anaclet Mathieu Taty',
+      secretaireGeneral: '',
+      adresse: 'Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Taty est également Secrétaire Général du CNOSG depuis mai 2026.',
+    },
+    {
+      id: 'FGBOXE', nom: 'Fédération Gabonaise de Boxe', sigle: 'FGBOXE', sport: 'Boxe', type: 'federation',
+      president: '',
+      secretaireGeneral: '',
+      adresse: '',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Présidence vacante publiquement rapportée (démission de Bonaventure Nzigou Manfoumbi) — à confirmer/actualiser.',
+    },
+    {
+      id: 'FGNAT', nom: 'Fédération Gabonaise de Natation', sigle: 'FEGANA', sport: 'Natation', type: 'federation',
+      president: 'Stéphane Soami Mabiala',
+      secretaireGeneral: '',
+      adresse: 'Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Élu le 04/04/2024, succède à Crésant Pambo.',
+    },
+    {
+      id: 'FGJUDO', nom: 'Fédération Gabonaise de Judo', sigle: 'FGJUDO', sport: 'Judo', type: 'federation',
+      president: '',
+      secretaireGeneral: '',
+      adresse: '',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: 'Présidence non confirmée par une source publique fiable au moment de la rédaction.',
+    },
+    {
+      id: 'FGTKD', nom: 'Fédération Gabonaise de Taekwondo', sigle: 'FEGATAE', sport: 'Taekwondo', type: 'federation',
+      president: 'Me Denis Mboumba',
+      secretaireGeneral: '',
+      adresse: 'Akanda, Libreville',
+      telephone: '', email: '', siteWeb: '',
+      sourceNote: '',
+    },
+    {
+      id: 'CNOSG', nom: 'Comité National Olympique et Sportif Gabonais', sigle: 'CNOSG', sport: 'Multisports', type: 'federation',
+      president: 'Général Sylvain Florient Pangou Mbembo',
+      secretaireGeneral: 'Anaclet Mathieu Taty',
+      adresse: "Stade de l'Amitié Sino-Gabonaise, Angondjè, BP 447, Libreville",
+      telephone: '+241 01 45 32 43', email: 'cnogab@gmail.com', siteWeb: 'https://www.cnog.ga',
+      sourceNote: "Élu le 02/05/2026 (10 voix contre 7 à Crésant Pambo). Renommage officiel CNOG → CNOSG en cours au moment de la rédaction. 1er VP : José Walter Foula · 2e VP : Edith Florida Biyoghe · 3e VP : Sylvain Lindzondzo Dynah · Trésorière : Rachel Benzeng Amvane · Représentante des athlètes : Lisa Aline Ngounga.",
+    },
+  ];
+
+  /* Instances non "structures sportives" au sens de l'app, mais utiles
+     comme référence pour les champs "organisateur/tutelle" des fiches
+     (ex. Football → LINAFP, Ministère de tutelle). Non injectées comme
+     structures par défaut (voir gsc-structures-seed.js). */
+  const INSTANCES_REFERENCE = [
+    {
+      id: 'LINAFP', nom: 'Ligue Nationale de Football Professionnel', sigle: 'LINAFP', type: 'ligue', sport: 'Football',
+      president: 'Brice Mbika Ndjambou',
+      sourceNote: "Organise le National Foot 1, sous l'égide de la FEGAFOOT.",
+    },
+    {
+      id: 'MINISTERE_SPORTS', nom: 'Ministère de la Jeunesse, des Sports, du Rayonnement Culturel et des Arts, chargé de la Vie Associative', sigle: 'MJSRCA', type: 'ministere', sport: 'Multisports',
+      ministre: 'Paul Ulrich Kessany (Zategwa)',
+      sourceNote: 'Ministère de tutelle du mouvement sportif gabonais.',
+    },
   ];
 
   /* ══════════════════════════════════════════════════════════════════
@@ -130,6 +228,7 @@
 
   window.GSC_GABON_SPORTS_DATA = {
     FEDERATIONS,
+    INSTANCES_REFERENCE,
     CLUBS_D1_FOOTBALL_2025_2026,
     AUTRES_STRUCTURES,
     ETABLISSEMENTS,
