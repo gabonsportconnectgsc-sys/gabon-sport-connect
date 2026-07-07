@@ -18,6 +18,32 @@
     return fn();
   }
 
+  /* ── Sync Helper : Synchronise status vers le vrai emplacement ──────────────
+     Depuis la migration, status doit vivre à users/{uid}/private/contact.status,
+     pas à la racine. Ce helper normalise les écritures pour les deux chemins.
+  ────────────────────────────────────────────────────────────────────────── */
+  async function syncStatusToBothLocations(docRef, updates) {
+    // Si pas de status dans les updates, écrire normalement
+    if (!('status' in updates)) {
+      return docRef.update(updates);
+    }
+
+    const statusValue = updates.status;
+    const rootUpdates = { ...updates };
+    delete rootUpdates.status; // Enlever de la racine
+
+    // Écriture atomique : racine + private/contact
+    const batch = window.db.batch();
+    if (Object.keys(rootUpdates).length > 0) {
+      batch.update(docRef, rootUpdates);
+    }
+    batch.update(docRef.collection('private').doc('contact'), {
+      status: statusValue,
+      updatedAt: new Date()
+    });
+    return batch.commit();
+  }
+
   const ROLE_LABELS = {
     joueur: '⚽ Joueur',
     athlete: '🏃 Athlète',
@@ -394,7 +420,7 @@
     }
 
     try {
-      await withAuth(() => window.db.collection('users').doc(id).update(updates));
+      await withAuth(() => syncStatusToBothLocations(window.db.collection('users').doc(id), updates));
       toast('✅ Profil validé avec succès.', 'success');
       closeModal('validation-modal');
       renderDashboard();
@@ -410,12 +436,13 @@
     const reason = prompt('Motif du refus (visible par l\'équipe admin uniquement) :', '');
     if (reason === null) return; // annulé
     try {
-      await withAuth(() => window.db.collection('users').doc(id).update({
+      const rejectUpdates = {
         status: 'hidden',
         rejectedAt: new Date(),
         rejectedBy: 'admin',
         rejectionReason: reason || 'Non spécifié'
-      }));
+      };
+      await withAuth(() => syncStatusToBothLocations(window.db.collection('users').doc(id), rejectUpdates));
       toast('🚫 Demande refusée.', 'info');
       closeModal('validation-modal');
       renderDashboard();
@@ -741,7 +768,7 @@
       });
     }
     try {
-      await withAuth(() => window.db.collection('users').doc(id).update(updates));
+      await withAuth(() => syncStatusToBothLocations(window.db.collection('users').doc(id), updates));
       toast('Acteur mis à jour', 'success');
       closeModal('player-modal');
     } catch (e) {
@@ -752,7 +779,7 @@
   async function deletePlayer(id) {
     if (!confirm('Supprimer ce profil ? Cette action est irréversible.')) return;
     try {
-      await withAuth(() => window.db.collection('users').doc(id).update({ status: 'deleted' }));
+      await withAuth(() => syncStatusToBothLocations(window.db.collection('users').doc(id), { status: 'deleted' }));
       toast('Profil supprimé', 'success');
       closeModal('player-modal');
       renderPlayers();
