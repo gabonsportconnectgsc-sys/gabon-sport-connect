@@ -1852,11 +1852,11 @@
             <button class="actor-filter-btn active" data-type="tous" onclick="filterActors('tous')" style="--abtn-color:#009E60;">
               <span style="font-size:18px;line-height:1;">👥</span>Tous
             </button>
-            <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')" style="--abtn-color:#1a2d4a;">
-              <span style="font-size:18px;line-height:1;">⚽</span>Joueurs
+            <button class="actor-filter-btn" data-type="joueur" onclick="filterActors('joueur')" style="--abtn-color:#1a2d4a;" title="Inclut aussi les Athlètes (sport individuel)">
+              <span style="font-size:18px;line-height:1;">⚽</span>Joueurs/Athlètes
             </button>
-            <button class="actor-filter-btn" data-type="athlete" onclick="filterActors('athlete')" style="--abtn-color:#0891b2;">
-              <span style="font-size:18px;line-height:1;">🏃</span>Athlètes
+            <button class="actor-filter-btn" data-type="athlete" onclick="filterActors('athlete')" style="--abtn-color:#0891b2;" title="Athlètes uniquement (sous-ensemble de Joueurs/Athlètes)">
+              <span style="font-size:18px;line-height:1;">🏃</span>Athlètes seuls
             </button>
             <button class="actor-filter-btn" data-type="arbitre" onclick="filterActors('arbitre')" style="--abtn-color:#8b5cf6;">
               <span style="font-size:18px;line-height:1;">🟨</span>Arbitres
@@ -4293,7 +4293,7 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','athlete','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','club','federation','association','organisateur','ecole_universite','independant','supporter','admin'];
+      const GROUP_ORDER=['joueur','athlete','entraineur','arbitre','eleve_etudiant','ecole_universite','sportif_etranger','handisport','ancien_sportif','formateur','club','federation','association','organisateur','independant','supporter','admin'];
       const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',athlete:'🏃 Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport',ancien_sportif:'🎖️ Anciens Sportifs',formateur:'🧑‍🏫 Formateurs',ecole_universite:'🏫 Écoles / Universités'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
@@ -4821,7 +4821,9 @@ function renderSportStats(p){
 
 function buildEditForm(p){
   const body=document.getElementById('edit-form-body');
-  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur'].includes(p.role);
+  // ecole_universite est un sous-type d'Élève/Étudiant (cf. GSC ID '006' partagé, voir generateGscId)
+  // et non une organisation : il doit donc suivre le même formulaire personnel (sport, club, stats…).
+  const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','ecole_universite'].includes(p.role);
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
   let h='';

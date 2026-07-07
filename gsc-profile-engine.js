@@ -807,7 +807,7 @@
           const statsCard = document.getElementById('prof-stats-card');
           if (statsCard && window.userProfile) {
             const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-              'eleve_etudiant', 'sportif_etranger', 'handisport'].includes(window.userProfile.role);
+              'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(window.userProfile.role);
             statsCard.style.display = isPersonnel ? '' : 'none';
             if (isPersonnel) renderSportStats_v2(window.userProfile);
           }
@@ -823,7 +823,7 @@
         _origBuildEditForm.call(this, p);
 
         const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-          'eleve_etudiant', 'sportif_etranger', 'handisport'].includes(p.role);
+          'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(p.role);
         if (!isPersonnel) return;
 
         const target = document.getElementById('edit-form-body');
@@ -932,7 +932,7 @@
     if (!a) return;
 
     const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-      'eleve_etudiant', 'sportif_etranger', 'handisport'].includes(a.role);
+      'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(a.role);
     if (!isPersonnel) return;
 
     /* Remplacer la section stats existante (ancienne) par la nouvelle */
@@ -1002,7 +1002,7 @@
       if (!p) return;
 
       const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-        'eleve_etudiant', 'sportif_etranger', 'handisport'].includes(p.role);
+        'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(p.role);
       if (!isPersonnel) return;
 
       /* Vérifier si on a déjà injecté nos sections (éviter les boucles) */

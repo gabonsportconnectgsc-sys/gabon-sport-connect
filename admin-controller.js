@@ -73,12 +73,16 @@
      Sans cette distinction, un club/fédération affichait et pouvait écraser
      des champs qui n'ont aucun sens pour une organisation (taille, poids,
      pied fort, main dominante, buts, passes décisives). */
-  const PLAYER_ROLES = ['joueur', 'athlete', 'independant', 'eleve_etudiant', 'sportif_etranger', 'handisport', 'ancien_sportif'];
+  // ecole_universite est un sous-type d'Élève/Étudiant (même préfixe GSC ID '006',
+  // cf. generateGscId côté index.html/admin.html) : c'est un profil INDIVIDUEL, pas
+  // une organisation. Il doit donc suivre le même traitement que PLAYER_ROLES
+  // (champs sport/physique/stats), pas ORG_ROLES (nom d'organisation, effectif…).
+  const PLAYER_ROLES = ['joueur', 'athlete', 'independant', 'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport', 'ancien_sportif'];
   // Les arbitres participent physiquement sur le terrain (course, endurance…) —
   // ils ont donc des critères physiques pertinents, mais pas de stats de
   // performance joueur (buts/passes décisives n'ont pas de sens pour eux).
   const PHYSIQUE_ROLES = PLAYER_ROLES.concat(['arbitre']);
-  const ORG_ROLES = ['club', 'federation', 'association', 'organisateur', 'ecole_universite'];
+  const ORG_ROLES = ['club', 'federation', 'association', 'organisateur'];
   const ROLE_COLORS = {
     joueur: '#009E60',
     athlete: '#0891b2',
