@@ -2871,13 +2871,13 @@ const ROLE_LABELS = {
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
   handisport:'🦾 Sportif handisport', ancien_sportif:'🎖️ Ancien Sportif',
-  formateur:'🧑‍🏫 Formateur'
+  formateur:'🧑‍🏫 Formateur', ecole_universite:'🏫 École / Université'
 };
 const ROLE_ICONS = {
   admin:'⚙️', federation:'🏛️', club:'🏟️', association:'🤝',
   joueur:'⚽', arbitre:'🟨', entraineur:'📋', visiteur:'👁️', independant:'🧍',
   organisateur:'🎪', supporter:'💗', eleve_etudiant:'🎓', sportif_etranger:'🌍',
-  handisport:'🦾', ancien_sportif:'🎖️', formateur:'🧑‍🏫'
+  handisport:'🦾', ancien_sportif:'🎖️', formateur:'🧑‍🏫', ecole_universite:'🏫'
 };
 
 // Établissements scolaires & universitaires reconnus (Gabon + structure d'accueil international)
@@ -4210,8 +4210,8 @@ function renderActors(actors){
 
   if(isListMode){
     // ── MODE LISTE COMPACT ──
-    const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫'};
-    const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur'};
+    const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫',ecole_universite:'🏫'};
+    const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur',ecole_universite:'École/Univ.'};
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
@@ -4247,8 +4247,8 @@ function renderActors(actors){
 
     if(groupAll){
       // Regroupement intelligent par rôle, ordre professionnel : Joueurs → Encadrement → Officiels → Organisations
-      const GROUP_ORDER=['joueur','athlete','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','club','federation','association','organisateur','independant','supporter','admin'];
-      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',athlete:'🏃 Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport',ancien_sportif:'🎖️ Anciens Sportifs',formateur:'🧑‍🏫 Formateurs'};
+      const GROUP_ORDER=['joueur','athlete','entraineur','arbitre','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','club','federation','association','organisateur','ecole_universite','independant','supporter','admin'];
+      const GROUP_LABELS={joueur:'⚽ Joueurs / Athlètes',athlete:'🏃 Athlètes',entraineur:'📋 Entraîneurs',arbitre:'🟨 Arbitres',club:'🏟️ Clubs',federation:'🏛️ Fédérations',association:'🤝 Associations',organisateur:'🎪 Organisateurs',independant:'🚴 Indépendants',supporter:'💗 Supporters',admin:'⚙️ Administrateurs',eleve_etudiant:'🎓 Élèves / Étudiants',sportif_etranger:'🌍 Sportifs étrangers',handisport:'🦾 Sportifs handisport',ancien_sportif:'🎖️ Anciens Sportifs',formateur:'🧑‍🏫 Formateurs',ecole_universite:'🏫 Écoles / Universités'};
       const buckets={};
       actors.forEach(a=>{ const r=a.role||'joueur'; (buckets[r]=buckets[r]||[]).push(a); });
       orderedActors=[];
@@ -4330,9 +4330,9 @@ function renderActors(actors){
       const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||(ROLE_LABELS[a.role]||a.role||'Profil');
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
-      const roleName={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur'}[roleKey]||roleKey;
+      const roleName={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur',ecole_universite:'École / Université'}[roleKey]||roleKey;
       const badgeClass='badge-'+roleKey;
-      const typeIcons={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫'};
+      const typeIcons={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫',ecole_universite:'🏫'};
       const typeDotIcon=typeIcons[roleKey]||'👤';
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[roleKey])||null;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;vertical-align:middle;">DÉMO</span>`:'';
@@ -4679,7 +4679,7 @@ function renderProfile(){
   if(becomeSuppCard) becomeSuppCard.style.display=(isPersonnel&&!isSupporter)?'':'none';
 
   // Gallery card — visible pour tous les membres inscrits (rôles acteurs sportifs)
-  const allActorRoles=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','club','association','federation','organisateur'];
+  const allActorRoles=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur','club','association','federation','organisateur','ecole_universite'];
   const gallCard=document.getElementById('prof-gallery-card');
   if(gallCard){
     gallCard.style.display=(!isVisitor && allActorRoles.includes(p.role))?'':'none';
@@ -5814,8 +5814,8 @@ function renderActorsAdmin(actors){
   let localPhotos={};
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhotos=d.photos||{};}}catch(e){}
 
-  const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫'};
-  const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur'};
+  const ROLE_ICONS_MAP={joueur:'⚽',athlete:'🏃',arbitre:'🟨',entraineur:'📋',club:'🏟️',association:'🤝',federation:'🏛️',independant:'🚴',organisateur:'🎪',admin:'⚙️',supporter:'💗',eleve_etudiant:'🎓',sportif_etranger:'🌍',handisport:'🦾',ancien_sportif:'🎖️',formateur:'🧑‍🏫',ecole_universite:'🏫'};
+  const ROLE_SHORT={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Coach',club:'Club',association:'Asso.',federation:'Fédération',independant:'Indép.',organisateur:'Org.',supporter:'Supporter',admin:'Admin',eleve_etudiant:'Élève/Étud.',sportif_etranger:'Étranger',handisport:'Handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur',ecole_universite:'École/Univ.'};
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
@@ -7987,7 +7987,7 @@ const CATEGORY_NUM = {
   ecole_universite:'006' // fusionné avec Élève/Étudiant : sous-type, pas une catégorie à part
 };
 // Rôles autorisés à avoir un QR imprimable
-const QR_ENABLED_ROLES = ['joueur','athlete','independant','club','association','federation','admin','handisport','ancien_sportif','formateur'];
+const QR_ENABLED_ROLES = ['joueur','athlete','independant','club','association','federation','admin','handisport','ancien_sportif','formateur','ecole_universite'];
 
 function generateGscId(uid, role){
   if(!uid) return null;

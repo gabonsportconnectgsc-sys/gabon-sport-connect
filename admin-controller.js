@@ -18,9 +18,19 @@
     return fn();
   }
 
-  /* ── Sync Helper : Synchronise status vers le vrai emplacement ──────────────
-     Depuis la migration, status doit vivre à users/{uid}/private/contact.status,
-     pas à la racine. Ce helper normalise les écritures pour les deux chemins.
+  /* ── Sync Helper : Synchronise status vers les DEUX emplacements ────────────
+     BUG CORRIGÉ : cette fonction retirait auparavant `status` des écritures
+     racine et l'écrivait UNIQUEMENT dans private/contact. Or l'annuaire public
+     (index.html, écoute temps réel sur la collection 'users') filtre les
+     acteurs visibles à partir du champ `status` du document RACINE
+     (u.status==='active'||u.status===undefined) — jamais de private/contact.
+     Résultat : un acteur activé/masqué/validé depuis l'admin ne changeait
+     jamais d'état côté public, indéfiniment.
+     Le propre panneau admin intégré à index.html fait les choses correctement
+     (voir adminApproveUser/adminToggleHide/adminSaveUser) : il écrit le status
+     à la fois sur le document racine (lu par le public) ET dans
+     private/contact (lu par les règles Firestore, ex. isActiveOrLegacy). On
+     réplique ici exactement le même schéma pour rester cohérent partout.
   ────────────────────────────────────────────────────────────────────────── */
   async function syncStatusToBothLocations(docRef, updates) {
     // Si pas de status dans les updates, écrire normalement
@@ -29,18 +39,14 @@
     }
 
     const statusValue = updates.status;
-    const rootUpdates = { ...updates };
-    delete rootUpdates.status; // Enlever de la racine
 
-    // Écriture atomique : racine + private/contact
+    // Écriture atomique : racine (status inclus, lu par le public) + private/contact (lu par les règles)
     const batch = window.db.batch();
-    if (Object.keys(rootUpdates).length > 0) {
-      batch.update(docRef, rootUpdates);
-    }
-    batch.update(docRef.collection('private').doc('contact'), {
+    batch.update(docRef, { ...updates, updatedAt: new Date() });
+    batch.set(docRef.collection('private').doc('contact'), {
       status: statusValue,
       updatedAt: new Date()
-    });
+    }, { merge: true });
     return batch.commit();
   }
 
