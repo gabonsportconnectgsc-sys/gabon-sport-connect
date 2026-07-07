@@ -1,13 +1,14 @@
 {
-  "name": "gsc-seed-import",
-  "version": "1.0.0",
+  "name": "gsc-migrate-private-contact",
   "private": true,
-  "description": "Import des profils fictifs de démonstration dans Firestore pour Gabon Sport Connect",
-  "main": "import-seed.js",
+  "version": "1.0.0",
+  "description": "Script ponctuel de migration email/telephone vers users/{uid}/private/contact",
+  "main": "migrate-private-contact.js",
   "scripts": {
-    "import-seed": "node import-seed.js"
+    "migrate:dry-run": "node migrate-private-contact.js --dry-run",
+    "migrate:confirm": "node migrate-private-contact.js --confirm"
   },
   "dependencies": {
-    "firebase": "^10.12.0"
+    "firebase-admin": "^12.0.0"
   }
 }
