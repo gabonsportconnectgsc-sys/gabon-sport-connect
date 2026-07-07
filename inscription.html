@@ -1500,8 +1500,23 @@
     });
   });
 
-  // Démarrer sur l'écran 0
-  show('s0');
+  // ── PRÉSÉLECTION DEPUIS L'ANNUAIRE (index.html) ──
+  // Quand un visiteur clique sur "Ajouter un acteur dans cette catégorie" depuis une
+  // tuile de l'annuaire, il arrive ici avec ?role=xxx (ex: inscription.html?role=club).
+  // On saute directement les écrans "Type" et "Rôle" pour atterrir sur le formulaire
+  // Profil (s2a), avec le rôle déjà choisi et les champs conditionnels déjà adaptés.
+  (function initFromRoleParam(){
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    const roleTile = roleParam ? document.querySelector(`.role-tile[data-role="${roleParam}"]`) : null;
+    if (roleParam && roleTile) {
+      document.getElementById('tc-a')?.classList.add('sel');
+      pickRole(roleParam, roleTile);
+      goToActeurForm();
+    } else {
+      show('s0');
+    }
+  })();
 </script>
 </body>
 </html>

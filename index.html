@@ -1898,6 +1898,17 @@
               <span style="font-size:18px;line-height:1;">🧑‍🏫</span>Formateurs
             </button>
           </div>
+
+          <!-- CTA contextuel : "Ajouter un acteur dans cette catégorie" — visible pour les visiteurs
+               non inscrits dès qu'une catégorie précise (≠ "Tous") est sélectionnée. Redirige vers
+               inscription.html avec le rôle correspondant déjà présélectionné (voir goToInscriptionWithRole). -->
+          <div id="annuaire-add-actor-cta" class="fade-up" style="display:none;margin-top:12px;">
+            <button onclick="goToInscriptionWithRole()" style="width:100%;padding:12px 14px;background:linear-gradient(135deg,var(--green),var(--green-dk));color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(0,158,96,.28);">
+              <span style="font-size:16px;">➕</span>
+              <span id="annuaire-add-actor-label">Ajouter un acteur dans cette catégorie</span>
+            </button>
+          </div>
+
           <div style="display:flex;gap:10px;margin-top:12px;margin-bottom:4px;">
             <input class="search-input" id="annuaire-search" placeholder="🔍 Nom, sport, ville…" oninput="searchAnnuaire()" style="flex:1;">
             <select class="search-input" id="annuaire-sport" onchange="searchAnnuaire()" style="flex:1;max-width:160px;">
@@ -2866,7 +2877,7 @@ let currentDetailActorUid = null;
 
 const ROLE_LABELS = {
   admin:'⚙️ Administrateur', federation:'🏛️ Fédération', club:'🏟️ Club',
-  association:'🤝 Association', joueur:'⚽ Joueur / Athlète', arbitre:'🟨 Arbitre',
+  association:'🤝 Association', joueur:'⚽ Joueur / Athlète', athlete:'🏃 Athlète', arbitre:'🟨 Arbitre',
   entraineur:'📋 Entraîneur', visiteur:'👁️ Visiteur', independant:'🧍 Sportif indépendant',
   organisateur:'🎪 Organisateur', supporter:'💗 Supporter',
   eleve_etudiant:'🎓 Élève / Étudiant', sportif_etranger:'🌍 Sportif étranger',
@@ -4121,7 +4132,42 @@ function filterActors(type,btn){
   if(btn) btn.classList.add('active');
   else document.querySelector(`.actor-filter-btn[onclick*="'${type}'"]`)?.classList.add('active');
   searchAnnuaire();
+  updateAnnuaireAddActorCta();
 }
+
+// ── CTA "Ajouter un acteur dans cette catégorie" ──
+// Libellés adaptés (accord grammatical) pour chaque rôle de l'annuaire, alignés sur
+// les tuiles de rôle de la page inscription.html (voir role-grid dans inscription.html).
+const ANNUAIRE_ADD_PHRASE = {
+  joueur:'un joueur / une athlète', athlete:'un athlète', arbitre:'un arbitre',
+  entraineur:'un entraîneur', club:'un club sportif', federation:'une fédération',
+  organisateur:'un organisateur', independant:'un sportif indépendant',
+  association:'une association', eleve_etudiant:'un élève / étudiant',
+  sportif_etranger:'un sportif étranger', handisport:'un sportif handisport',
+  ancien_sportif:'un ancien sportif', formateur:'un formateur', supporter:'un supporter'
+};
+
+function updateAnnuaireAddActorCta(){
+  const cta=document.getElementById('annuaire-add-actor-cta');
+  if(!cta) return;
+  const visitorOnly = (typeof isVisitor==='undefined') || isVisitor; // par défaut affiché tant que l'état d'auth n'est pas connu
+  const phrase = ANNUAIRE_ADD_PHRASE[currentActorType];
+  if(!visitorOnly || currentActorType==='tous' || !phrase){
+    cta.style.display='none';
+    return;
+  }
+  document.getElementById('annuaire-add-actor-label').textContent='➕ Ajouter '+phrase+' dans l\'annuaire';
+  cta.style.display='block';
+}
+
+// Redirige vers la page d'inscription en présélectionnant automatiquement le type
+// de compte ("Acteur Sportif") et le rôle correspondant à la catégorie/tuile active
+// dans l'annuaire, pour épargner au visiteur les étapes "Type" et "Rôle".
+function goToInscriptionWithRole(){
+  const role = (currentActorType && currentActorType!=='tous' && ANNUAIRE_ADD_PHRASE[currentActorType]) ? currentActorType : '';
+  window.location.href='inscription.html'+(role?('?role='+encodeURIComponent(role)):'');
+}
+window.goToInscriptionWithRole=goToInscriptionWithRole;
 
 function searchAnnuaire(){
   const q=(document.getElementById('annuaire-search')?.value||'').toLowerCase();
@@ -5696,6 +5742,7 @@ function showView(name){
   if(name==='profil') renderProfile();
   if(name==='annuaire'){
     loadActors();
+    updateAnnuaireAddActorCta();
   }
   if(name==='stades'){
     initMap();
