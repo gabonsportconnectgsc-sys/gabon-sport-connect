@@ -2848,6 +2848,12 @@ tr.is-demo-row td { opacity: .82; }
     const appEl=document.getElementById('app');
     appEl.classList.remove('gate-locked');
     appEl.style.display='block';
+    // Défense en profondeur : les modules qui affichent des données
+    // sensibles (email/téléphone/statut — admin-actors-accounts.js,
+    // gsc-club-validation-admin.js) vérifient ce flag avant de rendre
+    // quoi que ce soit, plutôt que de se reposer uniquement sur le fait
+    // que #app soit masqué en CSS tant qu'on n'est pas connecté.
+    window.__gscAdminVerified = true;
     // Fix #3 — charger les stats dynamiques depuis Firestore (SDK compat déjà initialisé)
     loadDashboardStats();
   }
@@ -2978,6 +2984,12 @@ tr.is-demo-row td { opacity: .82; }
     appEl.classList.add('gate-locked');
     appEl.style.display='none';
     document.getElementById('admin-login-screen').style.display='flex';
+    // Défense en profondeur : dès qu'on repasse à l'écran de login (échec
+    // de vérif du rôle, session expirée, déconnexion…), on retire le
+    // "feu vert" que les modules PII (Comptes & Accès, Validations clubs)
+    // vérifient avant d'afficher quoi que ce soit.
+    window.__gscAdminVerified = false;
+    window.__gscAdminIdentity = null;
   }
 
   async function handleAdminLogin(){
@@ -3032,6 +3044,10 @@ tr.is-demo-row td { opacity: .82; }
         btn.disabled=false; btn.textContent='Se connecter';
         return;
       }
+      // Identité admin exposée pour l'audit trail (ex: qui a validé/refusé
+      // un rattachement club, qui a réinitialisé quel mot de passe) —
+      // consommé par gsc-club-validation-admin.js et admin-actors-accounts.js.
+      window.__gscAdminIdentity = { uid, email: (data&&data.user&&data.user.email)||email||'' };
       showApp();
     }catch(e){
       const msg=(e&&e.message)||'';
@@ -3197,6 +3213,7 @@ tr.is-demo-row td { opacity: .82; }
         }
         // Pont Firebase Auth
         try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('[GSC Admin] Pont indisponible (checkSession):',e); }
+        window.__gscAdminIdentity = { uid: session.user.id, email: session.user.email||'' };
         showApp();
       }
       else showLogin();

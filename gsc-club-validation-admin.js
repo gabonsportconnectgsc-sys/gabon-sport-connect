@@ -112,62 +112,105 @@
     return (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
   }
 
-  function actorName(u) {
-    return [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || u.email || 'Sans nom';
+  // clubValidation vit dans clubValidationRequests/{uid} (collection publique
+  // non-PII, lisible aussi par la structure concernée — voir gsc-club-validation.js
+  // et firestore.rules). L'email (PII) reste dans users/{uid}/private/contact,
+  // lisible par l'admin uniquement via le collectionGroup 'users_private'.
+  function getRequestsByUid() {
+    const rows = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('clubValidationRequests')) || [];
+    const map = new Map();
+    rows.forEach(r => { const uid = r.requesterUid || r.id; if (uid) map.set(uid, r); });
+    return map;
   }
 
-  function classify(u) {
-    const cv = u.clubValidation;
-    if (!cv || !cv.status) return null;
-    if (cv.status === 'pending') {
-      const overdue = cv.deadline && new Date(cv.deadline).getTime() < Date.now();
+  function getPrivateByUid() {
+    const rows = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users_private')) || [];
+    const map = new Map();
+    rows.forEach(r => { if (r.uid) map.set(r.uid, r); });
+    return map;
+  }
+
+  function actorName(u, priv, req) {
+    return [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || (req && req.name) || (priv && priv.email) || u.email || 'Sans nom';
+  }
+
+  function classify(req) {
+    if (!req || !req.status) return null;
+    if (req.status === 'pending') {
+      const overdue = req.deadline && new Date(req.deadline).getTime() < Date.now();
       return overdue ? 'overdue' : 'pending';
     }
-    return cv.status; // 'approved' | 'rejected'
+    return req.status; // 'approved' | 'rejected'
+  }
+
+  function adminLabel() {
+    return (window.__gscAdminIdentity && (window.__gscAdminIdentity.email || window.__gscAdminIdentity.uid)) || 'admin_plateforme';
   }
 
   function render() {
     const table = document.getElementById('cv-table');
     const countEl = document.getElementById('cv-count');
     if (!table) return;
+    // Défense en profondeur — voir admin-actors-accounts.js pour le
+    // rationnel : ce panneau affiche des emails, ne rend qu'une fois le
+    // rôle admin confirmé par admin.html.
+    if (!window.__gscAdminVerified) {
+      table.innerHTML = '<p style="font-size:12.5px;color:var(--gray-txt);">Accès non vérifié.</p>';
+      return;
+    }
     const filter = document.getElementById('cv-filter')?.value || 'pending';
-    const rows = getUsers()
-      .map(u => ({ u, cat: classify(u) }))
+    const requestsByUid = getRequestsByUid();
+    const privByUid = getPrivateByUid();
+    const usersByUid = new Map(getUsers().map(u => [u.id || u.uid, u]));
+
+    const rows = Array.from(requestsByUid.entries())
+      .map(([uid, req]) => ({ uid, req, u: usersByUid.get(uid) || {}, priv: privByUid.get(uid) || {}, cat: classify(req) }))
       .filter(r => r.cat && (filter === 'all' || r.cat === filter));
 
     if (countEl) countEl.textContent = `${rows.length} résultat(s)`;
     if (!rows.length) { table.innerHTML = `<p style="font-size:12.5px;color:var(--gray-txt);">Aucune demande dans cette catégorie.</p>`; return; }
 
-    table.innerHTML = rows.map(({ u, cat }) => {
-      const uid = u.uid || u.id;
-      const cv = u.clubValidation;
-      const deadline = cv.deadline ? new Date(cv.deadline) : null;
+    table.innerHTML = rows.map(({ uid, req, u, priv, cat }) => {
+      const email = priv.email || u.email || '';
+      const deadline = req.deadline ? new Date(req.deadline) : null;
       const remainingMs = deadline ? deadline.getTime() - Date.now() : null;
       const remainingLabel = cat === 'pending' && remainingMs != null
         ? `⏱️ ${Math.max(0, Math.round(remainingMs / 3600000))}h restantes`
         : (cat === 'overdue' ? '⚠️ délai dépassé' : '');
-      const statutLabel = cv.requestedStatut === 'direction' ? 'Poste de direction' : (cv.requestedStatut === 'sous_contrat' ? 'Sous contrat' : (cv.requestedStatut || ''));
+      const statutLabel = req.requestedStatut === 'direction' ? 'Poste de direction' : (req.requestedStatut === 'sous_contrat' ? 'Sous contrat' : (req.requestedStatut || ''));
       const actions = (cat === 'pending' || cat === 'overdue')
         ? `<button class="btn-sm" style="background:#10b981;color:#fff;" onclick="GSCClubValidationAdmin.approve('${uid}')">✅ Valider</button>
            <button class="btn-sm" style="background:#ef4444;color:#fff;" onclick="GSCClubValidationAdmin.reject('${uid}')">❌ Refuser</button>`
-        : `<span style="font-size:11.5px;color:var(--gray-txt);">${cv.status === 'approved' ? '✅ Validée' : '❌ Refusée'}${cv.decidedAt ? ' le ' + new Date(cv.decidedAt).toLocaleDateString('fr-FR') : ''}</span>`;
+        : `<span style="font-size:11.5px;color:var(--gray-txt);">${req.status === 'approved' ? '✅ Validée' : '❌ Refusée'}${req.decidedAt ? ' le ' + new Date(req.decidedAt).toLocaleDateString('fr-FR') : ''}</span>`;
 
       return `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-bd,#eee);flex-wrap:wrap;">
           <div>
-            <div style="font-weight:700;font-size:13px;">${esc(actorName(u))} <span style="font-weight:400;color:var(--gray-txt);font-size:11.5px;">(${esc(u.email || '')})</span></div>
-            <div style="font-size:11.5px;color:var(--gray-txt);">${esc(cv.structureName || '')} · ${esc(statutLabel)} · ${remainingLabel}</div>
+            <div style="font-weight:700;font-size:13px;">${esc(actorName(u, priv, req))} <span style="font-weight:400;color:var(--gray-txt);font-size:11.5px;">(${esc(email)})</span></div>
+            <div style="font-size:11.5px;color:var(--gray-txt);">${esc(req.structureName || '')} · ${esc(statutLabel)} · ${remainingLabel}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">${actions}</div>
         </div>`;
     }).join('');
   }
 
-  async function writeDecision(uid, fields) {
+  // `clubValidationRequests/{uid}` est écrit directement (l'admin y a accès
+  // sans restriction) ; `statut`/`employeur` (reset au membre simple lors
+  // d'un refus) sont écrits en même temps sur le doc public users/{uid} —
+  // contrairement au chemin "club" (gsc-club-validation.js), l'admin peut
+  // appliquer la décision immédiatement, pas besoin d'attendre que l'acteur
+  // se reconnecte.
+  async function writeDecision(uid, requestFields, publicFields) {
     const db = fdb();
     if (!db) { alert('Firestore indisponible.'); return; }
     try {
-      await db.collection('users').doc(uid).update(fields);
+      const writes = [
+        db.collection('clubValidationRequests').doc(uid).set(requestFields, { merge: true })
+      ];
+      if (publicFields && Object.keys(publicFields).length) {
+        writes.push(db.collection('users').doc(uid).update(publicFields));
+      }
+      await Promise.all(writes);
       render();
     } catch (err) {
       console.error('[GSCClubValidationAdmin] erreur écriture :', err);
@@ -177,19 +220,22 @@
 
   function approve(uid) {
     writeDecision(uid, {
-      'clubValidation.status': 'approved',
-      'clubValidation.decidedAt': new Date().toISOString(),
-      'clubValidation.decidedBy': 'admin_plateforme',
-    });
+      status: 'approved',
+      decidedAt: new Date().toISOString(),
+      decidedBy: adminLabel(),
+      appliedAt: new Date().toISOString(),
+    }, {});
   }
 
   function reject(uid) {
     const reason = prompt('Motif du refus (optionnel — sera visible par l\'acteur) :', '') || '';
     writeDecision(uid, {
-      'clubValidation.status': 'rejected',
-      'clubValidation.decidedAt': new Date().toISOString(),
-      'clubValidation.decidedBy': 'admin_plateforme',
-      'clubValidation.rejectionMessage': reason || "Rapprochez-vous de la direction de votre club pour connaître les motifs du refus.",
+      status: 'rejected',
+      decidedAt: new Date().toISOString(),
+      decidedBy: adminLabel(),
+      rejectionMessage: reason || "Rapprochez-vous de la direction de votre club pour connaître les motifs du refus.",
+      appliedAt: new Date().toISOString(),
+    }, {
       statut: 'libre',
       employeur: '',
     });
@@ -216,6 +262,12 @@
     injectSection();
     if (window.realtimeSync && typeof window.realtimeSync.onUpdate === 'function') {
       window.realtimeSync.onUpdate('users', () => {
+        if (document.getElementById(SECTION_ID)?.classList.contains('active')) render();
+      });
+      window.realtimeSync.onUpdate('users_private', () => {
+        if (document.getElementById(SECTION_ID)?.classList.contains('active')) render();
+      });
+      window.realtimeSync.onUpdate('clubValidationRequests', () => {
         if (document.getElementById(SECTION_ID)?.classList.contains('active')) render();
       });
     }

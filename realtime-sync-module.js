@@ -22,9 +22,27 @@
     _activeSyncs++;
     setBadge(true);
     try {
-      _unsub[name] = window.db.collection(name).onSnapshot(
+      // Cas spécial : 'users_private' n'est pas une collection top-level mais
+      // un collectionGroup sur la sous-collection users/{uid}/private — les
+      // champs sensibles (email, téléphone, status, clubValidation) y ont été
+      // déplacés (voir firestore.rules). Chaque règle Firestore s'applique
+      // par document : un client non-admin ne recevra ici QUE son propre
+      // document (owner) ; l'admin reçoit tout. Pas de fuite possible via ce
+      // mécanisme, contrairement à l'ancien accès direct sur users/{uid}.
+      const ref = (name === 'users_private')
+        ? window.db.collectionGroup('private')
+        : window.db.collection(name);
+      _unsub[name] = ref.onSnapshot(
         (snap) => {
-          _cache[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          _cache[name] = snap.docs.map(d => {
+            const data = { id: d.id, ...d.data() };
+            if (name === 'users_private') {
+              // uid du propriétaire = id du document parent de "private"
+              // (users/{uid}/private/contact → parent.parent.id === uid)
+              data.uid = d.ref.parent.parent ? d.ref.parent.parent.id : d.id;
+            }
+            return data;
+          });
           (_listeners[name] || []).forEach(cb => {
             try { cb(_cache[name]); } catch (e) { console.error('realtimeSync listener error:', e); }
           });

@@ -1,7 +1,7 @@
 /**
  * ══════════════════════════════════════════════════════════════════════
  *  GSC CLUB VALIDATION — Rattachement club/structure + validation 72h
- *  Gabon Sport Connect · v1.0 · 2026
+ *  Gabon Sport Connect · v1.1 · 2026
  *
  *  Monkey-patch non-invasif (n'édite pas index.html) :
  *   1) Injecte un sélecteur "Sport" et transforme "Employeur / Club actuel"
@@ -11,15 +11,41 @@
  *   2) Ajoute au statut l'option "Poste de direction / dirigeant".
  *   3) Si le statut déclaré est "Sous contrat" ou "Direction" ET que la
  *      structure choisie est une structure reconnue (club/fédération) :
- *      l'inscription N'EST PAS bloquée, mais le compte est marqué
- *      `clubValidation.status = 'pending'` avec une échéance de 72h.
- *      Le club/la fédération concerné(e) — ou à défaut l'administrateur
+ *      l'inscription N'EST PAS bloquée, mais une demande de rattachement
+ *      est créée dans `clubValidationRequests/{uid}` avec une échéance de
+ *      72h. Le club/la fédération concerné(e) — ou à défaut l'administrateur
  *      de la plateforme via gsc-club-validation-admin.js — peut valider
  *      ou refuser. En cas de refus, l'acteur repasse automatiquement en
  *      statut "libre" / sans club, avec un message l'invitant à se
  *      rapprocher de la direction de son club pour connaître les motifs.
  *
- *  Dépendances : window.db/doc/updateDoc/setDoc (firebase-init.js),
+ *  ⚠️ ARCHITECTURE PII (v1.1) : `clubValidationRequests` est une collection
+ *  PUBLIQUE mais volontairement NON-PII (nom, rôle, structure visée,
+ *  statut demandé, échéance — jamais d'email/téléphone). C'est nécessaire
+ *  pour qu'une structure (club/fédération) puisse voir et trancher les
+ *  demandes qui la concernent : les règles Firestore actuelles n'autorisent
+ *  QUE le propriétaire ou l'admin à lire/écrire sur `users/{uid}` et
+ *  `users/{uid}/private/contact` (email/téléphone/status), donc une
+ *  structure tierce ne peut PAS y accéder. Voir `applyDecisionIfNeeded()`
+ *  plus bas : quand une structure tranche, l'acteur lui-même applique la
+ *  décision (reset `statut`/`employeur`) à sa prochaine connexion, car lui
+ *  seul (ou l'admin) a le droit d'écrire sur son propre document.
+ *
+ *  Règle Firestore requise (à ajouter, absente des règles fournies) :
+ *    match /clubValidationRequests/{uid} {
+ *      allow read: if true;
+ *      allow create: if request.auth != null && request.auth.uid == uid
+ *        && request.resource.data.status == 'pending';
+ *      allow update: if request.auth != null && (
+ *        request.auth.uid == uid ||
+ *        isAdmin(request.auth.uid) ||
+ *        (resource.data.structureOwnerUid != null
+ *          && resource.data.structureOwnerUid == request.auth.uid)
+ *      );
+ *      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+ *    }
+ *
+ *  Dépendances : window.db/doc/updateDoc/setDoc/getDoc (firebase-init.js),
  *  window.realtimeSync, window.GSC_GABON_SPORTS_DATA (data réelle).
  * ══════════════════════════════════════════════════════════════════════
  */
@@ -241,30 +267,38 @@
     const raw = sessionStorage.getItem(SS_KEY);
     if (!raw) return;
     const uid = window.currentUser && window.currentUser.uid;
-    if (!uid || !window.db || !window.doc || !window.updateDoc) return;
+    if (!uid || !window.db || !window.doc) return;
     let info;
     try { info = JSON.parse(raw); } catch (e) { sessionStorage.removeItem(SS_KEY); return; }
+
+    const p = window.userProfile || {};
+    const name = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nomOrganisation || '';
+    // Lien fiable structure ↔ propriétaire (fiche Firestore "live" avec un
+    // addedBy connu) — permet à la structure de valider elle-même sans
+    // passer par l'admin (voir règle clubValidationRequests/{uid}).
+    let structureOwnerUid = null;
+    if (info.structureRef && info.structureRef.indexOf('live:') === 0 && window.structuresManager && window.structuresManager.list) {
+      const s = window.structuresManager.list().find(x => 'live:' + x.id === info.structureRef);
+      if (s && s.addedBy) structureOwnerUid = s.addedBy;
+    }
+    const request = {
+      requesterUid: uid, name, role: info.role,
+      structureRef: info.structureRef, structureId: info.structureId, structureName: info.structureName, structureType: info.structureType,
+      requestedRole: info.role, requestedStatut: info.statut,
+      requestedAt: info.requestedAt, deadline: info.deadline,
+      status: 'pending',
+      ...(structureOwnerUid ? { structureOwnerUid } : {}),
+    };
     try {
-      await window.updateDoc(window.doc(window.db, 'users', uid), {
-        'clubValidation.status': 'pending',
-        'clubValidation.structureRef': info.structureRef,
-        'clubValidation.structureId': info.structureId,
-        'clubValidation.structureName': info.structureName,
-        'clubValidation.structureType': info.structureType,
-        'clubValidation.requestedRole': info.role,
-        'clubValidation.requestedStatut': info.statut,
-        'clubValidation.requestedAt': info.requestedAt,
-        'clubValidation.deadline': info.deadline,
-      });
-      if (window.userProfile) {
-        window.userProfile.clubValidation = {
-          status: 'pending', structureRef: info.structureRef, structureId: info.structureId, structureName: info.structureName,
-          structureType: info.structureType, requestedRole: info.role, requestedStatut: info.statut,
-          requestedAt: info.requestedAt, deadline: info.deadline,
-        };
-      }
+      // clubValidation vit dans une collection dédiée PUBLIQUE mais NON-PII
+      // (aucun email/téléphone/status ici) : clubValidationRequests/{uid}.
+      // Une structure peut ainsi lire/valider une demande qui la concerne
+      // sans avoir besoin d'accéder au document privé du candidat
+      // (users/{uid}/private/contact), réservé au propriétaire + admin.
+      if (window.setDoc) await window.setDoc(window.doc(window.db, 'clubValidationRequests', uid), request);
+      if (window.userProfile) window.userProfile.clubValidation = request;
     } catch (err) {
-      console.warn('[GSCClubValidation] écriture clubValidation impossible :', err);
+      console.warn('[GSCClubValidation] écriture clubValidationRequests impossible :', err);
     } finally {
       sessionStorage.removeItem(SS_KEY);
     }
@@ -273,7 +307,45 @@
   /* ══════════════════════════════════════════════════════════════════
    * 3. BANNIÈRE "EN ATTENTE / VALIDÉ / REFUSÉ" côté acteur
    * ══════════════════════════════════════════════════════════════════ */
-  function renderClubValidationBanner() {
+  // clubValidation vit dans clubValidationRequests/{uid} — collection
+  // publique mais non-PII, lisible par tous (nécessaire pour que la
+  // structure concernée puisse la consulter). On la lit ici pour la
+  // bannière, et on applique une décision (approuvée/refusée) en attente
+  // dès que l'acteur repasse sur la plateforme : seules SES propres
+  // écritures sur users/{uid} et clubValidationRequests/{uid} sont
+  // autorisées par les règles — une structure tierce ne peut pas les
+  // faire à sa place.
+  async function loadOwnPendingRequest() {
+    const uid = window.currentUser && window.currentUser.uid;
+    if (!uid || !window.db || !window.doc || !window.getDoc) return;
+    try {
+      const snap = await window.getDoc(window.doc(window.db, 'clubValidationRequests', uid));
+      if (!snap.exists()) return;
+      const req = snap.data();
+      if (window.userProfile) window.userProfile.clubValidation = req;
+      await applyDecisionIfNeeded(uid, req);
+    } catch (err) {
+      console.warn('[GSCClubValidation] lecture clubValidationRequests impossible :', err);
+    }
+  }
+
+  async function applyDecisionIfNeeded(uid, req) {
+    if (!req || req.appliedAt || !['approved', 'rejected'].includes(req.status)) return;
+    if (!window.db || !window.doc || !window.updateDoc) return;
+    try {
+      if (req.status === 'rejected') {
+        // L'acteur redevient "simple membre" — lui seul (ou l'admin) peut
+        // écrire ce champ sur son propre profil public.
+        await window.updateDoc(window.doc(window.db, 'users', uid), { statut: 'libre', employeur: '' });
+      }
+      await window.updateDoc(window.doc(window.db, 'clubValidationRequests', uid), { appliedAt: new Date().toISOString() });
+    } catch (err) {
+      console.warn('[GSCClubValidation] application de la décision impossible :', err);
+    }
+  }
+
+  async function renderClubValidationBanner() {
+    await loadOwnPendingRequest();
     const p = window.userProfile;
     const host = document.getElementById('pending-self-notice')?.parentElement
       || document.getElementById('view-dashboard');
@@ -319,9 +391,12 @@
    * 4. PANNEAU DE REVUE — côté compte "club / association / fédération"
    *    (permet à la structure elle-même de valider/refuser, en plus de
    *    l'administrateur de la plateforme — voir gsc-club-validation-admin.js)
+   *    Source : clubValidationRequests (collection publique, NON-PII —
+   *    pas d'email/téléphone/status ici), jamais les documents users/*
+   *    des autres acteurs (inaccessibles à un compte club par les règles).
    * ══════════════════════════════════════════════════════════════════ */
-  function getUsersCache() {
-    return (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
+  function getPendingRequestsCache() {
+    return (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('clubValidationRequests')) || [];
   }
 
   /** Structures Firestore (structuresSportives) créées par le compte
@@ -333,16 +408,15 @@
     return window.structuresManager.list().filter(s => s.addedBy === uid).map(s => 'live:' + s.id);
   }
 
-  function myStructureMatches(u) {
+  function myStructureMatches(req) {
     const p = window.userProfile;
     if (!p || !['club', 'association', 'federation'].includes(p.role)) return false;
-    const cv = u.clubValidation;
-    if (!cv || cv.status !== 'pending') return false;
+    if (!req || req.status !== 'pending') return false;
 
     // 1) Lien fiable : la structure Firestore qui a servi de cible a été
     //    créée par ce même compte (structuresSportives.addedBy).
     const owned = myOwnedStructureIds();
-    if (owned.length && cv.structureRef && owned.includes(cv.structureRef)) return true;
+    if (owned.length && req.structureRef && owned.includes(req.structureRef)) return true;
 
     // 2) Repli : comparaison de nom (référentiel statique ou saisie libre),
     //    même logique que le reste de l'app pour rattacher un acteur à son
@@ -350,8 +424,8 @@
     //    userProfile.nomOrganisation).
     const d = data();
     const myStructure = d && d.findValidationCapableStructure(p.nomOrganisation);
-    if (myStructure && cv.structureId === myStructure.id) return true;
-    return normalize(cv.structureName) === normalize(p.nomOrganisation);
+    if (myStructure && req.structureId === myStructure.id) return true;
+    return normalize(req.structureName) === normalize(p.nomOrganisation);
   }
 
   function renderStructureReviewPanel() {
@@ -359,7 +433,7 @@
     if (!p || !['club', 'association', 'federation'].includes(p.role)) return;
     const host = document.getElementById('view-dashboard');
     if (!host) return;
-    const pending = getUsersCache().filter(myStructureMatches);
+    const pending = getPendingRequestsCache().filter(myStructureMatches);
 
     let card = document.getElementById('gsc-cv-review-card');
     if (!pending.length) { if (card) card.style.display = 'none'; return; }
@@ -370,13 +444,13 @@
       host.insertAdjacentElement('afterbegin', card);
     }
     card.style.display = 'block';
-    const rows = pending.map(u => {
-      const uid = u.uid || u.id;
-      const name = [u.prenom, u.nom].filter(Boolean).join(' ') || u.email || uid;
-      const deadline = u.clubValidation?.deadline ? new Date(u.clubValidation.deadline) : null;
+    const rows = pending.map(req => {
+      const uid = req.requesterUid || req.id;
+      const name = req.name || 'Compte sans nom';
+      const deadline = req.deadline ? new Date(req.deadline) : null;
       const overdue = deadline && deadline.getTime() < Date.now();
-      const roleLabel = u.clubValidation?.requestedRole || u.role || '';
-      const statutLabel = u.clubValidation?.requestedStatut === 'direction' ? 'Poste de direction' : 'Sous contrat';
+      const roleLabel = req.requestedRole || '';
+      const statutLabel = req.requestedStatut === 'direction' ? 'Poste de direction' : 'Sous contrat';
       return `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-bd,#eee);flex-wrap:wrap;">
           <div>
@@ -398,13 +472,17 @@
       </div>`;
   }
 
+  // Le club/la fédération n'a le droit d'écrire QUE sur clubValidationRequests
+  // (voir règles) — jamais directement sur users/{uid} d'un autre compte.
+  // Le retour au statut "libre" en cas de refus est appliqué par l'acteur
+  // lui-même à sa prochaine connexion (voir applyDecisionIfNeeded ci-dessus).
   async function approve(uid) {
     if (!window.db || !window.doc || !window.updateDoc) return;
     try {
-      await window.updateDoc(window.doc(window.db, 'users', uid), {
-        'clubValidation.status': 'approved',
-        'clubValidation.decidedAt': new Date().toISOString(),
-        'clubValidation.decidedBy': (window.currentUser && window.currentUser.uid) || 'admin',
+      await window.updateDoc(window.doc(window.db, 'clubValidationRequests', uid), {
+        status: 'approved',
+        decidedAt: new Date().toISOString(),
+        decidedBy: (window.currentUser && window.currentUser.uid) || 'club',
       });
       if (typeof window.toast === 'function') window.toast('Rattachement validé.', 'success');
       renderStructureReviewPanel();
@@ -417,16 +495,13 @@
     if (!window.db || !window.doc || !window.updateDoc) return;
     const message = reason || "Rapprochez-vous de la direction de votre club pour connaître les motifs du refus.";
     try {
-      await window.updateDoc(window.doc(window.db, 'users', uid), {
-        'clubValidation.status': 'rejected',
-        'clubValidation.decidedAt': new Date().toISOString(),
-        'clubValidation.decidedBy': (window.currentUser && window.currentUser.uid) || 'admin',
-        'clubValidation.rejectionMessage': message,
-        // L'acteur redevient "simple membre" : statut neutre, plus de club déclaré.
-        statut: 'libre',
-        employeur: '',
+      await window.updateDoc(window.doc(window.db, 'clubValidationRequests', uid), {
+        status: 'rejected',
+        decidedAt: new Date().toISOString(),
+        decidedBy: (window.currentUser && window.currentUser.uid) || 'club',
+        rejectionMessage: message,
       });
-      if (typeof window.toast === 'function') window.toast('Demande refusée — l\'acteur repasse en membre simple.', 'info');
+      if (typeof window.toast === 'function') window.toast('Demande refusée — l\'acteur repasse en membre simple dès sa prochaine connexion.', 'info');
       renderStructureReviewPanel();
     } catch (err) {
       console.warn('[GSCClubValidation] reject erreur :', err);
@@ -443,8 +518,7 @@
     renderClubValidationBanner();
     renderStructureReviewPanel();
     if (window.realtimeSync && typeof window.realtimeSync.onUpdate === 'function') {
-      window.realtimeSync.onUpdate('users', () => {
-        renderClubValidationBanner();
+      window.realtimeSync.onUpdate('clubValidationRequests', () => {
         renderStructureReviewPanel();
       });
     }

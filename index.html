@@ -4375,6 +4375,17 @@ function openActorDetail(uid){
   if(a.niveau) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">📊 ${a.niveau}</span></div>`;
   if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${a.nationalite}</span></div>`;
   html+=`</div>`;
+  // Contact public (optionnel) — uniquement pour comptes indépendants,
+  // organisateurs, ou statut "libre" (aucune structure/affiliation), et
+  // seulement si l'acteur a lui-même choisi de renseigner ces champs.
+  // Distinct de l'email/téléphone de connexion, qui restent privés.
+  const isPublicContactEligible=a.role==='independant'||a.role==='organisateur'||(a.statut||'').toLowerCase()==='libre';
+  if(isPublicContactEligible && (a.publicContactEmail||a.publicContactPhone)){
+    html+=`<div class="adm-section"><div class="adm-section-title">📇 Contact public</div>`;
+    if(a.publicContactEmail) html+=`<div class="adm-info-row"><span class="adm-info-label">Email</span><span class="adm-info-val">✉️ ${a.publicContactEmail}</span></div>`;
+    if(a.publicContactPhone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">📞 ${a.publicContactPhone}</span></div>`;
+    html+=`</div>`;
+  }
   if(isPersonnel){
     // Physique — masqué pour les visiteurs
     if((a.taille||a.poids) && !isVisitor){
@@ -4698,6 +4709,21 @@ function buildEditForm(p){
       </select>
     </div>
   </div>`;
+
+  // Contact public (optionnel) — réservé aux comptes individuels sans
+  // structure/affiliation (statut "libre"), aux sportifs indépendants et
+  // aux organisateurs. Volontairement DISTINCT du téléphone/email de
+  // connexion (privés) : ce champ, s'il est renseigné, est affiché dans
+  // la fiche publique de l'annuaire pour permettre d'être contacté.
+  const isPublicContactEligible = p.role==='independant' || p.role==='organisateur' || (p.statut||'').toLowerCase()==='libre';
+  if (isPublicContactEligible) {
+    h+=`<div class="section-divider" style="border-color:#009E60;">📇 Contact public (optionnel)</div>
+    <p style="font-size:11.5px;color:var(--gray-txt);margin:-6px 0 10px;">Affiché publiquement dans l'annuaire si renseigné. Différent de votre email/téléphone de connexion, qui restent privés.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>Email de contact public</label><input type="email" id="edit-public-contact-email" value="${p.publicContactEmail||''}" placeholder="contact@exemple.com"></div>
+      <div class="form-group"><label>Téléphone de contact public</label><input type="tel" id="edit-public-contact-phone" value="${p.publicContactPhone||''}" placeholder="+241…"></div>
+    </div>`;
+  }
 
   if(isPersonnel){
     h+=`<div class="form-group"><label>Date de naissance</label><input type="date" id="edit-dob" value="${p.dateNaissance||''}"></div>`;
@@ -5037,6 +5063,13 @@ async function saveProfile(){
     bio:document.getElementById('edit-bio')?.value.trim()||'',
     updatedAt:serverTimestamp()
   };
+  // Contact public (optionnel) — uniquement pour les comptes éligibles
+  // (indépendant, organisateur, ou statut "libre"). Si le compte n'est
+  // plus éligible (ex: nouvellement rattaché à un club), on efface toute
+  // valeur résiduelle plutôt que de la laisser trainer en base.
+  const isPublicContactEligible = p.role==='independant' || p.role==='organisateur' || (p.statut||'').toLowerCase()==='libre';
+  updates.publicContactEmail = isPublicContactEligible ? (document.getElementById('edit-public-contact-email')?.value.trim()||'') : '';
+  updates.publicContactPhone = isPublicContactEligible ? (document.getElementById('edit-public-contact-phone')?.value.trim()||'') : '';
   if(isPersonnel){
     Object.assign(updates,{
       dateNaissance:document.getElementById('edit-dob')?.value||'',
@@ -8655,6 +8688,7 @@ window.lookupManualGscId = lookupManualGscId;
 
 <!-- ══ GSC GABON SPORTS DATA + VALIDATION CLUB — Rattachement club/structure ══ -->
 <script src="gsc-gabon-sports-data.js"></script>
+<script src="realtime-sync-module.js"></script>
 <script src="gsc-club-validation.js"></script>
 <script src="gsc-whatsapp-module.js"></script>
 <link rel="stylesheet" href="structures-modules.css">

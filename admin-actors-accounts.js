@@ -35,7 +35,20 @@
   const SECTION_ID = 'comptes-acteurs';
   const NAV_ID = 'nav-comptes-acteurs';
   const MNAV_ID = 'mnav-comptes-acteurs';
-  const DEFAULT_PASSWORD = 'Gsc1234';
+
+  // Un mot de passe par défaut FIXE et partagé par tous les resets était
+  // prévisible (quiconque connaît la convention peut se connecter sur
+  // n'importe quel compte réinitialisé). On génère désormais un mot de
+  // passe temporaire ALÉATOIRE à chaque réinitialisation, affiché une
+  // seule fois à l'admin pour transmission par canal sûr.
+  function generateTempPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = new Uint32Array(10);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    let out = '';
+    for (let i = 0; i < 10; i++) out += chars[bytes[i] % chars.length];
+    return out;
+  }
 
   // Même config publique que celle utilisée dans admin.html pour le pont
   // Supabase → Firebase (clé "publishable", sans risque à dupliquer côté client).
@@ -109,8 +122,8 @@
           <div class="dash-card-title">🔐 Comptes &amp; Accès des acteurs</div>
           <p style="font-size:12px;color:var(--gray-txt);margin-bottom:4px;">
             Email (lecture seule, lié au compte de connexion) et téléphone (modifiable) de chaque acteur.
-            La réinitialisation de mot de passe fixe un mot de passe temporaire par défaut
-            (<code>${DEFAULT_PASSWORD}</code>) — communiquez-le à l'acteur par un canal sûr et invitez-le à le changer dès sa prochaine connexion.
+            La réinitialisation de mot de passe génère un mot de passe temporaire ALÉATOIRE
+            (différent à chaque fois) — communiquez-le à l'acteur par un canal sûr et invitez-le à le changer dès sa prochaine connexion.
           </p>
         </div>
         <div class="dash-card">
@@ -158,8 +171,20 @@
     return (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users')) || [];
   }
 
-  function actorName(u) {
-    return [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || u.email || 'Sans nom';
+  // Étape 2/5 de la migration PII (voir firestore.rules) : email, téléphone
+  // et status vivent désormais dans users/{uid}/private/contact, plus dans
+  // le document public users/{uid}. On les récupère via un collectionGroup
+  // dédié (voir realtime-sync-module.js) et on les fusionne par uid ici,
+  // uniquement pour l'affichage admin.
+  function getPrivateByUid() {
+    const rows = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users_private')) || [];
+    const map = new Map();
+    rows.forEach(r => { if (r.uid) map.set(r.uid, r); });
+    return map;
+  }
+
+  function actorName(u, priv) {
+    return [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || (priv && priv.email) || u.email || 'Sans nom';
   }
 
   let _allRows = [];
@@ -170,16 +195,19 @@
   // status/statut passe à 'deleted'. Comptes & Accès doit respecter la
   // même règle de visibilité, sinon les comptes supprimés depuis
   // l'Annuaire admin continuent d'apparaître ici.
-  function isDeleted(u) {
-    const s = (u.status || u.statut || '').toString().toLowerCase();
+  // `status` vit maintenant dans private/contact ; on retombe sur les
+  // champs historiques du doc public pour les comptes pas encore migrés.
+  function isDeleted(u, priv) {
+    const s = ((priv && priv.status) || u.status || u.statut || '').toString().toLowerCase();
     return s === 'deleted' || s === 'supprimé' || s === 'supprime';
   }
 
   function computeRows() {
+    const privByUid = getPrivateByUid();
     return getUsers()
-      .filter(u => !isDeleted(u))
-      .map(u => ({ u }))
-      .sort((a, b) => actorName(a.u).localeCompare(actorName(b.u)));
+      .map(u => ({ u, priv: privByUid.get(u.id || u.uid) || {} }))
+      .filter(({ u, priv }) => !isDeleted(u, priv))
+      .sort((a, b) => actorName(a.u, a.priv).localeCompare(actorName(b.u, b.priv)));
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -193,11 +221,13 @@
     const q = (filterTerm || '').toLowerCase().trim();
     let rows = _allRows;
     if (q) {
-      rows = rows.filter(({ u }) =>
-        actorName(u).toLowerCase().includes(q) ||
-        (u.email || '').toLowerCase().includes(q) ||
-        (u.telephone || u.phone || '').toLowerCase().includes(q)
-      );
+      rows = rows.filter(({ u, priv }) => {
+        const email = priv.email || u.email || '';
+        const phone = priv.telephone || u.telephone || u.phone || '';
+        return actorName(u, priv).toLowerCase().includes(q) ||
+          email.toLowerCase().includes(q) ||
+          phone.toLowerCase().includes(q);
+      });
     }
 
     if (countEl) countEl.textContent = `${rows.length} acteur(s)`;
@@ -207,17 +237,19 @@
       return;
     }
 
-    const trs = rows.map(({ u }) => {
+    const trs = rows.map(({ u, priv }) => {
       const uid = u.id || u.uid;
-      const phone = u.telephone || u.phone || '';
+      const email = priv.email || u.email || '';
+      const phone = priv.telephone || u.telephone || u.phone || '';
+      const status = priv.status || u.status || u.statut || 'actif';
       return `
         <tr data-uid="${esc(uid)}">
-          <td>${esc(actorName(u))}</td>
+          <td>${esc(actorName(u, priv))}</td>
           <td>${esc(u.role || '—')}</td>
           <td>
             <div class="gsc-acc-email-cell">
-              <span>${esc(u.email || '—')}</span>
-              ${u.email ? `<span class="gsc-acc-copy" title="Copier l'email" onclick="GSCAccounts.copyToClipboard('${esc(u.email)}')">📋</span>` : ''}
+              <span>${esc(email || '—')}</span>
+              ${email ? `<span class="gsc-acc-copy" title="Copier l'email" onclick="GSCAccounts.copyToClipboard('${esc(email)}')">📋</span>` : ''}
             </div>
           </td>
           <td>
@@ -229,9 +261,9 @@
             </div>
             <div class="gsc-acc-status-msg" id="phone-status-${esc(uid)}"></div>
           </td>
-          <td>${esc(u.status || u.statut || 'actif')}</td>
+          <td>${esc(status)}</td>
           <td>
-            <button type="button" class="btn-sm" onclick="GSCAccounts.resetPassword('${esc(uid)}','${esc(u.email || '')}','${esc(actorName(u))}')">🔑 Réinitialiser</button>
+            <button type="button" class="btn-sm" onclick="GSCAccounts.resetPassword('${esc(uid)}','${esc(email)}','${esc(actorName(u, priv))}')">🔑 Réinitialiser</button>
             <div class="gsc-acc-status-msg" id="reset-status-${esc(uid)}"></div>
           </td>
         </tr>`;
@@ -247,6 +279,16 @@
   }
 
   function render() {
+    // Défense en profondeur : ce panneau affiche des données sensibles
+    // (email, téléphone) pour tous les acteurs — on ne les rend que si
+    // admin.html a confirmé la vérification du rôle admin (voir showApp()
+    // / showLogin() dans admin.html). Sans ce garde, un chargement du
+    // script en dehors du gate normal afficherait ces données à nu.
+    if (!window.__gscAdminVerified) {
+      const el = document.getElementById('acc-table');
+      if (el) el.innerHTML = '<p style="text-align:center;color:var(--gray-txt);padding:16px;">Accès non vérifié.</p>';
+      return;
+    }
     _allRows = computeRows();
     renderPurgeBanner();
     const search = document.getElementById('acc-search');
@@ -324,7 +366,12 @@
     }
 
     try {
-      await window.db.collection('users').doc(uid).update({ telephone: newPhone });
+      // Étape 2/5 migration PII : le téléphone vit désormais dans
+      // users/{uid}/private/contact (accès admin autorisé par firestore.rules),
+      // plus dans le document public. set(..., {merge:true}) crée le doc
+      // private/contact s'il n'existe pas encore (comptes pas migrés).
+      await window.db.collection('users').doc(uid).collection('private').doc('contact')
+        .set({ telephone: newPhone }, { merge: true });
       wrap.querySelector('.gsc-acc-phone-view').textContent = newPhone || '—';
       wrap.querySelector('.gsc-acc-phone-view').style.display = 'inline';
       input.style.display = 'none';
@@ -372,10 +419,11 @@
   async function resetPassword(uid, email, name) {
     const statusEl = document.getElementById('reset-status-' + uid);
     const label = name || email || uid;
+    const tempPassword = generateTempPassword();
     if (!confirm(
       `Réinitialiser le mot de passe de "${label}" ?\n\n` +
-      `Le mot de passe sera fixé à "${DEFAULT_PASSWORD}" (identique pour tous les resets).\n` +
-      `⚠️ Un mot de passe par défaut partagé est prévisible : communiquez-le uniquement à la ` +
+      `Un mot de passe temporaire ALÉATOIRE sera généré (différent à chaque réinitialisation).\n` +
+      `⚠️ Il ne sera affiché qu'une seule fois ici : communiquez-le uniquement à la ` +
       `personne concernée (jamais publiquement) et demandez-lui de le changer dès sa prochaine connexion.`
     )) return;
 
@@ -389,7 +437,7 @@
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({ targetUid: uid, newPassword: DEFAULT_PASSWORD })
+        body: JSON.stringify({ targetUid: uid, newPassword: tempPassword })
       });
 
       if (!resp.ok) {
@@ -399,15 +447,17 @@
       }
 
       // Marque le compte pour forcer un changement de mot de passe à la prochaine
-      // connexion (à faire respecter côté écran de connexion — non inclus ici).
+      // connexion (à faire respecter côté écran de connexion — non inclus ici),
+      // et trace QUI a fait la réinitialisation (audit).
       if (window.db) {
         await window.db.collection('users').doc(uid).update({
           mustChangePassword: true,
-          passwordResetAt: new Date()
+          passwordResetAt: new Date(),
+          passwordResetBy: (window.__gscAdminIdentity && (window.__gscAdminIdentity.email || window.__gscAdminIdentity.uid)) || 'admin'
         }).catch(() => {});
       }
 
-      if (statusEl) { statusEl.textContent = `✅ Mot de passe réinitialisé (${DEFAULT_PASSWORD})`; statusEl.className = 'gsc-acc-status-msg ok'; }
+      if (statusEl) { statusEl.textContent = `✅ Mot de passe temporaire : ${tempPassword} (à transmettre par canal sûr, non réaffiché)`; statusEl.className = 'gsc-acc-status-msg ok'; }
     } catch (err) {
       console.error('[GSCAccounts] resetPassword erreur:', err);
       if (statusEl) { statusEl.textContent = '❌ ' + (err.message || err); statusEl.className = 'gsc-acc-status-msg err'; }
@@ -424,6 +474,12 @@
 
     if (window.realtimeSync && typeof window.realtimeSync.onUpdate === 'function') {
       window.realtimeSync.onUpdate('users', () => {
+        if (document.getElementById(SECTION_ID)?.classList.contains('active')) render();
+      });
+      // Étape 2/5 migration PII : email/téléphone/status vivent dans
+      // users/{uid}/private/contact — on s'y abonne aussi pour rafraîchir
+      // le tableau quand ces champs changent.
+      window.realtimeSync.onUpdate('users_private', () => {
         if (document.getElementById(SECTION_ID)?.classList.contains('active')) render();
       });
     }
