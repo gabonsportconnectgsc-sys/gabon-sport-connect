@@ -1132,26 +1132,10 @@
         reporterId: window.currentUser.uid, reporterName: authorName(profile),
         status: 'pending', createdAt: window.serverTimestamp()
       }));
-      if (ctx.type === 'post') {
-        const post = _posts.find(p => p.id === ctx.targetId);
-        if (post) {
-          post.reportsCount = (post.reportsCount || 0) + 1;
-          const fns = await getExtraFns();
-          const patch = { reportsCount: fns.increment ? fns.increment(1) : post.reportsCount };
-          if (post.reportsCount >= REPORT_THRESHOLD && post.status === 'visible') {
-            patch.status = 'hidden'; post.status = 'hidden';
-            if (post.authorId) {
-              pushNotif({
-                type: 'alert', recipientId: post.authorId, personal: true,
-                title: 'Votre publication a été masquée',
-                body: 'Suite à plusieurs signalements, votre publication est en attente de revue par un modérateur.',
-                link: 'fil:' + post.id
-              });
-            }
-          }
-          await withAuth(() => window.updateDoc(window.doc(window.db, POSTS_COL, post.id), patch));
-        }
-      }
+      // reportsCount / status ne peuvent pas être écrits ici par un utilisateur non-auteur :
+      // la règle communityPosts.update ne les autorise que pour l'auteur ou un admin.
+      // Le signalement (déjà enregistré ci-dessus dans "signalements") suffit : c'est
+      // l'admin qui traite et masque le post si besoin.
       closeReportModal();
       renderFeed();
       toastMsg('✅ Signalement envoyé. Merci, notre équipe va l\'examiner.', 'success');
