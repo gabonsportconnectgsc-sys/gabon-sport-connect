@@ -2918,7 +2918,7 @@ const ETABLISSEMENTS_GA=[
     const fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     const {initializeApp} = fb;
     const {getFirestore,doc,setDoc,getDoc,updateDoc,collection,
-           addDoc,getDocs,query,orderBy,serverTimestamp,deleteDoc,where,limit,onSnapshot} = fs;
+           addDoc,getDocs,query,orderBy,serverTimestamp,deleteDoc,where,limit,onSnapshot,collectionGroup} = fs;
     const app = initializeApp(FIREBASE_CONFIG);
     window._fbApp = app;
     window.db = getFirestore(app);
@@ -2928,6 +2928,7 @@ const ETABLISSEMENTS_GA=[
     window.getDocs=getDocs; window.query=query; window.orderBy=orderBy;
     window.serverTimestamp=serverTimestamp; window.deleteDoc=deleteDoc;
     window.where=where; window.limit=limit; window.onSnapshot=onSnapshot;
+    window.collectionGroup=collectionGroup;
     try{
       const sm = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
       window.sRef = sm.ref;
@@ -3002,7 +3003,7 @@ var storage=null, sRef=null, uploadBytes=null, uploadBytesResumable=null, getDow
 var db=null, _fbApp=null;
 // Firestore function stubs — assigned when firebase-ready fires
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
-    query, orderBy, serverTimestamp, deleteDoc, where, limit;
+    query, orderBy, serverTimestamp, deleteDoc, where, limit, collectionGroup;
 
 // ── POSTES ──
 const POSTES = {
@@ -3253,11 +3254,15 @@ async function handleSupabaseRegister(){
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
-  // Vérification doublon téléphone
+  // Vérification doublon téléphone — via empreinte non réversible (telephoneHash),
+  // le numéro en clair n'est jamais lu ni écrit sur le document public.
   if(tel && db && typeof getDocs==='function'){
     try{
-      const telSnap=await getDocs(query(collection(db,'users'),where('telephone','==',tel)));
-      if(!telSnap.empty){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
+      const telHash=await hashPhone(tel);
+      if(telHash){
+        const telSnap=await getDocs(query(collection(db,'users'),where('telephoneHash','==',telHash)));
+        if(!telSnap.empty){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
+      }
     }catch(e){ console.warn('Vérification téléphone:',e); }
   }
   const btn=document.getElementById('auth-register-submit');
@@ -3393,6 +3398,57 @@ async function ensureFirebaseAuthViaSupabase(){
 }
 window.ensureFirebaseAuthViaSupabase = ensureFirebaseAuthViaSupabase;
 
+// ── DONNÉES PRIVÉES (email/téléphone) ──
+// Stockées dans users/{uid}/private/contact, lisible uniquement par le
+// propriétaire et l'admin (règle Firestore dédiée). Le document public
+// users/{uid} ne doit plus jamais contenir ces champs en clair.
+async function getPrivateContact(uid){
+  if(!db||typeof getDoc!=='function'||!uid) return null;
+  try{
+    const snap=await getDoc(doc(db,'users',uid,'private','contact'));
+    return snap.exists()?snap.data():null;
+  }catch(e){ return null; }
+}
+async function setPrivateContact(uid,data){
+  if(!db||typeof setDoc!=='function'||!uid) return;
+  // La règle Firestore exige un champ `status` ('pending'|'active') à la
+  // toute première création du doc private/contact. Un setDoc(...,{merge:true})
+  // sur un doc inexistant est évalué comme un "create" côté règles — on doit
+  // donc vérifier l'existence et injecter un status valide dans ce cas.
+  const existing=await getPrivateContact(uid);
+  if(!existing){
+    const fallbackStatus=['pending','active'].includes(userProfile?.status)?userProfile.status:'active';
+    await setDoc(doc(db,'users',uid,'private','contact'),Object.assign({status:fallbackStatus},data));
+  } else {
+    await setDoc(doc(db,'users',uid,'private','contact'),data,{merge:true});
+  }
+}
+// Réservé à l'admin : synchronise le status "sécurité" côté private/contact
+// (celui que lisent les règles Firestore, ex. isActiveOrLegacy) avec le
+// status affiché côté public. Sans ça, un utilisateur validé par l'admin
+// resterait bloqué pour poster dans la communauté, etc.
+async function adminSetPrivateStatus(uid,status){
+  if(!db||typeof setDoc!=='function'||!uid) return;
+  try{ await setDoc(doc(db,'users',uid,'private','contact'),{status},{merge:true}); }
+  catch(e){ console.warn('adminSetPrivateStatus:',e); }
+}
+window.adminSetPrivateStatus=adminSetPrivateStatus;
+window.getPrivateContact=getPrivateContact;
+window.setPrivateContact=setPrivateContact;
+
+// Empreinte non réversible du numéro de téléphone, utilisée uniquement pour
+// détecter les doublons à l'inscription sans exposer le numéro en clair sur
+// le document public (le vrai numéro ne vit que dans private/contact).
+async function hashPhone(tel){
+  const norm=(tel||'').replace(/[^\d+]/g,'');
+  if(!norm||!window.crypto?.subtle) return '';
+  try{
+    const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
+window.hashPhone=hashPhone;
+
 // Appelé après un login/signup/reset Supabase réussi : relie l'identité Supabase
 // au profil Firestore existant (collection 'users', clé = uid Supabase).
 async function onSupabaseSignedIn(user, extra){
@@ -3410,14 +3466,17 @@ async function onSupabaseSignedIn(user, extra){
     const prenom = extra?.prenom || user.user_metadata?.prenom || '';
     const nom   = extra?.nom   || user.user_metadata?.nom   || '';
     delete userProfile._isNew;
-    // Tous les champs nécessaires à l'annuaire + déduplication téléphone
+    const telVal = extra?.tel || user.user_metadata?.tel || '';
+    const emailVal = user.email || '';
+    // Champs publics uniquement — email/téléphone en clair NE vont plus ici.
+    // telephoneHash permet toujours la déduplication (voir handleSupabaseRegister)
+    // sans exposer le numéro sur le document public.
     Object.assign(userProfile, {
       uid:        user.id,
-      email:      user.email || '',
       prenom,
       nom,
       role:       extra?.role       || user.user_metadata?.role       || 'joueur',
-      telephone:  extra?.tel        || user.user_metadata?.tel        || '',
+      telephoneHash: telVal ? await hashPhone(telVal) : '',
       sexe:       extra?.sexe       || user.user_metadata?.sexe       || '',
       dateNaissance: extra?.ddn     || user.user_metadata?.ddn        || '',
       nationalite: extra?.nationalite || user.user_metadata?.nationalite || 'Gabonaise',
@@ -3430,8 +3489,15 @@ async function onSupabaseSignedIn(user, extra){
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
     });
     try{
-      if(db && typeof setDoc==='function'){ await ensureFirebaseAuthViaSupabase(); await setDoc(doc(db,'users',user.id), userProfile); }
+      if(db && typeof setDoc==='function'){
+        await ensureFirebaseAuthViaSupabase();
+        await setDoc(doc(db,'users',user.id), userProfile);
+        await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
+      }
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
+    // Garder en mémoire pour l'UI de cette session (pas besoin de re-fetch)
+    userProfile.email = emailVal;
+    userProfile.telephone = telVal;
   }
   try{
     const fullname=[userProfile?.prenom,userProfile?.nom].filter(Boolean).join(' ');
@@ -3875,9 +3941,20 @@ async function loadUserProfile(uid){
   try{
     const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,email:currentUser.email,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    else userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
   }catch(e){
-    userProfile={uid,email:currentUser?.email||'',role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+  }
+  // Email/téléphone : source de vérité = users/{uid}/private/contact (lisible
+  // uniquement par le propriétaire + l'admin). Repli sur d'éventuels champs
+  // encore présents sur le doc public le temps que le script de migration
+  // (comptes créés avant cette refonte) ait tourné.
+  try{
+    const priv=await getPrivateContact(uid);
+    userProfile.email = priv?.email ?? userProfile.email ?? currentUser?.email ?? '';
+    userProfile.telephone = priv?.telephone ?? userProfile.telephone ?? '';
+  }catch(e){
+    userProfile.email = userProfile.email ?? currentUser?.email ?? '';
   }
 }
 
@@ -4129,7 +4206,7 @@ function renderActors(actors){
 
     const renderRow=(a,idx)=>{
       const id=a.uid||a.id;
-      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||(ROLE_LABELS[a.role]||a.role||'Profil');
       const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
       const roleKey=a.role||'joueur';
       const roleShort=ROLE_SHORT[roleKey]||roleKey;
@@ -4241,7 +4318,7 @@ function renderActors(actors){
     let qrIndexCounter=0;
     const cardHtml=a=>{
       const id=a.uid||a.id;
-      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+      const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||(ROLE_LABELS[a.role]||a.role||'Profil');
       const initial=name[0]?.toUpperCase()||'?';
       const roleKey=a.role||'joueur';
       const roleName={joueur:'Joueur',athlete:'Athlète',arbitre:'Arbitre',entraineur:'Entraîneur',club:'Club',association:'Association',federation:'Fédération',independant:'Sportif indépendant',organisateur:'Organisateur',eleve_etudiant:'Élève / Étudiant',sportif_etranger:'Sportif étranger',handisport:'Sportif handisport',ancien_sportif:'Ancien Sportif',formateur:'Formateur'}[roleKey]||roleKey;
@@ -4312,7 +4389,7 @@ function openActorDetail(uid){
     ||(window.allActorsRaw||[]).find(x=>(x.uid||x.id)===uid);
   if(!a) return;
   currentDetailActorUid=uid;
-  const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+  const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||(ROLE_LABELS[a.role]||a.role||'Profil');
   const initial=name[0]?.toUpperCase()||'?';
   // Photo : Firebase > admin localStorage > icône
   let localPhoto=null;
@@ -5055,10 +5132,11 @@ async function saveProfile(){
   const isOrg=['club','association','federation','organisateur'].includes(p.role);
   const fedManaged=(p.gereParFederation&&p.role==='joueur'&&(p.niveau==='National'||p.niveau==='International'))||(!!p.editLocked&&p.ownershipStatus!=='owner_self');
 
+  const telephoneVal=document.getElementById('edit-telephone')?.value.trim()||'';
   const updates={
     prenom:document.getElementById('edit-prenom')?.value.trim()||p.prenom||'',
     nom:document.getElementById('edit-nom')?.value.trim()||p.nom||'',
-    telephone:document.getElementById('edit-telephone')?.value.trim()||'',
+    telephoneHash: telephoneVal ? await hashPhone(telephoneVal) : '',
     ville:document.getElementById('edit-ville')?.value||'',
     bio:document.getElementById('edit-bio')?.value.trim()||'',
     updatedAt:serverTimestamp()
@@ -5167,7 +5245,10 @@ async function saveProfile(){
   try{
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',currentUser.uid),updates);
+    try{ await setPrivateContact(currentUser.uid,{telephone:telephoneVal,updatedAt:serverTimestamp()}); }
+    catch(e){ console.warn('Sauvegarde téléphone (private/contact):',e); }
     Object.assign(userProfile,updates);
+    userProfile.telephone=telephoneVal;
     renderDashboard();renderProfile();
     // Reload actors so annuaire reflects changes
     await loadActors();
@@ -5729,7 +5810,7 @@ function renderActorsAdmin(actors){
 
   const renderRow=(a,idx)=>{
     const id=a.uid||a.id;
-    const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||a.email?.split('@')[0]||'—';
+    const name=[a.prenom,a.nom,a.nomOrganisation].filter(Boolean).join(' ')||(ROLE_LABELS[a.role]||a.role||'Profil');
     const photoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||(localPhotos[id]||null)||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
     const roleKey=a.role||'joueur';
     const roleShort=ROLE_SHORT[roleKey]||roleKey;
@@ -5831,6 +5912,25 @@ async function loadAdminUsers(){
   try{
     const snap=await getDocs(collection(db,'users'));
     allAdminUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Email/téléphone : ne viennent JAMAIS du doc public — lus depuis
+    // users/{uid}/private/contact via collectionGroup. Nécessite une règle
+    // Firestore autorisant l'admin à lire ce collectionGroup (à ajouter/
+    // vérifier en prod, cf. synthèse sécurité).
+    try{
+      if(typeof collectionGroup==='function'){
+        const privSnap=await getDocs(collectionGroup(db,'private'));
+        const privByUid={};
+        privSnap.docs.forEach(d=>{
+          if(d.id!=='contact') return;
+          const uid=d.ref.parent.parent?.id;
+          if(uid) privByUid[uid]=d.data();
+        });
+        allAdminUsers.forEach(u=>{
+          const priv=privByUid[u.uid||u.id];
+          if(priv){ u.email=priv.email||''; u.telephone=priv.telephone||''; }
+        });
+      }
+    }catch(e){ console.warn('Lecture private/contact (admin):',e); }
     allAdminUsers.sort((a,b)=>{ const ta=a.createdAt?.toDate?a.createdAt.toDate():new Date(0); const tb=b.createdAt?.toDate?b.createdAt.toDate():new Date(0); return tb-ta; });
     renderAdminUsersTable(allAdminUsers);
     updatePendingBanner();
@@ -5895,6 +5995,7 @@ async function adminApproveUser(uid){
   try{
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    await adminSetPrivateStatus(uid,'active');
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='active';
     renderAdminUsersTable(allAdminUsers);
@@ -5911,6 +6012,7 @@ async function adminRejectUser(uid){
   try{
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    await adminSetPrivateStatus(uid,'hidden');
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='hidden';
     renderAdminUsersTable(allAdminUsers);
@@ -6042,6 +6144,7 @@ async function adminSaveUser(){
   try{
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),updates);
+    await adminSetPrivateStatus(uid,updates.status);
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) Object.assign(allAdminUsers[idx],updates);
     renderAdminUsersTable(allAdminUsers);
@@ -6057,6 +6160,7 @@ async function adminToggleHide(uid,currentStatus){
   try{
     await ensureFirebaseAuthViaSupabase();
     await updateDoc(doc(db,'users',uid),{status:newStatus,updatedAt:serverTimestamp()});
+    await adminSetPrivateStatus(uid,newStatus);
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status=newStatus;
     renderAdminUsersTable(allAdminUsers);
@@ -6070,6 +6174,7 @@ async function adminDeleteUser(uid){
   if(!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès…).\n\n⚠️ Le compte de connexion Firebase Auth associé n\'est pas supprimé automatiquement (nécessite un accès Admin SDK côté serveur) — seul l\'accès à ce backend applicatif est retiré.')) return;
   try{
     await ensureFirebaseAuthViaSupabase();
+    try{ await deleteDoc(doc(db,'users',uid,'private','contact')); }catch(e){ console.warn('Suppression private/contact:',e); }
     await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers.splice(idx,1);
@@ -8191,8 +8296,8 @@ function findActorByScan(payload){
 
 function showScanResult(actor){
   _qrScannerLastResult = actor;
-  const name = [actor.prenom, actor.nom, actor.nomOrganisation].filter(Boolean).join(' ') || actor.email?.split('@')[0] || '—';
   const roleLabel = (typeof ROLE_LABELS!=='undefined' ? ROLE_LABELS[actor.role] : null) || actor.role || '—';
+  const name = [actor.prenom, actor.nom, actor.nomOrganisation].filter(Boolean).join(' ') || roleLabel || '—';
   document.getElementById('qr-scanner-result-name').textContent = name;
   document.getElementById('qr-scanner-result-role').textContent = roleLabel;
   // Photo de vérification faciale — même logique de résolution que le reste de l'app
