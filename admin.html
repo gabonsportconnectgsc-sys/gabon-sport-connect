@@ -3138,18 +3138,17 @@ tr.is-demo-row td { opacity: .82; }
     if(logoutBtn) logoutBtn.addEventListener('click', handleAdminLogout);
   });
 
-  // Vérifie que le compte connecté a bien role === 'admin'
+  // Vérifie que le compte connecté a bien role === 'admin'.
+  // Uniquement basé sur le rôle Firestore (users/{uid}.role === 'admin',
+  // champ public en lecture) — plus de liste d'UID/email admin en clair
+  // dans le code source : ce genre de fallback statique est visible par
+  // quiconque fait "Afficher le code source" et ne se met jamais à jour
+  // si un rôle est révoqué. La vraie protection reste de toute façon
+  // côté règles Firestore (isAdmin()), pas ce garde côté client — ce
+  // garde ne sert qu'à afficher/masquer l'interface admin.
   async function verifyAdminRole(uid){
     const FIREBASE_API_KEY = 'AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM';
     const PROJECT_ID       = 'gabon-sport-connect';
-    const ADMIN_EMAIL      = 'gabonsportconnectgsc@gmail.com';
-    const ADMIN_UIDS       = ['iFuq1ziDpDheqvYMacnGEXAxwzK2','PZZICAtfQuQ0vlT3d0iKpGaBTKt1','4fec97e4-c6ed-49e0-83c6-ab702779c836'];
-
-    // ── Niveau 0 : UID connu ─────────────────────────────────────────────────
-    if(uid && ADMIN_UIDS.includes(uid)){
-      console.log('[GSC Admin] Niveau 0 — UID admin reconnu:', uid);
-      return true;
-    }
 
     // ── Niveau 1 : Firebase Auth SDK ────────────────────────────────────────
     try{
@@ -3178,19 +3177,6 @@ tr.is-demo-row td { opacity: .82; }
         break;
       }catch(e){ console.warn(`[GSC Admin] Niveau 2 tentative ${attempt}:`, e.message||e); }
     }
-
-    // ── Niveau 3 : Email Supabase session (permanent) ───────────────────────
-    try{
-      if(sb){
-        const { data:{ session } } = await sb.auth.getSession();
-        const email = session?.user?.email || '';
-        console.log('[GSC Admin] Niveau 3 — email session:', email);
-        if(email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
-          console.log('[GSC Admin] Niveau 3 — email admin reconnu, accès accordé.');
-          return true;
-        }
-      }
-    }catch(e){ console.warn('[GSC Admin] Niveau 3 échoué:', e.message||e); }
 
     console.error('[GSC Admin] Tous les niveaux ont échoué pour uid:', uid);
     return false;
