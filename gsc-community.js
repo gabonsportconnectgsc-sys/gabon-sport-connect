@@ -236,7 +236,18 @@
         await window.ensureFirebaseAuthViaSupabase();
       }
     } catch (e) {
+      // FIX : on n'avale plus l'erreur du pont. Avant, le code continuait
+      // vers fn() même sans session Firebase valide, ce qui produisait un
+      // "Missing or insufficient permissions" Firestore trompeur — l'utilisateur
+      // ne voyait jamais la vraie cause (session Supabase expirée, Worker
+      // gsc-auth-bridge en échec, custom token invalide, etc.).
       console.warn('GSC Community: pont Firebase Auth indisponible avant écriture —', e);
+      const bridgeError = new Error(
+        "Session expirée ou pont d'authentification indisponible. Reconnectez-vous puis réessayez."
+      );
+      bridgeError.isAuthBridgeError = true;
+      bridgeError.cause = e;
+      throw bridgeError;
     }
     return fn();
   }
