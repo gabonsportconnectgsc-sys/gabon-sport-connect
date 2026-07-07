@@ -36,6 +36,17 @@
     ancien_sportif: '🎖️ Ancien Sportif',
     formateur: '🧑‍🏫 Formateur'
   };
+  /* ── Catégories d'acteurs pour la fiche modale (player-modal) ──────────────
+     Le modal est partagé par TOUS les acteurs (personnes ET organisations).
+     Sans cette distinction, un club/fédération affichait et pouvait écraser
+     des champs qui n'ont aucun sens pour une organisation (taille, poids,
+     pied fort, main dominante, buts, passes décisives). */
+  const PLAYER_ROLES = ['joueur', 'athlete', 'independant', 'eleve_etudiant', 'sportif_etranger', 'handisport', 'ancien_sportif'];
+  // Les arbitres participent physiquement sur le terrain (course, endurance…) —
+  // ils ont donc des critères physiques pertinents, mais pas de stats de
+  // performance joueur (buts/passes décisives n'ont pas de sens pour eux).
+  const PHYSIQUE_ROLES = PLAYER_ROLES.concat(['arbitre']);
+  const ORG_ROLES = ['club', 'federation', 'association', 'organisateur', 'ecole_universite'];
   const ROLE_COLORS = {
     joueur: '#009E60',
     athlete: '#0891b2',
@@ -585,14 +596,41 @@
     document.getElementById('modal-phone').textContent = u.telephone || u.phone || '—';
     document.getElementById('modal-date').textContent = fmtDate(u.createdAt);
     document.getElementById('modal-status').value = u.status || 'active';
-    document.getElementById('modal-taille').value = u.taille || '';
-    document.getElementById('modal-poids').value = u.poids || '';
-    document.getElementById('modal-pied').value = u.pied || '';
-    document.getElementById('modal-main').value = u.main || '';
-    document.getElementById('modal-matchs').value = u.matchsJoues || u.matchsJ || '';
-    document.getElementById('modal-buts').value = u.buts || '';
-    document.getElementById('modal-passes').value = u.passes || '';
-    document.getElementById('modal-club').value = u.club || u.nomOrganisation || u.nomEtablissement || '';
+
+    const isPlayerRole = PLAYER_ROLES.includes(u.role);
+    const isPhysiqueRole = PHYSIQUE_ROLES.includes(u.role);
+    const isOrgRole = ORG_ROLES.includes(u.role);
+
+    // 🏃 Physique : joueurs/athlètes ET arbitres (actifs physiquement sur le terrain).
+    // ⚡ Performance (buts/passes) : réservé aux rôles joueurs, non pertinent pour un arbitre.
+    const physSection = document.getElementById('modal-physique-section');
+    if (physSection) physSection.style.display = isPhysiqueRole ? '' : 'none';
+    if (isPhysiqueRole) {
+      document.getElementById('modal-taille').value = u.taille || '';
+      document.getElementById('modal-poids').value = u.poids || '';
+      document.getElementById('modal-pied').value = u.pied || '';
+      document.getElementById('modal-main').value = u.main || '';
+    }
+    const perfSection = document.getElementById('modal-performance-section');
+    if (perfSection) perfSection.style.display = isPlayerRole ? '' : 'none';
+    if (isPlayerRole) {
+      document.getElementById('modal-matchs').value = u.matchsJoues || u.matchsJ || '';
+      document.getElementById('modal-buts').value = u.buts || '';
+      document.getElementById('modal-passes').value = u.passes || '';
+      document.getElementById('modal-club').value = u.club || '';
+    }
+
+    // 🏢 Organisation : nom officiel + année de création — uniquement pour
+    // club/fédération/association/organisateur/école-université.
+    const orgSection = document.getElementById('modal-org-section');
+    if (orgSection) {
+      orgSection.style.display = isOrgRole ? '' : 'none';
+      if (isOrgRole) {
+        document.getElementById('modal-org-nom').value = u.nomOrganisation || u.club || u.nomEtablissement || '';
+        document.getElementById('modal-annee').value = u.anneeCreation || '';
+      }
+    }
+
     document.getElementById('modal-titre-perso').value = u.titrePersonnalise || '';
 
     const hsSection = document.getElementById('modal-handisport-section');
@@ -657,18 +695,35 @@
     const id = currentPlayerId;
     const u = users.find(x => x.id === id);
     if (!u || u.isDemo) return;
+    const isPlayerRole = PLAYER_ROLES.includes(u.role);
+    const isPhysiqueRole = PHYSIQUE_ROLES.includes(u.role);
+    const isOrgRole = ORG_ROLES.includes(u.role);
     const updates = {
       status: document.getElementById('modal-status').value,
-      taille: document.getElementById('modal-taille').value || null,
-      poids: document.getElementById('modal-poids').value || null,
-      pied: document.getElementById('modal-pied').value || null,
-      main: document.getElementById('modal-main').value || null,
-      matchsJoues: parseInt(document.getElementById('modal-matchs').value) || 0,
-      buts: parseInt(document.getElementById('modal-buts').value) || 0,
-      passes: parseInt(document.getElementById('modal-passes').value) || 0,
-      club: document.getElementById('modal-club').value || null,
       titrePersonnalise: document.getElementById('modal-titre-perso').value || null
     };
+    if (isPhysiqueRole) {
+      Object.assign(updates, {
+        taille: document.getElementById('modal-taille').value || null,
+        poids: document.getElementById('modal-poids').value || null,
+        pied: document.getElementById('modal-pied').value || null,
+        main: document.getElementById('modal-main').value || null
+      });
+    }
+    if (isPlayerRole) {
+      Object.assign(updates, {
+        matchsJoues: parseInt(document.getElementById('modal-matchs').value) || 0,
+        buts: parseInt(document.getElementById('modal-buts').value) || 0,
+        passes: parseInt(document.getElementById('modal-passes').value) || 0,
+        club: document.getElementById('modal-club').value || null
+      });
+    }
+    if (isOrgRole) {
+      Object.assign(updates, {
+        nomOrganisation: document.getElementById('modal-org-nom').value || null,
+        anneeCreation: document.getElementById('modal-annee').value || null
+      });
+    }
     if (u.role === 'handisport') {
       Object.assign(updates, {
         handicapCategorie: document.getElementById('modal-hs-categorie').value || null,
