@@ -3146,6 +3146,15 @@ function goToAuth(tab){
 window.goToAuth=goToAuth;
 
 function switchAuthTab(tab){
+  // Unification des parcours d'inscription : le formulaire d'inscription inline
+  // (auth-view-register / handleSupabaseRegister) est obsolète — il écrivait un
+  // profil Firestore différent (pas de nomOrganisation/anneeCreation/gscId) de
+  // celui produit par inscription.html. On redirige systématiquement vers la
+  // page dédiée, quel que soit l'appelant (bouton d'onglet ou code existant).
+  if(tab==='register'){
+    window.location.href='inscription.html';
+    return;
+  }
   const views=['login','register','forgot','reset'];
   views.forEach(v=>{
     const el=document.getElementById('auth-view-'+v);
@@ -7091,7 +7100,7 @@ const GSC_SPORTS_DATA = [
     federation: {
       nom: 'Fédération Gabonaise de Basketball',
       sigle: 'FEGABASKET',
-      president: 'À confirmer',
+      president: 'Willy Conrad Asseko',
       fondee: 1970,
       affiliation: 'FIBA / FIBA Afrique',
       siege: 'Libreville',
@@ -7128,7 +7137,7 @@ const GSC_SPORTS_DATA = [
     federation: {
       nom: 'Fédération Gabonaise de Handball',
       sigle: 'FEGAHAND',
-      president: 'À confirmer',
+      president: 'Général Sylvain Florient Pangou Mbembo',
       fondee: 1972,
       affiliation: 'IHF / CAHB',
       siege: 'Libreville',
@@ -7165,7 +7174,7 @@ const GSC_SPORTS_DATA = [
     federation: {
       nom: 'Fédération Gabonaise de Volleyball',
       sigle: 'FEGAVOL',
-      president: 'À confirmer',
+      president: 'Raymond Bernard Bivigou',
       fondee: 1968,
       affiliation: 'FIVB / CAVB',
       siege: 'Libreville',
@@ -7200,7 +7209,7 @@ const GSC_SPORTS_DATA = [
     federation: {
       nom: 'Fédération Gabonaise d\'Athlétisme',
       sigle: 'FEGATH',
-      president: 'À confirmer',
+      president: 'Anaclet Mathieu Taty',
       fondee: 1965,
       affiliation: 'World Athletics / CAA',
       siege: 'Libreville',
@@ -7291,7 +7300,7 @@ const GSC_SPORTS_DATA = [
     federation: {
       nom: 'Fédération Gabonaise de Natation',
       sigle: 'FEGANAT',
-      president: 'À confirmer',
+      president: 'Stéphane Soami Mabiala',
       fondee: 1970,
       affiliation: 'FINA / World Aquatics / CANA',
       siege: 'Libreville',
@@ -8793,6 +8802,50 @@ window.lookupManualGscId = lookupManualGscId;
 
 <!-- ══ GSC GABON SPORTS DATA + VALIDATION CLUB — Rattachement club/structure ══ -->
 <script src="gsc-gabon-sports-data.js"></script>
+
+<!-- ══ Rattachement dirigeants : GSC_SPORTS_DATA.federation ← FEDERATIONS (source unique) ══
+     Sans ce script, les noms de présidents/contacts saisis dans gsc-gabon-sports-data.js
+     ne s'affichent jamais : renderSportDetail() lit GSC_SPORTS_DATA (codé en dur plus haut
+     dans ce fichier), pas le fichier FEDERATIONS. Ce bloc synchronise les deux au chargement. -->
+<script>
+(function(){
+  try{
+    var src = window.GSC_GABON_SPORTS_DATA;
+    if (!src || typeof GSC_SPORTS_DATA === 'undefined') return;
+
+    function norm(s){
+      return (s || '').toString().trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    GSC_SPORTS_DATA.forEach(function(sport){
+      if (!sport.federation) return;
+      var fed = src.getFederationBySport
+        ? src.getFederationBySport(sport.nom)
+        : (src.FEDERATIONS || []).find(function(f){ return norm(f.sport) === norm(sport.nom); });
+      if (!fed) return;
+
+      // On ne remplace que si la donnée source existe et n'est pas vide,
+      // pour ne pas écraser une valeur déjà correcte par un champ vide.
+      if (fed.president) sport.federation.president = fed.president;
+      if (fed.secretaireGeneral) sport.federation.secretaireGeneral = fed.secretaireGeneral;
+      if (fed.email) sport.federation.email = fed.email;
+      if (fed.telephone) sport.federation.telephone = fed.telephone;
+      if (fed.siteWeb) sport.federation.siteWeb = fed.siteWeb;
+      if (fed.adresse) sport.federation.siege = fed.adresse;
+    });
+
+    // Si une fiche fédération est déjà affichée à l'écran au moment où ce
+    // script s'exécute, on la rafraîchit pour refléter les valeurs à jour.
+    if (typeof currentSportId !== 'undefined' && currentSportId && typeof renderSportDetail === 'function') {
+      renderSportDetail(currentSportId);
+    }
+  }catch(e){
+    console.warn('[GSC] Rattachement FEDERATIONS → GSC_SPORTS_DATA impossible:', e.message);
+  }
+})();
+</script>
+
 <script src="realtime-sync-module.js"></script>
 <script src="gsc-club-validation.js"></script>
 <script src="gsc-whatsapp-module.js"></script>
