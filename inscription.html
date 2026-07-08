@@ -450,6 +450,31 @@
         <!-- Champs joueur/indépendant/étudiant — FORMULAIRE ENRICHI -->
         <div class="extra" id="ex-joueur">
 
+          <!-- SCOLARITÉ (Élève / Étudiant uniquement) -->
+          <div class="extra" id="ex-etudiant-scol">
+            <div class="subsection">🎓 Scolarité</div>
+            <div class="form-row">
+              <div class="fg">
+                <label>Niveau scolaire</label>
+                <select id="a-niveau-scolaire">
+                  <option value="">—</option>
+                  <option>6ème</option><option>5ème</option><option>4ème</option><option>3ème</option>
+                  <option>2nde</option><option>1ère</option><option>Terminale</option>
+                  <option>Licence 1</option><option>Licence 2</option><option>Licence 3</option>
+                  <option>Master 1</option><option>Master 2</option><option>Doctorat</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Université / Établissement *</label>
+                <select id="a-etablissement" onchange="onEtablissementChange()">
+                  <option value="">Sélectionner…</option>
+                </select>
+                <input type="text" id="a-etablissement-autre" placeholder="Nom de l'établissement" style="margin-top:8px;display:none;"/>
+              </div>
+            </div>
+            <div class="fg"><label>Filière / Spécialité</label><input type="text" id="a-filiere" placeholder="ex: Sciences, Lettres, Droit, Gestion…"/></div>
+          </div>
+
           <!-- MORPHOLOGIE -->
           <div class="subsection">📐 Morphologie</div>
           <div class="form-row-3">
@@ -889,6 +914,55 @@
   const SPORTS_INDIVIDUELS = ['Athlétisme','Judo','Boxe','Natation','Tennis','Cyclisme','Taekwondo','Karaté','Lutte'];
   const SPORTS_TOUS = ['Football','Basketball','Athlétisme','Judo','Boxe','Natation','Handball','Volleyball','Tennis','Rugby','Cyclisme','Taekwondo','Karaté','Lutte'];
 
+  // Établissements scolaires & universitaires reconnus (Gabon).
+  // ⚠️ Liste canonique à garder synchronisée avec la même constante dans
+  // admin.html, index.html et gsc-profile-engine.js, afin que le champ
+  // "Université / Établissement" soit identique partout (inscription → annuaire → admin).
+  const ETABLISSEMENTS_GA = [
+    {nom:'Université Omar Bongo (UOB)', ville:'Libreville', type:'Université'},
+    {nom:'Université des Sciences et Techniques de Masuku (USTM)', ville:'Franceville', type:'Université'},
+    {nom:'Université des Sciences de la Santé (USS)', ville:'Libreville (Owendo)', type:'Université'},
+    {nom:'École Normale Supérieure (ENS) Libreville', ville:'Libreville', type:'Université'},
+    {nom:"École Normale Supérieure de l'Enseignement Technique (ENSET)", ville:'Libreville', type:'Université'},
+    {nom:'Institut National des Sciences de Gestion (INSG)', ville:'Libreville', type:'Université'},
+    {nom:'Institut Supérieur de Technologie (IST)', ville:'Libreville', type:'Université'},
+    {nom:'Université Internationale de Libreville (UIL)', ville:'Libreville', type:'Université'},
+    {nom:'Lycée National Léon Mba', ville:'Libreville', type:'Lycée'},
+    {nom:'Lycée Quaben', ville:'Libreville', type:'Lycée'},
+    {nom:'Collège Bessieux', ville:'Libreville', type:'Collège'},
+    {nom:'Lycée Technique National Omar Bongo', ville:'Libreville', type:'Lycée'},
+    {nom:"Lycée d'État de Port-Gentil", ville:'Port-Gentil', type:'Lycée'},
+    {nom:'Lycée Provincial de Franceville', ville:'Franceville', type:'Lycée'},
+    {nom:'Établissement international (hors Gabon)', ville:'International', type:'International'}
+  ];
+
+  // Remplit le select id="a-etablissement" avec des optgroup par type
+  // (Université, Lycée, Collège, International) + une option "Autre / non listé".
+  function populateEtablissementSelect() {
+    const sel = document.getElementById('a-etablissement');
+    if (!sel) return;
+    const groups = {};
+    ETABLISSEMENTS_GA.forEach(e => { (groups[e.type] = groups[e.type] || []).push(e); });
+    const order = ['Université', 'Lycée', 'Collège', 'International'];
+    let html = '<option value="">Sélectionner…</option>';
+    order.forEach(type => {
+      if (!groups[type]) return;
+      html += '<optgroup label="' + (type === 'Université' ? '🎓 Université' : type) + '">';
+      html += groups[type].map(e => '<option value="' + e.nom + '">' + e.nom + ' — ' + e.ville + '</option>').join('');
+      html += '</optgroup>';
+    });
+    html += '<option value="__autre__">➕ Établissement non listé</option>';
+    sel.innerHTML = html;
+  }
+
+  function onEtablissementChange() {
+    const sel = document.getElementById('a-etablissement');
+    const autre = document.getElementById('a-etablissement-autre');
+    if (!sel || !autre) return;
+    autre.style.display = sel.value === '__autre__' ? 'block' : 'none';
+    if (sel.value !== '__autre__') autre.value = '';
+  }
+
   function updateSportOptions(role) {
     const sel = document.getElementById('a-sport');
     const label = document.getElementById('a-sport-label');
@@ -954,6 +1028,10 @@
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
     document.getElementById('ex-ancien').classList.toggle('show', selectedRole === 'ancien_sportif');
     document.getElementById('ex-formateur').classList.toggle('show', selectedRole === 'formateur');
+    document.getElementById('ex-etudiant-scol').classList.toggle('show', selectedRole === 'eleve_etudiant');
+    if (selectedRole === 'eleve_etudiant') {
+      populateEtablissementSelect();
+    }
     if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
       loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
     }
@@ -1222,6 +1300,13 @@
     const agent        = isJoueurRole ? (document.getElementById('a-agent')?.value?.trim() || '') : '';
     const bio          = isJoueurRole ? (document.getElementById('a-bio')?.value?.trim() || '').slice(0,500) : '';
     const palmares     = isJoueurRole ? (document.getElementById('a-palmares')?.value?.trim() || '') : '';
+    // Champs enrichis élève/étudiant (scolarité — Université / Établissement importé)
+    const isEtudiantRole = selectedRole === 'eleve_etudiant';
+    const niveauScolaire = isEtudiantRole ? (document.getElementById('a-niveau-scolaire')?.value || '') : '';
+    const etabSelectVal  = isEtudiantRole ? (document.getElementById('a-etablissement')?.value || '') : '';
+    const etabAutreVal   = isEtudiantRole ? (document.getElementById('a-etablissement-autre')?.value?.trim() || '') : '';
+    const etablissement  = isEtudiantRole ? (etabSelectVal === '__autre__' ? etabAutreVal : etabSelectVal) : '';
+    const filiere        = isEtudiantRole ? (document.getElementById('a-filiere')?.value?.trim() || '') : '';
     // Champs enrichis sportif handisport
     const isHandisportRole = selectedRole === 'handisport';
     const hsCategorie     = isHandisportRole ? (document.getElementById('a-hs-categorie')?.value || '') : '';
@@ -1275,6 +1360,8 @@
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
     if (isHandisportRole && !hsCategorie) {
                            errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
+    if (isEtudiantRole && !etablissement) {
+                           errMsg('a-err','Veuillez sélectionner votre université / établissement.'); return; }
     if (isAncienSportifRole && !ancPoste) {
                            errMsg('a-err','Veuillez indiquer votre poste / spécialité durant votre carrière.'); return; }
     if (isFormateurRole && !forSpecialite) {
@@ -1322,6 +1409,10 @@
             contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
             structureId: clubStructureId || null,
             bio, palmares
+          }),
+          // Champs enrichis élève/étudiant — Université / Établissement importé (vides pour les autres rôles)
+          ...(isEtudiantRole && {
+            niveauScolaire, etablissement, filiere
           }),
           // Champs enrichis sportif en situation de handicap (vides pour les autres rôles)
           ...(isHandisportRole && {

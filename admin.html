@@ -1706,6 +1706,33 @@ tr.is-demo-row td { opacity: .82; }
           <div class="field"><label>Année de création</label><input type="number" id="modal-annee" placeholder="ex: 1985" min="1900" max="2025"></div>
         </div>
       </div>
+      <div class="msection" id="modal-etudiant-section" style="display:none;">
+        <div class="msection-title">🎓 Scolarité</div>
+        <div class="grid2">
+          <div class="field"><label>Niveau scolaire</label>
+            <select id="modal-niveau-scolaire">
+              <option value="">—</option>
+              <option>6ème</option><option>5ème</option><option>4ème</option><option>3ème</option>
+              <option>2nde</option><option>1ère</option><option>Terminale</option>
+              <option>Licence 1</option><option>Licence 2</option><option>Licence 3</option>
+              <option>Master 1</option><option>Master 2</option><option>Doctorat</option>
+            </select>
+          </div>
+          <div class="field"><label>Université / Établissement</label>
+            <select id="modal-etablissement" onchange="gscOnModalEtablissementChange()">
+              <option value="">Sélectionner…</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Établissement (si non listé)</label>
+          <input type="text" id="modal-etablissement-autre" placeholder="Nom de l'établissement">
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Filière / Spécialité</label>
+          <input type="text" id="modal-filiere" placeholder="ex: Sciences, Lettres, Droit, Gestion…">
+        </div>
+      </div>
       <div class="msection" id="modal-handisport-section" style="display:none;">
         <div class="msection-title">♿ Profil sportif handisport</div>
         <div class="grid2">
@@ -2403,6 +2430,26 @@ tr.is-demo-row td { opacity: .82; }
       `<tr><td>${esc(e.nom)}</td><td>${esc(e.ville)}</td><td>${esc(e.type)}</td></tr>`
     ).join('');
   }
+
+  // Remplit le select "Université / Établissement" de la fiche Élève/Étudiant
+  // (modal-etablissement) avec des optgroup par type, + option "Autre / non listé".
+  function populateModalEtablissementSelect() {
+    const sel = document.getElementById('modal-etablissement');
+    if (!sel) return;
+    const groups = {};
+    ETABLISSEMENTS_GA.forEach(e => { (groups[e.type] = groups[e.type] || []).push(e); });
+    const order = ['Université', 'Lycée', 'Collège', 'International'];
+    let html = '<option value="">Sélectionner…</option>';
+    order.forEach(type => {
+      if (!groups[type]) return;
+      html += `<optgroup label="${esc(type === 'Université' ? '🎓 Université' : type)}">`;
+      html += groups[type].map(e => `<option value="${esc(e.nom)}">${esc(e.nom)} — ${esc(e.ville)}</option>`).join('');
+      html += '</optgroup>';
+    });
+    html += '<option value="__autre__">➕ Établissement non listé</option>';
+    sel.innerHTML = html;
+  }
+  window.gscPopulateModalEtablissementSelect = populateModalEtablissementSelect;
 
   async function toggleVerifie(uid, value) {
     try {

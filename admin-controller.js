@@ -618,6 +618,15 @@
     });
   }
 
+  function onModalEtablissementChange() {
+    const sel = document.getElementById('modal-etablissement');
+    const autre = document.getElementById('modal-etablissement-autre');
+    if (!sel || !autre) return;
+    autre.style.display = sel.value === '__autre__' ? 'block' : 'none';
+    if (sel.value !== '__autre__') autre.value = '';
+  }
+  window.gscOnModalEtablissementChange = onModalEtablissementChange;
+
   function openPlayerModal(id) {
     const u = users.find(x => x.id === id);
     if (!u) return;
@@ -689,6 +698,30 @@
         const equipSel = document.getElementById('modal-hs-equipement');
         const equipVals = Array.isArray(u.equipementsAdaptes) ? u.equipementsAdaptes : [];
         Array.from(equipSel.options).forEach(o => { o.selected = equipVals.includes(o.value); });
+      }
+    }
+
+    const etudiantSection = document.getElementById('modal-etudiant-section');
+    if (etudiantSection) {
+      const isEtudiant = u.role === 'eleve_etudiant';
+      etudiantSection.style.display = isEtudiant ? 'block' : 'none';
+      if (isEtudiant) {
+        if (typeof window.gscPopulateModalEtablissementSelect === 'function') window.gscPopulateModalEtablissementSelect();
+        const niveauSel = document.getElementById('modal-niveau-scolaire');
+        const etabSel = document.getElementById('modal-etablissement');
+        const etabAutre = document.getElementById('modal-etablissement-autre');
+        const filiereInput = document.getElementById('modal-filiere');
+        if (niveauSel) niveauSel.value = u.niveauScolaire || '';
+        if (filiereInput) filiereInput.value = u.filiere || '';
+        if (etabSel) {
+          const options = Array.from(etabSel.options).map(o => o.value);
+          const known = u.etablissement && options.includes(u.etablissement);
+          etabSel.value = known ? u.etablissement : (u.etablissement ? '__autre__' : '');
+          if (etabAutre) {
+            etabAutre.value = known ? '' : (u.etablissement || '');
+            etabAutre.style.display = known ? 'none' : 'block';
+          }
+        }
       }
     }
 
@@ -795,6 +828,25 @@
       });
     } else if (DEL) {
       Object.assign(updates, { nomOrganisation: DEL, anneeCreation: DEL });
+    }
+
+    /* ── Champs scolarité (élève/étudiant) — Université / Établissement ─────
+       Validation : université/établissement obligatoire. Nettoyage : effacé
+       si le rôle n'est plus élève/étudiant. */
+    const isEtudiant = u.role === 'eleve_etudiant';
+    if (isEtudiant) {
+      const niveauScolaire = document.getElementById('modal-niveau-scolaire').value || '';
+      const etabSelectVal = document.getElementById('modal-etablissement').value || '';
+      const etabAutreVal = document.getElementById('modal-etablissement-autre').value.trim();
+      const etablissement = etabSelectVal === '__autre__' ? etabAutreVal : etabSelectVal;
+      const filiere = document.getElementById('modal-filiere').value.trim();
+      if (!etablissement) {
+        toast('Veuillez sélectionner l\'université / établissement.', 'error');
+        return;
+      }
+      Object.assign(updates, { niveauScolaire, etablissement, filiere });
+    } else if (DEL) {
+      Object.assign(updates, { niveauScolaire: DEL, etablissement: DEL, filiere: DEL });
     }
 
     /* ── Champs handisport ───────────────────────────────────────────────── */

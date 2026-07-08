@@ -661,6 +661,24 @@
     }
 
     if (p.role === 'eleve_etudiant') {
+      // Liste des établissements reconnus (Université Omar Bongo, USTM, USS, etc.)
+      // Voir la constante ETABLISSEMENTS_GA, déclarée globalement dans index.html.
+      const etabList = (typeof ETABLISSEMENTS_GA !== 'undefined') ? ETABLISSEMENTS_GA : [];
+      const etabGroups = {};
+      etabList.forEach(e => { (etabGroups[e.type] = etabGroups[e.type] || []).push(e); });
+      const etabOrder = ['Université', 'Lycée', 'Collège', 'International'];
+      const currentEtab = p.etablissement || '';
+      const currentKnown = etabList.some(e => e.nom === currentEtab);
+      let etabOptionsHtml = '<option value="">Sélectionner…</option>';
+      etabOrder.forEach(type => {
+        if (!etabGroups[type]) return;
+        etabOptionsHtml += `<optgroup label="${type === 'Université' ? '🎓 Université' : type}">`;
+        etabOptionsHtml += etabGroups[type].map(e =>
+          `<option value="${e.nom}"${currentEtab === e.nom ? ' selected' : ''}>${e.nom} — ${e.ville}</option>`).join('');
+        etabOptionsHtml += '</optgroup>';
+      });
+      etabOptionsHtml += `<option value="__autre__"${currentEtab && !currentKnown ? ' selected' : ''}>➕ Établissement non listé</option>`;
+
       h += `<div class="section-divider blue">🎓 Scolarité</div>`;
       h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group"><label>Niveau scolaire</label>
@@ -670,8 +688,11 @@
               `<option${p.niveauScolaire === v ? ' selected' : ''}>${v}</option>`).join('')}
           </select>
         </div>
-        <div class="form-group"><label>Établissement</label>
-          <input type="text" id="edit-etablissement" value="${p.etablissement || ''}" placeholder="Lycée Léon Mba…">
+        <div class="form-group"><label>Université / Établissement</label>
+          <select id="edit-etablissement" onchange="document.getElementById('edit-etablissement-autre').style.display=this.value==='__autre__'?'block':'none';">
+            ${etabOptionsHtml}
+          </select>
+          <input type="text" id="edit-etablissement-autre" value="${!currentKnown ? currentEtab : ''}" placeholder="Nom de l'établissement" style="margin-top:8px;${currentEtab && !currentKnown ? '' : 'display:none;'}">
         </div>
       </div>
       <div class="form-group"><label>Filière / Spécialité</label>
@@ -734,9 +755,10 @@
     if (p.role === 'eleve_etudiant') {
       const ns = document.getElementById('edit-niveau-scolaire');
       const et = document.getElementById('edit-etablissement');
+      const etAutre = document.getElementById('edit-etablissement-autre');
       const fi = document.getElementById('edit-filiere');
       if (ns) updates.niveauScolaire = ns.value || '';
-      if (et) updates.etablissement = et.value.trim() || '';
+      if (et) updates.etablissement = (et.value === '__autre__' ? (etAutre?.value.trim() || '') : et.value) || '';
       if (fi) updates.filiere = fi.value.trim() || '';
     }
 
