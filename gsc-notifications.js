@@ -894,6 +894,31 @@
   /* ═══════════════════════════════════════════════════════════════
      FIRESTORE REALTIME LISTENER
   ══════════════════════════════════════════════════════════════════ */
+  /* ── Cache des deux flux (uid/all + role:xxx) fusionnés dans _notifications ── */
+  let _fsCore = [];   // docs recipientId in [uid, 'all']  — flux garanti
+  let _fsRole = [];   // docs recipientId == 'role:xxx'    — flux best-effort
+
+  function mergeAndRender(){
+    const prev = _notifications.length;
+    const byId = new Map();
+    [..._fsCore, ..._fsRole].forEach(n=>byId.set(n.id, n));
+    /* Exclure les notifications que j'ai moi-même émises (ex: diffusion 'all' sur ma propre publication) */
+    _notifications = [...byId.values()].filter(n=>n.senderId !== _currentUserId);
+    _notifications.sort((a,b)=>(b.createdAt?.seconds||b.createdAt||0)-(a.createdAt?.seconds||a.createdAt||0));
+    /* Convertir timestamps */
+    _notifications.forEach(n=>{
+      if(n.createdAt?.seconds) n.createdAt = n.createdAt.seconds*1000;
+    });
+    /* Nouvelles notifications — toast seulement si je suis le destinataire (pas l'expéditeur) */
+    if(_notifications.length > prev){
+      const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId);
+      if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
+    }
+    updateBadge();
+    updateZoneBadges();
+    if(_panelOpen) renderList(_currentTab);
+  }
+
   async function subscribeFirestore(uid){
     if(!window.db || !uid) return;
     if(_firestoreUnsub) { _firestoreUnsub(); _firestoreUnsub=null; }
@@ -904,42 +929,64 @@
     try{
       const {collection, query, where, orderBy, limit, onSnapshot} = window;
       if(typeof onSnapshot !== 'function') return;
-      /* Récupérer le rôle de l'utilisateur pour filtrer role:xxx */
-      const userRole = (window.userProfile && window.userProfile.role) ? ('role:'+window.userProfile.role) : null;
-      const recipientFilters = [uid,'all'];
-      if(userRole) recipientFilters.push(userRole);
-      const q = query(
+
+      _fsCore = []; _fsRole = [];
+      const unsubs = [];
+
+      /* ── FLUX PRINCIPAL — recipientId in [uid, 'all'] ──
+         FIX MAJEUR (anomalie "la cloche ne varie pas") : ce flux était
+         auparavant fusionné avec le filtre 'role:xxx' (voir plus bas) dans
+         UNE SEULE requête 'in' à 3 valeurs. Or quasiment tous les
+         utilisateurs ont un rôle non-nul (par défaut 'joueur' à
+         l'inscription — voir enterApp/onSupabaseSignedIn dans index.html),
+         donc cette requête à 3 valeurs était systématiquement émise pour
+         tout le monde. Dès que la règle Firestore 'notifications' ne couvre
+         pas explicitement la valeur 'role:xxx' pour une requête liste
+         (onSnapshot), Firestore rejette la requête ENTIÈRE ("Missing or
+         insufficient permissions") — pas seulement les documents role:xxx.
+         Résultat : le listener ne s'abonnait jamais correctement,
+         _notifications restait figé, et la cloche ne variait plus du tout
+         quelle que soit l'activité (like, commentaire, publication) —
+         exactement le symptôme observé dans l'onglet Actu / Fil
+         communautaire. On sépare donc maintenant en DEUX requêtes
+         indépendantes : celle-ci (uid + all) est indispensable et ne doit
+         jamais échouer avec le flux secondaire ; l'autre (role:xxx) est un
+         bonus best-effort qui ne peut plus bloquer la première si les règles
+         Firestore ne la supportent pas encore. */
+      const qCore = query(
         collection(window.db, NOTIF_COLLECTION),
-        where('recipientId','in', recipientFilters),
+        where('recipientId','in', [uid,'all']),
         orderBy('createdAt','desc'),
         limit(50)
       );
-      _firestoreUnsub = onSnapshot(q, (snap)=>{
-        const prev = _notifications.length;
-        /* Exclure les notifications que j'ai moi-même émises (ex: diffusion 'all' sur ma propre publication) */
-        _notifications = snap.docs.map(d=>({id:d.id,...d.data()})).filter(n=>n.senderId !== _currentUserId);
-        _notifications.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-        /* Convertir timestamps */
-        _notifications.forEach(n=>{
-          if(n.createdAt?.seconds) n.createdAt = n.createdAt.seconds*1000;
-        });
-        /* Nouvelles notifications — toast seulement si je suis le destinataire (pas l'expéditeur) */
-        if(_notifications.length > prev){
-          const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId);
-          if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
-        }
-        updateBadge();
-        updateZoneBadges();
-        if(_panelOpen) renderList(_currentTab);
+      unsubs.push(onSnapshot(qCore, (snap)=>{
+        _fsCore = snap.docs.map(d=>({id:d.id,...d.data()}));
+        mergeAndRender();
       }, (err)=>{
-        // FIX : cette erreur était silencieusement avalée. Elle se déclenche
-        // systématiquement pour tout utilisateur ayant un rôle, tant que la
-        // règle Firestore 'notifications' n'autorise pas recipientId de la
-        // forme 'role:xxx' (voir requête ci-dessus : where('recipientId','in',
-        // [uid,'all','role:xxx'])) — Firestore rejette alors la requête
-        // ENTIÈRE, pas seulement les docs role:xxx. Voir firestore.rules.
-        console.error('[GSCNotif] onSnapshot notifications refusé — vérifier la règle Firestore (recipientId role:xxx) :', err);
-      });
+        console.error('[GSCNotif] onSnapshot notifications (uid/all) refusé — vérifier les règles Firestore :', err);
+      }));
+
+      /* ── FLUX SECONDAIRE — notifications ciblant le rôle de l'utilisateur ──
+         Best-effort : si la règle Firestore ne l'autorise pas encore, on log
+         l'erreur sans jamais toucher au flux principal ci-dessus. */
+      const userRole = (window.userProfile && window.userProfile.role) ? ('role:'+window.userProfile.role) : null;
+      if(userRole){
+        const qRole = query(
+          collection(window.db, NOTIF_COLLECTION),
+          where('recipientId','==', userRole),
+          orderBy('createdAt','desc'),
+          limit(50)
+        );
+        unsubs.push(onSnapshot(qRole, (snap)=>{
+          _fsRole = snap.docs.map(d=>({id:d.id,...d.data()}));
+          mergeAndRender();
+        }, (err)=>{
+          // Best-effort seulement : n'affecte pas le flux principal ci-dessus.
+          console.warn('[GSCNotif] onSnapshot notifications (role:'+window.userProfile.role+') indisponible — règle Firestore à ajouter :', err);
+        }));
+      }
+
+      _firestoreUnsub = ()=>{ unsubs.forEach(u=>{ try{u();}catch(e){} }); };
     }catch(e){}
   }
 
