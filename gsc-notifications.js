@@ -51,6 +51,7 @@
   let _panelOpen       = false;
   let _currentUserId   = null;
   let _badgeSW         = null;  // référence SW pour badgeAPI
+  let _audioCtx        = null;  // AudioContext réutilisé pour le son de notification
 
   /* ── PRÉFÉRENCES PAR DÉFAUT ── */
   const DEFAULT_PREFS = {
@@ -672,18 +673,41 @@
     if(el) el.classList.remove('show');
   }
 
+  /* Carillon "ding-dong" à deux notes (façon notification WhatsApp) — synthétisé
+     en Web Audio pur (pas de fichier .mp3 à héberger, donc rien ne peut casser
+     au déploiement). Chaque note est un petit accord de 3 harmoniques avec une
+     enveloppe façon cloche (attaque rapide, décroissance exponentielle). */
   function playNotifSound(){
     try{
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime+0.1);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.3);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime+0.3);
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      if(!_audioCtx) _audioCtx = new Ctx();
+      /* Sur mobile, l'AudioContext démarre parfois "suspended" tant qu'aucun
+         geste utilisateur n'a eu lieu — resume() est sans effet si déjà actif. */
+      if(_audioCtx.state === 'suspended') _audioCtx.resume().catch(()=>{});
+      const ctx = _audioCtx;
+      const now = ctx.currentTime;
+
+      const notes = [
+        { freq: 1046.5, start: 0,    dur: 0.32 }, // Do6
+        { freq: 1318.5, start: 0.11, dur: 0.42 }  // Mi6
+      ];
+
+      notes.forEach(({ freq, start, dur }) => {
+        [1, 2, 3].forEach((harmonic) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq * harmonic, now + start);
+          const peak = 0.16 / harmonic;
+          gain.gain.setValueAtTime(0, now + start);
+          gain.gain.linearRampToValueAtTime(peak, now + start + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now + start);
+          osc.stop(now + start + dur + 0.05);
+        });
+      });
     }catch(e){}
   }
 

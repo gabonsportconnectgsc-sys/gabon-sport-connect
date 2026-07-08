@@ -2,7 +2,7 @@
    SW.JS — Service Worker Gabon Sport Connect v4
    + Badge PWA temps réel + Push Notifications
    ═══════════════════════════════════════════════════════════════ */
-const CACHE_NAME = 'gsc-v5';
+const CACHE_NAME = 'gsc-v6';
 const URLS_TO_CACHE = [
   './',
   './index.html',
