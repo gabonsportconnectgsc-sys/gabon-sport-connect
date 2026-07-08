@@ -128,6 +128,8 @@
     .btn-p:disabled{opacity:.5;cursor:not-allowed;}
     .btn-p.blue{background:linear-gradient(135deg,var(--blue),#1d4ed8);}
     .btn-p.blue:hover:not(:disabled){box-shadow:0 6px 20px rgba(59,130,246,.35);}
+    .btn-s{width:100%;padding:12px;background:var(--white);color:var(--navy);border:2px solid var(--gray-bd);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;}
+    .btn-s:hover{border-color:var(--gray-txt);background:var(--gray-bg);}
     .btn-back{display:flex;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,.5);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px;font-family:var(--font-body);transition:color .2s;}
     .btn-back:hover{color:#fff;}
     .btn-sec{width:100%;padding:11px;background:var(--white);color:var(--gray-txt);border:1.5px solid var(--gray-bd);border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px;font-family:var(--font-body);}
@@ -229,8 +231,33 @@
 <main class="page">
   <div class="card" id="card">
 
+    <!-- ══ ÉCRAN GARDE : DÉJÀ CONNECTÉ ══ -->
+    <!-- Empêche la création d'un doublon lorsque l'utilisateur a déjà une session
+         active (ex: il revient sur inscription.html après avoir déjà créé son compte)
+         et tente de remplir à nouveau le formulaire "Devenir acteur sportif". -->
+    <div id="sguard" class="fade-in" style="display:none;">
+      <div class="card-header">
+        <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">S</span><span class="l-c">C</span></div>
+        <div class="card-title">Vous êtes déjà connecté</div>
+        <div class="card-sub">Un compte GSC est déjà actif sur cet appareil</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13.5px;color:var(--gray-txt);line-height:1.6;margin-bottom:6px;">
+          Vous êtes connecté en tant que <strong id="sguard-email" style="color:var(--navy);">—</strong>.
+        </p>
+        <p style="font-size:13.5px;color:var(--gray-txt);line-height:1.6;margin-bottom:18px;">
+          Remplir à nouveau ce formulaire créerait un <strong>second compte séparé</strong> (doublon) au lieu de compléter votre fiche existante. Pour modifier votre catégorie, votre sport ou vos informations, utilisez plutôt <strong>« Modifier mon profil »</strong> depuis votre espace personnel.
+        </p>
+        <button class="btn-p" onclick="window.location.href='index.html'">Aller à mon profil</button>
+        <button class="btn-s" style="margin-top:10px;" onclick="guardSignOutAndRestart()">Me déconnecter et créer un autre compte</button>
+        <p style="font-size:11px;color:var(--gray-txt);margin-top:14px;line-height:1.5;">
+          Utile uniquement si vous gérez volontairement plusieurs profils distincts (ex : votre profil personnel <em>et</em> un compte club/fédération séparé).
+        </p>
+      </div>
+    </div>
+
     <!-- ══ ÉCRAN 0 : CHOIX DU TYPE ══ -->
-    <div id="s0" class="fade-in">
+    <div id="s0" class="fade-in" style="display:none;">
       <div class="card-header">
         <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">S</span><span class="l-c">C</span></div>
         <div class="card-title">Créer un compte</div>
@@ -808,6 +835,35 @@
   let _sb;
   try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { _sb = null; }
 
+  // ── Garde anti-doublon : bloque le formulaire si une session est déjà active ──
+  // Cause racine du bug remonté : un utilisateur déjà connecté qui revenait sur
+  // inscription.html pouvait remplir le formulaire "Acteur" une seconde fois et
+  // créer un compte Supabase entièrement distinct (donc une fiche en double,
+  // parfois avec un rôle différent de celui choisi initialement). On vérifie
+  // désormais la session AVANT d'afficher le choix de type de profil.
+  (async () => {
+    try {
+      if (!_sb) { show('s0'); return; }
+      const { data: { session } } = await _sb.auth.getSession();
+      if (session && session.user) {
+        const emailEl = document.getElementById('sguard-email');
+        if (emailEl) emailEl.textContent = session.user.email || session.user.phone || 'votre compte';
+        show('sguard');
+      } else {
+        show('s0');
+      }
+    } catch(e) {
+      console.warn('Vérification de session existante:', e);
+      show('s0');
+    }
+  })();
+
+  async function guardSignOutAndRestart() {
+    try { if (_sb) await _sb.auth.signOut(); } catch(e) { console.warn('Déconnexion:', e); }
+    window.location.reload();
+  }
+  window.guardSignOutAndRestart = guardSignOutAndRestart;
+
   // ── FIREBASE FIRESTORE (pour sauvegarder le profil) ──
   let db = null, _setDoc, _doc, _collection, _query, _where, _getDocs, _serverTimestamp;
   let _fbApp = null;
@@ -989,7 +1045,7 @@
   let selectedRole = null;
 
   function show(id) {
-    ['s0','s1v','s1a','s2a','sv','sa'].forEach(s => {
+    ['s0','s1v','s1a','s2a','sv','sa','sguard'].forEach(s => {
       const el = document.getElementById(s);
       if (el) el.style.display = 'none';
     });
