@@ -343,6 +343,39 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 .status-pending { background: rgb(219, 234, 254); color: rgb(30, 64, 175); }
 
+/* ── Fiches en attente de validation : cadre clignotant pour repérage admin ── */
+/* S'applique à la ligne/carte entière (table.users-table tr), y compris en
+   affichage mobile où chaque tr devient un bloc-carte individuel (voir
+   @media max-width:640px plus bas). Le clignotement s'arrête et le style
+   disparaît automatiquement dès que le statut n'est plus 'pending' (re-rendu). */
+@keyframes pendingRowGlow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(249,115,22,.15), 0 0 0 rgba(249,115,22,0); background-color: rgba(249,115,22,.04); }
+  50% { box-shadow: 0 0 0 2px rgba(249,115,22,.75), 0 0 14px rgba(249,115,22,.55); background-color: rgba(249,115,22,.13); }
+}
+table.users-table tr.row-pending-blink {
+  animation: pendingRowGlow 1.4s ease-in-out infinite;
+  border-radius: 8px;
+  position: relative;
+}
+table.users-table tr.row-pending-blink td { position: relative; z-index: 1; }
+table.users-table tr.row-pending-blink td:first-child::after {
+  content: '⏳ EN ATTENTE';
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  color: #c2410c;
+  background: rgba(249,115,22,.16);
+  border-radius: 10px;
+  padding: 2px 7px;
+  vertical-align: middle;
+}
+@media (max-width: 640px) {
+  table.users-table tr.row-pending-blink { margin-bottom: 4px; }
+  table.users-table tr.row-pending-blink td:first-child::after { margin-left: 0; margin-top: 4px; }
+}
+
 /* Groupement par catégorie (Tous) et marquage des fiches démo */
 tr.group-header-row { cursor: default; background: var(--gray-bg); }
 tr.group-header-row:hover td { background: var(--gray-bg) !important; }

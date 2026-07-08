@@ -154,7 +154,7 @@
     }
     return keys.map(k => ({
       label: cfg.label(k),
-      items: buckets[k].sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'))
+      items: sortWithPendingFirst(buckets[k])
     }));
   }
 
@@ -172,6 +172,26 @@
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || 'Sans nom'; }
+
+  // Trie une liste d'acteurs en faisant systématiquement remonter les fiches
+  // "en attente de validation" en tête (les plus anciennes d'abord parmi elles),
+  // puis le reste trié par ordre alphabétique comme avant. Dès qu'une fiche est
+  // validée (status devient 'active'), elle retombe naturellement dans le tri
+  // alphabétique normal au prochain rendu.
+  function sortWithPendingFirst(arr) {
+    return arr.sort((a, b) => {
+      const aPending = (a.status === 'pending') ? 0 : 1;
+      const bPending = (b.status === 'pending') ? 0 : 1;
+      if (aPending !== bPending) return aPending - bPending;
+      if (aPending === 0) {
+        // Parmi les fiches en attente : la plus ancienne (la plus urgente) en premier
+        const aT = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const bT = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        if (aT !== bT) return aT - bT;
+      }
+      return fullName(a).localeCompare(fullName(b), 'fr');
+    });
+  }
   function fmtDate(ts) { try { return ts && ts.toDate ? ts.toDate().toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
 
   let hiddenDemoUids = new Set();
@@ -533,7 +553,7 @@
       const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, role) : ('GSC-' + (uid || '').slice(0, 6).toUpperCase()));
       const qrIdx = qrRowIdx++;
       return `
-      <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''}">
+      <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''} ${u.status === 'pending' ? 'row-pending-blink' : ''}">
         <td data-label="ID"><span class="user-gscid-cell">${esc(gscId)}</span></td>
         <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div></td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
@@ -552,13 +572,14 @@
         const groupList = buckets[role];
         if (!groupList || !groupList.length) return;
         seen.add(role);
-        groupList.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+        sortWithPendingFirst(groupList);
         html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
       Object.keys(buckets).forEach(role => {
         if (seen.has(role)) return;
         const groupList = buckets[role];
+        sortWithPendingFirst(groupList);
         html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
@@ -573,7 +594,7 @@
         });
         tbody.innerHTML = html;
       } else {
-        list.sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+        sortWithPendingFirst(list);
         tbody.innerHTML = list.map(renderRow).join('');
       }
     }
