@@ -807,7 +807,21 @@
     .actor-filter-btn:hover .real-icon{transform:scale(1.1);}
     .bnav-real-icon{width:26px;height:26px;border-radius:50%;object-fit:cover;filter:grayscale(30%);border:2px solid transparent;transition:all .2s;}
     .bnav-item.active .bnav-real-icon{filter:none;transform:scale(1.12);border-color:var(--green);}
-    .stat-real-icon{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 4px 18px rgba(0,0,0,.40);margin-bottom:10px;border:3px solid rgba(255,255,255,.70);align-self:center;display:block;flex-shrink:0;}
+    .stat-real-icon{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 4px 18px rgba(0,0,0,.40);margin-bottom:10px;border:3px solid rgba(255,255,255,.70);align-self:center;display:block;flex-shrink:0;position:relative;z-index:2;}
+
+    /* ── FILIGRANE PHOTO/LOGO PAR DÉFAUT (par catégorie, uploadé depuis l'admin) ── */
+    /* Incrustée en arrière-plan de la tuile, fondue et légère, derrière l'icône et le texte. */
+    .stat-wm{
+      position:absolute;inset:0;width:100%;height:100%;
+      object-fit:cover;object-position:center;
+      opacity:0;z-index:1;pointer-events:none;
+      border-radius:inherit;
+      mix-blend-mode:overlay;
+      filter:grayscale(15%) saturate(1.15) contrast(1.05);
+      transition:opacity .5s ease;
+    }
+    .stat-wm.is-loaded{opacity:.22;}
+    .stat-card .stat-val,.stat-card .stat-lbl{position:relative;z-index:2;}
 
     /* Quick-btn image icons */
     .qb-real-icon{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.22);border:2.5px solid rgba(0,158,96,.25);animation:float 3s ease-in-out infinite;}
@@ -1491,6 +1505,7 @@
         <!-- Joueurs / Athlètes — joueur de football avec ballon -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('joueur')"
           style="background:linear-gradient(135deg,#009E60,#007a47);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="joueur" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>⚽</span>'">
           <div class="stat-val" id="stat-total-joueurs">—</div>
           <div class="stat-lbl" style="color:#FFD700;">Joueurs / Athlètes</div>
@@ -1499,6 +1514,7 @@
         <!-- Clubs — maillots de football accrochés -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('club')"
           style="background:linear-gradient(135deg,#f97316,#c2410c);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="club" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏟️</span>'">
           <div class="stat-val" id="stat-total-clubs">—</div>
           <div class="stat-lbl" style="color:#ffe9c2;">Clubs sportifs</div>
@@ -1507,6 +1523,7 @@
         <!-- Arbitres — carton jaune / sifflet -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('arbitre')"
           style="background:linear-gradient(135deg,#b45309,#78350f);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="arbitre" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🟨</span>'">
           <div class="stat-val" id="stat-total-arbitres">—</div>
           <div class="stat-lbl" style="color:#e9d8ff;">Arbitres</div>
@@ -1515,6 +1532,7 @@
         <!-- Entraîneurs — coach avec tablette tactique -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('entraineur')"
           style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="entraineur" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>📋</span>'">
           <div class="stat-val" id="stat-total-entraineurs">—</div>
           <div class="stat-lbl" style="color:#c9fff0;">Entraîneurs / Coachs</div>
@@ -1523,6 +1541,7 @@
         <!-- Fédérations — salle de réunion institutionnelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('federation')"
           style="background:linear-gradient(135deg,#1a2d4a,#0f3460);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="federation" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏛️</span>'">
           <div class="stat-val" id="stat-total-federations">—</div>
           <div class="stat-lbl" style="color:#7dd3fc;">Fédérations</div>
@@ -1531,6 +1550,7 @@
         <!-- Organisateurs — événement / cérémonie sportive -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('organisateur')"
           style="background:linear-gradient(135deg,#b45309,#92400e);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="organisateur" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1478429145907-6c7a20c77a79?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🎯</span>'">
           <div class="stat-val" id="stat-total-organisateurs">—</div>
           <div class="stat-lbl" style="color:#ffd9a0;">Organisateurs</div>
@@ -1539,6 +1559,7 @@
         <!-- Indépendants — athlète solo / course individuelle -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('independant')"
           style="background:linear-gradient(135deg,#0369a1,#075985);padding:16px 12px;">
+          <img class="stat-wm" data-wm-role="independant" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop&auto=format" class="stat-real-icon" alt="" onerror="this.outerHTML='<span style=font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;>🏃</span>'">
           <div class="stat-val" id="stat-total-independants">—</div>
           <div class="stat-lbl" style="color:#bae6fd;">Sportifs indépendants</div>
@@ -1547,7 +1568,8 @@
         <!-- Élèves / Étudiants -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('eleve_etudiant')"
           style="background:linear-gradient(135deg,#6366f1,#4338ca);padding:16px 12px;">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🎓</span>
+          <img class="stat-wm" data-wm-role="eleve_etudiant" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🎓</span>
           <div class="stat-val" id="stat-total-etudiants">—</div>
           <div class="stat-lbl" style="color:#e0e7ff;">Élèves / Étudiants</div>
         </button>
@@ -1555,7 +1577,8 @@
         <!-- Sportifs étrangers -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('sportif_etranger')"
           style="background:linear-gradient(135deg,#ca8a04,#92660a);padding:16px 12px;">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🌍</span>
+          <img class="stat-wm" data-wm-role="sportif_etranger" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🌍</span>
           <div class="stat-val" id="stat-total-etrangers">—</div>
           <div class="stat-lbl" style="color:#1a2d4a;text-shadow:none;">Sportifs étrangers</div>
         </button>
@@ -1563,7 +1586,8 @@
         <!-- Sportifs handisport -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('handisport')"
           style="background:linear-gradient(135deg,#b45309,#78350f);padding:16px 12px;">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🦾</span>
+          <img class="stat-wm" data-wm-role="handisport" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🦾</span>
           <div class="stat-val" id="stat-total-handisport">—</div>
           <div class="stat-lbl" style="color:#ede9fe;">Sportifs handisport</div>
         </button>
@@ -1571,7 +1595,8 @@
         <!-- Anciens Sportifs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('ancien_sportif')"
           style="background:linear-gradient(135deg,#9f1239,#4c0519);padding:16px 12px;">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🎖️</span>
+          <img class="stat-wm" data-wm-role="ancien_sportif" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🎖️</span>
           <div class="stat-val" id="stat-total-anciens">—</div>
           <div class="stat-lbl" style="color:#ffe4e6;">Anciens Sportifs</div>
         </button>
@@ -1579,7 +1604,8 @@
         <!-- Formateurs -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('formateur')"
           style="background:linear-gradient(135deg,#a21caf,#701a75);padding:16px 12px;">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">🧑‍🏫</span>
+          <img class="stat-wm" data-wm-role="formateur" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🧑‍🏫</span>
           <div class="stat-val" id="stat-total-formateurs">—</div>
           <div class="stat-lbl" style="color:#ede9fe;">Formateurs</div>
         </button>
@@ -7605,6 +7631,9 @@ window.showView = function(v) {
 };
 
 // Also add sport btn to the dashboard quick actions
+document.addEventListener('DOMContentLoaded', function(){
+  if (typeof window._applyDashboardWatermarks === 'function') window._applyDashboardWatermarks();
+});
 document.addEventListener('DOMContentLoaded', function() {
   // Add Sport Gabon quick button to both action grids
   const ballImg = `<img src="${SPORT_IMG.football}" style="width:30px;height:30px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.15);" alt="" onerror="this.style.display='none'">`;
@@ -8570,6 +8599,26 @@ window.lookupManualGscId = lookupManualGscId;
   // ── Photos/logos par défaut par catégorie (uploadés depuis l'admin) ──
   window.GSC_DEFAULT_AVATARS = window.GSC_DEFAULT_AVATARS || {};
   let _unsubDefaultAvatars = null;
+
+  // Applique les photos/logos par défaut (par catégorie) en filigrane léger
+  // dans les tuiles de l'accueil, derrière l'icône et le texte.
+  function _applyDashboardWatermarks(){
+    const imgs = document.querySelectorAll('.stat-wm[data-wm-role]');
+    if (!imgs.length) return;
+    imgs.forEach(function(img){
+      const role = img.getAttribute('data-wm-role');
+      const url = window.GSC_DEFAULT_AVATARS && window.GSC_DEFAULT_AVATARS[role];
+      if (url && img.getAttribute('src') !== url){
+        img.classList.remove('is-loaded');
+        img.src = url;
+      } else if (!url){
+        img.classList.remove('is-loaded');
+        img.removeAttribute('src');
+      }
+    });
+  }
+  window._applyDashboardWatermarks = _applyDashboardWatermarks;
+
   function startDefaultAvatarsSync(){
     if (!window.db || typeof window.doc !== 'function' || typeof window.onSnapshot !== 'function') return;
     if (_unsubDefaultAvatars) return;
@@ -8577,6 +8626,7 @@ window.lookupManualGscId = lookupManualGscId;
       _unsubDefaultAvatars = window.onSnapshot(window.doc(window.db,'settings','defaultAvatars'), function(snap){
         window.GSC_DEFAULT_AVATARS = (snap.exists() && snap.data()) || {};
         _refreshViews();
+        _applyDashboardWatermarks();
       }, function(){ /* silencieux */ });
     }catch(e){ /* silencieux */ }
   }
