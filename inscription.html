@@ -897,33 +897,38 @@
   // ── Pont d'authentification : Supabase → Firebase Custom Token (via Cloudflare Worker) ──
   // Identique à index.html : permet à request.auth.uid d'être fiable dans les règles Firestore.
   const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
-  async function ensureFirebaseAuthViaSupabase(uid) {
-    try {
-      if (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === uid) {
-        return window._fbAuth.currentUser;
-      }
-      if (!_sb) throw new Error('Supabase non initialisé.');
-      const { data: { session } } = await _sb.auth.getSession();
-      if (!session || !session.access_token) throw new Error('Aucune session Supabase active.');
-
-      const res = await fetch(GSC_AUTH_WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ supabaseAccessToken: session.access_token })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.firebaseToken) {
-        throw new Error(data?.error || "Le pont d'authentification a refusé la demande.");
-      }
-      if (!window._fbAuth || !window._signInWithCustomToken) {
-        throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
-      }
-      const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
-      return cred.user;
-    } catch(e) {
-      console.warn('Pont Firebase Auth indisponible :', e);
-      return null;
+  async function ensureFirebaseAuthViaSupabase(uid, attempts = 3) {
+    if (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === uid) {
+      return window._fbAuth.currentUser;
     }
+    let lastErr = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        if (!_sb) throw new Error('Supabase non initialisé.');
+        const { data: { session } } = await _sb.auth.getSession();
+        if (!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+
+        const res = await fetch(GSC_AUTH_WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ supabaseAccessToken: session.access_token })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.firebaseToken) {
+          throw new Error(data?.error || "Le pont d'authentification a refusé la demande.");
+        }
+        if (!window._fbAuth || !window._signInWithCustomToken) {
+          throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+        }
+        const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+        return cred.user;
+      } catch (e) {
+        lastErr = e;
+        console.warn(`Pont Firebase Auth — tentative ${i + 1}/${attempts} échouée :`, e);
+        if (i < attempts - 1) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+    throw lastErr || new Error("Pont d'authentification Firebase indisponible après plusieurs tentatives.");
   }
 
   // ── GSC ID — fonction identique à index.html & admin.html ──
@@ -1254,10 +1259,14 @@
   }
 
   async function saveProfile(uid, email, profile) {
-    if (!db || !_setDoc || !_doc) return;
+    if (!db || !_setDoc || !_doc) throw new Error('Firestore non disponible.');
+    // Si le pont d'authentification échoue après retries, l'erreur remonte ici
+    // et interrompt saveProfile : on ne tente pas une écriture vouée à l'échec.
     await ensureFirebaseAuthViaSupabase(uid);
-    try { await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() }); }
-    catch(e) { console.warn('Firestore save failed:', e); }
+    // Écriture principale : plus jamais avalée. Si elle échoue (permission-denied,
+    // réseau...), l'erreur remonte à l'appelant (submitVisiteur/submitActeur) pour
+    // empêcher l'affichage de l'écran de succès tant que le profil n'est pas confirmé.
+    await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() });
 
     // ── Migration en douceur (étape 1/5 — sécurité) : miroir des champs
     // sensibles vers users/{uid}/private/contact (lecture restreinte au
@@ -1305,7 +1314,15 @@
       if (error) throw error;
       // Sauvegarder profil Firestore
       const uid = data.user?.id;
-      if (uid) await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport });
+      if (uid) {
+        try {
+          await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport });
+        } catch (saveErr) {
+          console.warn('Échec de sauvegarde du profil après inscription :', saveErr);
+          errMsg('v-err', "Votre compte a été créé mais l'enregistrement de votre profil a échoué (connexion instable). Reconnectez-vous puis réessayez depuis votre espace, ou contactez le support.");
+          return;
+        }
+      }
       // Afficher succès
       document.getElementById('sv-prenom').textContent = prenom;
       document.getElementById('sv-name').textContent = prenom + ' ' + nom;
@@ -1502,7 +1519,13 @@
           club: clubActuel || '',
           status: 'pending'
         };
-        await saveProfile(uid, email, profile);
+        try {
+          await saveProfile(uid, email, profile);
+        } catch (saveErr) {
+          console.warn('Échec de sauvegarde du profil après inscription :', saveErr);
+          errMsg('a-err', "Votre compte a été créé mais l'enregistrement de votre profil sportif a échoué (connexion instable). Reconnectez-vous puis réessayez depuis votre espace, ou contactez le support.");
+          return;
+        }
         // Afficher le GSC-ID généré sur l'écran de succès
         const gscEl = document.getElementById('sa-gscid');
         if (gscEl) gscEl.textContent = gscId;

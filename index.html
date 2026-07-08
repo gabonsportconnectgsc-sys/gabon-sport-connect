@@ -3415,25 +3415,36 @@ async function ensureFirebaseAuthViaSupabase(){
   if(_firebaseCustomAuthPromise) return _firebaseCustomAuthPromise;
 
   _firebaseCustomAuthPromise = (async () => {
-    if(!window._sb) throw new Error('Supabase non initialisé.');
-    const {data:{session}} = await window._sb.auth.getSession();
-    if(!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+    const maxAttempts = 3;
+    let lastErr = null;
+    for(let i=0;i<maxAttempts;i++){
+      try{
+        if(!window._sb) throw new Error('Supabase non initialisé.');
+        const {data:{session}} = await window._sb.auth.getSession();
+        if(!session || !session.access_token) throw new Error('Aucune session Supabase active.');
 
-    const res = await fetch(GSC_AUTH_WORKER_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({supabaseAccessToken: session.access_token})
-    });
-    const data = await res.json();
-    if(!res.ok || !data.firebaseToken){
-      throw new Error(data?.error || 'Le pont d\'authentification a refusé la demande.');
-    }
+        const res = await fetch(GSC_AUTH_WORKER_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({supabaseAccessToken: session.access_token})
+        });
+        const data = await res.json();
+        if(!res.ok || !data.firebaseToken){
+          throw new Error(data?.error || 'Le pont d\'authentification a refusé la demande.');
+        }
 
-    if(!window._fbAuth || !window._signInWithCustomToken){
-      throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+        if(!window._fbAuth || !window._signInWithCustomToken){
+          throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+        }
+        const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+        return cred.user;
+      }catch(e){
+        lastErr = e;
+        console.warn(`Pont Firebase Auth — tentative ${i+1}/${maxAttempts} échouée :`, e);
+        if(i<maxAttempts-1) await new Promise(r=>setTimeout(r,500*(i+1)));
+      }
     }
-    const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
-    return cred.user;
+    throw lastErr || new Error("Pont d'authentification Firebase indisponible après plusieurs tentatives.");
   })();
 
   try{
@@ -3986,10 +3997,17 @@ async function loadUserProfile(uid){
   if(!db||typeof getDoc!=='function'){return;}
   try{
     const snap=await getDoc(doc(db,'users',uid));
-    if(snap.exists()) userProfile=snap.data();
-    else userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    if(snap.exists()){
+      userProfile=snap.data();
+    } else {
+      // Document réellement absent (et non une erreur réseau/permission) → nouveau profil
+      userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    }
   }catch(e){
-    userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_isNew:true};
+    console.warn('loadUserProfile : lecture Firestore impossible (réseau/permission), profil NON écrasé :', e);
+    // On ne sait pas si le document existe réellement : on ne marque PAS _isNew,
+    // pour ne jamais réécraser un profil existant avec des valeurs par défaut.
+    userProfile={uid,role:'joueur',sport:'',prenom:'',nom:'',status:'active',createdAt:new Date(),_loadError:true};
   }
   // Email/téléphone : source de vérité = users/{uid}/private/contact (lisible
   // uniquement par le propriétaire + l'admin). Repli sur d'éventuels champs
