@@ -1145,17 +1145,60 @@
 </style>
 </head>
 <body>
-<!-- ═══ DEBUG TEMPORAIRE — console mobile visible sur téléphone (aucun PC requis) ═══
+<!-- ═══ DEBUG TEMPORAIRE — panneau d'erreurs visible sur téléphone, SANS dépendance externe ═══
      Activation : ajouter ?debug=1 à l'URL (ex: index.html?debug=1). Sans ce
      paramètre, rien ne change pour les utilisateurs normaux. À retirer une
      fois le diagnostic de la cloche de notifications terminé. -->
 <script>
 (function(){
   if (new URLSearchParams(location.search).get('debug') !== '1') return;
-  var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/eruda';
-  s.onload = function(){ window.eruda && window.eruda.init(); };
-  document.head.appendChild(s);
+
+  var panel = document.createElement('div');
+  panel.id = 'gsc-debug-panel';
+  panel.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow-y:auto;'
+    + 'background:#0A1628;color:#0f0;font:11px/1.4 monospace;padding:8px;z-index:2147483647;'
+    + 'white-space:pre-wrap;word-break:break-word;border-top:3px solid #ef4444;box-shadow:0 -4px 20px rgba(0,0,0,.4);';
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:#fff;font-weight:bold;';
+  header.innerHTML = '<span>🐞 DEBUG CONSOLE</span>';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ Fermer';
+  closeBtn.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;';
+  closeBtn.onclick = function(){ panel.style.display = 'none'; };
+  var clearBtn = document.createElement('button');
+  clearBtn.textContent = '🗑 Vider';
+  clearBtn.style.cssText = 'background:#334155;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;margin-right:6px;';
+  var logBody = document.createElement('div');
+  clearBtn.onclick = function(){ logBody.innerHTML=''; };
+  var btnWrap = document.createElement('div');
+  btnWrap.appendChild(clearBtn); btnWrap.appendChild(closeBtn);
+  header.appendChild(btnWrap);
+  panel.appendChild(header);
+  panel.appendChild(logBody);
+  document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(panel); });
+  if(document.body) document.body.appendChild(panel);
+
+  function addLine(text, color){
+    var line = document.createElement('div');
+    line.style.cssText = 'padding:3px 0;border-bottom:1px solid #1e293b;color:' + (color||'#0f0') + ';';
+    line.textContent = '[' + new Date().toLocaleTimeString('fr-FR') + '] ' + text;
+    logBody.appendChild(line);
+    panel.scrollTop = panel.scrollHeight;
+  }
+
+  addLine('Console de debug active — ?debug=1 détecté.', '#22d3ee');
+
+  var origError = console.error, origWarn = console.warn, origLog = console.log;
+  console.error = function(){ addLine(Array.from(arguments).map(String).join(' '), '#ef4444'); origError.apply(console, arguments); };
+  console.warn  = function(){ addLine(Array.from(arguments).map(String).join(' '), '#f59e0b'); origWarn.apply(console, arguments); };
+  console.log   = function(){ addLine(Array.from(arguments).map(String).join(' '), '#0f0');     origLog.apply(console, arguments); };
+
+  window.addEventListener('error', function(e){
+    addLine('ERREUR JS : ' + e.message + ' (' + (e.filename||'') + ':' + (e.lineno||'') + ')', '#ef4444');
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    addLine('PROMESSE REJETÉE : ' + (e.reason && e.reason.message ? e.reason.message : e.reason), '#ef4444');
+  });
 })();
 </script>
 <!-- ═══ FIN DEBUG TEMPORAIRE ═══ -->
