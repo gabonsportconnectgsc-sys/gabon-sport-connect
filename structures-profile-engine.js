@@ -95,6 +95,7 @@
     return `
       <div class="adm-section">
         <div class="adm-section-title">${icon} Identité</div>
+        ${s.slogan ? `<p style="font-style:italic;color:var(--gray-txt);margin:-4px 0 10px;">« ${esc(s.slogan)} »</p>` : ''}
         <div class="detail-grid">
           <div><strong>Nom</strong><br>${esc(s.nom)}</div>
           <div><strong>Sigle</strong><br>${esc(s.sigle) || '—'}</div>
@@ -244,7 +245,19 @@
           <div><strong>Adresse</strong><br>${esc(s.adresse) || '—'}</div>
           <div><strong>Téléphone</strong><br>${esc(s.telephone || s.contact) || '—'}</div>
           <div><strong>Email</strong><br>${esc(s.email) || '—'}</div>
+          <div><strong>WhatsApp</strong><br>${esc(s.whatsapp) || '—'}</div>
         </div>
+        ${s.infrastructures ? `<div style="margin-top:8px;"><strong>Infrastructures</strong><br>${esc(s.infrastructures)}</div>` : ''}
+      </div>`;
+  }
+
+  function renderPresentationBlock(s) {
+    if (!s.bio && !s.palmares) return '';
+    return `
+      <div class="adm-section">
+        <div class="adm-section-title">✍️ Présentation</div>
+        ${s.bio ? `<p style="font-size:12.5px;margin-bottom:8px;">${esc(s.bio)}</p>` : ''}
+        ${s.palmares ? `<div><strong>Palmarès</strong><br>${esc(s.palmares)}</div>` : ''}
       </div>`;
   }
 
@@ -282,6 +295,7 @@
       ${renderRosterBlock(saisonData, sport, activeSaison, role)}
       ${renderEncadrementBlock(saisonData, activeSaison)}
       ${renderContactBlock(structure)}
+      ${renderPresentationBlock(structure)}
     `;
   }
 
@@ -303,7 +317,8 @@
     renderEffectifsBlock,
     renderRosterBlock,
     renderEncadrementBlock,
-    renderContactBlock
+    renderContactBlock,
+    renderPresentationBlock
   };
 
 })(window);

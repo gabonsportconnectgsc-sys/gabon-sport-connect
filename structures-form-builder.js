@@ -37,6 +37,8 @@
         <input type="text" id="sf-nom" value="${esc(s.nom)}" placeholder="AS Mangasport…"></div>
       <div class="form-group"><label>Sigle</label>
         <input type="text" id="sf-sigle" value="${esc(s.sigle)}" placeholder="ASM"></div>
+      <div class="form-group"><label>Slogan</label>
+        <input type="text" id="sf-slogan" value="${esc(s.slogan)}" placeholder="ex: Ensemble vers la victoire"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label>Discipline principale</label>
           <select id="sf-discipline" onchange="GSCStructureForm.onDisciplineChange(this.value)">
@@ -97,7 +99,18 @@
         <div class="form-group"><label>Téléphone</label><input type="text" id="sf-telephone" value="${esc(s.telephone || s.contact)}" placeholder="+241…"></div>
         <div class="form-group"><label>Email</label><input type="email" id="sf-email" value="${esc(s.email)}"></div>
       </div>
+      <div class="form-group"><label>WhatsApp officiel</label><input type="text" id="sf-whatsapp" value="${esc(s.whatsapp)}" placeholder="+241…"></div>
       <div class="form-group"><label>Capacité (places)</label><input type="number" id="sf-capacite" min="0" value="${s.capacite ?? 0}"></div>
+      <div class="form-group"><label>Infrastructures</label><textarea id="sf-infrastructures" placeholder="ex: Stade 2000 places, siège social, internat, terrain annexe…">${esc(s.infrastructures)}</textarea></div>
+    </div>`;
+  }
+
+  function sectionPresentation(s) {
+    return `
+    <div class="form-section">
+      <div class="section-divider">✍️ Présentation</div>
+      <div class="form-group"><label>Biographie / présentation</label><textarea id="sf-bio" placeholder="Histoire, valeurs, ambitions de la structure…">${esc(s.bio)}</textarea></div>
+      <div class="form-group"><label>Palmarès / distinctions</label><textarea id="sf-palmares" placeholder="ex: Champion national 2019, Vainqueur Coupe du Gabon 2021…">${esc(s.palmares)}</textarea></div>
     </div>`;
   }
 
@@ -256,6 +269,7 @@
       ${sectionRoster(saisonData, sport, saison)}
       ${sectionEncadrement(saisonData, sport)}
       ${sectionContact(structure)}
+      ${sectionPresentation(structure)}
     `;
   }
 
@@ -272,6 +286,45 @@
   /* ══════════════════════════════════════════════════════════════════
    * 5. INTERACTIONS DYNAMIQUES
    * ══════════════════════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════════════════════════════
+   * 5ter. PONT COMPTE CLUB → FICHE STRUCTURE PUBLIQUE
+   * Reprend ce qu'un club/fédération/association/organisateur a déclaré
+   * à l'inscription (doc `users`) pour pré-remplir la fiche publique
+   * `sitesSportifs`, sans ressaisie. N'écrase jamais une fiche existante :
+   * à utiliser uniquement pour la création initiale (existingId absent).
+   * ══════════════════════════════════════════════════════════════════ */
+  function structureFromAccount(u) {
+    return {
+      nom: u.nomOrganisation || '',
+      sigle: u.sigle || '',
+      slogan: u.slogan || '',
+      type: '',
+      discipline: u.sport || u.discipline || '',
+      ville: u.ville || 'Libreville',
+      lat: (u.geoloc && u.geoloc.lat != null) ? u.geoloc.lat : null,
+      lng: (u.geoloc && u.geoloc.lng != null) ? u.geoloc.lng : null,
+      statutJuridique: { siegeSocial: u.siegeSocial || '' },
+      gouvernance: {
+        bureau: (u.gouvernance && u.gouvernance.president)
+          ? [{ role: 'Président', nom: u.gouvernance.president, telephone: u.gouvernance.presidentTelephone || '', email: '' }]
+          : []
+      },
+      affiliations: [],
+      adresse: u.siegeSocial || '',
+      telephone: u.telephone || '',
+      email: u.email || '',
+      whatsapp: u.whatsapp || '',
+      infrastructures: u.infrastructures || '',
+      bio: u.bio || '',
+      palmares: u.palmares || '',
+      saisons: {}, status: 'active'
+    };
+  }
+
+  function openFromAccount(container, u, saison) {
+    open(container, structureFromAccount(u), u.sport || u.discipline || '', saison);
+  }
+
   function addRow(containerId, fieldKeys) {
     const labels = { role: 'Rôle', nom: 'Nom', telephone: 'Téléphone', email: 'Email', organisme: 'Organisme', numeroAffiliation: 'N° affiliation', dateAffiliation: 'Date (AAAA-MM-JJ)' };
     const fields = fieldKeys.map(k => ({ key: k, label: labels[k] || k }));
@@ -421,6 +474,7 @@
 
     target.nom = val('sf-nom').trim();
     target.sigle = val('sf-sigle').trim();
+    target.slogan = val('sf-slogan').trim();
     target.discipline = sport;
     target.type = val('sf-type');
     target.ville = val('sf-ville');
@@ -446,7 +500,11 @@
     target.telephone = val('sf-telephone').trim();
     target.contact = target.telephone;
     target.email = val('sf-email').trim();
+    target.whatsapp = val('sf-whatsapp').trim();
     target.capacite = parseInt(val('sf-capacite')) || 0;
+    target.infrastructures = val('sf-infrastructures').trim();
+    target.bio = val('sf-bio').trim();
+    target.palmares = val('sf-palmares').trim();
 
     target.saisons = target.saisons || {};
     target.saisons[saison] = {
@@ -485,7 +543,8 @@
     open, build, addRow, addRosterRow,
     onDisciplineChange, onSeasonChange, newSeason,
     useMyLocation, extractLatLngFromLink, openInMaps, shareLocationWhatsApp,
-    collect, save
+    collect, save,
+    structureFromAccount, openFromAccount
   };
 
 })(window);

@@ -444,11 +444,15 @@
         </div>
         <div class="fg"><label>Email *</label><div class="fg-icon"><span class="fi">✉️</span><input type="email" id="a-email" placeholder="votre@email.com" autocomplete="email"/></div></div>
         <div class="fg"><label>Téléphone</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
-        <div class="form-row">
-          <div class="fg"><label>Sexe *</label>
-            <select id="a-sexe"><option value="">—</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+        <!-- Sexe / Date de naissance : concerne les personnes physiques uniquement.
+             Masqué pour club/fédération/association/organisateur via goToActeurForm(). -->
+        <div class="extra" id="ex-personne">
+          <div class="form-row">
+            <div class="fg"><label>Sexe *</label>
+              <select id="a-sexe"><option value="">—</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+            </div>
+            <div class="fg"><label>Date de naissance</label><input type="date" id="a-ddn" max="2010-12-31"/></div>
           </div>
-          <div class="fg"><label>Date de naissance</label><input type="date" id="a-ddn" max="2010-12-31"/></div>
         </div>
         <div class="fg"><label>Mot de passe *</label><div class="fg-icon"><span class="fi">🔒</span><input type="password" id="a-pw" placeholder="6 caractères minimum" autocomplete="new-password"/></div></div>
         <div class="section-sep">Informations sportives</div>
@@ -579,10 +583,47 @@
           </div>
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-palmares" placeholder="ex: Champion national 2023, Meilleur buteur ligue 2022…"></textarea></div>
         </div>
-        <!-- Champs club/fédération/association -->
+        <!-- Champs club/fédération/association/organisateur -->
         <div class="extra" id="ex-org">
+          <div class="notice"><span>🏟️</span><span>Ce profil décrit une structure (club, fédération, association ou organisateur), pas une personne physique : les informations demandées ci-dessous concernent l'organisation elle-même.</span></div>
+
+          <div class="subsection">🏟️ Identité de la structure</div>
           <div class="fg"><label>Nom de l'organisation *</label><input type="text" id="a-org" placeholder="Nom officiel"/></div>
-          <div class="fg"><label>Année de création</label><input type="number" id="a-annee" placeholder="ex: 1985" min="1900" max="2025"/></div>
+          <div class="form-row">
+            <div class="fg"><label>Sigle (optionnel)</label><input type="text" id="a-org-sigle" placeholder="ex: FC105"/></div>
+            <div class="fg"><label>Slogan (optionnel)</label><input type="text" id="a-org-slogan" placeholder="ex: Ensemble vers la victoire"/></div>
+          </div>
+          <div class="fg"><label>Date de création</label><input type="date" id="a-annee" max="2026-12-31"/></div>
+
+          <div class="subsection">🏛️ Gouvernance</div>
+          <div class="form-row">
+            <div class="fg"><label>Nom du président / responsable *</label><input type="text" id="a-org-president" placeholder="Nom complet"/></div>
+            <div class="fg"><label>Téléphone du président</label><input type="tel" id="a-org-president-tel" placeholder="+241 XX XX XX XX"/></div>
+          </div>
+
+          <div class="subsection">👥 Effectifs</div>
+          <div class="form-row">
+            <div class="fg"><label>Nombre de joueurs / athlètes</label><input type="number" id="a-org-effectif" placeholder="ex: 45" min="0"/></div>
+            <div class="fg"><label>Catégories encadrées</label><input type="text" id="a-org-categories" placeholder="ex: Seniors, U20, U17, U15…"/></div>
+          </div>
+
+          <div class="subsection">📍 Sites & infrastructures</div>
+          <div class="fg"><label>Siège social / adresse</label><input type="text" id="a-org-siege" placeholder="ex: Quartier Nzeng-Ayong, Libreville"/></div>
+          <div class="fg">
+            <label>Géolocalisation (optionnel)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="a-org-geoloc" placeholder="Coordonnées GPS" readonly style="flex:1;background:#f5f5f5;"/>
+              <button type="button" class="btn-sec" style="white-space:nowrap;padding:10px 14px;" onclick="useCurrentLocationOrg()">📍 Ma position</button>
+            </div>
+            <input type="hidden" id="a-org-lat"/><input type="hidden" id="a-org-lng"/>
+            <div class="form-hint">Utilisé pour situer précisément vos sites de pratique sur la carte.</div>
+          </div>
+          <div class="fg"><label>Infrastructures</label><textarea id="a-org-infra" placeholder="ex: Stade 2000 places, siège social, internat, terrain d'entraînement annexe…"></textarea></div>
+          <div class="fg"><label>WhatsApp officiel</label><input type="tel" id="a-org-whatsapp" placeholder="+241 XX XX XX XX"/></div>
+
+          <div class="subsection">✍️ Présentation</div>
+          <div class="fg"><label>Biographie / présentation (optionnel)</label><textarea id="a-org-bio" placeholder="Histoire, valeurs, ambitions de la structure…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / distinctions</label><textarea id="a-org-palmares" placeholder="ex: Champion national 2019, Vainqueur Coupe du Gabon 2021…"></textarea></div>
         </div>
         <!-- Champs entraîneur/arbitre -->
         <div class="extra" id="ex-off">
@@ -1047,6 +1088,23 @@
     if (hint) { hint.textContent = hintTxt; hint.style.display = hintTxt ? 'block' : 'none'; }
   }
 
+  // ── GÉOLOCALISATION STRUCTURE (club/fédération/association/organisateur) ──
+  function useCurrentLocationOrg() {
+    const field = document.getElementById('a-org-geoloc');
+    if (!navigator.geolocation) { field.value = 'Géolocalisation non supportée par ce navigateur'; return; }
+    field.value = 'Localisation en cours…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        document.getElementById('a-org-lat').value = lat;
+        document.getElementById('a-org-lng').value = lng;
+        field.value = lat.toFixed(5) + ', ' + lng.toFixed(5);
+      },
+      () => { field.value = ''; errMsg('a-err','Impossible de récupérer votre position (autorisation refusée ou signal indisponible).'); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
   let selectedRole = null;
 
   function show(id) {
@@ -1083,8 +1141,10 @@
     }
     document.getElementById('a-title').textContent = ROLE_LABELS[selectedRole];
     document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
+    const isOrgRole = ['club','federation','association','organisateur'].includes(selectedRole);
+    document.getElementById('ex-personne').classList.toggle('show', !isOrgRole);
     document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole));
-    document.getElementById('ex-org').classList.toggle('show', ['club','federation','association','organisateur'].includes(selectedRole));
+    document.getElementById('ex-org').classList.toggle('show', isOrgRole);
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
     document.getElementById('ex-ancien').classList.toggle('show', selectedRole === 'ancien_sportif');
@@ -1342,8 +1402,6 @@
     const nom    = document.getElementById('a-nom').value.trim();
     const email  = document.getElementById('a-email').value.trim();
     const tel    = document.getElementById('a-tel').value.trim();
-    const sexe   = document.getElementById('a-sexe')?.value || '';
-    const ddn    = document.getElementById('a-ddn')?.value || '';
     const pw     = document.getElementById('a-pw').value;
     const sport  = document.getElementById('a-sport').value;
     const ville  = document.getElementById('a-ville').value;
@@ -1351,11 +1409,29 @@
     const exact  = document.getElementById('a-exact').checked;
 
     // Champs spécifiques selon rôle
+    const isOrgRole = ['club','federation','association','organisateur'].includes(selectedRole);
+    // Sexe / date de naissance : personnes physiques uniquement, sans objet pour une structure.
+    const sexe   = !isOrgRole ? (document.getElementById('a-sexe')?.value || '') : '';
+    const ddn    = !isOrgRole ? (document.getElementById('a-ddn')?.value || '') : '';
     const poste  = document.getElementById('a-poste')?.value?.trim() || '';
     const niveau = document.getElementById('a-niveau')?.value || '';
     const org    = document.getElementById('a-org')?.value?.trim() || '';
-    const annee  = document.getElementById('a-annee')?.value || '';
     const licence= document.getElementById('a-licence')?.value || '';
+    // Champs enrichis structure (club/fédération/association/organisateur)
+    const orgSigle      = isOrgRole ? (document.getElementById('a-org-sigle')?.value?.trim() || '') : '';
+    const orgSlogan      = isOrgRole ? (document.getElementById('a-org-slogan')?.value?.trim() || '') : '';
+    const orgDateCreation= isOrgRole ? (document.getElementById('a-annee')?.value || '') : '';
+    const orgPresident   = isOrgRole ? (document.getElementById('a-org-president')?.value?.trim() || '') : '';
+    const orgPresidentTel= isOrgRole ? (document.getElementById('a-org-president-tel')?.value?.trim() || '') : '';
+    const orgEffectif    = isOrgRole ? (document.getElementById('a-org-effectif')?.value || '') : '';
+    const orgCategories  = isOrgRole ? (document.getElementById('a-org-categories')?.value?.trim() || '') : '';
+    const orgSiege       = isOrgRole ? (document.getElementById('a-org-siege')?.value?.trim() || '') : '';
+    const orgGeolocLat   = isOrgRole ? (document.getElementById('a-org-lat')?.value || '') : '';
+    const orgGeolocLng   = isOrgRole ? (document.getElementById('a-org-lng')?.value || '') : '';
+    const orgInfra       = isOrgRole ? (document.getElementById('a-org-infra')?.value?.trim() || '') : '';
+    const orgWhatsapp    = isOrgRole ? (document.getElementById('a-org-whatsapp')?.value?.trim() || '') : '';
+    const orgBio         = isOrgRole ? (document.getElementById('a-org-bio')?.value?.trim() || '').slice(0,500) : '';
+    const orgPalmares    = isOrgRole ? (document.getElementById('a-org-palmares')?.value?.trim() || '') : '';
     // Champs enrichis joueur/athlète
     const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole);
     const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
@@ -1429,8 +1505,10 @@
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
     if (!sport)          { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
     if (!ville)          { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
-    if (['club','federation','association','organisateur'].includes(selectedRole) && !org) {
+    if (isOrgRole && !org) {
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
+    if (isOrgRole && !orgPresident) {
+                           errMsg('a-err','Veuillez indiquer le nom du président / responsable de la structure.'); return; }
     if (isHandisportRole && !hsCategorie) {
                            errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
     if (isEtudiantRole && !etablissement) {
@@ -1474,7 +1552,7 @@
         const profile = {
           prenom, nom, role: selectedRole, accountType: 'acteur',
           sport, ville, telephone: tel, sexe, dateNaissance: ddn,
-          poste, niveau, nomOrganisation: org, anneeCreation: annee, licence,
+          poste, niveau, nomOrganisation: org, licence,
           // Champs enrichis joueur/athlète (vides pour les autres rôles)
           ...(isJoueurRole && {
             taille, poids, piedFort, poste2, numMaillot,
@@ -1514,6 +1592,16 @@
             anneesExperienceFormation: forExperience, nbApprenantsFormes: forApprenants,
             disponibilitePourFormation: forDispo,
             bio: forBio, palmares: forPalmares
+          }),
+          // Champs enrichis structure — club/fédération/association/organisateur (vides pour les autres rôles)
+          ...(isOrgRole && {
+            sigle: orgSigle, slogan: orgSlogan, dateCreation: orgDateCreation,
+            gouvernance: { president: orgPresident, presidentTelephone: orgPresidentTel },
+            effectifTotal: orgEffectif, categoriesEncadrees: orgCategories,
+            siegeSocial: orgSiege,
+            geoloc: (orgGeolocLat && orgGeolocLng) ? { lat: Number(orgGeolocLat), lng: Number(orgGeolocLng) } : null,
+            infrastructures: orgInfra, whatsapp: orgWhatsapp,
+            bio: orgBio, palmares: orgPalmares
           }),
           gscId,
           club: clubActuel || '',

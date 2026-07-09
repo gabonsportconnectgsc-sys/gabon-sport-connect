@@ -2121,6 +2121,7 @@ tr.is-demo-row td { opacity: .82; }
     const statusKey = u.status || 'active';
     const HS_CAT_LABELS_RPT = {visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
     const isHandisportRpt = u.role === 'handisport';
+    const isOrgRpt = ['club','federation','association','organisateur'].includes(u.role);
     const BALL_TEAM_SPORTS_DOSSIER = ['Football','Basketball','Handball','Volleyball','Rugby'];
     const isBallPlayerRpt = u.role === 'joueur' && BALL_TEAM_SPORTS_DOSSIER.includes(u.sport);
     body.innerHTML = `
@@ -2135,7 +2136,20 @@ tr.is-demo-row td { opacity: .82; }
               <tr><td style="font-weight:700">Téléphone</td><td>${esc(u.telephone || u.phone || '—')}</td></tr>
               <tr><td style="font-weight:700">Club / Organisation</td><td>${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td></tr>
               <tr><td style="font-weight:700">Inscrit le</td><td>${window.AdminController_fmtDate ? esc(window.AdminController_fmtDate(u.createdAt)) : '—'}</td></tr>
-              ${isHandisportRpt ? `
+              ${isOrgRpt ? `
+              <tr><td style="font-weight:700">Sigle</td><td>${esc(u.sigle || '—')}</td></tr>
+              <tr><td style="font-weight:700">Slogan</td><td>${esc(u.slogan || '—')}</td></tr>
+              <tr><td style="font-weight:700">Date de création</td><td>${esc(u.dateCreation || '—')}</td></tr>
+              <tr><td style="font-weight:700">Président / responsable</td><td>${esc((u.gouvernance && u.gouvernance.president) || '—')}${(u.gouvernance && u.gouvernance.presidentTelephone) ? ' — ' + esc(u.gouvernance.presidentTelephone) : ''}</td></tr>
+              <tr><td style="font-weight:700">Effectif joueurs/athlètes</td><td>${esc(u.effectifTotal || '—')}</td></tr>
+              <tr><td style="font-weight:700">Catégories encadrées</td><td>${esc(u.categoriesEncadrees || '—')}</td></tr>
+              <tr><td style="font-weight:700">Siège social / adresse</td><td>${esc(u.siegeSocial || '—')}</td></tr>
+              <tr><td style="font-weight:700">Géolocalisation</td><td>${(u.geoloc && u.geoloc.lat != null) ? esc(`${u.geoloc.lat}, ${u.geoloc.lng}`) : '—'}</td></tr>
+              <tr><td style="font-weight:700">WhatsApp officiel</td><td>${esc(u.whatsapp || '—')}</td></tr>
+              <tr><td style="font-weight:700">Infrastructures</td><td>${esc(u.infrastructures || '—')}</td></tr>
+              <tr><td style="font-weight:700">Biographie</td><td>${esc(u.bio || '—')}</td></tr>
+              <tr><td style="font-weight:700">Palmarès</td><td>${esc(u.palmares || '—')}</td></tr>
+              ` : isHandisportRpt ? `
               <tr><td style="font-weight:700">Type de déficience</td><td>${esc(HS_CAT_LABELS_RPT[u.handicapCategorie] || u.handicapCategorie || '—')}</td></tr>
               <tr><td style="font-weight:700">Classe sportive</td><td>${esc(u.classeSportive || '—')}${u.organismeClassificateur ? ' — ' + esc(u.organismeClassificateur) : ''}</td></tr>
               <tr><td style="font-weight:700">Discipline para-sportive</td><td>${esc(u.disciplineParaSport || '—')}</td></tr>
@@ -2155,9 +2169,20 @@ tr.is-demo-row td { opacity: .82; }
               `}
             </tbody>
           </table>
+          ${isOrgRpt ? `<button type="button" class="btn-sm" style="margin-top:10px;" onclick="window.gscCreateStructureFromAccount('${esc(u.id)}')">🏟️ Créer / mettre à jour la fiche structure publique</button>` : ''}
         </div>
       </div>`;
   }
+
+  window.gscCreateStructureFromAccount = function (id) {
+    const list = getRealActors();
+    const u = list.find(x => x.id === id);
+    if (!u) { alert('Compte introuvable.'); return; }
+    if (!window.AdminStructures || !window.AdminStructures.openCreateFromAccount) {
+      alert('Module structures indisponible sur cette page.'); return;
+    }
+    window.AdminStructures.openCreateFromAccount(u);
+  };
 
   window.gscOpenIndivReport = function (id) {
     const list = getRealActors();
@@ -3585,6 +3610,16 @@ tr.is-demo-row td { opacity: .82; }
     window.GSCStructureForm.open('structure-form-body', structure, structure.discipline, structure.saisonCourante);
   }
 
+  // Pré-remplit le formulaire "Nouvelle structure" à partir d'un compte
+  // club/fédération/association/organisateur déjà inscrit (doc `users`),
+  // pour éviter à l'admin de ressaisir ce que le responsable a déjà déclaré.
+  function openCreateFromAccount(u) {
+    _editingId = null;
+    document.getElementById('structure-form-title').textContent = 'Nouvelle structure — depuis le compte de ' + (u.nomOrganisation || 'l\'organisation');
+    document.getElementById('structure-form-overlay').classList.add('open');
+    window.GSCStructureForm.openFromAccount('structure-form-body', u, window.GSCStructureProfile.getCurrentSeasonLabel());
+  }
+
   function closeForm() {
     document.getElementById('structure-form-overlay').classList.remove('open');
   }
@@ -4032,7 +4067,7 @@ tr.is-demo-row td { opacity: .82; }
   });
 
   window.AdminStructures = {
-    openCreateForm, openEditForm, closeForm, saveForm, deleteStructure,
+    openCreateForm, openCreateFromAccount, openEditForm, closeForm, saveForm, deleteStructure,
     openDetail, closeDetail, switchDetailTab, editCurrentDetail,
     filterByDiscipline, search,
     loadInfrastructures, openInfraForm, saveInfraFallback, deleteInfraFallback,
