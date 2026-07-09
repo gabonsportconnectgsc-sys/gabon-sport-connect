@@ -159,9 +159,16 @@ async function setBadgeCount(n) {
       tx.onerror = resolve;
     });
   } catch (e) {}
-  if ('setAppBadge' in self) {
-    if (count > 0) self.setAppBadge(count).catch(() => {});
-    else self.clearAppBadge().catch(() => {});
+  /* FIX BADGE HORS APP : la spec Badging API (NavigatorBadge) est un mixin de
+     Navigator ET WorkerNavigator — les méthodes vivent donc sur self.navigator
+     dans un Service Worker, PAS directement sur self. `'setAppBadge' in self`
+     était toujours faux (ou appelait une méthode inexistante), donc l'appel
+     échouait silencieusement à chaque push : le badge ne s'actualisait jamais
+     quand l'app était fermée, alors que la même page ouverte fonctionnait
+     (là, `navigator.setAppBadge` existe bien sur window). */
+  if (self.navigator && 'setAppBadge' in self.navigator) {
+    if (count > 0) self.navigator.setAppBadge(count).catch(() => {});
+    else self.navigator.clearAppBadge().catch(() => {});
   }
   return count;
 }
