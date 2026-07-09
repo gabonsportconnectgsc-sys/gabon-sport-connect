@@ -2,7 +2,20 @@
    SW.JS — Service Worker Gabon Sport Connect v4
    + Badge PWA temps réel + Push Notifications
    ═══════════════════════════════════════════════════════════════ */
-const CACHE_NAME = 'gsc-v6';
+/* FIX MAJEUR : CACHE_NAME était figé sur 'gsc-v6' depuis longtemps. Le
+   handler fetch ci-dessous servait TOUS les fichiers .js/.css de l'app
+   (gsc-notifications.js compris) en "cache-first" : dès qu'un appareil
+   avait mis un fichier en cache une fois, il ne récupérait plus JAMAIS la
+   version à jour sur GitHub Pages, même après un nouveau déploiement —
+   seul un changement de CACHE_NAME (purge au prochain 'activate') permet
+   de forcer le rafraîchissement. C'est exactement pourquoi le correctif de
+   gsc-notifications.js (cloche de notifications) semblait ne rien changer :
+   le téléphone exécutait toujours l'ancien fichier mis en cache.
+   On bump la version ici pour purger immédiatement le cache existant, ET
+   on passe en stratégie "network-first / stale-while-revalidate" pour les
+   fichiers JS/CSS de l'app (voir plus bas) afin que ce problème ne se
+   reproduise plus à chaque futur correctif. */
+const CACHE_NAME = 'gsc-v7';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -64,6 +77,30 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  /* Fichiers de l'app elle-même (JS/CSS same-origin : gsc-*.js, admin-*.js,
+     structures-*.js, etc.) — FIX : ces fichiers changent souvent (corrections
+     de bugs) et étaient auparavant servis en "cache-first", ce qui gelait
+     n'importe quel correctif pour tout appareil ayant déjà visité l'app une
+     fois. On passe en "réseau d'abord" : la version la plus récente sur
+     GitHub Pages est toujours utilisée quand la connexion est disponible ;
+     le cache ne sert que de secours hors-ligne. */
+  const isOwnAppCode = url.origin === location.origin && /\.(js|css)$/i.test(url.pathname);
+  if (isOwnAppCode) {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (response && response.status === 200) {
+          const r = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(request, r));
+        }
+        return response;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  /* Ressources tierces versionnées (fonts, leaflet, chart.js, firebase SDK…)
+     — celles-ci ne changent pas sous une même URL, donc le cache-first reste
+     pertinent et économise de la bande passante. */
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
