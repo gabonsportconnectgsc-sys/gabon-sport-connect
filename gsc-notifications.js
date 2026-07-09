@@ -26,6 +26,14 @@
 
   /* ── WORKER PUSH URL ── */
   const WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+  /* Clé VAPID publique — c'est une clé PUBLIQUE par conception (l'équivalent
+     d'une clé publique RSA/EC), elle est faite pour être exposée côté client.
+     Récupérée depuis Cloudflare Dashboard > Worker > Paramètres > Variables.
+     FIX : le code appelait auparavant WORKER_URL+'/vapid-public-key', une
+     route qui n'existe pas sur le Worker (ses seules routes sont
+     /push/subscribe, /push/send, /push/send-to-all) — chaque tentative
+     d'abonnement push échouait donc dès cette première étape. */
+  const VAPID_PUBLIC_KEY = 'BLF4gpRHVDLawA_msSA780FbVhCB-QhHY6W9_b5AMA3fW62xbDXZA7mWjJkBoNQI2YqwpKO2NyiMXgpP1OUKG-Q';
 
   /* FIX : relance le pont d'authentification Firebase (ensureFirebaseAuthViaSupabase,
      défini dans index.html/admin.html) avant CHAQUE écriture Firestore de ce module.
@@ -681,6 +689,35 @@
     if(el) el.classList.remove('show');
   }
 
+  /* FIX SON SILENCIEUX : les navigateurs (Chrome mobile en particulier)
+     bloquent l'AudioContext tant qu'aucun geste utilisateur n'a eu lieu sur
+     la page. Le code précédent tentait de le débloquer (resume()) au moment
+     même où une notification arrivait — mais cet instant n'est PAS un geste
+     utilisateur (la notification arrive de façon asynchrone, ex : quelqu'un
+     d'autre like un post), donc le resume() échouait silencieusement et
+     aucun son ne pouvait jamais sortir. On débloque donc l'AudioContext dès
+     le tout premier tap/clic n'importe où sur la page, une seule fois, pour
+     qu'il soit déjà actif et prêt quand une vraie notification arrivera. */
+  let _audioUnlocked = false;
+  function unlockAudioOnFirstGesture(){
+    if(_audioUnlocked) return;
+    const unlock = () => {
+      if(_audioUnlocked) return;
+      try{
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if(!Ctx) return;
+        if(!_audioCtx) _audioCtx = new Ctx();
+        if(_audioCtx.state === 'suspended') _audioCtx.resume().catch(()=>{});
+        _audioUnlocked = true;
+        console.log('[GSCNotif] AudioContext débloqué via geste utilisateur — le son des notifications est prêt.');
+      }catch(e){}
+      document.removeEventListener('click', unlock, true);
+      document.removeEventListener('touchstart', unlock, true);
+    };
+    document.addEventListener('click', unlock, true);
+    document.addEventListener('touchstart', unlock, true);
+  }
+
   /* Carillon "ding-dong" à deux notes (façon notification WhatsApp) — synthétisé
      en Web Audio pur (pas de fichier .mp3 à héberger, donc rien ne peut casser
      au déploiement). Chaque note est un petit accord de 3 harmoniques avec une
@@ -691,7 +728,8 @@
       if(!Ctx) return;
       if(!_audioCtx) _audioCtx = new Ctx();
       /* Sur mobile, l'AudioContext démarre parfois "suspended" tant qu'aucun
-         geste utilisateur n'a eu lieu — resume() est sans effet si déjà actif. */
+         geste utilisateur n'a eu lieu — resume() est sans effet si déjà actif.
+         Normalement déjà débloqué par unlockAudioOnFirstGesture() ci-dessus. */
       if(_audioCtx.state === 'suspended') _audioCtx.resume().catch(()=>{});
       const ctx = _audioCtx;
       const now = ctx.currentTime;
@@ -807,25 +845,33 @@
           if(typeof toast === 'function') toast('Notifications push refusées.','error');
           return;
         }
-        /* Récupérer la clé publique VAPID depuis le Worker */
-        const keyResp = await fetch(WORKER_URL+'/vapid-public-key');
-        const { publicKey } = await keyResp.json();
-        /* Enregistrer l'abonnement Push */
+        console.log('[GSCNotif] togglePush → permission notification accordée, abonnement en cours...');
+        /* FIX : plus besoin de récupérer la clé publique VAPID via une requête
+           réseau (la route /vapid-public-key n'existe pas sur le Worker) —
+           on utilise directement la constante VAPID_PUBLIC_KEY ci-dessus. */
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey)
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
-        /* Envoyer l'abonnement au Worker */
+        /* FIX : la route réelle du Worker est POST /push/subscribe (pas
+           /subscribe), et son format attendu est { userId, subscription }
+           (voir en-tête du Worker : "Body: { userId, subscription: {
+           endpoint, keys: { p256dh, auth } } }"). */
         const userId = _currentUserId || 'anonymous';
-        await fetch(WORKER_URL+'/subscribe', {
+        const subResp = await fetch(WORKER_URL+'/push/subscribe', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ subscription: sub, userId })
+          body: JSON.stringify({ userId, subscription: sub.toJSON ? sub.toJSON() : sub })
         });
+        if(!subResp.ok){
+          const errBody = await subResp.text().catch(()=>'(réponse illisible)');
+          throw new Error('Worker /push/subscribe a répondu '+subResp.status+' — '+errBody);
+        }
+        console.log('[GSCNotif] togglePush → abonnement enregistré côté Worker avec succès pour userId =', userId);
         if(typeof toast === 'function') toast('\u2705 Notifications push activées !','success');
       }catch(err){
-        console.error('Push subscribe error:', err);
+        console.error('[GSCNotif] togglePush → échec activation push :', err);
         input.checked = false;
         if(typeof toast === 'function') toast('Erreur activation push : '+err.message,'error');
       }
@@ -834,16 +880,18 @@
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
         if(sub){
+          /* FIX : la route réelle du Worker est DELETE /push/subscribe
+             (pas POST /unsubscribe), et attend { userId } dans le corps. */
           const userId = _currentUserId || 'anonymous';
-          await fetch(WORKER_URL+'/unsubscribe', {
-            method: 'POST',
+          await fetch(WORKER_URL+'/push/subscribe', {
+            method: 'DELETE',
             headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ endpoint: sub.endpoint, userId })
+            body: JSON.stringify({ userId })
           });
           await sub.unsubscribe();
         }
         if(typeof toast === 'function') toast('Notifications push désactivées.','info');
-      }catch(err){ console.error('Push unsubscribe error:', err); }
+      }catch(err){ console.error('[GSCNotif] togglePush → échec désactivation push :', err); }
     }
   }
 
@@ -1106,23 +1154,40 @@
       }catch(e){ console.error('[GSCNotif] push → échec écriture Firestore (notification NON créée) :', e); }
     }
 
-    /* Envoyer push via Worker Cloudflare au(x) destinataire(s) */
-    try{
-      await fetch(WORKER_URL+'/send-notification', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          recipientId,
-          senderId: _currentUserId,
-          title: 'Gabon Sport Connect',
-          body: n.title + (n.body ? ' — ' + n.body : ''),
-          icon: 'icon-192.png',
-          badge: 'icon-192.png',
-          data: { link: n.link, type: n.type },
-          adminSecret: window._GSC_ADMIN_SECRET || ''
-        })
-      });
-    }catch(e){ console.warn('Worker push error:', e); }
+    /* Envoyer push OS via Worker Cloudflare au destinataire ──
+       FIX : la route réelle du Worker est POST /push/send (pas
+       /send-notification), avec le corps { userId, title, body, type, link,
+       icon } (voir en-tête du Worker) — pas { recipientId, senderId, data,
+       adminSecret, ... }. Le Worker n'a de route pour un envoi ciblé que
+       vers UN userId précis ; les diffusions 'all' / 'role:xxx' utiliseraient
+       /push/send-to-all (protégée par ADMIN_SECRET, réservée à l'admin) —
+       on ne tente donc le push OS que pour un vrai destinataire individuel. */
+    const isRealUid = recipientId && recipientId !== 'all' && recipientId.indexOf('role:') !== 0;
+    if(isRealUid){
+      try{
+        console.log('[GSCNotif] push → envoi push OS via Worker pour userId =', recipientId);
+        const pushResp = await fetch(WORKER_URL+'/push/send', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            userId: recipientId,
+            title: 'Gabon Sport Connect',
+            body: n.title + (n.body ? ' — ' + n.body : ''),
+            type: n.type,
+            link: n.link,
+            icon: 'icon-192.png'
+          })
+        });
+        if(pushResp.ok){
+          console.log('[GSCNotif] push → push OS envoyé avec succès par le Worker');
+        } else {
+          const errBody = await pushResp.text().catch(()=>'(réponse illisible)');
+          console.warn('[GSCNotif] push → Worker /push/send a répondu', pushResp.status, '—', errBody);
+        }
+      }catch(e){ console.warn('[GSCNotif] push → erreur réseau vers le Worker :', e); }
+    } else {
+      console.log('[GSCNotif] push → diffusion \''+recipientId+'\', pas de push OS individuel (nécessiterait /push/send-to-all côté admin)');
+    }
 
     return id;
   }
@@ -1134,6 +1199,7 @@
     _currentUserId = uid || null;
     injectStyles();
     injectBell();
+    unlockAudioOnFirstGesture();
     await loadPrefs(uid);
     if(uid) subscribeFirestore(uid);
     else loadLocalNotifs();
