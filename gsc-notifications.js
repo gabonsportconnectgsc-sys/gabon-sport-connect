@@ -36,6 +36,14 @@
     try {
       if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
         await window.ensureFirebaseAuthViaSupabase();
+        const uid = window.auth?.currentUser?.uid || null;
+        if (uid) {
+          console.log('[GSCNotif] auth OK avant écriture — uid Firebase =', uid);
+        } else {
+          console.warn('[GSCNotif] auth pont exécuté mais aucun uid Firebase actif — l\'écriture va probablement échouer (permissions)');
+        }
+      } else {
+        console.warn('[GSCNotif] ensureFirebaseAuthViaSupabase introuvable sur window — pont d\'auth non exécuté');
       }
     } catch (e) {
       console.warn('[GSCNotif] pont Firebase Auth indisponible avant écriture —', e);
@@ -953,14 +961,20 @@
          jamais échouer avec le flux secondaire ; l'autre (role:xxx) est un
          bonus best-effort qui ne peut plus bloquer la première si les règles
          Firestore ne la supportent pas encore. */
+      console.log('[GSCNotif] abonnement flux principal (recipientId in [uid, all]) — uid =', uid);
       const qCore = query(
         collection(window.db, NOTIF_COLLECTION),
         where('recipientId','in', [uid,'all']),
         orderBy('createdAt','desc'),
         limit(50)
       );
+      let _qCoreFirstSnap = true;
       unsubs.push(onSnapshot(qCore, (snap)=>{
         _fsCore = snap.docs.map(d=>({id:d.id,...d.data()}));
+        if(_qCoreFirstSnap){
+          console.log('[GSCNotif] flux principal connecté avec succès —', _fsCore.length, 'notification(s) reçue(s)');
+          _qCoreFirstSnap = false;
+        }
         mergeAndRender();
       }, (err)=>{
         console.error('[GSCNotif] onSnapshot notifications (uid/all) refusé — vérifier les règles Firestore :', err);
@@ -971,19 +985,27 @@
          l'erreur sans jamais toucher au flux principal ci-dessus. */
       const userRole = (window.userProfile && window.userProfile.role) ? ('role:'+window.userProfile.role) : null;
       if(userRole){
+        console.log('[GSCNotif] abonnement flux secondaire (recipientId ==', userRole, ') — best-effort');
         const qRole = query(
           collection(window.db, NOTIF_COLLECTION),
           where('recipientId','==', userRole),
           orderBy('createdAt','desc'),
           limit(50)
         );
+        let _qRoleFirstSnap = true;
         unsubs.push(onSnapshot(qRole, (snap)=>{
           _fsRole = snap.docs.map(d=>({id:d.id,...d.data()}));
+          if(_qRoleFirstSnap){
+            console.log('[GSCNotif] flux secondaire (role) connecté avec succès —', _fsRole.length, 'notification(s) reçue(s)');
+            _qRoleFirstSnap = false;
+          }
           mergeAndRender();
         }, (err)=>{
           // Best-effort seulement : n'affecte pas le flux principal ci-dessus.
           console.warn('[GSCNotif] onSnapshot notifications (role:'+window.userProfile.role+') indisponible — règle Firestore à ajouter :', err);
         }));
+      } else {
+        console.log('[GSCNotif] pas de flux secondaire (role) — window.userProfile.role non défini à cet instant');
       }
 
       _firestoreUnsub = ()=>{ unsubs.forEach(u=>{ try{u();}catch(e){} }); };
@@ -1063,14 +1085,25 @@
       try{
         const {collection, addDoc, serverTimestamp} = window;
         if(typeof addDoc === 'function'){
-          await withAuth(()=>addDoc(collection(window.db, NOTIF_COLLECTION),{
-            ...n,
+          /* FIX BUG PRINCIPAL : mettre une clé à `undefined` ne la supprime pas
+             de l'objet en JS — elle reste présente avec la valeur undefined.
+             Firestore refuse catégoriquement d'écrire un champ à `undefined`
+             et lève "FirebaseError: Unsupported field value: undefined",
+             ce qui faisait échouer TOUTE création de notification, avalée
+             silencieusement par le catch ci-dessous. On exclut donc `id`
+             (Firestore génère son propre ID de document) et
+             `actionCallbacks` (des fonctions, de toute façon non stockables
+             dans Firestore) via déstructuration, au lieu de les mettre à
+             undefined. */
+          const { id: _omitId, actionCallbacks: _omitCallbacks, ...notifData } = n;
+          console.log('[GSCNotif] push → écriture Firestore', { type: notifData.type, recipientId: notifData.recipientId });
+          const ref = await withAuth(()=>addDoc(collection(window.db, NOTIF_COLLECTION),{
+            ...notifData,
             createdAt: serverTimestamp(),
-            id: undefined,
-            actionCallbacks: undefined
           }));
+          console.log('[GSCNotif] push → notification créée avec succès, doc id =', ref?.id);
         }
-      }catch(e){ console.error('Notif Firestore error:', e); }
+      }catch(e){ console.error('[GSCNotif] push → échec écriture Firestore (notification NON créée) :', e); }
     }
 
     /* Envoyer push via Worker Cloudflare au(x) destinataire(s) */
