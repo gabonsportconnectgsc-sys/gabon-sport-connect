@@ -3431,10 +3431,13 @@ async function handleSupabaseResetPassword(){
   try{
     const {error}=await window._sb.auth.updateUser({password});
     if(error) throw error;
-    toast('Mot de passe mis à jour ! Vous êtes connecté.','success');
-    closeModal('modal-auth');
-    const {data:{user}}=await window._sb.auth.getUser();
-    await onSupabaseSignedIn(user);
+    // Pas de connexion automatique : on déconnecte la session de récupération
+    // et on ramène l'utilisateur à l'écran de connexion pour qu'il se
+    // reconnecte lui-même avec son nouveau mot de passe.
+    await window._sb.auth.signOut();
+    history.replaceState(null,'',window.location.pathname);
+    switchAuthTab('login');
+    toast('Mot de passe mis à jour ! Reconnectez-vous.','success');
   }catch(e){
     errEl.textContent = supabaseAuthErrorMessage(e);
     errEl.style.display='block';
