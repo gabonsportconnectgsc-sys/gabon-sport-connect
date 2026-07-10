@@ -201,11 +201,11 @@
     statusEl.textContent = '⏳ Enregistrement…';
     statusEl.className = 'gsc-pe-status';
     try {
-      // FIX : window.db.collection(...).doc(...).update(...) est l'API compat v8,
-      // absente du SDK modulaire v9 utilisé partout ailleurs dans l'app
-      // (mêmes symptômes que le bug corrigé dans data-module.js / realtime-sync-module.js :
-      // "window.db.collection is not a function", échec silencieux de la sauvegarde).
-      await window.updateDoc(window.doc(window.db, 'users', _editingUid), fields);
+      // API compat v8 (cohérente avec firebase-init.js : window.db = firebase.firestore()).
+      // admin.html charge exclusivement le SDK compat — contrairement à index.html/
+      // inscription.html qui utilisent le SDK modulaire v9. window.doc/window.updateDoc
+      // (v9) n'existent jamais ici : d'où "window.doc is not a function".
+      await window.db.collection('users').doc(_editingUid).update(fields);
       statusEl.textContent = '✅ Profil mis à jour.';
       statusEl.className = 'gsc-pe-status ok';
       setTimeout(closeModal, 900);

@@ -3384,6 +3384,13 @@ tr.is-demo-row td { opacity: .82; }
     const json = await resp.json();
     if (!json.firebaseToken) throw new Error('[GSC] Pas de firebaseToken dans la réponse Worker');
 
+    // Le SDK Firebase compat doit être chargé (scripts <head>). S'il ne l'est
+    // pas (échec réseau du CDN gstatic.com sur mobile), on évite un
+    // ReferenceError brut ("firebase is not defined") et on donne un message
+    // actionnable à l'utilisateur.
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+      throw new Error('SDK Firebase non chargé — vérifiez votre connexion et rechargez la page.');
+    }
     // Se connecter à Firebase avec le Custom Token
     await firebase.auth().signInWithCustomToken(json.firebaseToken);
   };
@@ -4196,6 +4203,7 @@ tr.is-demo-row td { opacity: .82; }
       banner.style.color = '#fff';
       banner.innerHTML = '\u274c Script(s) non charg\u00e9(s) : ' +
         missing.map(function (c) { return c.label; }).join(', ') +
+        ' <span style="opacity:.85;cursor:pointer;text-decoration:underline;margin-left:8px;" onclick="location.reload()">Recharger</span>' +
         ' <span style="opacity:.85;cursor:pointer;text-decoration:underline;" onclick="this.parentElement.remove()">Fermer</span>';
     }
   }
