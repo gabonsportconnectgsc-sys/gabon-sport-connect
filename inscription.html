@@ -1376,11 +1376,12 @@
       const uid = data.user?.id;
       if (uid) {
         try {
-          await saveProfile(uid, email, { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport });
+          const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport };
+          try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(vProfile)); } catch(e){}
+          await saveProfile(uid, email, vProfile);
+          try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
         } catch (saveErr) {
-          console.warn('Échec de sauvegarde du profil après inscription :', saveErr);
-          errMsg('v-err', "Votre compte a été créé mais l'enregistrement de votre profil a échoué (connexion instable). Reconnectez-vous puis réessayez depuis votre espace, ou contactez le support.");
-          return;
+          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr);
         }
       }
       // Afficher succès
@@ -1607,12 +1608,12 @@
           club: clubActuel || '',
           status: 'pending'
         };
+        try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(profile)); } catch(e){}
         try {
           await saveProfile(uid, email, profile);
+          try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
         } catch (saveErr) {
-          console.warn('Échec de sauvegarde du profil après inscription :', saveErr);
-          errMsg('a-err', "Votre compte a été créé mais l'enregistrement de votre profil sportif a échoué (connexion instable). Reconnectez-vous puis réessayez depuis votre espace, ou contactez le support.");
-          return;
+          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr);
         }
         // Afficher le GSC-ID généré sur l'écran de succès
         const gscEl = document.getElementById('sa-gscid');

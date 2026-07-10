@@ -3586,6 +3586,11 @@ async function onSupabaseSignedIn(user, extra){
     // Champs publics uniquement — email/téléphone en clair NE vont plus ici.
     // telephoneHash permet toujours la déduplication (voir handleSupabaseRegister)
     // sans exposer le numéro sur le document public.
+    let pendingProfile = null;
+    try {
+      const raw = localStorage.getItem('gsc_pending_profile_'+user.id);
+      if (raw) pendingProfile = JSON.parse(raw);
+    } catch(e){}
     Object.assign(userProfile, {
       uid:        user.id,
       prenom,
@@ -3602,12 +3607,14 @@ async function onSupabaseSignedIn(user, extra){
       clubSupporte: extra?.clubSupporte || user.user_metadata?.clubSupporte || '',
       status:     'pending',
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
+      ...(pendingProfile || {}),
     });
     try{
       if(db && typeof setDoc==='function'){
         await ensureFirebaseAuthViaSupabase();
         await setDoc(doc(db,'users',user.id), userProfile);
         await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
+        try { localStorage.removeItem('gsc_pending_profile_'+user.id); } catch(e){}
       }
     }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
     // Garder en mémoire pour l'UI de cette session (pas besoin de re-fetch)
