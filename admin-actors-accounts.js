@@ -446,6 +446,18 @@
           `Cet endpoint doit être ajouté au Worker Cloudflare — voir la documentation fournie. ${txt}`);
       }
 
+      // ⚠️ On affiche le mot de passe AVANT l'écriture Firestore ci-dessous.
+      // Raison : cette écriture déclenche le listener temps réel
+      // (realtimeSync.onUpdate('users', ...) → render()), qui régénère tout
+      // le tableau HTML et donc détruit la case de statut (reset-status-{uid})
+      // AVANT que le message ne puisse y être affiché. Une alerte navigateur
+      // n'est pas affectée par ce re-rendu — c'est donc la voie fiable pour
+      // garantir que l'admin voit bien le mot de passe.
+      alert(
+        `✅ Mot de passe temporaire pour "${label}" :\n\n${tempPassword}\n\n` +
+        `À transmettre par un canal sûr. Il ne sera plus jamais affiché.`
+      );
+
       // Marque le compte pour forcer un changement de mot de passe à la prochaine
       // connexion (à faire respecter côté écran de connexion — non inclus ici),
       // et trace QUI a fait la réinitialisation (audit).
@@ -457,10 +469,17 @@
         }).catch(() => {});
       }
 
-      if (statusEl) { statusEl.textContent = `✅ Mot de passe temporaire : ${tempPassword} (à transmettre par canal sûr, non réaffiché)`; statusEl.className = 'gsc-acc-status-msg ok'; }
+      // Best-effort : si le tableau n'a pas encore été re-rendu, ce message
+      // peut aussi apparaître brièvement dans la case de statut. On re-cherche
+      // l'élément (au cas où il aurait déjà été remplacé) plutôt que de
+      // réutiliser la référence obtenue en haut de la fonction.
+      const freshStatusEl = document.getElementById('reset-status-' + uid);
+      if (freshStatusEl) { freshStatusEl.textContent = `✅ Mot de passe transmis (voir la fenêtre d'alerte).`; freshStatusEl.className = 'gsc-acc-status-msg ok'; }
     } catch (err) {
       console.error('[GSCAccounts] resetPassword erreur:', err);
-      if (statusEl) { statusEl.textContent = '❌ ' + (err.message || err); statusEl.className = 'gsc-acc-status-msg err'; }
+      alert('❌ Échec de la réinitialisation :\n\n' + (err.message || err));
+      const freshStatusEl = document.getElementById('reset-status-' + uid);
+      if (freshStatusEl) { freshStatusEl.textContent = '❌ ' + (err.message || err); freshStatusEl.className = 'gsc-acc-status-msg err'; }
     }
   }
 
