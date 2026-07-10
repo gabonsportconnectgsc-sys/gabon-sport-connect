@@ -3710,6 +3710,12 @@ async function checkSupabaseSession(){
     return;
   }
   const {data:{session}}=await window._sb.auth.getSession();
+  // Garde-fou : une session issue d'un lien de récupération de mot de passe
+  // ne doit jamais être traitée comme une connexion normale (sinon l'app
+  // affiche le tableau de bord au lieu de l'écran "Nouveau mot de passe").
+  // Le listener PASSWORD_RECOVERY ci-dessus gère déjà l'ouverture de l'écran ;
+  // ici on se contente de ne pas court-circuiter avec onSupabaseSignedIn.
+  if(window.location.hash.includes('type=recovery')) return;
   if(session && session.user){
     await onSupabaseSignedIn(session.user);
   }else{
@@ -6941,6 +6947,18 @@ document.addEventListener('supabase-ready', function(){
   window._sb.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT'){
       if(!isVisitor){ currentUser=null; userProfile=null; _uid=null; enterAsVisitor(true); }
+    }
+    // FIX : le SDK Supabase traite automatiquement (detectSessionInUrl) le
+    // fragment #access_token=...&type=recovery dès son initialisation, avant
+    // même que checkSupabaseSession() ne relise manuellement window.location.hash
+    // plus bas — ce qui fait rater l'ouverture de l'écran "Nouveau mot de passe"
+    // selon le timing (retombe sur le flux de connexion normal à la place).
+    // L'évènement PASSWORD_RECOVERY, émis par Supabase lui-même à ce moment
+    // précis, est fiable quel que soit l'ordre d'exécution.
+    if(event==='PASSWORD_RECOVERY'){
+      enterAsVisitor(true);
+      document.getElementById('modal-auth').classList.add('open');
+      switchAuthTab('reset');
     }
   });
 });
