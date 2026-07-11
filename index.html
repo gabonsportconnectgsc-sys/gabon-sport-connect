@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>
+  // ⚠️ Capturé EN TOUT PREMIER, avant tout autre script (y compris le SDK
+  // Supabase plus bas dans le fichier), car ce dernier nettoie le fragment
+  // d'URL (#access_token=...&type=...) dès qu'il traite la redirection —
+  // toute lecture tardive de location.hash le trouverait déjà vide. On garde
+  // donc une copie fiable ici, utilisée ensuite pour distinguer un retour de
+  // lien "mot de passe oublié" (type=recovery) d'un retour de lien de
+  // confirmation d'inscription (type=signup), quel que soit l'ordre
+  // d'exécution du reste du fichier.
+  window.__gscAuthRedirectRaw = (location.hash || '') + ' ' + (location.search || '');
+  window.__gscAuthRedirectType =
+    /type=recovery/.test(window.__gscAuthRedirectRaw) ? 'recovery' :
+    /type=signup/.test(window.__gscAuthRedirectRaw) ? 'signup' :
+    /type=email_change/.test(window.__gscAuthRedirectRaw) ? 'email_change' : null;
+</script>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="icon-192.png">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -3212,6 +3227,29 @@ const ETABLISSEMENTS_GA=[
         };
         openReset();
       }
+      // Retour du lien de confirmation d'inscription : Supabase établit une
+      // session valide dès la confirmation (comportement normal), mais on ne
+      // veut PAS connecter automatiquement le nouvel utilisateur — il doit
+      // saisir lui-même son email/mot de passe sur l'écran de connexion.
+      // window.__gscAuthRedirectType est capturé tout en haut du fichier,
+      // avant que le SDK ne nettoie l'URL (voir ce commentaire plus haut).
+      if(event==='SIGNED_IN' && window.__gscAuthRedirectType==='signup'){
+        window.__gscAuthRedirectType = null; // ne traiter qu'une seule fois
+        window.__gscPasswordRecoveryActive = true; // réutilise la même garde anti-auto-connexion
+        window._sb.auth.signOut().catch(()=>{});
+        enterAsVisitor(true);
+        const openLogin=()=>{
+          const modal=document.getElementById('modal-auth');
+          if(modal && typeof switchAuthTab==='function'){
+            modal.classList.add('open');
+            switchAuthTab('login');
+            if(typeof toast==='function') toast('✅ Email confirmé ! Connectez-vous pour accéder à votre compte.','success');
+          }else{
+            setTimeout(openLogin, 50);
+          }
+        };
+        openLogin();
+      }
     });
   }catch(e){
     window._supabaseReady = false;
@@ -3512,7 +3550,13 @@ async function handleSupabaseRegister(){
     const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur,isSupporter:isSupporterOptIn,clubSupporte:clubSupporteOptIn};
     const {data,error}=await window._sb.auth.signUp({
       email,password,
-      options:{data:extraMeta}
+      options:{
+        data:extraMeta,
+        // Sans ceci, Supabase redirige vers l'URL par défaut du projet
+        // (Site URL, dans Authentication > URL Configuration) au lieu de
+        // cette page précise — ce qui produisait un 404 après confirmation.
+        emailRedirectTo: window.location.origin + window.location.pathname
+      }
     });
     if(error) throw error;
     if(data.user && !data.session){
