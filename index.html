@@ -3076,6 +3076,45 @@ const ETABLISSEMENTS_GA=[
   try{
     window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'sb-gsc-player-auth', persistSession: true, autoRefreshToken: true } });
     window._supabaseReady = true;
+
+    // ⚠️ SÉCURITÉ — enregistré ICI, tout de suite après la création du client,
+    // et non via l'évènement custom 'supabase-ready' (voir plus bas dans le
+    // fichier). Cet évènement est émis quelques lignes plus bas dans CE MÊME
+    // bloc, de façon synchrone : tout script qui s'abonnerait à 'supabase-ready'
+    // plus loin dans le fichier (chargé après ce <script>) le recevrait TROP TARD
+    // — l'évènement serait déjà passé. Résultat concret observé : le listener
+    // PASSWORD_RECOVERY n'était jamais attaché à temps, donc jamais déclenché.
+    // Or Supabase crée une session valide dès le clic sur le lien de
+    // récupération (c'est le fonctionnement normal de ce mécanisme) — sans ce
+    // listener pour l'intercepter, l'app traitait cette session comme une
+    // connexion normale et ouvrait directement le compte, sans jamais demander
+    // de nouveau mot de passe. C'est une faille de sécurité (accès au compte
+    // via simple accès à la boîte mail). Ce listener doit donc être posé de
+    // façon synchrone, avant tout traitement de l'URL par le SDK Supabase.
+    window._sb.auth.onAuthStateChange((event)=>{
+      if(event==='SIGNED_OUT'){
+        if(typeof isVisitor!=='undefined' && !isVisitor){ currentUser=null; userProfile=null; _uid=null; enterAsVisitor(true); }
+      }
+      if(event==='PASSWORD_RECOVERY'){
+        // Empêche checkSupabaseSession() (exécuté plus tard au démarrage) de
+        // traiter cette session temporaire de récupération comme une
+        // connexion normale — voir la garde ajoutée dans checkSupabaseSession.
+        window.__gscPasswordRecoveryActive = true;
+        enterAsVisitor(true);
+        const openReset=()=>{
+          const modal=document.getElementById('modal-auth');
+          if(modal && typeof switchAuthTab==='function'){
+            modal.classList.add('open');
+            switchAuthTab('reset');
+          }else{
+            // Le DOM (modal-auth / switchAuthTab) n'est pas encore prêt à ce
+            // stade très précoce du chargement — on réessaie juste après.
+            setTimeout(openReset, 50);
+          }
+        };
+        openReset();
+      }
+    });
   }catch(e){
     window._supabaseReady = false;
     window._sb = null;
@@ -3716,9 +3755,14 @@ async function checkSupabaseSession(){
   // Garde-fou : une session issue d'un lien de récupération de mot de passe
   // ne doit jamais être traitée comme une connexion normale (sinon l'app
   // affiche le tableau de bord au lieu de l'écran "Nouveau mot de passe").
-  // Le listener PASSWORD_RECOVERY ci-dessus gère déjà l'ouverture de l'écran ;
-  // ici on se contente de ne pas court-circuiter avec onSupabaseSignedIn.
-  if(window.location.hash.includes('type=recovery')) return;
+  // Le listener PASSWORD_RECOVERY (bootstrap Supabase, en haut du fichier)
+  // gère déjà l'ouverture de l'écran ; ici on se contente de ne pas
+  // court-circuiter avec onSupabaseSignedIn.
+  // ⚠️ On ne peut PAS se fier uniquement à window.location.hash ici : le SDK
+  // Supabase (detectSessionInUrl) nettoie déjà ce fragment de l'URL au moment
+  // où ce code s'exécute, donc ce test échouerait silencieusement. On utilise
+  // à la place l'indicateur explicite posé par le listener PASSWORD_RECOVERY.
+  if(window.location.hash.includes('type=recovery') || window.__gscPasswordRecoveryActive) return;
   if(session && session.user){
     await onSupabaseSignedIn(session.user);
   }else{
@@ -6944,27 +6988,16 @@ document.addEventListener('firebase-ready', async function(){
   }
 });
 
-// Écoute les changements de session Supabase (connexion/déconnexion depuis un autre onglet, expiration, etc.)
-document.addEventListener('supabase-ready', function(){
-  if(!window._sb) return;
-  window._sb.auth.onAuthStateChange((event)=>{
-    if(event==='SIGNED_OUT'){
-      if(!isVisitor){ currentUser=null; userProfile=null; _uid=null; enterAsVisitor(true); }
-    }
-    // FIX : le SDK Supabase traite automatiquement (detectSessionInUrl) le
-    // fragment #access_token=...&type=recovery dès son initialisation, avant
-    // même que checkSupabaseSession() ne relise manuellement window.location.hash
-    // plus bas — ce qui fait rater l'ouverture de l'écran "Nouveau mot de passe"
-    // selon le timing (retombe sur le flux de connexion normal à la place).
-    // L'évènement PASSWORD_RECOVERY, émis par Supabase lui-même à ce moment
-    // précis, est fiable quel que soit l'ordre d'exécution.
-    if(event==='PASSWORD_RECOVERY'){
-      enterAsVisitor(true);
-      document.getElementById('modal-auth').classList.add('open');
-      switchAuthTab('reset');
-    }
-  });
-});
+// Écoute des changements de session Supabase (connexion/déconnexion depuis un
+// autre onglet, expiration, détection PASSWORD_RECOVERY, etc.) : voir le
+// bloc <script> "Supabase bootstrap" en haut du fichier, où ce listener est
+// désormais enregistré de façon SYNCHRONE juste après la création de
+// window._sb. Il ne pouvait pas rester ici : ce fichier dispatch l'évènement
+// 'supabase-ready' avant que ce bloc-ci ne soit atteint par le navigateur,
+// donc un addEventListener('supabase-ready', ...) placé à cet endroit ne le
+// reçoit jamais (l'évènement est déjà passé). C'était la cause de la faille
+// de sécurité où le lien "mot de passe oublié" connectait directement au
+// compte au lieu d'afficher l'écran "Nouveau mot de passe".
 
 // ══════════════════════════════════════════════════
 // ── SPORT GABON — DONNÉES NATIONALES COMPLÈTES ──
