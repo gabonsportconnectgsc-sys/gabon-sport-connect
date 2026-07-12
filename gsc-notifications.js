@@ -621,46 +621,17 @@
      BADGES SUR ZONES (bnav, boutons, sections)
   ══════════════════════════════════════════════════════════════════ */
   function updateZoneBadges(){
-    /* Par type → zone mapping */
-    const zoneMap = {
-      message:  ['bnav-profil','side-menu-profil'],
-      mention:  ['bnav-profil'],
-      follow:   ['bnav-profil'],
-      match:    ['bnav-sport'],
-      event:    ['bnav-stades'],
-      news:     ['bnav-actualites'],
-      alert:    ['bnav-admin','side-menu-admin'],
-      transfer: ['bnav-profil','bnav-sport'],
-    };
-
-    /* Compter par zone */
-    const zoneCounts = {};
-    _notifications.filter(n=>!n.read).forEach(n=>{
-      const zones = zoneMap[n.type] || [];
-      zones.forEach(z=>{ zoneCounts[z]=(zoneCounts[z]||0)+1; });
-    });
-
-    /* Mettre à jour chaque bouton de nav */
-    Object.keys({...zoneMap,...{}}).forEach(()=>{});
-    const allZones = new Set(Object.values(zoneMap).flat());
-    allZones.forEach(zoneId=>{
-      const el = document.getElementById(zoneId);
-      if(!el) return;
-      el.style.position = 'relative';
-      let b = el.querySelector('.zone-badge');
-      if(!b){
-        b = document.createElement('span');
-        b.className = 'zone-badge';
-        el.appendChild(b);
-      }
-      const cnt = zoneCounts[zoneId]||0;
-      if(cnt > 0){
-        b.textContent = cnt > 9 ? '9+' : cnt;
-        b.classList.add('visible');
-      } else {
-        b.classList.remove('visible');
-      }
-    });
+    /* FIX DOUBLON : cette fonction posait auparavant ses propres badges
+       (.zone-badge) sur bnav-profil / bnav-actualites / bnav-admin /
+       side-menu-profil / side-menu-admin — exactement les mêmes boutons que
+       gsc-nav-badges.js (classe .gsc-nb / .gsc-smi-badge), avec un mapping
+       type→zone légèrement différent. Résultat : deux badges superposés sur
+       le même bouton, parfois avec un chiffre différent.
+       gsc-nav-badges.js est désormais seul propriétaire des badges de zone
+       (logo, bnav, menu latéral, onglets) : il a son propre onSnapshot
+       Firestore et se met à jour indépendamment de ce module. On ne fait
+       donc plus rien ici — la fonction est conservée (no-op) uniquement pour
+       ne pas casser les appels existants dans ce fichier. */
   }
 
   /* ═══════════════════════════════════════════════════════════════
