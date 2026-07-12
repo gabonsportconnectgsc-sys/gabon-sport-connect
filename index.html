@@ -1172,6 +1172,7 @@
      n'importe quelle erreur de chargement ne bloque jamais dessus (timeout
      de sécurité inclus). -->
 <div id="gsc-splash">
+  <img src="splash-portrait-shadow.png" class="gsc-splash-bg-portrait" alt="" aria-hidden="true" onerror="this.style.display='none'">
   <div class="gsc-splash-inner">
     <div class="gsc-splash-badge">
       <svg class="gsc-splash-wave-svg" viewBox="0 0 200 200">
@@ -1199,9 +1200,10 @@
   </div>
 </div>
 <style>
-  #gsc-splash{position:fixed;inset:0;z-index:99999;background:#ffffff;display:flex;justify-content:center;align-items:flex-start;padding-top:14vh;transition:opacity .5s ease, visibility .5s ease;}
+  #gsc-splash{position:fixed;inset:0;z-index:99999;background:#ffffff;display:flex;justify-content:center;align-items:flex-start;padding-top:14vh;transition:opacity .5s ease, visibility .5s ease;overflow:hidden;}
+  .gsc-splash-bg-portrait{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;pointer-events:none;user-select:none;z-index:0;}
   #gsc-splash.gsc-splash-hide{opacity:0;visibility:hidden;pointer-events:none;}
-  .gsc-splash-inner{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0 24px;}
+  .gsc-splash-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0 24px;}
   .gsc-splash-badge{position:relative;width:150px;height:150px;animation:gscSway 4.2s ease-in-out infinite;}
   @keyframes gscSway{0%,100%{transform:rotate(-1.6deg);}50%{transform:rotate(1.6deg);}}
   .gsc-splash-wave-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 18px rgba(0,60,40,.16));}
