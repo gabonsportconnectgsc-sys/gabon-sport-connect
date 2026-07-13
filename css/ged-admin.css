@@ -1,0 +1,57 @@
+/* ══════════════════════════════════════════════════════════════════
+   GED-ADMIN.CSS — Gestion Électronique des Documents (vue Administration)
+   Gabon Sport Connect · 2026
+   Réutilise les variables et classes existantes (dash-card, users-table,
+   btn-sm, stat-card, modal-overlay) — n'ajoute que le nécessaire pour
+   les panneaux Catalogue / Validation / Impression / Tableau de bord.
+   ══════════════════════════════════════════════════════════════════ */
+
+.ged-panel { margin-top: 18px; }
+.ged-panel-sub { font-size: 12.5px; color: var(--gray-txt); margin: 4px 0 14px; }
+
+.ged-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.ged-toolbar select { padding: 7px 10px; border: 1.5px solid var(--gray-bd); border-radius: 8px; font-size: 13px; }
+
+.ged-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.ged-filters select { padding: 7px 10px; border: 1.5px solid var(--gray-bd); border-radius: 8px; font-size: 13px; }
+
+.ged-cat-card { margin-bottom: 14px; }
+
+.ged-doc-row {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--gray-bd); flex-wrap: wrap;
+}
+.ged-doc-row:last-child { border-bottom: none; }
+.ged-doc-row.ged-archived { opacity: .55; }
+.ged-doc-main { flex: 1; min-width: 200px; }
+.ged-doc-name { font-weight: 700; color: var(--navy); font-size: 13.5px; margin-bottom: 2px; }
+.ged-doc-meta { font-size: 11.5px; color: var(--gray-txt); }
+.ged-doc-model { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ged-doc-actions { display: flex; gap: 6px; }
+
+.ged-req { font-size: 10px; font-weight: 700; color: var(--danger); background: #fee2e2; padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+.ged-opt { font-size: 10px; font-weight: 700; color: var(--gray-txt); background: var(--gray-bg); padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+.ged-empty { font-size: 12px; color: var(--gray-txt); font-style: italic; }
+.ged-empty-msg { text-align: center; color: var(--gray-txt); padding: 16px; font-size: 13px; }
+
+.ged-form-field { margin-bottom: 12px; }
+.ged-form-field label { display: block; font-size: 11.5px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.ged-form-field input, .ged-form-field select, .ged-form-field textarea {
+  width: 100%; box-sizing: border-box; border: 1.5px solid var(--gray-bd); border-radius: 8px;
+  padding: 8px 10px; font-size: 13.5px; font-family: var(--font-body);
+}
+.ged-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .ged-form-row { grid-template-columns: 1fr; } }
+
+.ged-status { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: var(--gray-bg); color: var(--gray-txt); white-space: nowrap; }
+.ged-status-valide { background: #dcfce7; color: #166534; }
+.ged-status-refuse { background: #fee2e2; color: #991b1b; }
+.ged-status-en_attente { background: #fef9c3; color: #92400e; }
+.ged-status-correction { background: #dbeafe; color: #1e40af; }
+
+.ged-row-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.ged-badge-chip { font-size: 11.5px; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1.5px solid; }
+
+.ged-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 768px) { .ged-stats-grid { grid-template-columns: repeat(2, 1fr); } }
