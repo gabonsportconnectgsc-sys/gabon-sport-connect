@@ -205,11 +205,14 @@
   function rosterRow(cat, p) {
     p = p || {};
     const rowId = uid();
+    const QUALITES = ['', 'Amateur', 'Semi-professionnel', 'Professionnel', 'Sous contrat', 'Stagiaire'];
+    const qualiteOptions = QUALITES.map(q => `<option value="${esc(q)}" ${p.qualite === q ? 'selected' : ''}>${q || '—'}</option>`).join('');
     return `<tr id="${rowId}" data-cat="${esc(cat)}">
       <td><input type="text" data-r="nom" value="${esc(p.nom)}" placeholder="Nom complet"></td>
       <td><input type="number" min="0" data-r="age" value="${p.age ?? ''}" style="width:60px;"></td>
       <td><input type="date" data-r="dateNaissance" value="${esc(p.dateNaissance)}"></td>
       <td><input type="text" data-r="poste" value="${esc(p.poste)}" placeholder="Poste"></td>
+      <td><select data-r="qualite">${qualiteOptions}</select></td>
       <td><input type="text" data-r="infos" value="${esc(p.infos)}" placeholder="Infos essentielles"></td>
       <td><button type="button" class="btn-icon-danger" onclick="document.getElementById('${rowId}').remove()">✕</button></td>
     </tr>`;
@@ -223,7 +226,7 @@
       return `
       <div style="margin-bottom:14px;">
         <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${esc(cat)}</div>
-        <table class="mini-table"><thead><tr><th>Nom</th><th>Âge</th><th>Naissance</th><th>Poste</th><th>Infos</th><th></th></tr></thead>
+        <table class="mini-table"><thead><tr><th>Nom</th><th>Âge</th><th>Naissance</th><th>Poste</th><th>Qualité</th><th>Infos</th><th></th></tr></thead>
         <tbody id="sf-roster-${cssId(cat)}">${rows}</tbody></table>
         <button type="button" class="btn-sm" onclick="GSCStructureForm.addRosterRow('${esc(cat)}')">+ Ajouter dans ${esc(cat)}</button>
       </div>`;

@@ -199,7 +199,9 @@
     if (title) title.textContent = structure.nom || 'Fiche structure';
 
     if (P()) {
-      body.innerHTML = P().renderFullProfile(structure, structure.saisonCourante, null, 'public');
+      const up = window.userProfile;
+      const role = (up && up.role === 'admin') ? 'admin' : (up && up.structureId === id) ? 'manager' : 'public';
+      body.innerHTML = P().renderFullProfile(structure, structure.saisonCourante, null, role);
     } else {
       body.innerHTML = '<p>Moteur de profil indisponible.</p>';
     }

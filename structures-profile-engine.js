@@ -27,6 +27,20 @@
 
   const D = () => window.GSCDisciplines;
 
+  /* Catégories considérées mineures (protection données personnelles) —
+     valable pour toutes les disciplines qui utilisent cette nomenclature
+     (Poussin/Benjamin/Minime/Cadet ≈ moins de 18 ans). Les catégories hors
+     de cette liste (Junior, Espoir, Senior, Vétéran, etc.) sont traitées
+     comme majeures. */
+  const MINOR_CATEGORIES = ['Poussin', 'Benjamin', 'Minime', 'Cadet'];
+  function isMinorCategory(cat) { return MINOR_CATEGORIES.includes(cat); }
+
+  function canSeeSensitive(viewerRole) { return viewerRole === 'admin' || viewerRole === 'manager'; }
+
+  function qrMiniUrl(text) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent(text)}`;
+  }
+
   /* ══════════════════════════════════════════════════════════════════
    * 1. GESTION DES SAISONS
    * ══════════════════════════════════════════════════════════════════ */
@@ -106,11 +120,12 @@
       </div>`;
   }
 
-  function renderGovernanceBlock(s) {
+  function renderGovernanceBlock(s, viewerRole) {
     const g = s.gouvernance || {};
     const bureau = Array.isArray(g.bureau) ? g.bureau : [];
+    const showContacts = canSeeSensitive(viewerRole);
     const rows = bureau.map(b => `
-      <tr><td>${esc(b.role)}</td><td>${esc(b.nom)}</td><td>${esc(b.telephone) || '—'}</td><td>${esc(b.email) || '—'}</td></tr>
+      <tr><td>${esc(b.role)}</td><td>${esc(b.nom)}</td><td>${showContacts ? (esc(b.telephone) || '—') : '🔒'}</td><td>${showContacts ? (esc(b.email) || '—') : '🔒'}</td></tr>
     `).join('');
     return `
       <div class="adm-section">
@@ -118,6 +133,7 @@
         <p style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;">
           Mandat : ${esc(g.mandatDebut) || '—'} → ${esc(g.mandatFin) || '—'}
         </p>
+        ${!showContacts ? '<p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">📞 Coordonnées professionnelles réservées à la structure et à l\'administration.</p>' : ''}
         <table class="mini-table"><thead><tr><th>Rôle</th><th>Nom</th><th>Tél.</th><th>Email</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="4">Aucun membre renseigné</td></tr>'}</tbody></table>
       </div>`;
@@ -178,7 +194,7 @@
   function renderRosterBlock(saisonData, sport, saison, viewerRole) {
     const roster = saisonData.roster || {};
     const cats = Object.keys(roster).filter(c => (roster[c] || []).length);
-    const canSeeIdentities = viewerRole === 'admin' || viewerRole === 'manager';
+    const canSeeIdentities = canSeeSensitive(viewerRole);
 
     if (!cats.length) {
       return `
@@ -188,64 +204,100 @@
         </div>`;
     }
 
-    if (!canSeeIdentities) {
-      const rows = cats.map(cat => `
-        <tr><td>${esc(cat)}</td><td>${roster[cat].length}</td></tr>
-      `).join('');
+    // Vue admin/dirigeant : nominatif complet, toutes catégories.
+    if (canSeeIdentities) {
+      const blocks = cats.map(cat => {
+        const rows = (roster[cat] || []).map(p => `
+          <tr><td>${esc(p.nom)}</td><td>${p.age ?? '—'}</td><td>${esc(p.poste) || '—'}</td><td>${esc(p.qualite) || '—'}</td><td>${esc(p.dateNaissance) || '—'}</td><td>${esc(p.infos) || '—'}</td></tr>
+        `).join('');
+        return `
+          <div style="margin-bottom:14px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${esc(cat)} (${roster[cat].length}) ${isMinorCategory(cat) ? '🔒 mineur' : ''}</div>
+            <table class="mini-table"><thead><tr><th>Nom</th><th>Âge</th><th>Poste</th><th>Qualité</th><th>Naissance</th><th>Infos</th></tr></thead>
+            <tbody>${rows}</tbody></table>
+          </div>`;
+      }).join('');
       return `
         <div class="adm-section">
-          <div class="adm-section-title">📋 Effectifs par catégorie — Saison ${esc(saison)}</div>
+          <div class="adm-section-title">📋 Joueurs / Athlètes (nominatif) — Saison ${esc(saison)}</div>
           <p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">
-            Liste nominative réservée aux dirigeants de la structure et à l'administration (protection des données des mineurs).
+            Données sensibles (mineurs inclus) — visibles uniquement par vous (dirigeant/admin).
           </p>
-          <table class="mini-table"><thead><tr><th>Catégorie</th><th>Effectif</th></tr></thead>
-          <tbody>${rows}</tbody></table>
+          ${blocks}
         </div>`;
     }
 
+    // Vue publique : catégories mineures → effectif chiffré uniquement.
+    // Catégories majeures → liste limitée (nom, poste, qualité, QR miniature),
+    // sans aucune coordonnée personnelle.
     const blocks = cats.map(cat => {
-      const rows = (roster[cat] || []).map(p => `
-        <tr><td>${esc(p.nom)}</td><td>${p.age ?? '—'}</td><td>${esc(p.poste) || '—'}</td><td>${esc(p.dateNaissance) || '—'}</td><td>${esc(p.infos) || '—'}</td></tr>
-      `).join('');
-      return `
-        <div style="margin-bottom:14px;">
-          <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${esc(cat)} (${roster[cat].length})</div>
-          <table class="mini-table"><thead><tr><th>Nom</th><th>Âge</th><th>Poste</th><th>Naissance</th><th>Infos</th></tr></thead>
-          <tbody>${rows}</tbody></table>
-        </div>`;
+      const players = roster[cat] || [];
+      if (isMinorCategory(cat)) {
+        return `<tr><td>${esc(cat)} 🔒</td><td>${players.length}</td></tr>`;
+      }
+      return null;
+    }).filter(Boolean).join('');
+
+    const adultCats = cats.filter(c => !isMinorCategory(c));
+    const adultBlocks = adultCats.map(cat => {
+      const rows = (roster[cat] || []).map(p => {
+        const qrText = `${saisonData.__structureNom || ''} · ${p.nom || ''} · ${cat}`.trim();
+        return `
+          <div class="roster-pub-row">
+            <img class="roster-pub-qr" src="${qrMiniUrl(qrText)}" alt="QR" width="40" height="40">
+            <div class="roster-pub-info">
+              <div class="roster-pub-name">${esc(p.nom) || '—'}</div>
+              <div class="roster-pub-meta">${esc(p.poste) || '—'} ${p.qualite ? '· ' + esc(p.qualite) : ''}</div>
+            </div>
+          </div>`;
+      }).join('');
+      return `<div style="margin-bottom:12px;"><div style="font-weight:700;font-size:13px;margin-bottom:4px;">${esc(cat)} (${players.length})</div>${rows}</div>`;
     }).join('');
+
     return `
       <div class="adm-section">
-        <div class="adm-section-title">📋 Joueurs / Athlètes (nominatif) — Saison ${esc(saison)}</div>
-        <p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">
-          Données sensibles (mineurs) — visibles uniquement par vous (dirigeant/admin).
-        </p>
-        ${blocks}
+        <div class="adm-section-title">📋 Effectifs — Saison ${esc(saison)}</div>
+        ${blocks ? `
+          <p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">
+            Catégories mineures : effectif chiffré uniquement (protection des données des mineurs).
+          </p>
+          <table class="mini-table"><thead><tr><th>Catégorie</th><th>Effectif</th></tr></thead>
+          <tbody>${blocks}</tbody></table>` : ''}
+        ${adultBlocks ? `
+          <div style="margin-top:${blocks ? '14px' : '0'};">
+            <p style="font-size:11px;color:var(--gray-txt);margin-bottom:8px;">
+              Catégories majeures : nom, poste et qualité uniquement — coordonnées personnelles non affichées publiquement.
+            </p>
+            ${adultBlocks}
+          </div>` : ''}
       </div>`;
   }
 
-  function renderEncadrementBlock(saisonData, saison) {
+  function renderEncadrementBlock(saisonData, saison, viewerRole) {
     const list = Array.isArray(saisonData.encadrement) ? saisonData.encadrement : [];
+    const showContacts = canSeeSensitive(viewerRole);
     const rows = list.map(e => `
-      <tr><td>${esc(e.role)}</td><td>${esc(e.nom)}</td><td>${esc(e.telephone) || '—'}</td><td>${esc(e.email) || '—'}</td></tr>
+      <tr><td>${esc(e.role)}</td><td>${esc(e.nom)}</td><td>${showContacts ? (esc(e.telephone) || '—') : '🔒'}</td><td>${showContacts ? (esc(e.email) || '—') : '🔒'}</td></tr>
     `).join('');
     return `
       <div class="adm-section">
         <div class="adm-section-title">🎓 Encadrement — Saison ${esc(saison)}</div>
+        ${!showContacts ? '<p style="font-size:11px;color:var(--gray-txt);margin-bottom:6px;">📞 Coordonnées professionnelles réservées à la structure et à l\'administration.</p>' : ''}
         <table class="mini-table"><thead><tr><th>Rôle</th><th>Nom</th><th>Tél.</th><th>Email</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="4">Aucun encadrant renseigné</td></tr>'}</tbody></table>
       </div>`;
   }
 
-  function renderContactBlock(s) {
+  function renderContactBlock(s, viewerRole) {
+    const showContacts = canSeeSensitive(viewerRole);
     return `
       <div class="adm-section">
         <div class="adm-section-title">📞 Coordonnées</div>
         <div class="detail-grid">
           <div><strong>Adresse</strong><br>${esc(s.adresse) || '—'}</div>
-          <div><strong>Téléphone</strong><br>${esc(s.telephone || s.contact) || '—'}</div>
-          <div><strong>Email</strong><br>${esc(s.email) || '—'}</div>
-          <div><strong>WhatsApp</strong><br>${esc(s.whatsapp) || '—'}</div>
+          <div><strong>Téléphone</strong><br>${showContacts ? (esc(s.telephone || s.contact) || '—') : '🔒 Réservé à la structure et à l\'administration'}</div>
+          <div><strong>Email</strong><br>${showContacts ? (esc(s.email) || '—') : '🔒 Réservé à la structure et à l\'administration'}</div>
+          <div><strong>WhatsApp</strong><br>${showContacts ? (esc(s.whatsapp) || '—') : '🔒 Réservé à la structure et à l\'administration'}</div>
         </div>
         ${s.infrastructures ? `<div style="margin-top:8px;"><strong>Infrastructures</strong><br>${esc(s.infrastructures)}</div>` : ''}
       </div>`;
@@ -288,13 +340,13 @@
     return `
       ${seasonSelectorCallback ? renderSeasonSelector(structure, activeSaison, seasonSelectorCallback) : ''}
       ${renderIdentityBlock(structure)}
-      ${renderGovernanceBlock(structure)}
+      ${renderGovernanceBlock(structure, role)}
       ${renderLegalBlock(structure)}
       ${renderAffiliationsBlock(structure)}
       ${renderEffectifsBlock(saisonData, sport)}
-      ${renderRosterBlock(saisonData, sport, activeSaison, role)}
-      ${renderEncadrementBlock(saisonData, activeSaison)}
-      ${renderContactBlock(structure)}
+      ${renderRosterBlock({ ...saisonData, __structureNom: structure.nom }, sport, activeSaison, role)}
+      ${renderEncadrementBlock(saisonData, activeSaison, role)}
+      ${renderContactBlock(structure, role)}
       ${renderPresentationBlock(structure)}
     `;
   }

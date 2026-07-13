@@ -737,3 +737,16 @@
     align-self: flex-end;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   Vue publique du roster — catégories majeures (nom/poste/qualité/QR)
+   Ajouté 2026 — voir structures-profile-engine.js renderRosterBlock()
+   ══════════════════════════════════════════════════════════════════ */
+.roster-pub-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--gray-bd, #e2e8f0);
+}
+.roster-pub-row:last-child { border-bottom: none; }
+.roster-pub-qr { border-radius: 4px; flex-shrink: 0; }
+.roster-pub-name { font-weight: 700; font-size: 12.5px; color: var(--navy, #0A1628); }
+.roster-pub-meta { font-size: 11px; color: var(--gray-txt, #64748b); }
