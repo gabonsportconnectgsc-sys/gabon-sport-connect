@@ -1791,6 +1791,7 @@
       <div class="stats-grid fade-up" style="grid-template-columns:1fr;margin:10px 0 16px;">
         <button class="stat-card" onclick="isVisitor?goToAuth():showView('profil')"
           style="background:linear-gradient(135deg,#FFD700,#b8960c);padding:16px 12px;max-width:50%;margin:0 auto;">
+          <img class="stat-wm" data-wm-role="niveau" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
           <span class="anim-bars" style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;">📊</span>
           <div class="stat-val" id="stat-niveau" style="color:var(--navy);">—</div>
           <div class="stat-lbl" style="color:rgba(10,22,40,.75);">Mon niveau</div>
@@ -4356,6 +4357,7 @@ function renderDashboard(){
   const pct=Math.round((filled/fields.length)*100);
   document.getElementById('completion-fill').style.width=pct+'%';
   document.getElementById('completion-label').textContent=pct===100?'✅ Profil complet !':'Profil complété à '+pct+'% — Cliquez pour compléter';
+  if (typeof window._applyDashboardWatermarks === 'function') window._applyDashboardWatermarks();
 }
 
 // ── MISE À JOUR AVATAR TOPNAV ──
@@ -8935,12 +8937,32 @@ window.lookupManualGscId = lookupManualGscId;
 
   // Applique les photos/logos par défaut (par catégorie) en filigrane léger
   // dans les tuiles de l'accueil, derrière l'icône et le texte.
+  function _ownPhotoForNiveauTile(){
+    // Tuile personnelle "Mon niveau" : priorité à la propre photo du membre connecté,
+    // même logique de repli que le reste de l'app (a.photoURL || cache local || null).
+    try{
+      const p = window.userProfile;
+      if (!p) return null;
+      if (p.photoURL) return p.photoURL;
+      const s = localStorage.getItem('gsc_profile_photos');
+      if (s){
+        const d = JSON.parse(s);
+        if (d && d.photos && d.photos[p.uid]) return d.photos[p.uid];
+      }
+    }catch(e){ /* silencieux */ }
+    return null;
+  }
+
   function _applyDashboardWatermarks(){
     const imgs = document.querySelectorAll('.stat-wm[data-wm-role]');
     if (!imgs.length) return;
     imgs.forEach(function(img){
       const role = img.getAttribute('data-wm-role');
-      const url = window.GSC_DEFAULT_AVATARS && window.GSC_DEFAULT_AVATARS[role];
+      // Cas particulier : "Mon niveau" utilise la photo perso du membre connecté,
+      // et ne retombe sur l'image de catégorie admin que s'il n'en a pas encore.
+      const url = (role === 'niveau')
+        ? (_ownPhotoForNiveauTile() || (window.GSC_DEFAULT_AVATARS && window.GSC_DEFAULT_AVATARS['niveau']))
+        : (window.GSC_DEFAULT_AVATARS && window.GSC_DEFAULT_AVATARS[role]);
       if (url && img.getAttribute('src') !== url){
         img.classList.remove('is-loaded');
         img.src = url;
