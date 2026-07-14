@@ -7293,8 +7293,12 @@ const GSC_SPORTS_DATA = [
       president: 'Pierre Alain Mounguengui',
       fondee: 1962,
       affiliation: 'FIFA / CAF / UNIFFAC',
-      siege: 'Libreville',
-      email: 'fegafoot@gabon.com',
+      siege: 'Owendo (Maison Alexandre Sambat), Libreville',
+      siteWeb: 'https://fegafoot.ga',
+      // email volontairement absent : aucune adresse officielle vérifiable
+      // trouvée publiquement (la page contact officielle n'affiche même pas
+      // de numéro réel). Ne pas en inventer une — voir gsc-gabon-sports-data.js
+      // qui applique la même règle et laisse ce champ vide pour FEGAFOOT.
       img: SPORT_IMG.football,
       organe_pro: 'LINAFP — Ligue Nationale de Football Professionnel (Président : Brice Mbika Ndjambou)',
     },
@@ -7779,12 +7783,14 @@ function renderSportDetail(id) {
   const fedEl = document.getElementById('federation-detail');
   if (fedEl) fedEl.innerHTML = `
     <div class="fed-card mb-16">
-      <img src="${fed.img}" class="fed-card-logo" alt="${fed.sigle}" onerror="this.src='${SPORT_IMG.club}'">
+      <img src="${esc(sanitizeUrl(fed.img))}" class="fed-card-logo" alt="${esc(fed.sigle)}" onerror="this.src='${esc(SPORT_IMG.club)}'">
       <div class="fed-card-info">
-        <div class="fed-card-name">${fed.nom}</div>
-        <div class="fed-card-sigle">${fed.sigle} · Fondée en ${fed.fondee}</div>
-        <div class="fed-card-meta">${fed.affiliation}</div>
-        ${fed.president !== 'À confirmer' ? `<div class="fed-card-meta" style="color:var(--yellow);">Président : ${fed.president}</div>` : ''}
+        <div class="fed-card-name">${esc(fed.nom)}</div>
+        <div class="fed-card-sigle">${esc(fed.sigle)} · Fondée en ${esc(fed.fondee)}</div>
+        <div class="fed-card-meta">${esc(fed.affiliation)}</div>
+        ${fed.president !== 'À confirmer' ? `<div class="fed-card-meta" style="color:var(--yellow);">Président : ${esc(fed.president)}</div>` : ''}
+        ${fed.siege ? `<div class="fed-card-meta">📍 ${esc(fed.siege)}</div>` : ''}
+        ${fed.siteWeb ? `<div class="fed-card-meta"><a href="${esc(sanitizeUrl(fed.siteWeb))}" target="_blank" rel="noopener noreferrer">🔗 Site officiel</a></div>` : ''}
       </div>
     </div>`;
 
