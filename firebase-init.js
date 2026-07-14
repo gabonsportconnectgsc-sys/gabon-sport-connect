@@ -1,10 +1,27 @@
 /* ═══════════════════════════════════════════════════════════════
    FIREBASE-INIT.JS — Initialisation Firebase (SDK compat)
    Projet partagé avec index.html : gabon-sport-connect
+   ═══════════════════════════════════════════════════════════════
+   NOTE SÉCURITÉ :
+   La clé API Firebase ci-dessous N'EST PAS un secret. Elle identifie
+   le projet Firebase auprès de Google, elle n'authentifie personne.
+   Elle est destinée à être publique dans le code d'une app web
+   (voir doc officielle Firebase / Google Cloud).
+   L'obfuscation par concaténation de chaînes n'apporte AUCUNE
+   protection réelle — elle a été retirée pour ne pas donner une
+   fausse impression de sécurité.
+
+   La vraie protection contre les abus repose sur DEUX couches :
+   1. Restriction de la clé par domaine dans Google Cloud Console
+      → API et services → Identifiants (déjà configuré pour ce
+      projet : firebaseapp.com, web.app, github.io)
+   2. Firestore Security Rules strictes (à vérifier/renforcer dans
+      la console Firebase → Firestore → Règles)
+   Ne JAMAIS considérer la clé API comme la barrière de sécurité.
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   const FIREBASE_CONFIG = {
-    apiKey: ['AIza', 'SyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi', '14VM'].join(''),
+    apiKey: "AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM",
     authDomain: "gabon-sport-connect.firebaseapp.com",
     projectId: "gabon-sport-connect",
     storageBucket: "gabon-sport-connect.appspot.com",
