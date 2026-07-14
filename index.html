@@ -3286,6 +3286,25 @@ var db=null, _fbApp=null;
 var doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs,
     query, orderBy, serverTimestamp, deleteDoc, where, limit, collectionGroup;
 
+/* ── Échappement HTML global ──────────────────────────────────────────────
+   Ce fichier assemble énormément de HTML par template literal avec des
+   champs de profil (nom, club, ville, sport…) directement fournis par les
+   utilisateurs (inscription, édition de profil), puis l'injecte via
+   innerHTML dans l'annuaire PUBLIC (visible sans connexion) et la fiche
+   détail d'acteur. Sans échappement, un simple nom de profil contenant du
+   HTML/JS s'exécute pour TOUT visiteur du site (XSS stocké non authentifié).
+   esc() DOIT envelopper toute donnée utilisateur insérée via innerHTML.
+   sanitizeUrl() bloque en plus les URLs "javascript:" placées dans un
+   attribut src/href/background-image (esc() seul ne le fait pas). */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+function sanitizeUrl(u){
+  const s=String(u==null?'':u).trim();
+  if(!s) return '';
+  if(/^[a-z][a-z0-9+.-]*:/i.test(s)) return /^(https?:|data:image\/)/i.test(s) ? s : '';
+  return s;
+}
+
 // ── POSTES ──
 const POSTES = {
   Football:['Gardien','Défenseur central','Latéral droit','Latéral gauche','Milieu défensif','Milieu central','Milieu offensif','Ailier droit','Ailier gauche','Attaquant','Avant-centre'],
@@ -3484,7 +3503,8 @@ async function handleSupabaseLogin(){
   }catch(e){
     const msg=(e&&e.message)||'';
     if(/email not confirmed/i.test(msg)){
-      errEl.innerHTML = 'Veuillez confirmer votre email avant de vous connecter. <a onclick="handleResendConfirmation(\''+email.replace(/'/g,"\\'")+'\')" style="text-decoration:underline;cursor:pointer;color:var(--green-dk);">Renvoyer l\'email</a>';
+      const emailJs=String(email).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      errEl.innerHTML = 'Veuillez confirmer votre email avant de vous connecter. <a onclick="handleResendConfirmation(\''+esc(emailJs)+'\')" style="text-decoration:underline;cursor:pointer;color:var(--green-dk);">Renvoyer l\'email</a>';
       errEl.style.display='block';
     }else{
       errEl.textContent = supabaseAuthErrorMessage(e);
@@ -4083,10 +4103,10 @@ async function renderLoginHistoryCompact(){
   el.innerHTML = rows.map(r=>{
     const {date,heure} = lhDateLabel(r.date);
     return `<div class="login-history-row">
-      <div class="login-history-avatar">${lhInitials(r.nom)}</div>
+      <div class="login-history-avatar">${esc(lhInitials(r.nom))}</div>
       <div class="login-history-info">
-        <div class="login-history-name">${r.nom}</div>
-        <div class="login-history-meta"><span>#${lhId(r)}</span><span class="lh-dot">·</span><span>${lhLieu(r)}</span></div>
+        <div class="login-history-name">${esc(r.nom)}</div>
+        <div class="login-history-meta"><span>#${esc(lhId(r))}</span><span class="lh-dot">·</span><span>${esc(lhLieu(r))}</span></div>
       </div>
       <div class="login-history-time"><span class="lh-date">${date}</span>${heure}</div>
     </div>`;
@@ -4115,10 +4135,10 @@ async function openLoginHistoryModal(){
       lastDay = dayKey;
     }
     html += `<div class="login-history-full-row">
-      <div class="login-history-avatar">${lhInitials(r.nom)}</div>
+      <div class="login-history-avatar">${esc(lhInitials(r.nom))}</div>
       <div class="login-history-info">
-        <div class="login-history-name">${r.nom}</div>
-        <div class="login-history-meta"><span>ID #${lhId(r)}</span><span class="lh-dot">·</span><span>${lhLieu(r)}</span></div>
+        <div class="login-history-name">${esc(r.nom)}</div>
+        <div class="login-history-meta"><span>ID #${esc(lhId(r))}</span><span class="lh-dot">·</span><span>${esc(lhLieu(r))}</span></div>
       </div>
       <div class="login-history-time"><span class="lh-date">${date}</span>${heure}</div>
     </div>`;
@@ -4305,7 +4325,8 @@ function renderDashboard(){
   const navAv=document.getElementById('nav-avatar');
   if(navPhotoSrc){
     // Afficher la photo — fallback sur initiale si l'image échoue à charger
-    navAv.innerHTML=`<img src="${navPhotoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    const initialJs=esc(String(initial).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+    navAv.innerHTML=`<img src="${esc(sanitizeUrl(navPhotoSrc))}" alt="${esc(initial)}" onerror="this.parentElement.textContent='${initialJs}'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     navAv.style.borderColor='rgba(0,200,100,.7)';
     navAv.style.fontSize='';
   } else {
@@ -4349,7 +4370,8 @@ function refreshNavAvatar(){
   const navAv=document.getElementById('nav-avatar');
   if(!navAv) return;
   if(photoSrc){
-    navAv.innerHTML=`<img src="${photoSrc}" alt="${initial}" onerror="this.parentElement.textContent='${initial}'">`;
+    const initialJs=esc(String(initial).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+    navAv.innerHTML=`<img src="${esc(sanitizeUrl(photoSrc))}" alt="${esc(initial)}" onerror="this.parentElement.textContent='${initialJs}'">`;
   } else {
     navAv.textContent=initial;
   }
@@ -4585,16 +4607,16 @@ function renderActors(actors){
       const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
       // Ordre professionnel : ID · Rôle · Club/Association — affiché sous le nom
       const meta=[gscId,roleShort,clubOrg].filter(Boolean).join(' · ');
-      const avatarHtml=photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
+      const avatarHtml=photoSrc?`<img src="${esc(sanitizeUrl(photoSrc))}" alt="${esc(name)}" loading="lazy" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:`<span style="font-size:15px;">${roleIcon}</span>`;
       const demoTag=a.isDemo?`<span title="Fiche de démonstration" style="font-size:9px;font-weight:800;color:#94a3b8;background:#f1f5f9;border-radius:8px;padding:1px 6px;margin-left:6px;letter-spacing:.3px;">DÉMO</span>`:'';
-      return `<div class="actor-compact-row" onclick="openActorDetail('${id}')">
+      return `<div class="actor-compact-row" onclick="openActorDetail('${esc(id)}')">
         <div class="acr-avatar">${avatarHtml}</div>
         <div class="acr-info">
-          <div class="acr-name">${name}${demoTag}</div>
-          <div class="acr-meta">${meta}</div>
+          <div class="acr-name">${esc(name)}${demoTag}</div>
+          <div class="acr-meta">${esc(meta)}</div>
         </div>
         <span class="acr-badge ${roleKey}">${roleShort}</span>
-        <div class="acr-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-mini-${idx}">
+        <div class="acr-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${esc(id)}','${roleKey}')" id="qr-mini-${idx}">
           <canvas id="qr-canvas-mini-${idx}" width="28" height="28"></canvas>
         </div>
       </div>`;
@@ -4634,7 +4656,7 @@ function renderActors(actors){
         if(!GROUP_ORDER.includes(role)){
           const list=buckets[role];
           html+=`<div class="actors-group-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;margin-top:10px;">
-            <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">👤 ${role}</span>
+            <span style="font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.3px;">👤 ${esc(role)}</span>
             <span style="font-size:11px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-radius:12px;padding:2px 9px;">${list.length}</span>
           </div>`;
           html+=`<div class="actors-compact-list">`+list.map((a,i)=>renderRow(a,'g'+role+i)).join('')+`</div>`;
@@ -4701,28 +4723,28 @@ function renderActors(actors){
       const gscId=a.gscId||(typeof generateGscId==='function'?generateGscId(id,roleKey):('GSC-'+(id||'').slice(0,6).toUpperCase()));
       const qrIdx=qrIndexCounter++;
       return `
-        <div class="actor-card" onclick="openActorDetail('${id}')">
+        <div class="actor-card" onclick="openActorDetail('${esc(id)}')">
           <div class="actor-card-header">
             <div class="actor-avatar-wrap">
-              <div class="actor-avatar">${photoSrc?`<img src="${photoSrc}" alt="${name}" loading="lazy">`:(ROLE_ICONS[roleKey]||initial)}</div>
-              <div class="actor-type-dot ${roleKey}" title="${roleName}">${typeDotIcon}</div>
+              <div class="actor-avatar">${photoSrc?`<img src="${esc(sanitizeUrl(photoSrc))}" alt="${esc(name)}" loading="lazy">`:(ROLE_ICONS[roleKey]||esc(initial))}</div>
+              <div class="actor-type-dot ${roleKey}" title="${esc(roleName)}">${typeDotIcon}</div>
             </div>
-            <div class="actor-name">${name}${demoTag}</div>
-            <div class="actor-gscid-pill" title="Identifiant GSC">${gscId}</div>
+            <div class="actor-name">${esc(name)}${demoTag}</div>
+            <div class="actor-gscid-pill" title="Identifiant GSC">${esc(gscId)}</div>
           </div>
           <div class="actor-card-body">
             <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <span class="actor-type-badge ${badgeClass}">${roleName}</span>
-              <div class="actor-card-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${id}','${roleKey}')" id="qr-card-${qrIdx}">
+              <span class="actor-type-badge ${badgeClass}">${esc(roleName)}</span>
+              <div class="actor-card-qr" title="QR Code d'identification" onclick="event.stopPropagation();openActorQrZoom&&openActorQrZoom('${esc(id)}','${roleKey}')" id="qr-card-${qrIdx}">
                 <canvas id="qr-canvas-card-${qrIdx}" width="26" height="26"></canvas>
               </div>
             </div>
-            ${clubOrg?`<div class="actor-meta-row">🏟️ ${clubOrg}</div>`:''}
-            <div class="actor-meta-row">🏅 ${a.sport||a.sports?.join(', ')||'—'}</div>
-            <div class="actor-meta-row">📍 ${a.ville||'—'}</div>
-            ${a.niveau?`<div class="actor-meta-row">📊 ${a.niveau}</div>`:''}
-            ${a.etablissement?`<div class="actor-meta-row">🎓 ${a.etablissement}</div>`:''}
-            ${a.nationalite?`<div class="actor-meta-row">🌍 ${a.nationalite}${a.statutPro?' · '+a.statutPro:''}</div>`:''}
+            ${clubOrg?`<div class="actor-meta-row">🏟️ ${esc(clubOrg)}</div>`:''}
+            <div class="actor-meta-row">🏅 ${esc(a.sport||a.sports?.join(', ')||'—')}</div>
+            <div class="actor-meta-row">📍 ${esc(a.ville||'—')}</div>
+            ${a.niveau?`<div class="actor-meta-row">📊 ${esc(a.niveau)}</div>`:''}
+            ${a.etablissement?`<div class="actor-meta-row">🎓 ${esc(a.etablissement)}</div>`:''}
+            ${a.nationalite?`<div class="actor-meta-row">🌍 ${esc(a.nationalite)}${a.statutPro?' · '+esc(a.statutPro):''}</div>`:''}
           </div>
         </div>`;
     };
@@ -4766,11 +4788,11 @@ function openActorDetail(uid){
   try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);localPhoto=d.photos?.[uid]||null;}}catch(e){}
   const detailPhotoSrc=a.photoURL||(a.photo&&a.photo.startsWith('data:')?a.photo:null)||localPhoto||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[a.role])||null;
   const el=document.getElementById('adm-avatar');
-  if(detailPhotoSrc) el.innerHTML=`<img src="${detailPhotoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  if(detailPhotoSrc) el.innerHTML=`<img src="${esc(sanitizeUrl(detailPhotoSrc))}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   else el.textContent=ROLE_ICONS[a.role]||initial;
   // Photo de couverture : zone d'arrière-plan derrière logo/nom/QR, modifiable par le propriétaire du profil
   const coverEl=document.getElementById('adm-cover-bg');
-  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${a.coverURL}')`:'none';
+  if(coverEl) coverEl.style.backgroundImage=a.coverURL?`url('${sanitizeUrl(a.coverURL)}')`:'none';
   const isOwnerForCover=currentUser&&(a.uid||a.id)===currentUser.uid;
   const coverBtn=document.getElementById('adm-cover-edit-btn');
   if(coverBtn) coverBtn.style.display=isOwnerForCover?'flex':'none';
@@ -4817,10 +4839,10 @@ function openActorDetail(uid){
   let html='';
   // Infos générales
   html+=`<div class="adm-section"><div class="adm-section-title">📋 Informations générales</div>`;
-  html+=`<div class="adm-info-row"><span class="adm-info-label">Ville</span><span class="adm-info-val">📍 ${a.ville||'—'}</span></div>`;
-  html+=`<div class="adm-info-row"><span class="adm-info-label">Sport</span><span class="adm-info-val">🏅 ${a.sport||a.sports?.join(', ')||'—'}</span></div>`;
-  if(a.niveau) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">📊 ${a.niveau}</span></div>`;
-  if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${a.nationalite}</span></div>`;
+  html+=`<div class="adm-info-row"><span class="adm-info-label">Ville</span><span class="adm-info-val">📍 ${esc(a.ville||'—')}</span></div>`;
+  html+=`<div class="adm-info-row"><span class="adm-info-label">Sport</span><span class="adm-info-val">🏅 ${esc(a.sport||a.sports?.join(', ')||'—')}</span></div>`;
+  if(a.niveau) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">📊 ${esc(a.niveau)}</span></div>`;
+  if(a.nationalite) html+=`<div class="adm-info-row"><span class="adm-info-label">Nationalité</span><span class="adm-info-val">${esc(a.nationalite)}</span></div>`;
   html+=`</div>`;
   // Contact public (optionnel) — uniquement pour comptes indépendants,
   // organisateurs, ou statut "libre" (aucune structure/affiliation), et
@@ -4829,8 +4851,8 @@ function openActorDetail(uid){
   const isPublicContactEligible=a.role==='independant'||a.role==='organisateur'||(a.statut||'').toLowerCase()==='libre';
   if(isPublicContactEligible && (a.publicContactEmail||a.publicContactPhone)){
     html+=`<div class="adm-section"><div class="adm-section-title">📇 Contact public</div>`;
-    if(a.publicContactEmail) html+=`<div class="adm-info-row"><span class="adm-info-label">Email</span><span class="adm-info-val">✉️ ${a.publicContactEmail}</span></div>`;
-    if(a.publicContactPhone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">📞 ${a.publicContactPhone}</span></div>`;
+    if(a.publicContactEmail) html+=`<div class="adm-info-row"><span class="adm-info-label">Email</span><span class="adm-info-val">✉️ ${esc(a.publicContactEmail)}</span></div>`;
+    if(a.publicContactPhone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">📞 ${esc(a.publicContactPhone)}</span></div>`;
     html+=`</div>`;
   }
   if(isPersonnel){
@@ -4838,8 +4860,8 @@ function openActorDetail(uid){
     if((a.taille||a.poids) && !isVisitor){
       html+=`<div class="adm-section"><div class="adm-section-title">💪 Profil physique</div>`;
       html+=`<div class="adm-stats-grid">`;
-      if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.taille}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
-      if(a.poids) html+=`<div class="adm-stat"><div class="adm-stat-val">${a.poids}</div><div class="adm-stat-lbl">Poids kg</div></div>`;
+      if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.taille)}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
+      if(a.poids) html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.poids)}</div><div class="adm-stat-lbl">Poids kg</div></div>`;
       if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
@@ -4848,11 +4870,11 @@ function openActorDetail(uid){
       const BALL_TEAM_SPORTS_ADM=['Football','Basketball','Handball','Volleyball','Rugby'];
       html+=`<div class="adm-section"><div class="adm-section-title">📊 Statistiques</div>`;
       html+=`<div class="adm-stats-grid">`;
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.matchsJoues??0}</div><div class="adm-stat-lbl">Matchs</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.matchsJoues??0)}</div><div class="adm-stat-lbl">Matchs</div></div>`;
       if(BALL_TEAM_SPORTS_ADM.includes(a.sport)){
-        html+=`<div class="adm-stat"><div class="adm-stat-val">${a.buts??0}</div><div class="adm-stat-lbl">${a.sport==='Basketball'?'Points':'Buts'}</div></div>`;
+        html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.buts??0)}</div><div class="adm-stat-lbl">${a.sport==='Basketball'?'Points':'Buts'}</div></div>`;
       }
-      html+=`<div class="adm-stat"><div class="adm-stat-val">${a.trophees??0}</div><div class="adm-stat-lbl">Trophées</div></div>`;
+      html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.trophees??0)}</div><div class="adm-stat-lbl">Trophées</div></div>`;
       html+=`</div></div>`;
     }
     // Mandats
@@ -4860,41 +4882,41 @@ function openActorDetail(uid){
     if(mandats.length||a.club){
       html+=`<div class="adm-section"><div class="adm-section-title">📅 Mandats & Clubs</div>`;
       if(a.club){
-        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${a.club}</div>${a.poste?`<div class="mandat-dates">Poste : ${a.poste}</div>`:''}</div>`;
+        html+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${esc(a.club)}</div>${a.poste?`<div class="mandat-dates">Poste : ${esc(a.poste)}</div>`:''}</div>`;
       }
       mandats.forEach(m=>{
-        html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
+        html+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${esc(m.club||'—')}</div><div class="mandat-dates">${esc(m.dateDebut||'')}${m.dateFin?' → '+esc(m.dateFin):' → en cours'}</div>${m.poste?`<div class="mandat-title">${esc(m.poste)}</div>`:''}</div>`;
       });
       html+=`</div>`;
     }
     // Licence — donnée sensible : propriétaire, club employeur ou admin uniquement
     if(a.licenceNumero && canViewSensitive){
       html+=`<div class="adm-section"><div class="adm-section-title">🪪 Licence officielle</div>`;
-      html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceNumero}</span></div>`;
-      if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${a.licenceExpire}</span></div>`;
+      html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${esc(a.licenceNumero)}</span></div>`;
+      if(a.licenceExpire) html+=`<div class="adm-info-row"><span class="adm-info-label">Expire le</span><span class="adm-info-val">${esc(a.licenceExpire)}</span></div>`;
       html+=`</div>`;
     }
   }
   if(isOrg){
-    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${a.president}</span></div>`;
-    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${a.anneeCreation}</span></div>`;
-    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${a.effectif} membres</span></div>`;
+    if(a.president) html+=`<div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${esc(a.president)}</span></div>`;
+    if(a.anneeCreation) html+=`<div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${esc(a.anneeCreation)}</span></div>`;
+    if(a.effectif) html+=`<div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${esc(a.effectif)} membres</span></div>`;
   }
   // Élève / Étudiant — infos académiques
   if(a.role==='eleve_etudiant'){
     html+=`<div class="adm-section"><div class="adm-section-title">🎓 Profil académique</div>`;
-    if(a.niveauScolaire) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${a.niveauScolaire}</span></div>`;
-    if(a.etablissement) html+=`<div class="adm-info-row"><span class="adm-info-label">Établissement</span><span class="adm-info-val">${a.etablissement}</span></div>`;
-    if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${a.filiere}</span></div>`;
+    if(a.niveauScolaire) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${esc(a.niveauScolaire)}</span></div>`;
+    if(a.etablissement) html+=`<div class="adm-info-row"><span class="adm-info-label">Établissement</span><span class="adm-info-val">${esc(a.etablissement)}</span></div>`;
+    if(a.filiere) html+=`<div class="adm-info-row"><span class="adm-info-label">Filière</span><span class="adm-info-val">${esc(a.filiere)}</span></div>`;
     html+=`</div>`;
   }
   // Sportif étranger — statut & vérification documentaire (le n° de document exact
   // reste une donnée sensible réservée au propriétaire, son club employeur ou l'admin)
   if(a.role==='sportif_etranger'){
     html+=`<div class="adm-section"><div class="adm-section-title">🌍 Statut sportif étranger</div>`;
-    if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${a.statutPro}</span></div>`;
-    if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${a.employeur}</span></div>`;
-    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${a.documentType}${(a.documentNumero&&canViewSensitive)?' n° '+a.documentNumero:''}</span></div>`;
+    if(a.statutPro) html+=`<div class="adm-info-row"><span class="adm-info-label">Statut</span><span class="adm-info-val">${esc(a.statutPro)}</span></div>`;
+    if(a.employeur) html+=`<div class="adm-info-row"><span class="adm-info-label">Employeur / Club</span><span class="adm-info-val">${esc(a.employeur)}</span></div>`;
+    if(a.documentType) html+=`<div class="adm-info-row"><span class="adm-info-label">Document</span><span class="adm-info-val">${esc(a.documentType)}${(a.documentNumero&&canViewSensitive)?' n° '+esc(a.documentNumero):''}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Vérification</span><span class="adm-info-val">${a.documentVerifie?'✅ Vérifié':'⏳ Non vérifié'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://tms.fifa.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 FIFA TMS</a>
@@ -4902,7 +4924,7 @@ function openActorDetail(uid){
       <a href="https://www.cafonline.com" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 CAF</a>
     </div>`;
     if(userProfile?.role==='admin'){
-      html+=`<button class="btn-sm" onclick="event.stopPropagation();toggleDocumentVerifie('${a.uid||a.id}',${!a.documentVerifie})" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--green);border-radius:8px;background:${a.documentVerifie?'#fff':'var(--green)'};color:${a.documentVerifie?'var(--green-dk)':'#fff'};cursor:pointer;font-weight:700;">${a.documentVerifie?'Marquer non vérifié':'✅ Marquer comme vérifié'}</button>`;
+      html+=`<button class="btn-sm" onclick="event.stopPropagation();toggleDocumentVerifie('${esc(a.uid||a.id)}',${!a.documentVerifie})" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--green);border-radius:8px;background:${a.documentVerifie?'#fff':'var(--green)'};color:${a.documentVerifie?'var(--green-dk)':'#fff'};cursor:pointer;font-weight:700;">${a.documentVerifie?'Marquer non vérifié':'✅ Marquer comme vérifié'}</button>`;
     }
     html+=`</div>`;
   }
@@ -4911,16 +4933,16 @@ function openActorDetail(uid){
     const HS_CAT_LABELS={visuelle:'👁️ Déficience visuelle',auditive:'👂 Déficience auditive',motrice_amputation:'🦵 Amputation / déficience des membres',motrice_paralysie:'🧠 Paralysie cérébrale / lésion cérébrale',motrice_moelle:'🦽 Lésion médullaire',motrice_autre:'🚶 Autre déficience motrice',intellectuelle:'🧩 Déficience intellectuelle',multiple:'➕ Déficiences multiples',autre:'📋 Autre'};
     const HS_CADRE_LABELS={federation:'Fégoph / Comité Paralympique Gabonais',club_ordinaire:'Club ordinaire, section adaptée',independant:'Indépendant, hors structure fédérale',etablissement:'Établissement spécialisé / centre de rééducation'};
     html+=`<div class="adm-section"><div class="adm-section-title">🦾 Profil sportif handisport</div>`;
-    if(a.handicapCategorie) html+=`<div class="adm-info-row"><span class="adm-info-label">Type de déficience</span><span class="adm-info-val">${HS_CAT_LABELS[a.handicapCategorie]||a.handicapCategorie}</span></div>`;
-    if(a.handicapPrecision) html+=`<div class="adm-info-row"><span class="adm-info-label">Précision</span><span class="adm-info-val">${a.handicapPrecision}</span></div>`;
-    if(a.classeSportive) html+=`<div class="adm-info-row"><span class="adm-info-label">Classe sportive</span><span class="adm-info-val">${a.classeSportive}${a.organismeClassificateur?' — '+a.organismeClassificateur:''}</span></div>`;
-    if(a.disciplineParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Discipline</span><span class="adm-info-val">${a.disciplineParaSport}</span></div>`;
-    if(a.niveauParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${a.niveauParaSport}</span></div>`;
-    if(a.cadrePratique) html+=`<div class="adm-info-row"><span class="adm-info-label">Cadre de pratique</span><span class="adm-info-val">${HS_CADRE_LABELS[a.cadrePratique]||a.cadrePratique}</span></div>`;
-    if(a.club) html+=`<div class="adm-info-row"><span class="adm-info-label">Club / Structure</span><span class="adm-info-val">🏟️ ${a.club}</span></div>`;
-    if(Array.isArray(a.equipementsAdaptes)&&a.equipementsAdaptes.length) html+=`<div class="adm-info-row"><span class="adm-info-label">Équipements</span><span class="adm-info-val">${a.equipementsAdaptes.join(', ')}</span></div>`;
-    if(a.besoinGuide) html+=`<div class="adm-info-row"><span class="adm-info-label">Guide / accompagnateur</span><span class="adm-info-val">✅ ${a.nomGuide||'Oui'}</span></div>`;
-    if(a.licenceFegoph) html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${a.licenceFegoph}</span></div>`;
+    if(a.handicapCategorie) html+=`<div class="adm-info-row"><span class="adm-info-label">Type de déficience</span><span class="adm-info-val">${esc(HS_CAT_LABELS[a.handicapCategorie]||a.handicapCategorie)}</span></div>`;
+    if(a.handicapPrecision) html+=`<div class="adm-info-row"><span class="adm-info-label">Précision</span><span class="adm-info-val">${esc(a.handicapPrecision)}</span></div>`;
+    if(a.classeSportive) html+=`<div class="adm-info-row"><span class="adm-info-label">Classe sportive</span><span class="adm-info-val">${esc(a.classeSportive)}${a.organismeClassificateur?' — '+esc(a.organismeClassificateur):''}</span></div>`;
+    if(a.disciplineParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Discipline</span><span class="adm-info-val">${esc(a.disciplineParaSport)}</span></div>`;
+    if(a.niveauParaSport) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau</span><span class="adm-info-val">${esc(a.niveauParaSport)}</span></div>`;
+    if(a.cadrePratique) html+=`<div class="adm-info-row"><span class="adm-info-label">Cadre de pratique</span><span class="adm-info-val">${esc(HS_CADRE_LABELS[a.cadrePratique]||a.cadrePratique)}</span></div>`;
+    if(a.club) html+=`<div class="adm-info-row"><span class="adm-info-label">Club / Structure</span><span class="adm-info-val">🏟️ ${esc(a.club)}</span></div>`;
+    if(Array.isArray(a.equipementsAdaptes)&&a.equipementsAdaptes.length) html+=`<div class="adm-info-row"><span class="adm-info-label">Équipements</span><span class="adm-info-val">${esc(a.equipementsAdaptes.join(', '))}</span></div>`;
+    if(a.besoinGuide) html+=`<div class="adm-info-row"><span class="adm-info-label">Guide / accompagnateur</span><span class="adm-info-val">✅ ${esc(a.nomGuide||'Oui')}</span></div>`;
+    if(a.licenceFegoph) html+=`<div class="adm-info-row"><span class="adm-info-label">N° Licence</span><span class="adm-info-val">${esc(a.licenceFegoph)}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Carte d'invalidité</span><span class="adm-info-val">${a.carteInvalidite?'✅ Reconnue':'⏳ Non renseignée'}</span></div>`;
     html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
       <a href="https://www.paralympic.org/" target="_blank" rel="noopener" class="btn-sm" style="padding:6px 10px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;text-decoration:none;color:var(--navy);font-weight:700;">🔗 Comité Paralympique International</a>
@@ -4930,37 +4952,37 @@ function openActorDetail(uid){
   // Ancien Sportif — carrière terminée, palmarès et reconversion
   if(a.role==='ancien_sportif'){
     html+=`<div class="adm-section"><div class="adm-section-title">🎖️ Carrière sportive</div>`;
-    if(a.poste) html+=`<div class="adm-info-row"><span class="adm-info-label">Poste / Spécialité</span><span class="adm-info-val">${a.poste}</span></div>`;
-    if(a.niveauCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau atteint</span><span class="adm-info-val">${a.niveauCarriere}</span></div>`;
-    if(a.anneeDebutCarriere||a.anneeFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Période</span><span class="adm-info-val">${a.anneeDebutCarriere||'?'} – ${a.anneeFinCarriere||'?'}</span></div>`;
-    if(a.clubsRepresentes) html+=`<div class="adm-info-row"><span class="adm-info-label">Clubs représentés</span><span class="adm-info-val">${a.clubsRepresentes}</span></div>`;
-    if(a.selectionNationale) html+=`<div class="adm-info-row"><span class="adm-info-label">Sélection nationale</span><span class="adm-info-val">✅ ${a.nbSelections?a.nbSelections+' sélections':'Oui'}</span></div>`;
-    if(a.raisonFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Fin de carrière</span><span class="adm-info-val">${a.raisonFinCarriere}</span></div>`;
-    if(a.faitsMarquants) html+=`<div class="adm-info-row"><span class="adm-info-label">Faits marquants</span><span class="adm-info-val">${a.faitsMarquants}</span></div>`;
+    if(a.poste) html+=`<div class="adm-info-row"><span class="adm-info-label">Poste / Spécialité</span><span class="adm-info-val">${esc(a.poste)}</span></div>`;
+    if(a.niveauCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau atteint</span><span class="adm-info-val">${esc(a.niveauCarriere)}</span></div>`;
+    if(a.anneeDebutCarriere||a.anneeFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Période</span><span class="adm-info-val">${esc(a.anneeDebutCarriere||'?')} – ${esc(a.anneeFinCarriere||'?')}</span></div>`;
+    if(a.clubsRepresentes) html+=`<div class="adm-info-row"><span class="adm-info-label">Clubs représentés</span><span class="adm-info-val">${esc(a.clubsRepresentes)}</span></div>`;
+    if(a.selectionNationale) html+=`<div class="adm-info-row"><span class="adm-info-label">Sélection nationale</span><span class="adm-info-val">✅ ${a.nbSelections?esc(a.nbSelections)+' sélections':'Oui'}</span></div>`;
+    if(a.raisonFinCarriere) html+=`<div class="adm-info-row"><span class="adm-info-label">Fin de carrière</span><span class="adm-info-val">${esc(a.raisonFinCarriere)}</span></div>`;
+    if(a.faitsMarquants) html+=`<div class="adm-info-row"><span class="adm-info-label">Faits marquants</span><span class="adm-info-val">${esc(a.faitsMarquants)}</span></div>`;
     html+=`</div>`;
     html+=`<div class="adm-section"><div class="adm-section-title">🔄 Reconversion</div>`;
-    if(a.reconversionActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Activité actuelle</span><span class="adm-info-val">${a.reconversionActuelle}</span></div>`;
-    if(a.structureActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Structure actuelle</span><span class="adm-info-val">${a.structureActuelle}</span></div>`;
+    if(a.reconversionActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Activité actuelle</span><span class="adm-info-val">${esc(a.reconversionActuelle)}</span></div>`;
+    if(a.structureActuelle) html+=`<div class="adm-info-row"><span class="adm-info-label">Structure actuelle</span><span class="adm-info-val">${esc(a.structureActuelle)}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Disponible mentorat</span><span class="adm-info-val">${a.disponibiliteMentorat?'✅ Oui':'—'}</span></div>`;
     html+=`</div>`;
   }
   // Formateur — spécialité, certifications et disponibilité de formation
   if(a.role==='formateur'){
     html+=`<div class="adm-section"><div class="adm-section-title">🧑‍🏫 Profil formateur</div>`;
-    if(a.specialiteFormation) html+=`<div class="adm-info-row"><span class="adm-info-label">Spécialité</span><span class="adm-info-val">${a.specialiteFormation}</span></div>`;
-    if(a.niveauFormateur) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau de certification</span><span class="adm-info-val">${a.niveauFormateur}</span></div>`;
-    if(a.organismeCertificateur) html+=`<div class="adm-info-row"><span class="adm-info-label">Organisme certificateur</span><span class="adm-info-val">${a.organismeCertificateur}</span></div>`;
-    if(a.structureRattachement) html+=`<div class="adm-info-row"><span class="adm-info-label">Structure de rattachement</span><span class="adm-info-val">🏟️ ${a.structureRattachement}</span></div>`;
-    if(a.anneesExperienceFormation) html+=`<div class="adm-info-row"><span class="adm-info-label">Années d'expérience</span><span class="adm-info-val">${a.anneesExperienceFormation}</span></div>`;
-    if(a.nbApprenantsFormes) html+=`<div class="adm-info-row"><span class="adm-info-label">Apprenants formés</span><span class="adm-info-val">${a.nbApprenantsFormes}</span></div>`;
+    if(a.specialiteFormation) html+=`<div class="adm-info-row"><span class="adm-info-label">Spécialité</span><span class="adm-info-val">${esc(a.specialiteFormation)}</span></div>`;
+    if(a.niveauFormateur) html+=`<div class="adm-info-row"><span class="adm-info-label">Niveau de certification</span><span class="adm-info-val">${esc(a.niveauFormateur)}</span></div>`;
+    if(a.organismeCertificateur) html+=`<div class="adm-info-row"><span class="adm-info-label">Organisme certificateur</span><span class="adm-info-val">${esc(a.organismeCertificateur)}</span></div>`;
+    if(a.structureRattachement) html+=`<div class="adm-info-row"><span class="adm-info-label">Structure de rattachement</span><span class="adm-info-val">🏟️ ${esc(a.structureRattachement)}</span></div>`;
+    if(a.anneesExperienceFormation) html+=`<div class="adm-info-row"><span class="adm-info-label">Années d'expérience</span><span class="adm-info-val">${esc(a.anneesExperienceFormation)}</span></div>`;
+    if(a.nbApprenantsFormes) html+=`<div class="adm-info-row"><span class="adm-info-label">Apprenants formés</span><span class="adm-info-val">${esc(a.nbApprenantsFormes)}</span></div>`;
     html+=`<div class="adm-info-row"><span class="adm-info-label">Disponible pour formation</span><span class="adm-info-val">${a.disponibilitePourFormation?'✅ Oui':'—'}</span></div>`;
     html+=`</div>`;
   }
   if(a.bio){
-    html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.bio}</p></div>`;
+    html+=`<div class="adm-section"><div class="adm-section-title">📝 Biographie</div><p style="font-size:13px;line-height:1.6;color:#374151;">${nl2br(a.bio)}</p></div>`;
   }
   if(a.palmares){
-    html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${a.palmares}</p></div>`;
+    html+=`<div class="adm-section"><div class="adm-section-title">🏆 Palmarès</div><p style="font-size:13px;line-height:1.6;color:#374151;">${nl2br(a.palmares)}</p></div>`;
   }
   // Documents personnels : DONNÉES SENSIBLES (CNI, licence, etc.). Visibles et accessibles
   // uniquement par le propriétaire, son club/association employeur, ou l'administrateur.
@@ -4973,16 +4995,16 @@ function openActorDetail(uid){
     if(!docs.length) html+=`<p style="font-size:12px;color:var(--gray-txt);">Aucun document archivé.</p>`;
     else docs.forEach((d,i)=>{
       html+=`<div class="doc-detail-row">
-        <a href="${d.url}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${d.label||'Document'}</a>
+        <a href="${esc(sanitizeUrl(d.url))}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${esc(d.label||'Document')}</a>
         ${d.locked?'<span class="doc-detail-lock">🔒 Sous contrat</span>':''}
         ${canManageDocs?`
-          <button class="doc-detail-btn" onclick="event.stopPropagation();shareOwnDocument('${a.uid||a.id}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
-          <button class="doc-detail-btn doc-detail-danger" onclick="event.stopPropagation();removeOwnDocument('${a.uid||a.id}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
+          <button class="doc-detail-btn" onclick="event.stopPropagation();shareOwnDocument('${esc(a.uid||a.id)}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
+          <button class="doc-detail-btn doc-detail-danger" onclick="event.stopPropagation();removeOwnDocument('${esc(a.uid||a.id)}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
         `:''}
       </div>`;
     });
     if(canManageDocs){
-      html+=`<button class="btn-sm" onclick="event.stopPropagation();openOwnDocumentUploadFor('${a.uid||a.id}')" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;">📎 Ajouter un document</button>`;
+      html+=`<button class="btn-sm" onclick="event.stopPropagation();openOwnDocumentUploadFor('${esc(a.uid||a.id)}')" style="margin-top:8px;padding:7px 12px;font-size:11px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;">📎 Ajouter un document</button>`;
     }
     html+=`</div>`;
   }
@@ -5005,7 +5027,7 @@ function renderProfile(){
   document.getElementById('prof-chip-poste').textContent=p.poste?`🎯 ${p.poste}`:(p.titrePersonnalise?`🎖️ ${p.titrePersonnalise}`:'');
   const av=document.getElementById('prof-avatar-lg');
   const profPhotoSrc=p.photoURL||(()=>{try{const s=localStorage.getItem('gsc_profile_photos');if(s){const d=JSON.parse(s);return d.photos?.[p.uid]||null;}}catch(e){}return null;})()||(window.GSC_DEFAULT_AVATARS&&window.GSC_DEFAULT_AVATARS[p.role])||null;
-  if(profPhotoSrc) av.innerHTML=`<img src="${profPhotoSrc}" alt="av">`;
+  if(profPhotoSrc) av.innerHTML=`<img src="${esc(sanitizeUrl(profPhotoSrc))}" alt="av">`;
   else av.textContent=ROLE_ICONS[p.role]||initial;
 
   const isPersonnel=['joueur','athlete','arbitre','entraineur','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','formateur'].includes(p.role);
@@ -5017,7 +5039,7 @@ function renderProfile(){
   if(fedManaged){
     const ownerManaged=p.editLocked&&p.ownershipStatus!=='owner_self';
     document.getElementById('fed-notice').innerHTML=ownerManaged
-      ? `<span>🏢</span><span>Informations de club/mandat gérées par <strong>${p.ownerRef?.clubName||'votre club/employeur'}</strong>. Vos données personnelles restent modifiables par vous.</span>`
+      ? `<span>🏢</span><span>Informations de club/mandat gérées par <strong>${esc(p.ownerRef?.clubName||'votre club/employeur')}</strong>. Vos données personnelles restent modifiables par vous.</span>`
       : `<span>🏛️</span><span>Informations de club/mandat gérées par votre <strong>Fédération</strong>. Vos données personnelles et amateur restent modifiables par vous.</span>`;
   }
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
@@ -5079,7 +5101,7 @@ function renderProfile(){
     const matchsLbl=document.getElementById('prof-matchs-lbl');
     if(matchsLbl) matchsLbl.textContent=(p.role==='arbitre')?'Matchs arbitrés':(p.role==='entraineur')?'Matchs encadrés':'Matchs';
     const pb=document.getElementById('prof-position-badge');
-    if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${p.poste}</span>`;
+    if(p.poste) pb.innerHTML=`<span class="position-badge">🎯 ${esc(p.poste)}</span>`;
     else pb.innerHTML='';
     renderSportStats(p);
   }
@@ -5092,9 +5114,9 @@ function renderProfile(){
     const src=p.editLocked&&p.ownershipStatus!=='owner_self'?`Géré par ${p.ownerRef?.clubName||'votre club'}`:(fedManaged?'Géré par la Fédération':'Géré par vous');
     document.getElementById('mandats-source-label').textContent=src;
     let mandHtml='';
-    if(p.club) mandHtml+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${p.club}</div>${p.poste?`<div class="mandat-dates">Poste : ${p.poste}</div>`:''}</div>`;
+    if(p.club) mandHtml+=`<div class="mandat-badge"><div class="mandat-title">Club actuel</div><div class="mandat-club">🏟️ ${esc(p.club)}</div>${p.poste?`<div class="mandat-dates">Poste : ${esc(p.poste)}</div>`:''}</div>`;
     mandats.forEach(m=>{
-      mandHtml+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${m.club||'—'}</div><div class="mandat-dates">${m.dateDebut||''}${m.dateFin?' → '+m.dateFin:' → en cours'}</div>${m.poste?`<div class="mandat-title">${m.poste}</div>`:''}</div>`;
+      mandHtml+=`<div class="mandat-badge"><div class="mandat-club">🏟️ ${esc(m.club||'—')}</div><div class="mandat-dates">${esc(m.dateDebut||'')}${m.dateFin?' → '+esc(m.dateFin):' → en cours'}</div>${m.poste?`<div class="mandat-title">${esc(m.poste)}</div>`:''}</div>`;
     });
     if(!mandHtml) mandHtml='<p style="font-size:13px;color:var(--gray-txt);">Aucun mandat enregistré.</p>';
     document.getElementById('mandats-display').innerHTML=mandHtml;
@@ -5104,11 +5126,11 @@ function renderProfile(){
   if(isOrg){
     const ci=document.getElementById('club-info-display');
     ci.innerHTML=`
-      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${p.nomOrganisation||fullname}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${p.typeOrganisation||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${p.president||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${p.anneeCreation||'—'}</span></div>
-      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${p.effectif||'—'}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Organisation</span><span class="adm-info-val">${esc(p.nomOrganisation||fullname)}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Type</span><span class="adm-info-val">${esc(p.typeOrganisation||'—')}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Président</span><span class="adm-info-val">${esc(p.president||'—')}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Fondé en</span><span class="adm-info-val">${esc(p.anneeCreation||'—')}</span></div>
+      <div class="adm-info-row"><span class="adm-info-label">Effectif</span><span class="adm-info-val">${esc(p.effectif||'—')}</span></div>
     `;
   }
 
@@ -5809,7 +5831,7 @@ function renderSitesList(sites){
   c.innerHTML=sites.map(s=>`
     <div class="site-item">
       <div class="site-icon-dot t-${s.type}">${SITE_ICONS[s.type]||'📍'}</div>
-      <div class="site-info"><div class="site-name">${s.nom}${s.verified?'<span class="site-badge-verified">✓ Vérifié</span>':''}</div><div class="site-meta">${s.type} · ${s.ville}${s.capacite?' · '+s.capacite.toLocaleString('fr-FR')+' places':''}</div></div>
+      <div class="site-info"><div class="site-name">${esc(s.nom)}${s.verified?'<span class="site-badge-verified">✓ Vérifié</span>':''}</div><div class="site-meta">${esc(s.type)} · ${esc(s.ville)}${s.capacite?' · '+esc(s.capacite.toLocaleString('fr-FR'))+' places':''}</div></div>
       <button class="btn-sm" onclick="centerOnSite(${s.lat},${s.lng})">Voir 🗺️</button>
     </div>`).join('');
 }
@@ -5833,7 +5855,7 @@ function addSiteMarker(site){
     iconSize:[26,26],iconAnchor:[13,13]
   });
   const m=L.marker([site.lat,site.lng],{icon}).addTo(mapInstance);
-  m.bindPopup(`<strong style="color:#009E60">${site.nom}</strong><br><span style="font-size:12px;color:#64748b">${site.type} — ${site.ville}</span>${site.capacite?`<br><span style="font-size:12px">👥 ${site.capacite.toLocaleString('fr-FR')} places</span>`:''}`);
+  m.bindPopup(`<strong style="color:#009E60">${esc(site.nom)}</strong><br><span style="font-size:12px;color:#64748b">${esc(site.type)} — ${esc(site.ville)}</span>${site.capacite?`<br><span style="font-size:12px">👥 ${esc(site.capacite.toLocaleString('fr-FR'))} places</span>`:''}`);
   mapMarkers.push(m);
 }
 function centerOnSite(lat,lng){
@@ -5962,16 +5984,16 @@ function renderNewsFiltered(){
   const isAdmin=userProfile?.role==='admin';
   const makeCard=n=>{
     const accentClass=n.cat==='Football'?'football':n.cat==='Basketball'?'basketball':n.cat==='Gabon'?'gabon':'other';
-    return `<div class="news-online-card" ${n.url&&n.url!=='#'?`onclick="window.open('${n.url}','_blank')"`:''}> 
+    return `<div class="news-online-card" ${n.url&&n.url!=='#'?`onclick="window.open('${esc(sanitizeUrl(n.url))}','_blank')"`:''}> 
       <div class="news-online-accent ${accentClass}"></div>
       <div class="news-online-body">
-        <div class="news-online-source">${n.source||'GSC Sport'}</div>
-        <div class="news-online-title">${n.title}</div>
-        ${n.excerpt?`<div class="news-online-excerpt">${n.excerpt.substring(0,200)}…</div>`:''}
+        <div class="news-online-source">${esc(n.source||'GSC Sport')}</div>
+        <div class="news-online-title">${esc(n.title)}</div>
+        ${n.excerpt?`<div class="news-online-excerpt">${esc(n.excerpt.substring(0,200))}…</div>`:''}
         <div class="news-online-footer">
-          <span class="news-online-cat">${n.cat||'Sport'}</span>
-          <span class="news-online-date">🕐 ${n.date||'Récent'}</span>
-          ${isAdmin&&!n.online?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();deleteNews('${n.id}')">🗑️</button>`:''}
+          <span class="news-online-cat">${esc(n.cat||'Sport')}</span>
+          <span class="news-online-date">🕐 ${esc(n.date||'Récent')}</span>
+          ${isAdmin&&!n.online?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();deleteNews('${esc(n.id)}')">🗑️</button>`:''}
         </div>
       </div>
     </div>`;
@@ -5983,10 +6005,10 @@ function renderNewsFiltered(){
     <div class="news-card">
       <div class="news-accent"></div>
       <div class="news-body">
-        <div class="news-cat">${n.cat||'Sport'}</div>
-        <div class="news-title">${n.title}</div>
-        <div class="news-excerpt">${(n.excerpt||'').substring(0,120)}</div>
-        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span></div>
+        <div class="news-cat">${esc(n.cat||'Sport')}</div>
+        <div class="news-title">${esc(n.title)}</div>
+        <div class="news-excerpt">${esc((n.excerpt||'').substring(0,120))}</div>
+        <div class="news-footer"><span class="news-date">🕐 ${esc(n.date||'Récent')}</span><span class="news-tag">${esc(n.tag||'')}</span></div>
       </div>
     </div>`).join('');
   const adm=document.getElementById('news-list-admin');
@@ -5994,11 +6016,11 @@ function renderNewsFiltered(){
     <div class="news-card">
       <div class="news-accent"></div>
       <div class="news-body">
-        <div class="news-cat">${n.cat||'Sport'}</div>
-        <div class="news-title">${n.title}</div>
-        <div class="news-excerpt">${n.excerpt||''}</div>
-        <div class="news-footer"><span class="news-date">🕐 ${n.date||'Récent'}</span><span class="news-tag">${n.tag||''}</span>
-          <button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteNews('${n.id}')">🗑️</button>
+        <div class="news-cat">${esc(n.cat||'Sport')}</div>
+        <div class="news-title">${esc(n.title)}</div>
+        <div class="news-excerpt">${esc(n.excerpt||'')}</div>
+        <div class="news-footer"><span class="news-date">🕐 ${esc(n.date||'Récent')}</span><span class="news-tag">${esc(n.tag||'')}</span>
+          <button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteNews('${esc(n.id)}')">🗑️</button>
         </div>
       </div>
     </div>`).join('');
@@ -6337,26 +6359,26 @@ function renderAdminUsersTable(users){
     const fedIcon=u.gereParFederation?'🏛️ ':'' ;
     return `<tr class="${isPending?'pending-row':''}">
       <td><div style="display:flex;align-items:center;gap:8px">
-        <div class="user-row-avatar">${u.photoURL?`<img src="${u.photoURL}" alt="">`:initial}</div>
+        <div class="user-row-avatar">${u.photoURL?`<img src="${esc(sanitizeUrl(u.photoURL))}" alt="">`:esc(initial)}</div>
         <div>
-          <div style="font-weight:600;font-size:13px">${fedIcon}${fullname}</div>
-          <div style="font-size:11px;color:var(--gray-txt)">${u.email||'—'}</div>
-          <span class="role-badge ${u.role}" style="font-size:9px">${u.role||'—'}</span>
+          <div style="font-weight:600;font-size:13px">${fedIcon}${esc(fullname)}</div>
+          <div style="font-size:11px;color:var(--gray-txt)">${esc(u.email||'—')}</div>
+          <span class="role-badge ${u.role}" style="font-size:9px">${esc(u.role||'—')}</span>
         </div>
       </div></td>
-      <td><div style="font-size:13px">${u.sport||u.sports?.join(', ')||'—'}</div><div style="font-size:11px;color:var(--gray-txt)">${u.poste||u.typeOrganisation||'—'}</div></td>
-      <td style="font-size:13px">${u.ville||'—'}</td>
-      <td style="font-size:13px">${u.niveau||'—'}</td>
+      <td><div style="font-size:13px">${esc(u.sport||u.sports?.join(', ')||'—')}</div><div style="font-size:11px;color:var(--gray-txt)">${esc(u.poste||u.typeOrganisation||'—')}</div></td>
+      <td style="font-size:13px">${esc(u.ville||'—')}</td>
+      <td style="font-size:13px">${esc(u.niveau||'—')}</td>
       <td>${statusBadge}</td>
       <td>${isPending?`<div class="pending-actions">
-        <button class="btn-approve" onclick="adminApproveUser('${u.uid||u.id}')" title="Valider la fiche">✅ Valider</button>
-        <button class="btn-reject" onclick="adminRejectUser('${u.uid||u.id}')" title="Rejeter la fiche">✕ Rejeter</button>
+        <button class="btn-approve" onclick="adminApproveUser('${esc(u.uid||u.id)}')" title="Valider la fiche">✅ Valider</button>
+        <button class="btn-reject" onclick="adminRejectUser('${esc(u.uid||u.id)}')" title="Rejeter la fiche">✕ Rejeter</button>
       </div>`:`<div class="action-btns">
-        <button class="btn-sm" onclick="adminEditUser('${u.uid||u.id}')">✏️</button>
-        <button class="btn-warn" onclick="adminToggleHide('${u.uid||u.id}','${u.status||'active'}')">${u.status==='hidden'?'👁️':'🙈'}</button>
-        ${u.role!=='admin'?`<button class="btn-danger" onclick="adminDeleteUser('${u.uid||u.id}')">🗑️</button>`:''}
-        ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${u.uid||u.id}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
-        <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${u.uid||u.id}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
+        <button class="btn-sm" onclick="adminEditUser('${esc(u.uid||u.id)}')">✏️</button>
+        <button class="btn-warn" onclick="adminToggleHide('${esc(u.uid||u.id)}','${esc(u.status||'active')}')">${u.status==='hidden'?'👁️':'🙈'}</button>
+        ${u.role!=='admin'?`<button class="btn-danger" onclick="adminDeleteUser('${esc(u.uid||u.id)}')">🗑️</button>`:''}
+        ${u.role==='joueur'?`<button class="btn-sm" style="border-color:var(--orange);color:var(--orange);" onclick="adminToggleFederation('${esc(u.uid||u.id)}',${!!u.gereParFederation})" title="Gestion fédération">🏛️</button>`:''}
+        <button class="btn-sm" style="border-color:#ec4899;color:#ec4899;" onclick="adminToggleSupporter('${esc(u.uid||u.id)}',${!!u.isSupporter})" title="${u.isSupporter?'Retirer statut Supporter':'Marquer Supporter'}">💗</button>
       </div>`}</td>
     </tr>`;
   }).join('');
@@ -6569,13 +6591,13 @@ async function loadAdminSites(){
       <div class="admin-site-item">
         <div style="font-size:24px">${icons[s.type]||'📍'}</div>
         <div class="admin-site-info">
-          <div class="admin-site-name">${s.nom}</div>
-          <div class="admin-site-meta">${s.type} · ${s.ville}${s.capacite?' · '+s.capacite+' places':''}</div>
+          <div class="admin-site-name">${esc(s.nom)}</div>
+          <div class="admin-site-meta">${esc(s.type)} · ${esc(s.ville)}${s.capacite?' · '+esc(s.capacite)+' places':''}</div>
           <div class="admin-site-meta">GPS: ${s.lat?.toFixed(4)||'?'}, ${s.lng?.toFixed(4)||'?'}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <button class="btn-sm" onclick="centerOnSite(${s.lat},${s.lng})">🗺️</button>
-          <button class="btn-danger" onclick="adminDeleteSite('${s.id}')">🗑️</button>
+          <button class="btn-danger" onclick="adminDeleteSite('${esc(s.id)}')">🗑️</button>
         </div>
       </div>`).join('');
   }catch(e){ toast('Erreur chargement sites : '+e.message,'error'); }
@@ -6662,13 +6684,15 @@ function renderGallery(photos=[]){
     : '';
   const items=photos.map((url,i)=>{
     const isProfile = url === profilePhoto;
+    const safeUrl=sanitizeUrl(url);
+    const urlJs=esc(String(safeUrl).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
     return `<div class="gallery-item">
       ${isProfile?'<div class="gallery-is-profile-badge">✓ Profil</div>':''}
-      <img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openGalleryModal('${url}',${i})">
+      <img src="${esc(safeUrl)}" alt="Photo ${i+1}" loading="lazy" onclick="openGalleryModal('${urlJs}',${i})">
       <div class="gallery-item-overlay">
         <div class="gallery-item-actions">
           <button class="gallery-action-btn" onclick="event.stopPropagation();gallerySetAsProfileDirect(${i})" title="Définir comme photo de profil">⭐</button>
-          <button class="gallery-action-btn" onclick="event.stopPropagation();galleryDownloadDirect('${url}')" title="Télécharger">⬇️</button>
+          <button class="gallery-action-btn" onclick="event.stopPropagation();galleryDownloadDirect('${urlJs}')" title="Télécharger">⬇️</button>
           <button class="gallery-action-btn danger" onclick="event.stopPropagation();galleryDeleteDirect(${i})" title="Supprimer">🗑️</button>
         </div>
       </div>
@@ -6680,9 +6704,10 @@ function renderGallery(photos=[]){
 }
 
 function openGalleryModal(url,idx){
-  _galleryCurrentUrl=url;
+  const safeUrl=sanitizeUrl(url);
+  _galleryCurrentUrl=safeUrl;
   _galleryCurrentIndex=idx;
-  document.getElementById('gallery-modal-img').src=url;
+  document.getElementById('gallery-modal-img').src=safeUrl;
   document.getElementById('gallery-modal').classList.add('open');
 }
 window.openGalleryModal=openGalleryModal;
@@ -6807,10 +6832,10 @@ function renderOwnDocuments(){
   if(!docs.length){ container.innerHTML='<p style="font-size:12px;color:var(--gray-txt);">Aucun document pour le moment.</p>'; return; }
   container.innerHTML=docs.map((d,i)=>`
     <div class="doc-detail-row">
-      <a href="${d.url}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${d.label||'Document'}</a>
+      <a href="${esc(sanitizeUrl(d.url))}" target="_blank" rel="noopener" class="doc-detail-link">📎 ${esc(d.label||'Document')}</a>
       ${d.locked?'<span class="doc-detail-lock">🔒 Sous contrat</span>':''}
-      <button class="doc-detail-btn" onclick="shareOwnDocument('${userProfile.uid}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
-      <button class="doc-detail-btn doc-detail-danger" onclick="removeOwnDocument('${userProfile.uid}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
+      <button class="doc-detail-btn" onclick="shareOwnDocument('${esc(userProfile.uid)}',${i})" ${d.locked?'disabled':''} title="Partager">🔗</button>
+      <button class="doc-detail-btn doc-detail-danger" onclick="removeOwnDocument('${esc(userProfile.uid)}',${i})" ${d.locked?'disabled':''} title="Supprimer">🗑️</button>
     </div>`).join('');
 }
 
@@ -8529,11 +8554,11 @@ function injectActorQr(uid, role, containerSelector){
   const row = document.createElement('div');
   row.className = 'actor-qr-row';
   row.innerHTML = `
-    <div class="actor-qr-mini" title="QR Code d'identification" onclick="openActorQrZoom('${uid}','${role}')">
-      <canvas id="actor-qr-${uid}" width="56" height="56"></canvas>
+    <div class="actor-qr-mini" title="QR Code d'identification" onclick="openActorQrZoom('${esc(uid)}','${esc(role)}')">
+      <canvas id="actor-qr-${esc(uid)}" width="56" height="56"></canvas>
     </div>
     <div>
-      <div class="actor-gsc-id-small">${gscId}</div>
+      <div class="actor-gsc-id-small">${esc(gscId)}</div>
       <div style="font-size:10px;color:var(--gray-txt);margin-top:2px;">Identification GSC</div>
     </div>`;
   container.appendChild(row);

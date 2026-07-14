@@ -102,7 +102,13 @@
   /* ══════════════════════════════════════════════════════════════════
    * 2. RENDU — VUE LECTURE (visiteur + admin détail)
    * ══════════════════════════════════════════════════════════════════ */
-  function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  /* esc() n'échappait auparavant que < et > : suffisant pour du texte de
+     cellule de tableau, mais PAS pour un champ inséré dans un attribut HTML
+     (ex. renderSeasonSelector ci-dessous, <option value="${esc(sn)}">) — un
+     guillemet non échappé y permet un breakout d'attribut. On échappe donc
+     aussi &, " et ' pour être sûr quel que soit le contexte d'insertion,
+     y compris si un futur appel place un champ dans un attribut. */
+  function esc(s) { return (s || '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   function renderIdentityBlock(s) {
     const icon = D().getIcon(s.discipline);
