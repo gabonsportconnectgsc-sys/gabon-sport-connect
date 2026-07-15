@@ -5948,8 +5948,10 @@ async function fetchOnlineNews(){
   const statusEl=document.getElementById('online-news-status');
   if(statusEl){statusEl.style.display='';statusEl.textContent='🔄 Chargement des actualités en ligne…';}
   const rssFeeds=[
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Frss.lemonde.fr%2Frss%2Fune',
+    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.gabonreview.com%2Fcategory%2Fsport%2Ffeed%2F',
+    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fgabonactu.com%2Ffeed%2F',
     'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.rfi.fr%2Ffr%2Fpodcasts%2Fsports%2Frss',
+    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Frss.lemonde.fr%2Frss%2Fune',
   ];
   let onlineItems=[];
   for(const url of rssFeeds){
@@ -6026,6 +6028,10 @@ function renderNewsFiltered(){
           <span class="news-online-date">🕐 ${esc(n.date||'Récent')}</span>
           ${isAdmin&&!n.online?`<button class="btn-danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();deleteNews('${esc(n.id)}')">🗑️</button>`:''}
         </div>
+        ${n.url&&n.url!=='#'?`<div class="news-online-attribution" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-bd);font-size:11px;color:var(--gray-txt);">
+          Source : <strong>${esc(n.source||'média tiers')}</strong> ·
+          <a href="${esc(sanitizeUrl(n.url))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="color:var(--green);font-weight:700;text-decoration:none;">Lire l'article complet →</a>
+        </div>`:''}
       </div>
     </div>`;
   };
@@ -6128,6 +6134,15 @@ function showView(name){
       // Then try fetching online news
       refreshOnlineNews();
     });
+    // Rafraîchit les actualités en ligne automatiquement toutes les 5 min
+    // tant que l'onglet reste ouvert (effet "temps réel" sans surcharger les flux RSS)
+    if(window._newsAutoRefreshTimer) clearInterval(window._newsAutoRefreshTimer);
+    window._newsAutoRefreshTimer = setInterval(()=>{
+      if(document.getElementById('view-actualites')?.classList.contains('active')) refreshOnlineNews();
+      else clearInterval(window._newsAutoRefreshTimer);
+    }, 300000);
+  } else if(window._newsAutoRefreshTimer){
+    clearInterval(window._newsAutoRefreshTimer);
   }
   if(name==='admin'){loadAdminUsers();loadAdminStats();loadAdminActorsTab();}
 }
