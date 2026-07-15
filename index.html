@@ -31,14 +31,14 @@
   <title>Gabon Sport Connect — Plateforme Nationale du Sport</title>
 
   <!-- ══ SEO — canonical + partage réseaux sociaux (Open Graph / Twitter Card) ══ -->
-  <link rel="canonical" href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/" />
+  <link rel="canonical" href="https://gabon-sport-connect.web.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Gabon Sport Connect" />
   <meta property="og:title" content="Gabon Sport Connect — Plateforme Nationale du Sport" />
   <meta property="og:description" content="Plateforme nationale du sport au Gabon : annuaire des clubs, fédérations, athlètes et statistiques sportives." />
-  <meta property="og:url" content="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/" />
-  <meta property="og:image" content="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/og-image.jpg?v=2" />
-  <meta property="og:image:secure_url" content="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/og-image.jpg?v=2" />
+  <meta property="og:url" content="https://gabon-sport-connect.web.app/" />
+  <meta property="og:image" content="https://gabon-sport-connect.web.app/og-image.jpg?v=2" />
+  <meta property="og:image:secure_url" content="https://gabon-sport-connect.web.app/og-image.jpg?v=2" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -46,7 +46,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Gabon Sport Connect — Plateforme Nationale du Sport" />
   <meta name="twitter:description" content="Plateforme nationale de gestion du sport au Gabon." />
-  <meta name="twitter:image" content="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/og-image.jpg?v=2" />
+  <meta name="twitter:image" content="https://gabon-sport-connect.web.app/og-image.jpg?v=2" />
   <!-- og:image / twitter:image → og-image.jpg (1200×630, généré à partir du logo GSC fourni,
        fond blanc, format standard réseaux sociaux). Fichier à déposer à la racine du dépôt
        (gabon-sport-connect/og-image.jpg) pour que l'URL ci-dessus soit valide. -->
@@ -1153,6 +1153,14 @@
     .scroll-arrow.left{left:10px;top:50%;transform:translateY(-50%);}
     .scroll-arrow.right{right:10px;top:50%;transform:translateY(-50%);}
 
+    /* ── FLÈCHES DE DÉFILEMENT GLOBALES (page entière) ── */
+    .page-scroll-nav{position:fixed;right:16px;bottom:84px;z-index:900;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+    .page-scroll-btn{width:38px;height:38px;border-radius:50%;border:none;background:rgba(0,158,96,.85);backdrop-filter:blur(4px);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);opacity:0;transform:translateY(6px) scale(.9);pointer-events:none;transition:opacity .25s ease,transform .25s ease,background .2s ease;}
+    .page-scroll-btn.visible{opacity:.9;transform:translateY(0) scale(1);pointer-events:auto;}
+    .page-scroll-btn:hover{background:rgba(0,122,71,.95);opacity:1;}
+    .page-scroll-btn:active{transform:scale(.92);}
+    @media (min-width:768px){.page-scroll-nav{bottom:32px;right:24px;}}
+
     /* ── AJOUT MODULE 2 : Profils structures enrichis ── */
     .detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;font-size:13px;margin-top:8px;}
     .mini-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
@@ -1340,7 +1348,7 @@
       </div>
       <div class="nav-menu-dropdown" id="nav-menu-dropdown">
         <a href="index.html" class="nav-menu-item"><span class="icon">🏠</span>Application</a>
-        <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
+        <a href="https://gabon-sport-connect.web.app/admin.html" target="_blank" rel="noopener" class="nav-menu-item"><span class="icon">⚙️</span>Console Admin</a>
         <div class="nav-menu-divider"></div>
         <button class="nav-menu-item" onclick="showView('legal');toggleNavMenu()"><span class="icon">📜</span>Mentions légales</button>
       </div>
@@ -1905,8 +1913,8 @@
           </div>
         </div>
 
-        <!-- Panneau filtres avancés (collapsible, replié par défaut en mode public) -->
-        <div id="scout-filters-body" style="display:none;">
+        <!-- Panneau filtres avancés (collapsible, déployé par défaut en mode public) -->
+        <div id="scout-filters-body" style="display:block;">
           <div style="padding:16px 16px 8px;">
 
             <!-- LIGNE 1 : Rôle + Sport + Niveau -->
@@ -2396,7 +2404,7 @@
         <div class="admin-sub">Panneau de contrôle général</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
           <button onclick="(function(){const url=location.origin+location.pathname+'?admin=1';navigator.clipboard?.writeText(url).then(()=>toast('🔗 Lien admin copié !','success')).catch(()=>toast(url,'info'));})()" style="padding:6px 14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;color:rgba(255,255,255,.85);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" title="Copier le lien d'accès direct admin">🔗 Copier le lien direct admin</button>
-          <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/admin.html" target="_blank" rel="noopener" style="padding:6px 14px;background:rgba(0,158,96,.25);border:1px solid rgba(0,158,96,.5);border-radius:20px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:5px;" title="Ouvrir la console d'administration complète (admin.html)">🚀 Console Admin complète</a>
+          <a href="https://gabon-sport-connect.web.app/admin.html" target="_blank" rel="noopener" style="padding:6px 14px;background:rgba(0,158,96,.25);border:1px solid rgba(0,158,96,.5);border-radius:20px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:5px;" title="Ouvrir la console d'administration complète (admin.html)">🚀 Console Admin complète</a>
         </div>
         <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;">
           <span style="width:6px;height:6px;border-radius:50%;background:#00e08a;display:inline-block;box-shadow:0 0 6px #00e08a;"></span>
@@ -2876,7 +2884,7 @@
             <h3>Contact</h3>
             <p>📧 <strong>gabonsportconnectgsc@gmail.com</strong></p>
             <p>🌐 <a href="https://gabon-sport-connect.web.app" target="_blank" style="color:var(--green);">gabon-sport-connect.web.app</a></p>
-            <p>🌐 <a href="https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/" target="_blank" style="color:var(--green);">gabonsportconnectgsc-sys.github.io/gabon-sport-connect</a></p>
+            <p>🌐 <a href="https://gabon-sport-connect.web.app/" target="_blank" style="color:var(--green);">gabonsportconnectgsc-sys.github.io/gabon-sport-connect</a></p>
             <p>Pour demander un accès Fédération ou signaler un problème, contactez l'administration GSC.</p>
             <h3>Équipe du projet</h3>
             <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
@@ -9138,6 +9146,65 @@ window.lookupManualGscId = lookupManualGscId;
   
   observer.observe(document.body, {childList: true, subtree: true});
 })();
+
+/* ── FLÈCHES DE DÉFILEMENT GLOBALES (page entière) ── */
+(function(){
+  const btnUp = document.getElementById('page-scroll-up');
+  const btnDown = document.getElementById('page-scroll-down');
+  if(!btnUp || !btnDown) return;
+
+  function scrollableEl(){
+    // La navigation interne du GSC bascule entre plusieurs "views" ;
+    // certaines défilent via window, d'autres via un conteneur interne.
+    const active = document.querySelector('.view.active, .view[style*="display: block"], .view[style*="display:block"]');
+    if(active && active.scrollHeight > active.clientHeight + 20) return active;
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function update(){
+    const el = scrollableEl();
+    const isWindowScroll = (el === document.scrollingElement || el === document.documentElement);
+    const scrollTop = isWindowScroll ? (window.scrollY || document.documentElement.scrollTop) : el.scrollTop;
+    const scrollHeight = isWindowScroll ? document.documentElement.scrollHeight : el.scrollHeight;
+    const clientHeight = isWindowScroll ? window.innerHeight : el.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
+
+    if(maxScroll < 60){
+      btnUp.classList.remove('visible');
+      btnDown.classList.remove('visible');
+      return;
+    }
+    btnUp.classList.toggle('visible', scrollTop > 80);
+    btnDown.classList.toggle('visible', scrollTop < maxScroll - 40);
+  }
+
+  function doScroll(dir){
+    const el = scrollableEl();
+    const isWindowScroll = (el === document.scrollingElement || el === document.documentElement);
+    const target = dir === 'up' ? 0 : (isWindowScroll ? document.documentElement.scrollHeight : el.scrollHeight);
+    if(isWindowScroll){
+      window.scrollTo({top: target, behavior: 'smooth'});
+    } else {
+      el.scrollTo({top: target, behavior: 'smooth'});
+    }
+  }
+
+  btnUp.addEventListener('click', () => doScroll('up'));
+  btnDown.addEventListener('click', () => doScroll('down'));
+
+  window.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('resize', update);
+  document.addEventListener('scroll', update, {capture:true, passive:true});
+  document.addEventListener('DOMContentLoaded', update);
+
+  // Réévalue à chaque changement de vue (showView) et sur mutations du DOM
+  const pageScrollObserver = new MutationObserver(() => update());
+  pageScrollObserver.observe(document.body, {attributes:true, childList:true, subtree:true, attributeFilter:['style','class']});
+
+  setInterval(update, 1200); // filet de sécurité léger, coût négligeable
+  update();
+})();
+
 </script>
 
 <!-- ══ TOPNAV ADAPTIVE LAYOUT — désactivé : le CSS responsive gère déjà la taille du texte du logo sans le masquer ══ -->
@@ -9327,5 +9394,9 @@ window.lookupManualGscId = lookupManualGscId;
 <script src="gsc-club-validation.js"></script>
 <script src="gsc-whatsapp-module.js"></script>
 <link rel="stylesheet" href="structures-modules.css">
+<div class="page-scroll-nav" id="page-scroll-nav">
+  <button class="page-scroll-btn" id="page-scroll-up" aria-label="Remonter en haut de page" title="Haut de page">▲</button>
+  <button class="page-scroll-btn" id="page-scroll-down" aria-label="Descendre en bas de page" title="Bas de page">▼</button>
+</div>
 </body>
 </html>
