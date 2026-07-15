@@ -904,12 +904,53 @@
     }
   }
 
+  // Même Worker que le pont d'authentification (ensureFirebaseAuthViaSupabase),
+  // utilisé ici pour l'endpoint /admin/delete-user (privilèges Admin SDK,
+  // nécessaires pour supprimer les comptes Auth — impossible depuis le SDK client).
+  const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+
+  async function getAdminAccessToken() {
+    if (!window._sb) throw new Error('Session admin introuvable (Supabase non initialisé).');
+    let { data: { session } } = await window._sb.auth.getSession();
+    if (!session) {
+      const refreshed = await window._sb.auth.refreshSession();
+      session = refreshed.data && refreshed.data.session;
+    }
+    if (!session || !session.access_token) throw new Error('Session admin expirée — reconnectez-vous.');
+    return session.access_token;
+  }
+
+  // Supprime les comptes Auth (Supabase + Firebase) via le Worker. N'interrompt
+  // pas la suppression Firestore si le Worker échoue (ex. endpoint pas encore
+  // déployé) : on prévient simplement l'admin que le compte de connexion subsiste.
+  async function deleteAuthAccounts(uid) {
+    try {
+      const token = await getAdminAccessToken();
+      const resp = await fetch(GSC_WORKER_URL + '/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ targetUid: uid })
+      });
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => '');
+        throw new Error(`HTTP ${resp.status} ${txt}`);
+      }
+      return true;
+    } catch (e) {
+      console.warn('deleteAuthAccounts:', e);
+      return false;
+    }
+  }
+
   async function deletePlayer(id) {
     // Suppression RÉELLE et DÉFINITIVE (avant : status:'deleted', le profil
-    // restait en base pour toujours). On efface le document racine ET son
-    // sous-document private/contact.
-    if (!confirm('Supprimer définitivement ce profil ? Cette action est irréversible et effacera toutes les données de cet acteur.')) return;
+    // restait en base pour toujours). On efface le document racine, son
+    // sous-document private/contact, ET les comptes Auth associés (Supabase +
+    // Firebase) via le Worker — sans quoi le compte peut se reconnecter et
+    // recréer automatiquement sa fiche à la prochaine connexion.
+    if (!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès...), et son compte de connexion sera désactivé.')) return;
     try {
+      const authDeleted = await deleteAuthAccounts(id);
       await withAuth(() => {
         const docRef = window.db.collection('users').doc(id);
         const batch = window.db.batch();
@@ -917,7 +958,10 @@
         batch.delete(docRef.collection('private').doc('contact'));
         return batch.commit();
       });
-      toast('🗑️ Profil supprimé définitivement', 'success');
+      toast(authDeleted
+        ? '🗑️ Profil et compte de connexion supprimés définitivement'
+        : '🗑️ Profil supprimé — ⚠️ le compte de connexion Auth n\'a pas pu être supprimé (endpoint indisponible), il faudra le faire manuellement',
+        authDeleted ? 'success' : 'error');
       closeModal('player-modal');
       renderPlayers();
     } catch (e) {
