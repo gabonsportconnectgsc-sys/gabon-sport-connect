@@ -875,7 +875,7 @@
   const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
   let _sb;
-  try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { _sb = null; }
+  try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'sb-gsc-player-auth', persistSession: true, autoRefreshToken: true } }); } catch(e) { _sb = null; }
 
   // ── Garde anti-doublon : bloque le formulaire si une session est déjà active ──
   // Cause racine du bug remonté : un utilisateur déjà connecté qui revenait sur
