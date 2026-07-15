@@ -1333,26 +1333,30 @@
       if (matchTabFilter === 'past') list = list.filter(m => new Date(m.date) < now);
       if (matchTabFilter === 'upcoming') list = list.filter(m => new Date(m.date) >= now);
     }
-    const tbody = document.getElementById('matchs-grid');
-    if (!tbody) return;
-    tbody.innerHTML = list.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => `
-      <tr data-id="${m.id}">
-        <td>${esc(m.home || '?')} — ${esc(m.away || '?')}</td>
-        <td>${m.date ? new Date(m.date).toLocaleDateString('fr-FR') : '—'}</td>
-        <td>${esc(m.lieu || '—')}</td>
-        <td>${m.score || '—'}</td>
-      </tr>
+    const container = document.getElementById('matches-list');
+    if (!container) return;
+    if (!list.length) {
+      container.innerHTML = `<div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div>`;
+      return;
+    }
+    container.innerHTML = list.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => `
+      <div class="match-card" data-id="${m.id}">
+        <div>
+          <div class="match-card-teams">${esc(m.home || '?')} — ${esc(m.away || '?')}</div>
+          <div class="match-card-meta">${m.date ? new Date(m.date).toLocaleDateString('fr-FR') : '—'}${m.time ? ' · ' + esc(m.time) : ''}${m.lieu ? ' · ' + esc(m.lieu) : ''}</div>
+        </div>
+        <div class="match-card-score">${esc(m.score || '—')}</div>
+      </div>
     `).join('');
-    tbody.querySelectorAll('tr[data-id]').forEach(tr => tr.addEventListener('click', () => openMatchModal(tr.dataset.id)));
+    container.querySelectorAll('.match-card[data-id]').forEach(card => card.addEventListener('click', () => openMatchModal(card.dataset.id)));
   }
 
   function wireMatchTabs() {
-    document.querySelectorAll('#matchs .tab-btn').forEach(btn => {
+    document.querySelectorAll('#matchs .match-tab').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('#matchs .tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#matchs .match-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const m = btn.className.match(/tab-(\w+)/);
-        matchTabFilter = (m && m[1]) || 'all';
+        matchTabFilter = btn.dataset.filter || 'all';
         renderMatches();
       });
     });
@@ -1361,23 +1365,33 @@
   function openMatchModal(id) {
     const m = id ? matchs.find(x => x.id === id) : null;
     currentMatchId = id;
-    document.getElementById('modal-match-home').value = m?.home || '';
-    document.getElementById('modal-match-away').value = m?.away || '';
-    document.getElementById('modal-match-date').value = m?.date || '';
-    document.getElementById('modal-match-time').value = m?.time || '';
-    document.getElementById('modal-match-lieu').value = m?.lieu || '';
-    document.getElementById('modal-match-score').value = m?.score || '';
+    const title = document.getElementById('match-modal-title');
+    if (title) title.textContent = id ? 'Modifier Match' : 'Nouveau Match';
+    document.getElementById('match-home').value = m?.home || 'GSC';
+    document.getElementById('match-away').value = m?.away || '';
+    document.getElementById('match-date').value = m?.date ? String(m.date).slice(0, 10) : '';
+    document.getElementById('match-time').value = m?.time || '';
+    document.getElementById('match-lieu').value = m?.lieu || '';
+    document.getElementById('match-competition').value = m?.competition || '';
+    const [scoreHome, scoreAway] = (m?.score || '').split('—').map(s => (s || '').trim());
+    document.getElementById('match-score-home').value = scoreHome || '';
+    document.getElementById('match-score-away').value = scoreAway || '';
+    const delBtn = document.getElementById('btn-delete-match');
+    if (delBtn) delBtn.style.display = id ? '' : 'none';
     document.getElementById('match-modal')?.classList.add('open');
   }
 
   async function saveMatch() {
+    const scoreHome = document.getElementById('match-score-home').value;
+    const scoreAway = document.getElementById('match-score-away').value;
     const data = {
-      home: document.getElementById('modal-match-home').value.trim(),
-      away: document.getElementById('modal-match-away').value.trim(),
-      date: document.getElementById('modal-match-date').value,
-      time: document.getElementById('modal-match-time').value || '',
-      lieu: document.getElementById('modal-match-lieu').value || '',
-      score: document.getElementById('modal-match-score').value || '',
+      home: document.getElementById('match-home').value.trim(),
+      away: document.getElementById('match-away').value.trim(),
+      date: document.getElementById('match-date').value,
+      time: document.getElementById('match-time').value || '',
+      lieu: document.getElementById('match-lieu').value || '',
+      competition: document.getElementById('match-competition').value || '',
+      score: (scoreHome !== '' && scoreAway !== '') ? `${scoreHome} — ${scoreAway}` : '',
       status: 'active'
     };
     if (!data.home || !data.away || !data.date) { toast('Remplissez au minimum : équipes et date', 'warn'); return; }
@@ -1803,6 +1817,7 @@
     matchModal?.querySelector('.btn-primary')?.addEventListener('click', saveMatch);
     matchModal?.querySelector('.btn-secondary')?.addEventListener('click', () => closeModal('match-modal'));
     document.getElementById('btn-delete-match')?.addEventListener('click', deleteMatch);
+    document.getElementById('btn-add-match')?.addEventListener('click', () => openMatchModal(null));
 
     document.getElementById('doc-search-input')?.addEventListener('input', (e) => { docSearchTerm = e.target.value; renderDocuments(); });
     document.querySelectorAll('#documents .filter-btn').forEach(btn => {

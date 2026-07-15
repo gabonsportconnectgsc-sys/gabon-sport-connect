@@ -514,6 +514,11 @@ tr.is-demo-row td { opacity: .82; }
 .btn-add:hover { transform: translateY(-1px); box-shadow: rgba(0, 158, 96, 0.3) 0px 5px 14px; }
 
 .matches-list { display: flex; flex-direction: column; gap: 11px; }
+.match-card { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid var(--gray-bd); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; transition: all 0.2s; }
+.match-card:hover { border-color: var(--green); transform: translateY(-1px); }
+.match-card-teams { font-weight: 700; font-size: 13.5px; color: var(--navy); }
+.match-card-meta { font-size: 12px; color: var(--gray-txt); margin-top: 3px; }
+.match-card-score { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--green-dk); white-space: nowrap; }
 
 .match-card { background: rgb(255, 255, 255); border-radius: 13px; padding: 15px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 13px; cursor: pointer; transition: 0.2s; border: 1.5px solid transparent; }
 
@@ -1126,12 +1131,12 @@ tr.is-demo-row td { opacity: .82; }
       <div id="matchs" class="section">
         <div class="page-header">
           <div class="page-title">Gestion des Matchs</div>
-          <button class="btn-add">➕ Ajouter</button>
+          <button class="btn-add" id="btn-add-match">➕ Ajouter</button>
         </div>
         <div class="match-tabs">
-          <button class="match-tab active">Tous</button>
-          <button class="match-tab">À venir</button>
-          <button class="match-tab">Joués</button>
+          <button class="match-tab active" data-filter="all">Tous</button>
+          <button class="match-tab" data-filter="upcoming">À venir</button>
+          <button class="match-tab" data-filter="past">Joués</button>
         </div>
         <div id="matches-list" class="matches-list"><div class="empty" style="display:block"><div class="empty-icon">📅</div><h3>Aucun match</h3><p>Ajoutez votre premier match</p></div></div>
       </div>
