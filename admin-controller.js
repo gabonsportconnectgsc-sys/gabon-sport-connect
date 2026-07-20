@@ -954,6 +954,13 @@
       await withAuth(() => {
         const docRef = window.db.collection('users').doc(id);
         const batch = window.db.batch();
+        // Empreinte de suppression : bloque la recréation automatique du
+        // profil si le compte Auth (Supabase/Firebase) n'a pas pu être
+        // réellement supprimé et que l'utilisateur se reconnecte ensuite.
+        batch.set(window.db.collection('deletedAccounts').doc(id), {
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          deletedBy: (window.currentAdminUid || 'admin')
+        });
         batch.delete(docRef);
         batch.delete(docRef.collection('private').doc('contact'));
         return batch.commit();

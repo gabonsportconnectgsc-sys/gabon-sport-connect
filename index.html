@@ -3816,6 +3816,22 @@ async function onSupabaseSignedIn(user, extra){
   // Le pont passe désormais par un Firebase Custom Token (généré par le Worker
   // Cloudflare à partir du token Supabase), pour que request.auth.uid == uid Supabase.
   try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('Pont Firebase Auth indisponible :', e); }
+  // Compte supprimé par un admin ? Le compte Auth (Supabase/Firebase) n'étant
+  // pas toujours supprimable côté client, on bloque ici via une empreinte de
+  // suppression plutôt que de laisser la logique ci-dessous recréer le profil
+  // à partir des métadonnées d'inscription (ce qui annulerait la suppression).
+  try{
+    if(db && typeof getDoc==='function'){
+      const tombstone = await getDoc(doc(db,'deletedAccounts',user.id));
+      if(tombstone.exists()){
+        try{ await window._sb.auth.signOut(); }catch(e){}
+        userProfile = null; currentUser = null; _uid = null;
+        enterAsVisitor(true);
+        toast('Ce compte a été supprimé par un administrateur. Contactez le support si vous pensez qu\'il s\'agit d\'une erreur.','error');
+        return;
+      }
+    }
+  }catch(e){ console.warn('Vérification suppression compte :', e); }
   await loadUserProfile(user.id);
   // Si la première lecture a échoué (pont Firebase pas encore prêt juste après
   // l'inscription, timing réseau...), on retente une fois avant de se rabattre
@@ -3824,6 +3840,16 @@ async function onSupabaseSignedIn(user, extra){
   if(userProfile && userProfile._loadError){
     try{ await ensureFirebaseAuthViaSupabase(); }catch(e){}
     await loadUserProfile(user.id);
+  }
+  // Le statut 'deleted' peut être posé sur la fiche (sans que le document ne
+  // soit physiquement retiré) depuis plusieurs écrans admin. Jusqu'ici rien
+  // ne l'empêchait de continuer à se connecter normalement : on bloque l'accès ici.
+  if(userProfile && !userProfile._isNew && userProfile.status==='deleted'){
+    try{ await window._sb.auth.signOut(); }catch(e){}
+    userProfile = null; currentUser = null; _uid = null;
+    enterAsVisitor(true);
+    toast('Ce compte a été supprimé par un administrateur. Contactez le support si vous pensez qu\'il s\'agit d\'une erreur.','error');
+    return;
   }
   if(userProfile && (userProfile._isNew || userProfile._loadError)){
     // Profil Firestore absent OU illisible (erreur réseau/permission persistante) :
@@ -6638,6 +6664,13 @@ async function adminDeleteUser(uid){
   if(!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès…).\n\n⚠️ Le compte de connexion Firebase Auth associé n\'est pas supprimé automatiquement (nécessite un accès Admin SDK côté serveur) — seul l\'accès à ce backend applicatif est retiré.')) return;
   try{
     await ensureFirebaseAuthViaSupabase();
+    // Empreinte de suppression : tant que le compte Auth (Supabase/Firebase)
+    // n'est pas réellement supprimé côté serveur, l'utilisateur peut se
+    // reconnecter avec les mêmes identifiants. Sans cette trace, onSupabaseSignedIn
+    // recrée automatiquement le profil à partir des métadonnées d'inscription
+    // dès qu'il ne trouve plus de document users/{uid} — ce qui annule la
+    // suppression. Ce tombstone bloque cette reconstruction.
+    try{ await setDoc(doc(db,'deletedAccounts',uid), {deletedAt: serverTimestamp?serverTimestamp():new Date(), deletedBy: userProfile?.uid||'admin'}); }catch(e){ console.warn('Tombstone suppression:',e); }
     try{ await deleteDoc(doc(db,'users',uid,'private','contact')); }catch(e){ console.warn('Suppression private/contact:',e); }
     await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
