@@ -3706,12 +3706,34 @@ const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.worker
 let _firebaseCustomAuthPromise = null;
 
 async function ensureFirebaseAuthViaSupabase(){
-  // Déjà connecté à Firebase avec le bon uid ? Rien à refaire.
+  // ────────────────────────────────────────────────────────────────────────────
+  // VERSION ROBUSTE : Vérification stricte + Retry × 3 + Logs détaillés
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // 1️⃣ VÉRIFICATION : Déjà connecté avec le bon uid ?
   if(window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === _uid){
-    return window._fbAuth.currentUser;
+    try {
+      const idTokenResult = await window._fbAuth.currentUser.getIdTokenResult();
+      const expiresAt = new Date(idTokenResult.expirationTime).getTime();
+      const timeLeft = expiresAt - Date.now();
+      if(timeLeft > 2 * 60 * 1000) {
+        console.log('[GSC Auth] ✅ Firebase Auth valide (' + Math.floor(timeLeft / 1000) + 's restants) pour uid: ' + _uid);
+        return window._fbAuth.currentUser;
+      } else {
+        console.log('[GSC Auth] ⏰ Firebase Auth expira bientôt (' + Math.floor(timeLeft / 1000) + 's), rafraîchissement...');
+      }
+    } catch (e) {
+      console.warn('[GSC Auth] ⚠️ Impossible de vérifier l\'expiration :', e.message);
+    }
+  } else {
+    console.log('[GSC Auth] ℹ️ Pas de session Firebase valide, établissement du pont...');
   }
-  // Évite les appels concurrents multiples si plusieurs écritures arrivent en même temps
-  if(_firebaseCustomAuthPromise) return _firebaseCustomAuthPromise;
+
+  // 2️⃣ Évite les appels concurrents multiples si plusieurs écritures arrivent en même temps
+  if(_firebaseCustomAuthPromise) {
+    console.log('[GSC Auth] ℹ️ Une authentification est déjà en cours, attente...');
+    return _firebaseCustomAuthPromise;
+  }
 
   _firebaseCustomAuthPromise = (async () => {
     const maxAttempts = 3;
@@ -3719,31 +3741,65 @@ async function ensureFirebaseAuthViaSupabase(){
     for(let i=0;i<maxAttempts;i++){
       try{
         if(!window._sb) throw new Error('Supabase non initialisé.');
+
+        // 3️⃣ SUPABASE : Récupérer session
         const {data:{session}} = await window._sb.auth.getSession();
-        if(!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+        if(!session || !session.access_token) {
+          throw new Error('Aucune session Supabase active.');
+        }
+
+        // 4️⃣ WORKER CLOUDFLARE : Obtenir Firebase Custom Token
+        if(i > 0) {
+          const delayMs = 500 * (i + 1);
+          console.log('[GSC Auth] 📍 Tentative ' + (i+1) + '/' + maxAttempts + ' (délai ' + delayMs + 'ms)');
+          await new Promise(r=>setTimeout(r, delayMs));
+        } else {
+          console.log('[GSC Auth] 📍 Tentative 1/' + maxAttempts);
+        }
 
         const res = await fetch(GSC_AUTH_WORKER_URL, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({supabaseAccessToken: session.access_token})
         });
+
         const data = await res.json();
         if(!res.ok || !data.firebaseToken){
-          throw new Error(data?.error || 'Le pont d\'authentification a refusé la demande.');
+          throw new Error(data?.error || 'Worker refusa (HTTP ' + res.status + ')');
         }
 
+        // 5️⃣ FIREBASE : Connexion avec Custom Token
         if(!window._fbAuth || !window._signInWithCustomToken){
-          throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+          throw new Error('Firebase SDK (signInWithCustomToken) non disponible.');
         }
+
         const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+        if(!cred.user) {
+          throw new Error('User objet absent après signInWithCustomToken');
+        }
+
+        console.log('[GSC Auth] ✅ Firebase Auth établie pour uid: ' + cred.user.uid);
         return cred.user;
+
       }catch(e){
         lastErr = e;
-        console.warn(`Pont Firebase Auth — tentative ${i+1}/${maxAttempts} échouée :`, e);
-        if(i<maxAttempts-1) await new Promise(r=>setTimeout(r,500*(i+1)));
+        const errMsg = e.message || e.toString();
+        console.warn('[GSC Auth] ❌ Tentative ' + (i+1) + '/' + maxAttempts + ' échouée : ' + errMsg);
+        if(i < maxAttempts-1) {
+          await new Promise(r=>setTimeout(r, 500*(i+1)));
+        }
       }
     }
-    throw lastErr || new Error("Pont d'authentification Firebase indisponible après plusieurs tentatives.");
+
+    // Formater le message d'erreur final
+    const finalMsg = lastErr?.message || "Pont d'authentification Firebase indisponible.";
+    if(finalMsg.includes('Missing or insufficient permissions')) {
+      throw new Error('[GSC] Permissions insuffisantes — contactez l\'admin.');
+    } else if(finalMsg.includes('Session expirée') || finalMsg.includes('Supabase')) {
+      throw new Error('[GSC] Session expirée — reconnexion nécessaire.');
+    } else {
+      throw lastErr || new Error("[GSC] Impossible d'établir l'authentification Firebase.");
+    }
   })();
 
   try{
@@ -3753,6 +3809,40 @@ async function ensureFirebaseAuthViaSupabase(){
   }
 }
 window.ensureFirebaseAuthViaSupabase = ensureFirebaseAuthViaSupabase;
+
+// ────────────────────────────────────────────────────────────────────────────
+// WRAPPER FIRESTORE : Exécute une opération avec Retry × 2 + Gestion d'erreur
+// ────────────────────────────────────────────────────────────────────────────
+async function safeFirestoreUpdate(operation, operationName = 'Firestore op') {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await ensureFirebaseAuthViaSupabase();
+      const result = await operation();
+      console.log('[GSC Firestore] ✅ ' + operationName + ' réussi');
+      return result;
+    } catch (e) {
+      const errMsg = e.message || e.toString();
+      console.warn('[GSC Firestore] ❌ ' + operationName + ' tentative ' + attempt + ' : ' + errMsg);
+
+      if (attempt === 2) {
+        // Dernière tentative échouée — formater le message d'erreur
+        if (errMsg.includes('Missing or insufficient permissions')) {
+          throw new Error('Permissions insuffisantes — contactez votre administrateur.');
+        } else if (errMsg.includes('Session expirée') || errMsg.includes('offline')) {
+          throw new Error('Votre session a expiré. Rechargez la page et réessayez.');
+        } else {
+          throw e;
+        }
+      }
+
+      // Attendre avant de réessayer (délai exponentiel)
+      const delayMs = Math.pow(2, attempt) * 600;
+      console.log('[GSC Firestore] ⏳ Nouvelle tentative dans ' + delayMs + 'ms...');
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+}
+window.safeFirestoreUpdate = safeFirestoreUpdate;
 
 // ── DONNÉES PRIVÉES (email/téléphone) ──
 // Stockées dans users/{uid}/private/contact, lisible uniquement par le
@@ -5710,8 +5800,10 @@ async function saveProfile(){
     });
   }
   try{
-    await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',currentUser.uid),updates);
+    await safeFirestoreUpdate(
+      () => updateDoc(doc(db,'users',currentUser.uid),updates),
+      'Sauvegarde profil utilisateur'
+    );
     try{ await setPrivateContact(currentUser.uid,{telephone:telephoneVal,updatedAt:serverTimestamp()}); }
     catch(e){ console.warn('Sauvegarde téléphone (private/contact):',e); }
     Object.assign(userProfile,updates);
@@ -5761,11 +5853,11 @@ async function uploadProfilePhoto(input){
   toast('📤 Upload en cours…','info');
   try{
     const url=await uploadToCloudinary(file,'image');
-    // S'assure qu'une session Firebase Auth (via Custom Token Supabase) est bien
-    // ouverte avant d'écrire dans Firestore. Sans ça, request.auth est null côté
-    // règles et l'updateDoc échoue avec "Missing or insufficient permissions".
-    await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
+    // Utilise le wrapper qui gère le retry automatique et la gestion d'erreur
+    await safeFirestoreUpdate(
+      () => updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()}),
+      'Upload photo de profil'
+    );
     userProfile.photoURL=url;
     renderDashboard();renderProfile();
     toast('✅ Photo mise à jour !','success');
@@ -5797,8 +5889,10 @@ async function uploadCoverPhoto(input){
   toast('📤 Upload de la couverture en cours…','info');
   try{
     const url=await uploadToCloudinary(file,'image');
-    await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',currentUser.uid),{coverURL:url,updatedAt:serverTimestamp()});
+    await safeFirestoreUpdate(
+      () => updateDoc(doc(db,'users',currentUser.uid),{coverURL:url,updatedAt:serverTimestamp()}),
+      'Upload photo de couverture'
+    );
     userProfile.coverURL=url;
     // Met à jour le cache local de l'acteur si déjà chargé, puis rafraîchit la modale ouverte
     const cached=allActors.find(x=>(x.uid||x.id)===currentUser.uid)||allAdminUsers.find(x=>(x.uid||x.id)===currentUser.uid);

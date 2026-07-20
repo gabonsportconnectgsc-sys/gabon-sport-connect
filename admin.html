@@ -2391,20 +2391,27 @@ tr.is-demo-row td { opacity: .82; }
     if (action === 'ban' && !confirm("Bannir cet utilisateur de la plateforme ? Cette action est forte et bloquera sa connexion.")) return;
 
     try {
-      await ensureFirebaseAuthViaSupabase();
       if (action === 'hide' && targetUid) {
-        await d.collection('users').doc(targetUid).update({ status: 'hidden' });
+        await firestoreOpWithRetry(
+          () => d.collection('users').doc(targetUid).update({ status: 'hidden' }),
+          'Masquer profil ' + targetUid
+        );
       }
       if (action === 'ban' && targetUid) {
-        await d.collection('users').doc(targetUid).update({ status: 'banned' });
+        await firestoreOpWithRetry(
+          () => d.collection('users').doc(targetUid).update({ status: 'banned' }),
+          'Bannir profil ' + targetUid
+        );
       }
-      const currentAdminUid = (window.firebase && firebase.auth().currentUser) ? firebase.auth().currentUser.uid : null;
-      await d.collection('signalements').doc(signalementId).update({
-        status: action === 'dismiss' ? 'dismissed' : 'resolved',
-        resolvedAction: action,
-        resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        resolvedBy: currentAdminUid
-      });
+      await firestoreOpWithRetry(() => {
+        const currentAdminUid = (window.firebase && firebase.auth().currentUser) ? firebase.auth().currentUser.uid : null;
+        return d.collection('signalements').doc(signalementId).update({
+          status: action === 'dismiss' ? 'dismissed' : 'resolved',
+          resolvedAction: action,
+          resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          resolvedBy: currentAdminUid
+        });
+      }, 'Résoudre signalement ' + signalementId);
     } catch (e) {
       console.error('gscResolveSignalement:', e);
       alert("Erreur lors du traitement du signalement : " + (e.message || e));
@@ -2515,13 +2522,53 @@ tr.is-demo-row td { opacity: .82; }
   }
   window.gscPopulateModalEtablissementSelect = populateModalEtablissementSelect;
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Wrapper Firestore avec Retry × 2 + Gestion d'erreur améliorée
+  // ────────────────────────────────────────────────────────────────────────────
+  async function firestoreOpWithRetry(operation, operationName = 'Firestore op') {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        await ensureFirebaseAuthViaSupabase();
+        const result = await operation();
+        console.log('[GSC Firestore] ✅ ' + operationName + ' réussi');
+        return result;
+      } catch (e) {
+        const errMsg = e.message || e.toString();
+        console.warn('[GSC Firestore] ❌ ' + operationName + ' tentative ' + attempt + ' : ' + errMsg);
+
+        if (attempt === 2) {
+          // Dernière tentative échouée — formater le message d'erreur
+          if (errMsg.includes('Missing or insufficient permissions')) {
+            throw new Error('Permissions insuffisantes. Vérifiez que vous êtes admin.');
+          } else if (errMsg.includes('Session expirée')) {
+            throw new Error('Votre session a expiré. Reconnexion nécessaire.');
+          } else {
+            throw e;
+          }
+        }
+
+        // Attendre avant de réessayer (délai exponentiel)
+        const delayMs = Math.pow(2, attempt) * 600;
+        console.log('[GSC Firestore] ⏳ Nouvelle tentative dans ' + delayMs + 'ms...');
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+  }
+
+  window.firestoreOpWithRetry = firestoreOpWithRetry;
+
   async function toggleVerifie(uid, value) {
     try {
       if (window.firebase && firebase.firestore) {
-        await ensureFirebaseAuthViaSupabase();
-        await firebase.firestore().collection('users').doc(uid).update({ documentVerifie: value });
+        await firestoreOpWithRetry(
+          () => firebase.firestore().collection('users').doc(uid).update({ documentVerifie: value }),
+          'toggleVerifie(uid=' + uid + ', value=' + value + ')'
+        );
       }
-    } catch (e) { console.warn('toggleVerifie:', e); }
+    } catch (e) {
+      console.error('❌ toggleVerifie échoué :', e.message);
+      alert('❌ Erreur : ' + e.message);
+    }
     renderEtrangers();
   }
   window.gscToggleVerifie = toggleVerifie;
@@ -3337,68 +3384,112 @@ tr.is-demo-row td { opacity: .82; }
   const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 
   window.ensureFirebaseAuthViaSupabase = async function() {
-    // Si Firebase Auth a déjà un uid valide non-anonyme et token encore frais, rien à faire
-    if (window.firebase && firebase.auth) {
-      const current = firebase.auth().currentUser;
-      if (current && !current.isAnonymous) {
-        try {
-          const idTokenResult = await current.getIdTokenResult();
-          const expiresAt = new Date(idTokenResult.expirationTime).getTime();
-          if (expiresAt - Date.now() > 5 * 60 * 1000) return; // valide > 5 min
-        } catch (_) { /* continuer et re-authentifier */ }
-      }
+    // ────────────────────────────────────────────────────────────────────────────
+    // VERSION ROBUSTE : Vérification stricte + Retry × 2 + Logs détaillés
+    // ────────────────────────────────────────────────────────────────────────────
+
+    // 1️⃣ VÉRIFICATION : Firebase Auth SDK prêt ?
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+      throw new Error('[GSC] SDK Firebase non chargé — vérifiez votre connexion et rechargez la page.');
     }
 
-    // Récupérer le token Supabase — forcer un refresh si expiré ou absent
-    if (!sb) throw new Error('[GSC] Supabase non initialisé');
-    let { data: { session }, error } = await sb.auth.getSession();
+    // 2️⃣ VÉRIFICATION : Token Firebase existant et valide (>2 min) ?
+    const current = firebase.auth().currentUser;
+    if (current && !current.isAnonymous) {
+      try {
+        const idTokenResult = await current.getIdTokenResult();
+        const expiresAt = new Date(idTokenResult.expirationTime).getTime();
+        const timeLeft = expiresAt - Date.now();
+        if (timeLeft > 2 * 60 * 1000) {
+          console.log('[GSC Auth] ✅ Token Firebase valide (' + Math.floor(timeLeft / 1000) + 's restants)');
+          return; // Rien à faire, token valide
+        } else {
+          console.log('[GSC Auth] ⏰ Token Firebase expira bientôt (' + Math.floor(timeLeft / 1000) + 's), rafraîchissement...');
+        }
+      } catch (e) {
+        console.warn('[GSC Auth] ⚠️ Impossible de vérifier l\'expiration du token :', e.message);
+      }
+    } else {
+      console.log('[GSC Auth] ℹ️ Pas de session Firebase valide (currentUser inexistant ou anonyme)');
+    }
 
-    // Si aucune session en mémoire (ex: onglet resté en arrière-plan trop longtemps
-    // sur mobile, minuteur de refresh automatique suspendu), ne pas abandonner tout
-    // de suite : le refresh token est souvent toujours valide en localStorage.
-    if (error || !session) {
+    // 3️⃣ SUPABASE : Récupérer une session valide
+    if (!sb) throw new Error('[GSC] Supabase non initialisé');
+
+    let session;
+    let { data: { session: sess }, error } = await sb.auth.getSession();
+
+    if (error || !sess) {
+      console.log('[GSC Auth] 🔄 Session Supabase absente en mémoire, tentative de refresh...');
       const recovered = await sb.auth.refreshSession();
       if (recovered.error || !recovered.data?.session) {
-        throw new Error('[GSC] Session expirée — veuillez vous reconnecter.');
+        throw new Error('[GSC] Session Supabase expirée — veuillez vous reconnecter.');
       }
       session = recovered.data.session;
+    } else {
+      session = sess;
     }
 
-    // Si access_token absent ou proche expiration, forcer le refresh
+    // 4️⃣ SUPABASE TOKEN : Vérifier expiration et refresh si nécessaire
     const nowSec = Math.floor(Date.now() / 1000);
-    if (!session.access_token || (session.expires_at && session.expires_at - nowSec < 60)) {
+    if (!session.access_token || (session.expires_at && session.expires_at - nowSec < 120)) {
+      console.log('[GSC Auth] 🔄 Token Supabase expirant, refresh...');
       const refreshed = await sb.auth.refreshSession();
       if (refreshed.error || !refreshed.data?.session) {
-        throw new Error('[GSC] Session expirée — veuillez vous reconnecter.');
+        throw new Error('[GSC] Session Supabase expirée — veuillez vous reconnecter.');
       }
       session = refreshed.data.session;
     }
 
     const supabaseToken = session.access_token;
-    if (!supabaseToken) throw new Error('[GSC] Token Supabase introuvable après refresh.');
+    if (!supabaseToken) throw new Error('[GSC] Token Supabase introuvable.');
 
-    // Appeler le Worker Cloudflare pour obtenir un Firebase Custom Token
-    const resp = await fetch(GSC_WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supabaseAccessToken: supabaseToken })
-    });
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      throw new Error('[GSC] Worker erreur HTTP ' + resp.status + (errText ? ' — ' + errText : ''));
-    }
-    const json = await resp.json();
-    if (!json.firebaseToken) throw new Error('[GSC] Pas de firebaseToken dans la réponse Worker');
+    // 5️⃣ WORKER CLOUDFLARE : Obtenir Firebase Custom Token (Retry × 2)
+    let firebaseToken = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt > 1) {
+          const delayMs = Math.pow(2, attempt - 1) * 800; // 800ms, 1600ms
+          console.log('[GSC Auth] 📍 Tentative ' + attempt + ' du Worker (délai ' + delayMs + 'ms)');
+          await new Promise(r => setTimeout(r, delayMs));
+        }
 
-    // Le SDK Firebase compat doit être chargé (scripts <head>). S'il ne l'est
-    // pas (échec réseau du CDN gstatic.com sur mobile), on évite un
-    // ReferenceError brut ("firebase is not defined") et on donne un message
-    // actionnable à l'utilisateur.
-    if (typeof firebase === 'undefined' || !firebase.auth) {
-      throw new Error('SDK Firebase non chargé — vérifiez votre connexion et rechargez la page.');
+        const resp = await fetch(GSC_WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ supabaseAccessToken: supabaseToken })
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => '');
+          throw new Error('Worker HTTP ' + resp.status + (errText ? ' — ' + errText : ''));
+        }
+
+        const json = await resp.json();
+        if (!json.firebaseToken) {
+          throw new Error('Pas de firebaseToken dans la réponse Worker');
+        }
+
+        firebaseToken = json.firebaseToken;
+        console.log('[GSC Auth] ✅ Firebase Custom Token obtenu du Worker');
+        break; // Succès
+      } catch (e) {
+        console.warn('[GSC Auth] ❌ Tentative ' + attempt + ' échouée :', e.message);
+        if (attempt === 2) throw new Error('[GSC] Worker indisponible — ' + e.message);
+      }
     }
-    // Se connecter à Firebase avec le Custom Token
-    await firebase.auth().signInWithCustomToken(json.firebaseToken);
+
+    // 6️⃣ FIREBASE : Connexion avec Custom Token
+    try {
+      await firebase.auth().signInWithCustomToken(firebaseToken);
+      const user = firebase.auth().currentUser;
+      if (!user || user.isAnonymous) {
+        throw new Error('CurrentUser non défini ou anonyme après signInWithCustomToken');
+      }
+      console.log('[GSC Auth] ✅ Firebase Auth établie pour uid: ' + user.uid);
+    } catch (e) {
+      throw new Error('[GSC] Impossible de se connecter à Firebase (' + e.message + ')');
+    }
   };
 })();
 </script>
