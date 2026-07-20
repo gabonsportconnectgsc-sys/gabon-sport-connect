@@ -3017,7 +3017,8 @@
     <div class="form-group"><label>Nom</label><input type="text" id="admin-edit-nom"></div>
     <div class="form-group"><label>Rôle</label>
       <select id="admin-edit-role">
-        <option value="joueur">⚽ Joueur / Athlète</option>
+        <option value="joueur">⚽ Joueur</option>
+        <option value="athlete">🏃 Athlète</option>
         <option value="arbitre">🟨 Arbitre</option>
         <option value="entraineur">📋 Entraîneur</option>
         <option value="club">🏟️ Club sportif</option>
@@ -3025,11 +3026,13 @@
         <option value="independant">🧍 Sportif indépendant</option>
         <option value="federation">🏛️ Fédération</option>
         <option value="organisateur">🎯 Organisateur</option>
+        <option value="supporter">💗 Supporter</option>
         <option value="eleve_etudiant">🎓 Élève / Étudiant</option>
         <option value="sportif_etranger">🌍 Sportif étranger</option>
         <option value="handisport">🦾 Sportif handisport</option>
         <option value="ancien_sportif">🎖️ Ancien Sportif</option>
         <option value="formateur">🧑‍🏫 Formateur</option>
+        <option value="ecole_universite">🏫 École / Université</option>
         <option value="admin">⚙️ Admin</option>
       </select>
     </div>
@@ -3814,11 +3817,25 @@ async function onSupabaseSignedIn(user, extra){
   // Cloudflare à partir du token Supabase), pour que request.auth.uid == uid Supabase.
   try{ await ensureFirebaseAuthViaSupabase(); }catch(e){ console.warn('Pont Firebase Auth indisponible :', e); }
   await loadUserProfile(user.id);
-  if(userProfile && userProfile._isNew){
-    // Aucun profil Firestore pour ce uid : on complète avec les infos d'inscription et on persiste
+  // Si la première lecture a échoué (pont Firebase pas encore prêt juste après
+  // l'inscription, timing réseau...), on retente une fois avant de se rabattre
+  // sur des valeurs par défaut : évite d'afficher un rôle 'joueur' par erreur
+  // pour un compte qui est en réalité correctement enregistré.
+  if(userProfile && userProfile._loadError){
+    try{ await ensureFirebaseAuthViaSupabase(); }catch(e){}
+    await loadUserProfile(user.id);
+  }
+  if(userProfile && (userProfile._isNew || userProfile._loadError)){
+    // Profil Firestore absent OU illisible (erreur réseau/permission persistante) :
+    // dans les deux cas, on reconstruit le rôle/les infos réelles à partir des
+    // métadonnées d'inscription Supabase et de la sauvegarde locale, plutôt que
+    // de figer le compte sur un rôle 'joueur' par défaut qui ne se corrige
+    // ensuite que manuellement via l'admin.
+    const wasLoadError = !!userProfile._loadError;
     const prenom = extra?.prenom || user.user_metadata?.prenom || '';
     const nom   = extra?.nom   || user.user_metadata?.nom   || '';
     delete userProfile._isNew;
+    delete userProfile._loadError;
     const telVal = extra?.tel || user.user_metadata?.tel || '';
     const emailVal = user.email || '';
     // Champs publics uniquement — email/téléphone en clair NE vont plus ici.
@@ -3833,7 +3850,10 @@ async function onSupabaseSignedIn(user, extra){
       uid:        user.id,
       prenom,
       nom,
-      role:       extra?.role       || user.user_metadata?.role       || 'joueur',
+      // Le rôle réel vient toujours en priorité des métadonnées Supabase posées
+      // lors de l'inscription (fiables) ou du profil en attente local ; 'joueur'
+      // n'est plus qu'un tout dernier recours si aucune trace du vrai rôle n'existe.
+      role:       extra?.role       || user.user_metadata?.role       || pendingProfile?.role || 'joueur',
       telephoneHash: telVal ? await hashPhone(telVal) : '',
       sexe:       extra?.sexe       || user.user_metadata?.sexe       || '',
       dateNaissance: extra?.ddn     || user.user_metadata?.ddn        || '',
@@ -3848,9 +3868,12 @@ async function onSupabaseSignedIn(user, extra){
       ...(pendingProfile || {}),
     });
     try{
+      // Si le doc existait déjà mais était juste illisible (_loadError), on ne
+      // veut pas écraser un profil potentiellement plus complet côté serveur :
+      // on fusionne (merge) au lieu de remplacer intégralement le document.
       if(db && typeof setDoc==='function'){
         await ensureFirebaseAuthViaSupabase();
-        await setDoc(doc(db,'users',user.id), userProfile);
+        await setDoc(doc(db,'users',user.id), userProfile, wasLoadError ? {merge:true} : undefined);
         await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
         try { localStorage.removeItem('gsc_pending_profile_'+user.id); } catch(e){}
       }

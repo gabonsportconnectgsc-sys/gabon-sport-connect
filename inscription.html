@@ -459,7 +459,7 @@
         <div class="section-sep">Informations sportives</div>
         <div class="fg">
           <label id="a-sport-label">Sport principal *</label>
-          <select id="a-sport">
+          <select id="a-sport" onchange="updateTeamFieldsVisibility()">
             <option value="">Choisir un sport</option>
             <option>Football</option><option>Basketball</option><option>Athlétisme</option>
             <option>Judo</option><option>Boxe</option><option>Natation</option>
@@ -509,22 +509,22 @@
 
           <!-- MORPHOLOGIE -->
           <div class="subsection">📐 Morphologie</div>
-          <div class="form-row-3">
+          <div class="form-row-3" id="ex-joueur-equipe">
             <div class="fg"><label>Taille (cm)</label><input type="number" id="a-taille" placeholder="ex: 178" min="100" max="250"/></div>
             <div class="fg"><label>Poids (kg)</label><input type="number" id="a-poids" placeholder="ex: 72" min="30" max="200"/></div>
-            <div class="fg"><label>Pied fort</label>
+            <div class="fg" id="ex-pied-fort"><label>Pied fort</label>
               <select id="a-pied"><option value="">—</option><option>Droit</option><option>Gauche</option><option>Les deux</option></select>
             </div>
           </div>
           <div class="form-row">
-            <div class="fg"><label>Poste / Spécialité *</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
-            <div class="fg"><label>Poste secondaire</label><input type="text" id="a-poste2" placeholder="ex: Milieu, 200m…"/></div>
+            <div class="fg"><label id="a-poste-label">Poste / Spécialité *</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
+            <div class="fg"><label id="a-poste2-label">Poste secondaire</label><input type="text" id="a-poste2" placeholder="ex: Milieu, 200m…"/></div>
           </div>
           <div class="form-row">
             <div class="fg"><label>Niveau</label>
               <select id="a-niveau"><option value="">Niveau</option><option>Débutant</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
             </div>
-            <div class="fg"><label>Numéro de maillot</label><input type="number" id="a-maillot" placeholder="ex: 10" min="1" max="99"/></div>
+            <div class="fg" id="ex-maillot"><label>Numéro de maillot</label><input type="number" id="a-maillot" placeholder="ex: 10" min="1" max="99"/></div>
           </div>
 
           <!-- CARACTÉRISTIQUES PHYSIQUES -->
@@ -1144,7 +1144,7 @@
     document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
     const isOrgRole = ['club','federation','association','organisateur'].includes(selectedRole);
     document.getElementById('ex-personne').classList.toggle('show', !isOrgRole);
-    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole));
+    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole));
     document.getElementById('ex-org').classList.toggle('show', isOrgRole);
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
@@ -1154,10 +1154,37 @@
     if (selectedRole === 'eleve_etudiant') {
       populateEtablissementSelect();
     }
-    if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
+    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
       loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
     }
+    updateTeamFieldsVisibility();
     show('s2a');
+  }
+
+  // Champs pertinents uniquement pour un sport d'équipe (poste, pied fort,
+  // maillot, données techniques) : n'ont pas de sens pour un athlète
+  // individuel (100m, judo…). Basé sur le sport réellement choisi (et non
+  // uniquement le rôle), pour couvrir aussi le rôle "Sportif étranger" qui
+  // peut pratiquer n'importe quel sport.
+  function updateTeamFieldsVisibility() {
+    const sport = document.getElementById('a-sport')?.value || '';
+    const isTeamPlayer = SPORTS_COLLECTIFS.includes(sport) || (selectedRole === 'joueur' && !sport);
+    const pied = document.getElementById('ex-pied-fort');
+    const maillot = document.getElementById('ex-maillot');
+    if (pied) pied.style.display = isTeamPlayer ? '' : 'none';
+    if (maillot) maillot.style.display = isTeamPlayer ? '' : 'none';
+    const posteLbl = document.getElementById('a-poste-label');
+    const poste2Lbl = document.getElementById('a-poste2-label');
+    if (posteLbl) posteLbl.textContent = isTeamPlayer ? 'Poste *' : 'Discipline / Épreuve *';
+    if (poste2Lbl) poste2Lbl.textContent = isTeamPlayer ? 'Poste secondaire' : 'Épreuve secondaire';
+    const posteInput = document.getElementById('a-poste');
+    const poste2Input = document.getElementById('a-poste2');
+    if (posteInput) posteInput.placeholder = isTeamPlayer ? 'ex: Attaquant, Gardien…' : 'ex: 100m, Judo -73kg…';
+    if (poste2Input) poste2Input.placeholder = isTeamPlayer ? 'ex: Milieu' : 'ex: 200m';
+    const techSection = document.getElementById('tech-section');
+    const techRatings = document.getElementById('tech-ratings');
+    if (techSection) techSection.style.display = isTeamPlayer ? '' : 'none';
+    if (techRatings) techRatings.style.display = isTeamPlayer ? '' : 'none';
   }
 
   // ── SÉLECTION D'UN CLUB EXISTANT (liste déployable des clubs déjà enregistrés) ──
@@ -1277,7 +1304,7 @@
 
   // Recharger la liste des clubs quand le sport change
   document.getElementById('a-sport')?.addEventListener('change', function() {
-    if (['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole)) {
+    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
       loadClubOptionsForSport(this.value);
     }
   });
@@ -1435,7 +1462,7 @@
     const orgBio         = isOrgRole ? (document.getElementById('a-org-bio')?.value?.trim() || '').slice(0,500) : '';
     const orgPalmares    = isOrgRole ? (document.getElementById('a-org-palmares')?.value?.trim() || '') : '';
     // Champs enrichis joueur/athlète
-    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant'].includes(selectedRole);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole);
     const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
     const poids        = isJoueurRole ? (document.getElementById('a-poids')?.value || '') : '';
     const piedFort     = isJoueurRole ? (document.getElementById('a-pied')?.value || '') : '';
