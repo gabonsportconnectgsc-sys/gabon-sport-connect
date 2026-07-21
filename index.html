@@ -4373,8 +4373,31 @@ function handleChipClick(){
   else showView('profil');
 }
 
+// ── Accueil : atterrir directement au niveau des 6 cartes acteurs (Joueurs,
+// Clubs, Arbitres...) plutôt qu'en tout haut (horloge/météo/bandeau de
+// bienvenue). Extrait en fonction réutilisable car showView('dashboard')
+// n'est PAS toujours appelé au premier chargement — enterAsVisitor(true) et
+// les flux de connexion silencieux passent directement par showApp() sans
+// jamais appeler showView(). Rien n'est supprimé — l'utilisateur reste libre
+// de scroller vers le haut ensuite.
+function scrollToDashboardLanding(){
+  const anchor=document.getElementById('dashboard-landing-anchor');
+  if(!anchor) return;
+  requestAnimationFrame(()=>{
+    const topnav=document.querySelector('.topnav');
+    const headerOffset=(topnav?topnav.offsetHeight:64)+8;
+    const y=anchor.getBoundingClientRect().top+window.pageYOffset-headerOffset;
+    window.scrollTo({top:Math.max(0,y),left:0,behavior:'auto'});
+  });
+}
+
 function showApp(){
   document.getElementById('app-screen').style.display='block';
+  // Ne scroller que si le dashboard est bien la vue active à ce moment (cas du
+  // tout premier chargement) — évite un scroll intempestif si l'app a déjà
+  // navigué ailleurs avant que showApp() ne soit (re)appelé.
+  const dashView=document.getElementById('view-dashboard');
+  if(dashView && dashView.classList.contains('active')) scrollToDashboardLanding();
 }
 
 function enterApp(){
@@ -6257,23 +6280,8 @@ function showView(name){
   if(ve) ve.classList.add('active');
   if(be) be.classList.add('active');
 
-  // ── Accueil : atterrir directement au niveau des 6 cartes acteurs (Joueurs,
-  // Clubs, Arbitres...) plutôt qu'en tout haut (horloge/météo/bandeau de
-  // bienvenue). L'utilisateur reste libre de scroller vers le haut ensuite —
-  // rien n'est supprimé, seul le point d'entrée visuel change.
   if(name==='dashboard'){
-    const anchor=document.getElementById('dashboard-landing-anchor');
-    if(anchor){
-      // Attendre une frame pour que le layout (display:flex sur .view.active) soit posé
-      requestAnimationFrame(()=>{
-        const topnav=document.querySelector('.topnav');
-        const headerOffset=(topnav?topnav.offsetHeight:64)+8;
-        const y=anchor.getBoundingClientRect().top+window.pageYOffset-headerOffset;
-        window.scrollTo({top:Math.max(0,y),left:0,behavior:'auto'});
-      });
-    } else {
-      window.scrollTo({top:0,left:0,behavior:'auto'});
-    }
+    scrollToDashboardLanding();
   } else {
     window.scrollTo({top:0,left:0,behavior:'auto'});
   }
