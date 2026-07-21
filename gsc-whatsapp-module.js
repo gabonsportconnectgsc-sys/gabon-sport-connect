@@ -395,7 +395,11 @@
     wireFilterBlock(document.getElementById('gsc-wa-overlay'), 'gsc-wa-modal');
   }
 
-  // Position par défaut : bas-droite, au-dessus de la barre de nav mobile.
+  // Position par défaut : sous le logo, en haut à gauche (au lieu de bas-droite
+  // au-dessus de la barre de nav mobile — ancien comportement). Ne s'applique
+  // que tant que l'utilisateur n'a jamais fait glisser le bouton lui-même
+  // (aucune position enregistrée dans localStorage) : le FAB reste déplaçable
+  // comme avant, on ne change que son point de départ.
   function positionFabDefault() {
     const fab = document.getElementById('gsc-wa-fab');
     if (!fab) return;
@@ -403,7 +407,9 @@
     try { pos = JSON.parse(localStorage.getItem(FAB_POS_KEY) || 'null'); } catch (e) { pos = null; }
     const vw = window.innerWidth, vh = window.innerHeight;
     if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
-      pos = { x: vw - 46 - 14, y: vh - 46 - 128 };
+      const topnav = document.querySelector('.topnav');
+      const topOffset = (topnav ? topnav.offsetHeight : 64) + 10;
+      pos = { x: 14, y: topOffset };
     }
     // Reclamp si la fenêtre a changé de taille depuis le dernier enregistrement.
     pos.x = Math.min(Math.max(6, pos.x), vw - 46 - 6);
