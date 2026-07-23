@@ -115,6 +115,7 @@
     return `
       <div class="adm-section">
         <div class="adm-section-title">${icon} Identité</div>
+        ${s.logoUrl ? `<div style="text-align:center;margin-bottom:12px;"><img src="${esc(s.logoUrl)}" alt="" style="width:96px;height:96px;border-radius:14px;object-fit:cover;border:1px solid var(--gray-bd,#e2e8f0);"></div>` : ''}
         ${s.slogan ? `<p style="font-style:italic;color:var(--gray-txt);margin:-4px 0 10px;">« ${esc(s.slogan)} »</p>` : ''}
         <div class="detail-grid">
           <div><strong>Nom</strong><br>${esc(s.nom)}</div>

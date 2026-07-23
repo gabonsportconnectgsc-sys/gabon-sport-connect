@@ -111,6 +111,11 @@
     .fi{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
     .form-hint{font-size:11px;color:var(--gray-txt);margin-top:3px;}
     .section-sep{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-txt);margin:14px 0 10px;padding-top:13px;border-top:1px solid var(--gray-bd);}
+    .a-avatar-upload-wrap{position:relative;width:96px;height:96px;margin:0 auto 6px;}
+    .a-avatar-upload-wrap .a-avatar{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;overflow:hidden;}
+    .a-avatar-upload-wrap .a-avatar img{width:100%;height:100%;object-fit:cover;}
+    .a-avatar-upload-wrap .a-edit-btn{position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;border:2px solid #fff;}
+    .a-avatar-hint{text-align:center;font-size:10.5px;color:var(--gray-txt);margin-bottom:16px;}
     .extra{display:none;animation:fadeIn .2s ease both;}
     .extra.show{display:block;}
 
@@ -339,6 +344,12 @@
           <div class="perm-item n">🚫 Figurer dans l'annuaire (compte Acteur Sportif requis)</div>
           <div class="perm-item n">🚫 Modifier des fiches ou publier du contenu</div>
         </div>
+        <div class="a-avatar-upload-wrap">
+          <div class="a-avatar" id="v-avatar-preview">📷</div>
+          <label class="a-edit-btn" for="v-photo-input" title="Ajouter une photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="v-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleVisiteurPhotoSelect(this)">
+        </div>
+        <div class="a-avatar-hint" id="v-avatar-hint">Photo de profil (optionnel) · min. 200×200 px · max 5 Mo</div>
         <div class="form-row">
           <div class="fg"><label>Prénom *</label><input type="text" id="v-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
           <div class="fg"><label>Nom *</label><input type="text" id="v-nom" placeholder="Nom" autocomplete="family-name"/></div>
@@ -439,6 +450,12 @@
         </div>
       </div>
       <div class="card-body">
+        <div class="a-avatar-upload-wrap">
+          <div class="a-avatar" id="a-avatar-preview">📷</div>
+          <label class="a-edit-btn" for="a-photo-input" title="Ajouter une photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="a-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleActeurPhotoSelect(this)">
+        </div>
+        <div class="a-avatar-hint" id="a-avatar-hint">Photo de profil / logo (optionnel) · min. 200×200 px · max 5 Mo</div>
         <div class="form-row">
           <div class="fg"><label>Prénom *</label><input type="text" id="a-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
           <div class="fg"><label>Nom *</label><input type="text" id="a-nom" placeholder="Nom" autocomplete="family-name"/></div>
@@ -1107,6 +1124,8 @@
   }
 
   let selectedRole = null;
+  let aPhotoURL = ''; // URL Cloudinary de la photo/logo choisie à l'inscription acteur (remplace l'avatar par défaut)
+  let vPhotoURL = ''; // idem, formulaire visiteur
 
   function show(id) {
     ['s0','s1v','s1a','s2a','sv','sa','sguard'].forEach(s => {
@@ -1334,6 +1353,54 @@
     el.textContent = msg; el.style.display = 'block';
   }
 
+  // ── Photo de profil / logo à l'inscription — même compte Cloudinary
+  // que le changement de photo depuis le profil (index.html), pour que
+  // l'acteur puisse remplacer l'avatar par défaut dès la fiche à remplir.
+  const INSC_CLOUDINARY_CLOUD = 'djvzc3vqp';
+  const INSC_CLOUDINARY_PRESET = 'gsc_admin_uploads';
+
+  async function uploadInscriptionPhoto(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', INSC_CLOUDINARY_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${INSC_CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok || !data.secure_url) throw new Error((data && data.error && data.error.message) || "Échec de l'upload de la photo.");
+    return data.secure_url;
+  }
+
+  async function handleRegistrationPhotoSelect(input, kind) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    const preview = document.getElementById(kind + '-avatar-preview');
+    const hint = document.getElementById(kind + '-avatar-hint');
+    const allowed = ['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif'];
+    if (!allowed.includes(file.type) && !file.type.startsWith('image/')) {
+      if (hint) { hint.textContent = 'Format non autorisé. Utilisez une image (JPG, PNG, WEBP…).'; hint.style.color = 'var(--danger)'; }
+      return;
+    }
+    if (file.size > 5*1024*1024) {
+      if (hint) { hint.textContent = 'Photo trop lourde (max 5 Mo).'; hint.style.color = 'var(--danger)'; }
+      return;
+    }
+    // Aperçu immédiat local pendant l'envoi
+    const localUrl = URL.createObjectURL(file);
+    if (preview) preview.innerHTML = `<img src="${localUrl}">`;
+    if (hint) { hint.textContent = '📤 Envoi en cours…'; hint.style.color = ''; }
+    try {
+      const url = await uploadInscriptionPhoto(file);
+      if (kind === 'a') aPhotoURL = url; else vPhotoURL = url;
+      if (preview) preview.innerHTML = `<img src="${url}">`;
+      if (hint) { hint.textContent = '✅ Photo prête — elle sera utilisée à la création du profil.'; hint.style.color = 'var(--green)'; }
+    } catch (e) {
+      if (kind === 'a') aPhotoURL = ''; else vPhotoURL = '';
+      if (preview) preview.innerHTML = '📷';
+      if (hint) { hint.textContent = 'Erreur upload : ' + (e.message || e); hint.style.color = 'var(--danger)'; }
+    }
+  }
+  function handleActeurPhotoSelect(input) { handleRegistrationPhotoSelect(input, 'a'); }
+  function handleVisiteurPhotoSelect(input) { handleRegistrationPhotoSelect(input, 'v'); }
+
   function isEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
   function sbError(e) {
@@ -1404,7 +1471,7 @@
       const uid = data.user?.id;
       if (uid) {
         try {
-          const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport };
+          const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport, ...(vPhotoURL && { photoURL: vPhotoURL }) };
           try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(vProfile)); } catch(e){}
           await saveProfile(uid, email, vProfile);
           try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
@@ -1634,7 +1701,8 @@
           }),
           gscId,
           club: clubActuel || '',
-          status: 'pending'
+          status: 'pending',
+          ...(aPhotoURL && { photoURL: aPhotoURL })
         };
         try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(profile)); } catch(e){}
         try {

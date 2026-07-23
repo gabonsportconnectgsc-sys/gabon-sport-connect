@@ -25,6 +25,60 @@
   function uid() { return 'r' + Math.random().toString(36).slice(2, 9); }
 
   /* ══════════════════════════════════════════════════════════════════
+   * 0. UPLOAD LOGO / PHOTO DE LA STRUCTURE (Cloudinary, même compte que
+   *    l'upload de photo de profil individuel dans index.html — permet
+   *    de changer l'image par défaut directement depuis la fiche à
+   *    remplir, sans dépendre d'un module externe non chargé ici).
+   * ══════════════════════════════════════════════════════════════════ */
+  const SF_CLOUDINARY_CLOUD = 'djvzc3vqp';
+  const SF_CLOUDINARY_PRESET = 'gsc_admin_uploads';
+
+  async function uploadLogoFile(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', SF_CLOUDINARY_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${SF_CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok || !data.secure_url) throw new Error((data && data.error && data.error.message) || "Échec de l'upload du logo.");
+    return data.secure_url;
+  }
+
+  async function uploadLogo(input) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/heic', 'image/heif'];
+    const preview = document.getElementById('sf-logo-preview');
+    const hint = document.getElementById('sf-logo-hint');
+    const resetPreview = () => {
+      if (!preview) return;
+      preview.innerHTML = (_currentStructure && _currentStructure.logoUrl)
+        ? `<img src="${esc(_currentStructure.logoUrl)}" style="width:100%;height:100%;object-fit:cover;">`
+        : '🖼️';
+    };
+    if (!allowed.includes(file.type) && !file.type.startsWith('image/')) {
+      if (hint) { hint.textContent = 'Format non autorisé. Utilisez une image (JPG, PNG, WEBP…).'; hint.style.color = '#dc2626'; }
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      if (hint) { hint.textContent = 'Fichier trop lourd (max 5 Mo).'; hint.style.color = '#dc2626'; }
+      return;
+    }
+    if (preview) preview.innerHTML = '<span style="font-size:12px;">⏳</span>';
+    if (hint) { hint.textContent = 'Envoi en cours…'; hint.style.color = ''; }
+    try {
+      const url = await uploadLogoFile(file);
+      if (!_currentStructure) _currentStructure = {};
+      _currentStructure.logoUrl = url;
+      if (preview) preview.innerHTML = `<img src="${esc(url)}" style="width:100%;height:100%;object-fit:cover;">`;
+      if (hint) { hint.textContent = '✅ Logo / photo mis à jour.'; hint.style.color = '#16a34a'; }
+    } catch (e) {
+      console.error('[GSCStructureForm] upload logo:', e);
+      resetPreview();
+      if (hint) { hint.textContent = 'Erreur upload : ' + (e.message || e); hint.style.color = '#dc2626'; }
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
    * 1. SECTIONS STATIQUES
    * ══════════════════════════════════════════════════════════════════ */
   function sectionIdentity(s, sport, sportChosen) {
@@ -33,6 +87,16 @@
     return `
     <div class="form-section">
       <div class="section-divider">🪪 Identité</div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="position:relative;width:96px;height:96px;margin:0 auto;">
+          <div id="sf-logo-preview" style="width:96px;height:96px;border-radius:14px;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;">
+            ${s.logoUrl ? `<img src="${esc(s.logoUrl)}" style="width:100%;height:100%;object-fit:cover;">` : '🖼️'}
+          </div>
+          <label for="sf-logo-input" style="position:absolute;bottom:-4px;right:-4px;width:30px;height:30px;border-radius:50%;background:var(--green,#009E60);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;border:2px solid #fff;" title="Changer le logo / photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="sf-logo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="GSCStructureForm.uploadLogo(this)">
+        </div>
+        <div id="sf-logo-hint" style="font-size:11px;color:var(--gray-txt,#64748b);margin-top:6px;">Logo / photo de la structure (optionnel) · max 5 Mo</div>
+      </div>
       <div class="form-group"><label>Nom de la structure</label>
         <input type="text" id="sf-nom" value="${esc(s.nom)}" placeholder="AS Mangasport…"></div>
       <div class="form-group"><label>Sigle</label>
@@ -546,7 +610,7 @@
     open, build, addRow, addRosterRow,
     onDisciplineChange, onSeasonChange, newSeason,
     useMyLocation, extractLatLngFromLink, openInMaps, shareLocationWhatsApp,
-    collect, save,
+    collect, save, uploadLogo,
     structureFromAccount, openFromAccount
   };
 
