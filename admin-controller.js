@@ -272,6 +272,8 @@
     document.getElementById('stat-verified').textContent = actifs.length;
     document.getElementById('stat-pending').textContent = pending.length;
     document.getElementById('stat-matchs').textContent = matchs.length;
+    const appMatchsEl = document.getElementById('app-matchs');
+    if (appMatchsEl) appMatchsEl.textContent = matchs.length;
 
     renderPendingValidation(pending);
 
@@ -282,14 +284,33 @@
       : `${actifs.length} visible(s) sur l'app`;
 
     const total = visibles.length || 1;
+    const ORG_ROLES = ['club', 'federation', 'association'];
     const barsHtml = DASH_ROLES.map(r => {
       const count = visibles.filter(u => u.role === r).length;
       if (count === 0) return '';
       const pct = Math.round((count / total) * 100);
-      return `<div class="sb-item clickable" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'${r}', title:'Gestion des Acteurs'})"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}">${count}</span></div><div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
+      return `<div class="sb-item clickable" data-dash-role="${r}" style="cursor:pointer;" onclick="window.gscGoToFiltered({roles:'${r}', title:'Gestion des Acteurs'})"><div class="sb-label"><span>${ROLE_LABELS[r] || r}</span><span style="color:${ROLE_COLORS[r] || '#64748b'}" data-dash-role-count>${count}</span></div><div class="sb-track"><div class="sb-fill" data-dash-role-fill style="width:${pct}%;background:${ROLE_COLORS[r] || '#64748b'}"></div></div></div>`;
     }).join('');
     const barsEl = document.getElementById('role-bars');
     if (barsEl) barsEl.innerHTML = barsHtml;
+
+    // Harmonisation avec l'onglet Structures / les tuiles du haut : club,
+    // fédération et association doivent être comptés avec la même règle
+    // que window.computeUnifiedOrgCount (définie dans admin.html), sinon
+    // cette carte affiche un chiffre différent de celui des tuiles
+    // juste au-dessus dès qu'une action admin déclenche renderDashboard().
+    if (barsEl && typeof window.computeUnifiedOrgCount === 'function') {
+      ORG_ROLES.forEach(r => {
+        window.computeUnifiedOrgCount(visibles, [r]).then(unifiedCount => {
+          const item = barsEl.querySelector(`[data-dash-role="${r}"]`);
+          if (!item) return;
+          const countEl = item.querySelector('[data-dash-role-count]');
+          const fillEl = item.querySelector('[data-dash-role-fill]');
+          if (countEl) countEl.textContent = unifiedCount;
+          if (fillEl) fillEl.style.width = Math.round((unifiedCount / total) * 100) + '%';
+        }).catch(() => { /* silencieux : le comptage simple déjà affiché reste en repli */ });
+      });
+    }
 
     const activityEl = document.getElementById('activity-list');
     if (activityEl) {
