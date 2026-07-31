@@ -680,6 +680,12 @@
     photoBox.style.backgroundImage = u.photoURL ? `url('${u.photoURL}')` : '';
     photoBox.style.backgroundSize = 'cover';
     photoBox.style.backgroundPosition = 'center';
+    const photoTrigger = document.getElementById('modal-photo-trigger');
+    if (photoTrigger) {
+      photoTrigger.style.cursor = u.isDemo ? 'not-allowed' : 'pointer';
+      photoTrigger.title = u.isDemo ? 'Fiche de démonstration — import désactivé' : 'Changer la photo';
+      photoTrigger.onclick = () => triggerActorPhotoUpload(u.uid || u.id);
+    }
     document.getElementById('modal-email').textContent = u.email || '—';
     document.getElementById('modal-phone').textContent = u.telephone || u.phone || '—';
     document.getElementById('modal-date').textContent = fmtDate(u.createdAt);
@@ -1289,10 +1295,47 @@
   }
 
   function triggerActorPhotoUpload(uid) {
-    // Import désactivé côté admin — la gestion des photos de profil est désormais
-    // entièrement déléguée à l'application (index.html), qui dispose déjà d'un
-    // flux d'upload fiable. L'admin reste lecture seule sur ce point.
-    toast('📷 La modification de photo se fait désormais depuis l\'application (profil de l\'acteur).', 'info');
+    if (!uid) return;
+    const u = users.find(x => (x.uid || x.id) === uid);
+    if (!u) { toast('❌ Fiche introuvable.', 'error'); return; }
+    if (u.isDemo) { toast('📷 Fiche de démonstration — import désactivé.', 'info'); return; }
+    actorPhotoUploadTargetUid = uid;
+    const input = document.getElementById('actor-photo-input');
+    if (!input) { toast('❌ Élément d\'import introuvable.', 'error'); return; }
+    pickAndUpload(input, async (file) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast('❌ Format non autorisé. Utilisez JPG, PNG ou WEBP.', 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast('❌ Photo trop lourde (max 5 Mo).', 'error');
+        return;
+      }
+      photoUploadBusyId = uid;
+      renderPhotos();
+      try {
+        const url = await doUpload(file, 'actors/photos/' + uid);
+        if (!url) { photoUploadBusyId = null; renderPhotos(); return; }
+        if (!window.db) { toast('⚠️ Connexion Firebase requise.', 'error'); photoUploadBusyId = null; renderPhotos(); return; }
+        await withAuth(() => window.db.collection('users').doc(u.id).update({ photoURL: url }));
+        u.photoURL = url;
+        // Si le modal de détail de cette même fiche est ouvert, on met sa photo à jour aussi.
+        if (currentPlayerId === u.id) {
+          const photoBox = document.getElementById('modal-photo');
+          const photoContent = document.getElementById('modal-photo-content');
+          if (photoBox) { photoBox.style.backgroundImage = `url('${url}')`; photoBox.style.backgroundSize = 'cover'; photoBox.style.backgroundPosition = 'center'; }
+          if (photoContent) photoContent.textContent = '';
+        }
+        toast('✅ Photo mise à jour pour « ' + fullName(u) + ' ».', 'success');
+      } catch (e) {
+        console.error('Erreur sauvegarde photo acteur :', e);
+        toast('❌ Erreur lors de l\'enregistrement : ' + e.message, 'error');
+      } finally {
+        photoUploadBusyId = null;
+        renderPhotos();
+      }
+    });
   }
 
   function triggerDefaultAvatarUpload(role) {
