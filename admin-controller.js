@@ -980,19 +980,34 @@
     // sous-document private/contact, ET les comptes Auth associés (Supabase +
     // Firebase) via le Worker — sans quoi le compte peut se reconnecter et
     // recréer automatiquement sa fiche à la prochaine connexion.
+    const u = users.find(x => x.id === id);
+    // uid réel de connexion (Supabase/Firebase) : peut différer de l'ID du
+    // document Firestore pour une fiche créée par l'admin avant que la
+    // personne ne se soit inscrite elle-même (cf. ownerUid / "non revendiqué").
+    // Cibler le mauvais identifiant ici laissait le vrai compte Auth actif,
+    // ce qui permettait à l'ancien profil de « revenir » à la reconnexion.
+    const realUid = (u && u.uid) ? u.uid : id;
     if (!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès...), et son compte de connexion sera désactivé.')) return;
     try {
-      const authDeleted = await deleteAuthAccounts(id);
+      const authDeleted = await deleteAuthAccounts(realUid);
       await withAuth(() => {
         const docRef = window.db.collection('users').doc(id);
         const batch = window.db.batch();
         // Empreinte de suppression : bloque la recréation automatique du
         // profil si le compte Auth (Supabase/Firebase) n'a pas pu être
         // réellement supprimé et que l'utilisateur se reconnecte ensuite.
-        batch.set(window.db.collection('deletedAccounts').doc(id), {
+        // Écrite sous le vrai uid (vérifié à la connexion dans index.html),
+        // et en plus sous l'ID du document par sécurité si les deux diffèrent.
+        batch.set(window.db.collection('deletedAccounts').doc(realUid), {
           deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
           deletedBy: (window.currentAdminUid || 'admin')
         });
+        if (realUid !== id) {
+          batch.set(window.db.collection('deletedAccounts').doc(id), {
+            deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            deletedBy: (window.currentAdminUid || 'admin')
+          });
+        }
         batch.delete(docRef);
         batch.delete(docRef.collection('private').doc('contact'));
         return batch.commit();

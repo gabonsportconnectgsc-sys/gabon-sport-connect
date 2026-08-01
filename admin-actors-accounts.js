@@ -189,12 +189,12 @@
 
   let _allRows = [];
 
-  // Même convention de suppression douce que partout ailleurs dans l'app
-  // (admin.html Joueurs, index.html Annuaire / adminDeleteUser) : un
-  // acteur "supprimé" n'est jamais retiré de Firestore, seul son champ
-  // status/statut passe à 'deleted'. Comptes & Accès doit respecter la
-  // même règle de visibilité, sinon les comptes supprimés depuis
-  // l'Annuaire admin continuent d'apparaître ici.
+  // Compatibilité avec les comptes supprimés AVANT le passage de deletePlayer()
+  // (admin-controller.js) à une suppression réelle et définitive : ces
+  // anciens comptes portent encore un statut 'deleted' sans avoir été
+  // retirés de Firestore. On les masque ici et on les propose à la purge
+  // (voir renderPurgeBanner / purgeDeleted) ; les suppressions récentes,
+  // elles, retirent déjà le document et n'ont plus besoin de ce filtre.
   // `status` vit maintenant dans private/contact ; on retombe sur les
   // champs historiques du doc public pour les comptes pas encore migrés.
   function isDeleted(u, priv) {
@@ -315,18 +315,43 @@
     const statusEl = document.getElementById('purge-status');
     const stale = getUsers().filter(isDeleted);
     if (!stale.length) return;
-    if (!confirm(`Effacer définitivement ${stale.length} compte(s) marqué(s) "supprimé" ?\n\nCette action est irréversible : les documents seront retirés de Firestore.`)) return;
+    if (!confirm(`Effacer définitivement ${stale.length} compte(s) marqué(s) "supprimé" ?\n\nCette action est irréversible : les documents Firestore ET les comptes de connexion associés (Supabase/Firebase) seront retirés.`)) return;
     if (!window.db) {
       if (statusEl) { statusEl.textContent = 'Firestore indisponible.'; statusEl.className = 'gsc-acc-status-msg err'; }
       return;
     }
     if (statusEl) { statusEl.textContent = '⏳ Purge en cours…'; statusEl.className = 'gsc-acc-status-msg'; }
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, authFail = 0;
     for (const u of stale) {
       const uid = u.id || u.uid;
       if (!uid) continue;
+      // Même logique que deletePlayer() dans admin-controller.js : supprimer
+      // uniquement le document Firestore laisse le compte de connexion
+      // (Supabase/Firebase) actif — la personne peut alors se reconnecter
+      // avec les mêmes identifiants et voir son profil recréé automatiquement.
+      // On tente donc aussi la suppression du compte Auth via le Worker, et
+      // on pose systématiquement l'empreinte deletedAccounts (vérifiée au
+      // login dans index.html) qui bloque cette reconnexion même si la
+      // suppression Auth échoue.
+      let authDeleted = false;
       try {
-        await window.db.collection('users').doc(uid).delete();
+        const token = await getAdminAccessToken();
+        const resp = await fetch(GSC_WORKER_URL + '/admin/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ targetUid: uid })
+        });
+        authDeleted = resp.ok;
+      } catch (e) { console.warn('[GSCAccounts] purge — suppression Auth échouée pour', uid, e); }
+      if (!authDeleted) authFail++;
+      try {
+        const batch = window.db.batch();
+        batch.set(window.db.collection('deletedAccounts').doc(uid), {
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          deletedBy: (window.__gscAdminIdentity && (window.__gscAdminIdentity.email || window.__gscAdminIdentity.uid)) || 'admin'
+        });
+        batch.delete(window.db.collection('users').doc(uid));
+        await batch.commit();
         ok++;
       } catch (err) {
         console.error('[GSCAccounts] purge erreur pour', uid, err);
@@ -334,8 +359,11 @@
       }
     }
     if (statusEl) {
-      statusEl.textContent = fail ? `⚠️ ${ok} supprimé(s), ${fail} échec(s).` : `✅ ${ok} compte(s) purgé(s) définitivement.`;
-      statusEl.className = 'gsc-acc-status-msg ' + (fail ? 'err' : 'ok');
+      const parts = [`✅ ${ok} compte(s) purgé(s) définitivement.`];
+      if (fail) parts.push(`⚠️ ${fail} échec(s) Firestore.`);
+      if (authFail) parts.push(`⚠️ ${authFail} compte(s) de connexion non supprimé(s) (endpoint indisponible) — à traiter manuellement côté Supabase/Firebase.`);
+      statusEl.textContent = parts.join(' ');
+      statusEl.className = 'gsc-acc-status-msg ' + ((fail || authFail) ? 'err' : 'ok');
     }
     render();
   }

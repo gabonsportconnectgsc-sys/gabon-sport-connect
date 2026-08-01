@@ -93,16 +93,36 @@
   /* ══════════════════════════════════════════════════════════════════
    * 3. UPLOAD LOGO / PHOTO
    * ══════════════════════════════════════════════════════════════════ */
+  // Cloudinary (preset non signé) — même compte que admin-controller.js.
+  // Firebase Storage est indisponible sur le plan Spark de ce projet ;
+  // l'ancienne implémentation (window.storage.ref(...).put(file)) échouait
+  // donc systématiquement à chaque appel.
+  const CLOUDINARY_CLOUD_NAME = 'djvzc3vqp';
+  const CLOUDINARY_UPLOAD_PRESET = 'gsc_admin_uploads';
+
   async function uploadLogo(id, file) {
-    if (!window.storage) throw new Error('Firebase Storage indisponible');
-    return withAuth(async () => {
-      const path = `structures/${id}/logo_${Date.now()}_${file.name}`;
-      const ref = window.storage.ref(path);
-      const snapshot = await ref.put(file);
-      const url = await snapshot.ref.getDownloadURL();
-      await update(id, { logoUrl: url });
-      return url;
-    });
+    if (!id) throw new Error('id requis pour uploadLogo()');
+    if (!file) throw new Error('file requis pour uploadLogo()');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `structures/${id}`);
+    let resp;
+    try {
+      resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+        method: 'POST',
+        body: formData
+      });
+    } catch (e) {
+      throw new Error('Upload impossible : connexion réseau indisponible.');
+    }
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data || !data.secure_url) {
+      const msg = (data && data.error && data.error.message) ? data.error.message : `HTTP ${resp.status}`;
+      throw new Error('Échec de l\'upload du logo : ' + msg);
+    }
+    await update(id, { logoUrl: data.secure_url });
+    return data.secure_url;
   }
 
   /* ══════════════════════════════════════════════════════════════════

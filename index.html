@@ -3597,7 +3597,12 @@ async function handleSupabaseRegister(){
       const telHash=await hashPhone(tel);
       if(telHash){
         const telSnap=await getDocs(query(collection(db,'users'),where('telephoneHash','==',telHash)));
-        if(!telSnap.empty){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
+        // On ignore les fiches déjà marquées 'deleted' : avec l'ancien système de
+        // suppression (statut posé sans retrait réel du document), une fiche
+        // supprimée pouvait rester en base et bloquer indéfiniment toute
+        // réinscription avec le même numéro.
+        const activeDup = telSnap.docs.some(d => d.data().status !== 'deleted');
+        if(activeDup){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
       }
     }catch(e){ console.warn('Vérification téléphone:',e); }
   }
