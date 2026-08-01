@@ -1070,7 +1070,7 @@ tr.is-demo-row td { opacity: .82; }
         </div>
         <div class="users-table-wrap">
           <table class="users-table">
-            <thead><tr><th>ID</th><th>Membre</th><th>Rôle</th><th>Club</th><th>QR</th><th>Statut</th></tr></thead>
+            <thead><tr><th>ID</th><th>Membre</th><th>Rôle</th><th>Club</th><th>QR</th><th>Statut</th><th>📎 Docs</th></tr></thead>
             <tbody id="players-grid"></tbody>
           </table>
         </div>
@@ -1845,6 +1845,16 @@ tr.is-demo-row td { opacity: .82; }
             <option>Aucun équipement spécifique</option>
           </select>
         </div>
+      </div>
+      <div class="msection" id="modal-docs-section">
+        <div class="msection-title">📎 Documents épinglés</div>
+        <div style="font-size:12px;color:var(--gray-txt);margin-bottom:10px;">
+          Fichiers fournis par l'acteur (inscription ou navigation) ou ajoutés par l'administrateur. Un document 🔒 sous contrat ne peut pas être supprimé.
+        </div>
+        <div id="modal-docs-list" style="margin-bottom:10px;"></div>
+        <button type="button" class="filter-btn" id="modal-docs-add-btn">➕ Ajouter des documents</button>
+        <div id="modal-docs-pending"></div>
+        <input type="file" id="doc-multi-input" accept="image/*,.pdf,.doc,.docx" multiple style="display:none;">
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary">💾 Enregistrer</button>

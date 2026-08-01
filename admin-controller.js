@@ -581,6 +581,7 @@
         <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td>
         <td data-label="QR"><div class="user-qr-cell" title="QR Code d'identification" data-uid="${esc(uid)}" id="row-qr-${qrIdx}"><canvas id="row-qr-canvas-${qrIdx}" width="26" height="26"></canvas></div></td>
         <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span>${u.editLocked ? (u.ownerUid ? ` <span class="status-badge" style="background:#3b82f620;color:#3b82f6;border:1px solid #3b82f640;" title="Géré par un propriétaire">🏢 Géré</span>` : ` <span class="status-badge" style="background:#f9731620;color:#f97316;border:1px solid #f9731640;" title="En attente de revendication">🔒 Non revendiqué</span>`) : ''}</td>
+        <td data-label="Documents">${renderPinnedDocsBadge(u)}</td>
       </tr>`;
     };
 
@@ -594,14 +595,14 @@
         if (!groupList || !groupList.length) return;
         seen.add(role);
         sortWithPendingFirst(groupList);
-        html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="7"><span class="group-header-label">${ROLE_LABELS[role] || role}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
       Object.keys(buckets).forEach(role => {
         if (seen.has(role)) return;
         const groupList = buckets[role];
         sortWithPendingFirst(groupList);
-        html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="7"><span class="group-header-label">👤 ${esc(role)}</span><span class="group-header-count">${groupList.length}</span></td></tr>`;
         html += groupList.map(renderRow).join('');
       });
       tbody.innerHTML = html;
@@ -610,7 +611,7 @@
       if (sGroups) {
         let html = '';
         sGroups.forEach(g => {
-          html += `<tr class="group-header-row"><td colspan="6"><span class="group-header-label">${g.label}</span><span class="group-header-count">${g.items.length}</span></td></tr>`;
+          html += `<tr class="group-header-row"><td colspan="7"><span class="group-header-label">${g.label}</span><span class="group-header-count">${g.items.length}</span></td></tr>`;
           html += g.items.map(renderRow).join('');
         });
         tbody.innerHTML = html;
@@ -784,6 +785,10 @@
         ownershipRow.style.display = 'none';
       }
     }
+
+    pendingDocFiles = [];
+    renderModalDocuments(u);
+    renderPendingDocs(id);
 
     const modal = document.getElementById('player-modal');
     const saveBtn = modal?.querySelector('.btn-primary');
@@ -1536,7 +1541,7 @@
         ? docs.map((d, i) => `
             <div class="doc-chip" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-bd);border-radius:8px;padding:3px 8px;margin:2px 4px 2px 0;font-size:12px;">
               <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}
-              ${u.isDemo ? '' : `<button class="btn-sm danger" title="Supprimer" onclick="window.AdminController_deleteDocument('${u.id}', ${i})">✕</button>`}
+              ${docChipButtonsHtml(u, d, i)}
             </div>`).join('')
         : `<span style="color:var(--danger);font-weight:700;">⚠️ aucun document</span>`;
       return `
@@ -1554,6 +1559,232 @@
     return users.find(u => u.id === uid)?.documents || [];
   }
 
+  /* ── Boutons d'action sur un document épinglé : télécharger, imprimer,
+     et supprimer (ou lever le verrou si le document est marqué "sous contrat",
+     ce qui permet à l'admin de traiter une irrégularité constatée). ── */
+  function docChipButtonsHtml(u, d, i) {
+    const label = d.label || 'Document';
+    let html = '';
+    html += `<button type="button" class="btn-sm doc-btn-download" title="Télécharger" data-url="${esc(d.url)}" data-label="${esc(label)}" style="background:var(--gray-bg);color:var(--navy);">⬇️</button>`;
+    html += `<button type="button" class="btn-sm doc-btn-print" title="Imprimer" data-url="${esc(d.url)}" data-label="${esc(label)}" style="background:var(--gray-bg);color:var(--navy);">🖨️</button>`;
+    if (!u.isDemo) {
+      html += d.locked
+        ? `<button type="button" class="btn-sm" title="Lever le verrou (en cas d'irrégularité)" style="background:#fff3e0;color:var(--warn);" onclick="window.AdminController_unlockDocument('${u.id}', ${i})">🔓</button>`
+        : `<button type="button" class="btn-sm danger" title="Supprimer" onclick="window.AdminController_deleteDocument('${u.id}', ${i})">✕</button>`;
+    }
+    return html;
+  }
+
+  function guessDocExt(url) {
+    const clean = (url || '').split('?')[0].split('#')[0];
+    const m = /\.([a-zA-Z0-9]{2,5})$/.exec(clean.split('/').pop() || '');
+    return m ? m[1].toLowerCase() : '';
+  }
+
+  async function downloadDocument(url, label) {
+    if (!url) return;
+    const ext = guessDocExt(url);
+    const safeName = (label || 'document')
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\- ]/g, '').trim().replace(/\s+/g, '_') || 'document';
+    try {
+      // Téléchargement via blob : fiable même pour un fichier hébergé en cross-origin
+      // (l'attribut download seul est souvent ignoré sur une URL distante).
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = ext ? `${safeName}.${ext}` : safeName;
+      link.href = blobUrl;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+    } catch (e) {
+      // Repli : ouvrir le fichier dans un nouvel onglet si le fetch échoue.
+      window.open(url, '_blank');
+    }
+  }
+
+  function printDocument(url, label) {
+    if (!url) return;
+    const ext = guessDocExt(url);
+    const isPdf = ext === 'pdf';
+    const w = window.open('', '_blank');
+    if (!w) { toast('⚠️ Autorisez les fenêtres popup pour imprimer.', 'warn'); return; }
+    const safeLabel = esc(label || 'Document');
+    if (isPdf) {
+      w.document.write(`<!DOCTYPE html><html><head><title>${safeLabel}</title></head><body style="margin:0;">
+        <iframe src="${esc(url)}" style="width:100%;height:100vh;border:none;" onload="setTimeout(function(){window.print();},400)"></iframe>
+      </body></html>`);
+    } else {
+      w.document.write(`<!DOCTYPE html><html><head><title>${safeLabel}</title></head>
+        <body style="text-align:center;font-family:sans-serif;padding:20px;">
+          <div style="font-weight:800;margin-bottom:14px;">${safeLabel}</div>
+          <img src="${esc(url)}" style="max-width:100%;" onload="setTimeout(function(){window.print();},400)">
+        </body></html>`);
+    }
+    w.document.close();
+  }
+
+  async function unlockDocument(uid, idx) {
+    const target = users.find(x => x.id === uid);
+    if (!target) return;
+    const docs = getUserDocs(uid);
+    const d = docs[idx];
+    if (!d || !d.locked) return;
+    if (!confirm('Lever le verrou de ce document ? Il pourra ensuite être supprimé ou partagé librement.')) return;
+    const updated = docs.map((doc, i) => i === idx ? { ...doc, locked: false } : doc);
+    try {
+      await withAuth(() => window.db.collection('users').doc(uid).update({ documents: updated }));
+      target.documents = updated;
+      toast('🔓 Verrou levé sur le document', 'success');
+      if (document.getElementById('documents')?.classList.contains('active')) renderDocuments();
+      if (currentPlayerId === uid) renderModalDocuments(target);
+      renderPlayers();
+    } catch (e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  }
+
+  // Délégation d'événement globale pour les boutons télécharger/imprimer des
+  // documents épinglés (évite tout risque d'échappement de guillemets dans
+  // les titres saisis par l'admin, contrairement à un onclick inline).
+  document.addEventListener('click', (e) => {
+    const dlBtn = e.target.closest('.doc-btn-download');
+    if (dlBtn) { downloadDocument(dlBtn.dataset.url, dlBtn.dataset.label); return; }
+    const prBtn = e.target.closest('.doc-btn-print');
+    if (prBtn) { printDocument(prBtn.dataset.url, prBtn.dataset.label); return; }
+  });
+
+  /* ── Badge compact "documents épinglés" affiché dans le tableau Gestion des Acteurs ── */
+  function renderPinnedDocsBadge(u) {
+    const docs = u.documents || [];
+    if (!docs.length) {
+      return `<span style="font-size:11px;color:var(--gray-txt);">—</span>`;
+    }
+    const titles = docs.map(d => d.label || 'Document').join(' • ');
+    return `<span title="${esc(titles)}" style="display:inline-flex;align-items:center;gap:4px;background:var(--green-lt);color:var(--green-dk);font-weight:700;font-size:11px;padding:3px 9px;border-radius:20px;">📎 ${docs.length}</span>`;
+  }
+
+  /* ── Section "Documents épinglés" dans la fiche détail d'un acteur (player-modal) ──
+     Permet à l'admin de consulter/supprimer les documents existants et d'en importer
+     plusieurs à la fois (photos, PDF, etc.) chacun avec son propre titre. */
+  let pendingDocFiles = [];
+
+  function renderModalDocuments(u) {
+    const listEl = document.getElementById('modal-docs-list');
+    if (!listEl) return;
+    const docs = u.documents || [];
+    listEl.innerHTML = docs.length
+      ? docs.map((d, i) => `
+          <div class="doc-chip" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-bd);border-radius:8px;padding:4px 10px;margin:3px 6px 3px 0;font-size:12px;">
+            <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}
+            ${docChipButtonsHtml(u, d, i)}
+          </div>`).join('')
+      : `<span style="color:var(--gray-txt);font-size:12px;">Aucun document épinglé pour cet acteur.</span>`;
+
+    const addBtn = document.getElementById('modal-docs-add-btn');
+    if (addBtn) {
+      addBtn.style.display = u.isDemo ? 'none' : '';
+      addBtn.onclick = () => triggerDocsUpload(u.id);
+    }
+  }
+
+  function triggerDocsUpload(docId) {
+    const u = users.find(x => x.id === docId);
+    if (!u) return;
+    if (u.isDemo) { toast('📎 Fiche de démonstration — import désactivé.', 'info'); return; }
+    const input = document.getElementById('doc-multi-input');
+    if (!input) { toast('❌ Élément d\'import introuvable.', 'error'); return; }
+    input.value = '';
+    input.onchange = () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      const tooBig = files.filter(f => f.size > 20 * 1024 * 1024);
+      if (tooBig.length) {
+        toast('❌ Fichier(s) trop volumineux (max 20 Mo chacun) : ' + tooBig.map(f => f.name).join(', '), 'error');
+        return;
+      }
+      pendingDocFiles = files.map(f => ({ file: f, title: f.name.replace(/\.[^/.]+$/, '') }));
+      renderPendingDocs(docId);
+    };
+    input.click();
+  }
+
+  function renderPendingDocs(docId) {
+    const el = document.getElementById('modal-docs-pending');
+    if (!el) return;
+    if (!pendingDocFiles.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div style="margin-top:10px;padding:10px;background:var(--gray-bg);border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;">📝 Donnez un titre à chaque document avant l'envoi :</div>
+        ${pendingDocFiles.map((p, i) => `
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+            <input type="text" value="${esc(p.title)}" data-idx="${i}" class="pending-doc-title" placeholder="Titre du document" style="flex:1;min-width:120px;padding:6px 8px;border:1px solid var(--gray-bd);border-radius:6px;font-size:12px;">
+            <span style="font-size:11px;color:var(--gray-txt);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(p.file.name)}">${esc(p.file.name)}</span>
+            <button type="button" class="btn-sm danger" onclick="window.AdminController_removePendingDoc(${i}, '${docId}')">✕</button>
+          </div>`).join('')}
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button type="button" class="btn btn-primary" style="padding:8px 14px;font-size:12px;" onclick="window.AdminController_confirmUploadDocs('${docId}')">📤 Envoyer ${pendingDocFiles.length} document(s)</button>
+          <button type="button" class="btn btn-secondary" style="padding:8px 14px;font-size:12px;" onclick="window.AdminController_cancelPendingDocs('${docId}')">Annuler</button>
+        </div>
+      </div>`;
+    el.querySelectorAll('.pending-doc-title').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.dataset.idx, 10);
+        if (pendingDocFiles[idx]) pendingDocFiles[idx].title = e.target.value;
+      });
+    });
+  }
+
+  function removePendingDoc(idx, docId) {
+    pendingDocFiles.splice(idx, 1);
+    renderPendingDocs(docId);
+  }
+
+  function cancelPendingDocs(docId) {
+    pendingDocFiles = [];
+    renderPendingDocs(docId);
+  }
+
+  async function confirmUploadDocs(docId) {
+    const u = users.find(x => x.id === docId);
+    if (!u || !pendingDocFiles.length) return;
+    if (!window.db) { toast('⚠️ Connexion Firebase requise.', 'error'); return; }
+    const toUpload = pendingDocFiles.slice();
+    pendingDocFiles = [];
+    renderPendingDocs(docId);
+    toast('⏳ Envoi de ' + toUpload.length + ' document(s)…', 'info');
+    const newDocs = [];
+    for (const item of toUpload) {
+      try {
+        const url = await doUpload(item.file, 'actors/documents/' + docId);
+        if (url) {
+          newDocs.push({
+            label: (item.title || item.file.name).trim() || item.file.name,
+            url,
+            locked: false,
+            addedAt: Date.now(),
+            addedBy: 'admin'
+          });
+        }
+      } catch (e) {
+        console.error('Erreur upload document :', e);
+      }
+    }
+    if (!newDocs.length) { toast('❌ Aucun document n\'a pu être envoyé.', 'error'); return; }
+    const updated = [...(u.documents || []), ...newDocs];
+    try {
+      await withAuth(() => window.db.collection('users').doc(docId).update({ documents: updated }));
+      u.documents = updated;
+      toast('✅ ' + newDocs.length + ' document(s) épinglé(s) pour « ' + fullName(u) + ' ».', 'success');
+      renderModalDocuments(u);
+      renderPlayers();
+      if (document.getElementById('documents')?.classList.contains('active')) renderDocuments();
+    } catch (e) {
+      toast('❌ Erreur d\'enregistrement : ' + e.message, 'error');
+    }
+  }
+
   async function deleteDocument(uid, idx) {
     const target = users.find(x => x.id === uid);
     if (target?.isDemo) return;
@@ -1565,8 +1796,11 @@
     const updated = docs.filter((_, i) => i !== idx);
     try {
       await withAuth(() => window.db.collection('users').doc(uid).update({ documents: updated }));
+      target.documents = updated;
       toast('Document supprimé', 'success');
-      renderDocuments();
+      if (document.getElementById('documents')?.classList.contains('active')) renderDocuments();
+      if (currentPlayerId === uid) renderModalDocuments(target);
+      renderPlayers();
     } catch (e) {
       toast('Erreur : ' + e.message, 'error');
     }
@@ -1577,6 +1811,10 @@
   window.showSection = switchSection;
 
   window.AdminController_deleteDocument = deleteDocument;
+  window.AdminController_unlockDocument = unlockDocument;
+  window.AdminController_removePendingDoc = removePendingDoc;
+  window.AdminController_cancelPendingDocs = cancelPendingDocs;
+  window.AdminController_confirmUploadDocs = confirmUploadDocs;
 
   // Helper global utilisé par les tuiles/cartes cliquables du Dashboard et des Rapports
   // pour naviguer vers la section Joueurs avec un filtre de rôle (simple ou multiple) et/ou de statut.
