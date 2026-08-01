@@ -2292,7 +2292,7 @@
           </p>
           <div id="documents-own-list"></div>
           <button class="btn-sm" onclick="document.getElementById('own-document-input').click()" style="margin-top:8px;padding:8px 14px;font-size:12px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;">📎 Ajouter un document</button>
-          <input type="file" id="own-document-input" accept="image/*,application/pdf" style="display:none" onchange="uploadOwnDocument(this)">
+          <input type="file" id="own-document-input" accept="image/*,application/pdf" multiple style="display:none" onchange="onOwnDocumentFilesSelected(this)">
         </div>
       </div>
 
@@ -7063,31 +7063,114 @@ function renderOwnDocuments(){
     </div>`).join('');
 }
 
-async function uploadOwnDocument(input){
+function onOwnDocumentFilesSelected(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length) return;
+  const tooBig=files.filter(f=>f.size>10*1024*1024);
+  if(tooBig.length){
+    toast('❌ Fichier(s) trop volumineux (max 10 Mo chacun) : '+tooBig.map(f=>f.name).join(', '),'error');
+    input.value='';
+    return;
+  }
+  _pendingOwnDocFiles=files.map(f=>({file:f,title:f.name.replace(/\.[^/.]+$/,'')}));
+  renderPendingOwnDocsPanel();
+}
+window.onOwnDocumentFilesSelected=onOwnDocumentFilesSelected;
+
+let _pendingOwnDocFiles=[];
+
+// Panneau flottant : permet de donner un titre à chaque document sélectionné
+// avant l'envoi (remplace l'ancien prompt() qui ne gérait qu'un seul fichier
+// sans lien visuel entre le nom et le titre saisi).
+function renderPendingOwnDocsPanel(){
+  let panel=document.getElementById('own-doc-pending-panel');
+  if(!_pendingOwnDocFiles.length){ panel?.remove(); return; }
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='own-doc-pending-panel';
+    panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML=`
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;">
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px;">📎 Titrer vos documents</div>
+      <div style="font-size:12px;color:var(--gray-txt);margin-bottom:12px;">Donnez un titre à chaque document avant l'envoi (ex : Carte d'identité, Licence…).</div>
+      <div id="own-doc-pending-list"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" id="own-doc-pending-send" style="flex:1;padding:10px;border:none;border-radius:8px;background:var(--green);color:#fff;font-weight:700;font-size:13px;cursor:pointer;">📤 Envoyer ${_pendingOwnDocFiles.length} document(s)</button>
+        <button type="button" id="own-doc-pending-cancel" style="padding:10px 16px;border:1.5px solid var(--gray-bd);border-radius:8px;background:#fff;font-weight:700;font-size:13px;cursor:pointer;">Annuler</button>
+      </div>
+    </div>`;
+  const listEl=panel.querySelector('#own-doc-pending-list');
+  listEl.innerHTML=_pendingOwnDocFiles.map((p,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <input type="text" value="${esc(p.title)}" data-idx="${i}" class="own-doc-title-input" placeholder="Titre du document" style="flex:1;min-width:0;padding:8px 10px;border:1.5px solid var(--gray-bd);border-radius:8px;font-size:12px;">
+      <span style="font-size:10.5px;color:var(--gray-txt);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;" title="${esc(p.file.name)}">${esc(p.file.name)}</span>
+      <button type="button" data-idx="${i}" class="own-doc-remove-btn" style="border:none;background:#fee2e2;color:#ef4444;width:26px;height:26px;border-radius:7px;font-size:12px;cursor:pointer;flex-shrink:0;">✕</button>
+    </div>`).join('');
+  listEl.querySelectorAll('.own-doc-title-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const idx=parseInt(e.target.dataset.idx,10);
+      if(_pendingOwnDocFiles[idx]) _pendingOwnDocFiles[idx].title=e.target.value;
+    });
+  });
+  listEl.querySelectorAll('.own-doc-remove-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.idx,10);
+      _pendingOwnDocFiles.splice(idx,1);
+      renderPendingOwnDocsPanel();
+    });
+  });
+  const cancelBtn=panel.querySelector('#own-doc-pending-cancel');
+  if(cancelBtn) cancelBtn.onclick=()=>{
+    _pendingOwnDocFiles=[];
+    panel.remove();
+    const input=document.getElementById('own-document-input');
+    if(input) input.value='';
+    _ownDocUploadTargetUid=null;
+  };
+  const sendBtn=panel.querySelector('#own-doc-pending-send');
+  if(sendBtn) sendBtn.onclick=confirmUploadOwnDocs;
+}
+
+async function confirmUploadOwnDocs(){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
-  const file=input.files[0];
   const targetUid=_ownDocUploadTargetUid||currentUser?.uid;
-  if(!file||!targetUid) return;
-  if(file.size>10*1024*1024){toast('Fichier trop lourd (max 10 Mo).','error');input.value='';return;}
-  const label=prompt('Type de document (ex : Carte d\'identité, Licence, Justificatif de domicile)','Document');
-  if(label===null){input.value='';return;}
+  if(!targetUid||!_pendingOwnDocFiles.length) return;
+  const toUpload=_pendingOwnDocFiles.slice();
+  _pendingOwnDocFiles=[];
+  document.getElementById('own-doc-pending-panel')?.remove();
+  toast('📤 Envoi de '+toUpload.length+' document(s)…','info');
   try{
-    toast('📤 Envoi du document…','info');
-    const url=await uploadToCloudinary(file,'auto');
+    await ensureFirebaseAuthViaSupabase();
     const targetProfile = targetUid===currentUser?.uid ? userProfile : (allActors.find(a=>(a.uid||a.id)===targetUid)||{});
     const existingDocs=Array.isArray(targetProfile.documents)?targetProfile.documents:[];
-    const newDoc={label:label||'Document',url,addedAt:new Date().toISOString(),addedBy:targetUid===currentUser?.uid?'owner':'organisation',locked:false};
-    const updatedDocs=[...existingDocs,newDoc];
-    await ensureFirebaseAuthViaSupabase();
+    const newDocs=[];
+    for(const item of toUpload){
+      try{
+        const url=await uploadToCloudinary(item.file,'auto');
+        newDocs.push({
+          label:(item.title||item.file.name).trim()||item.file.name,
+          url,
+          addedAt:new Date().toISOString(),
+          addedBy:targetUid===currentUser?.uid?'owner':'organisation',
+          locked:false
+        });
+      }catch(e){ console.error('Erreur upload document :',e); }
+    }
+    if(!newDocs.length){ toast('❌ Aucun document n\'a pu être envoyé.','error'); return; }
+    const updatedDocs=[...existingDocs,...newDocs];
     await updateDoc(doc(db,'users',targetUid),{documents:updatedDocs,updatedAt:serverTimestamp()});
     if(targetUid===currentUser?.uid){ userProfile.documents=updatedDocs; renderOwnDocuments(); }
     await loadActors();
-    toast('✅ Document ajouté !','success');
-  }catch(e){ toast('Erreur upload : '+e.message,'error'); }
-  input.value='';
+    if(document.getElementById('actor-detail-modal')?.classList.contains('open')) openActorDetail(targetUid);
+    toast('✅ '+newDocs.length+' document(s) ajouté(s) !','success');
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+  const input=document.getElementById('own-document-input');
+  if(input) input.value='';
   _ownDocUploadTargetUid=null;
 }
-window.uploadOwnDocument=uploadOwnDocument;
+window.confirmUploadOwnDocs=confirmUploadOwnDocs;
 
 async function removeOwnDocument(uid,idx){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Connexion Firebase requise.','error'); return; }
