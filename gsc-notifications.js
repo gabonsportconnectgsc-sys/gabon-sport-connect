@@ -128,9 +128,17 @@
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 .notif-panel-head{
-  display:flex;align-items:center;padding:16px 16px 12px;
+  display:flex;align-items:center;padding:16px 40px 12px 16px;
   border-bottom:1px solid #f1f5f9;gap:10px;flex-shrink:0;
+  position:relative;flex-wrap:wrap;
 }
+.notif-panel-close{
+  position:absolute;top:12px;right:12px;width:26px;height:26px;
+  border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#64748b;
+  font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:all .15s;flex-shrink:0;z-index:2;
+}
+.notif-panel-close:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca;}
 .notif-panel-title{font-size:16px;font-weight:800;color:#0A1628;flex:1;font-family:'Syne',sans-serif;}
 .notif-panel-count{
   font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
@@ -146,8 +154,6 @@
 .notif-panel-btn:hover{background:#e2e8f0;color:#0A1628;}
 .notif-panel-btn.primary{background:#009E60;color:#fff;border-color:#009E60;}
 .notif-panel-btn.primary:hover{background:#007a47;}
-.notif-panel-btn.notif-panel-close{padding:5px 9px;font-size:13px;font-weight:800;}
-.notif-panel-btn.notif-panel-close:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca;}
 
 /* Onglets */
 .notif-tabs{display:flex;border-bottom:1px solid #f1f5f9;flex-shrink:0;padding:0 6px;}
@@ -361,12 +367,12 @@
     panel.setAttribute('aria-label','Notifications');
     panel.innerHTML = `
       <div class="notif-panel-head">
+        <button class="notif-panel-close" onclick="GSCNotif.closeAll()" title="Fermer" aria-label="Fermer les notifications">✕</button>
         <span class="notif-panel-title">🔔 Notifications</span>
         <span class="notif-panel-count" id="gsc-np-count">0</span>
         <div class="notif-panel-actions">
           <button class="notif-panel-btn" onclick="GSCNotif.markAllRead()" title="Tout marquer comme lu">✓ Tout lire</button>
           <button class="notif-panel-btn" onclick="GSCNotif.openPrefs()" title="Préférences">⚙️</button>
-          <button class="notif-panel-btn notif-panel-close" onclick="GSCNotif.closeAll()" title="Fermer" aria-label="Fermer les notifications">✕</button>
         </div>
       </div>
       <div class="notif-tabs">
