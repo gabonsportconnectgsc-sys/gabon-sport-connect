@@ -12,6 +12,11 @@
 (function (window) {
   'use strict';
 
+  /* Même Worker Cloudflare que gsc-notifications.js — utilisé ici uniquement
+     pour /push/broadcast-post (diffusion "vraie" push OS à tous les abonnés
+     après une nouvelle publication, sans exposer ADMIN_SECRET). */
+  const PUSH_WORKER_URL = 'https://solitary-dew-0560gsc-push-worker.gabonsportconnectgsc.workers.dev';
+
   const POSTS_COL = 'communityPosts';
   const COMMENTS_SUB = 'comments';
   const REPORTS_COL = 'signalements';
@@ -771,6 +776,37 @@
         body: (cat ? '[' + cat + '] ' : '') + text.slice(0, 100),
         link: newPostId ? ('fil:' + newPostId) : null
       });
+
+      /* Diffusion OS "vraie" à TOUS les membres abonnés au push — son +
+         badge sur l'icône, même app fermée, façon WhatsApp/Facebook.
+         FIX : pushNotif() ci-dessus n'envoie un vrai push OS que pour un
+         destinataire individuel précis (voir gsc-notifications.js) ; pour
+         une diffusion générale ('all'/'role:xxx'), la seule route Worker
+         correspondante est /push/send-to-all, protégée par ADMIN_SECRET —
+         qu'on ne peut jamais exposer ici. On appelle donc /push/broadcast-post,
+         une route dédiée qui fait le même travail sans secret (voir Worker).
+         Non bloquant : un échec ici ne doit jamais empêcher la publication. */
+      try {
+        const broadcastResp = await fetch(PUSH_WORKER_URL + '/push/broadcast-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: window.currentUser.uid,
+            title: 'Gabon Sport Connect',
+            body: (authorName(profile) || 'Un membre') + ' a publié : ' + text.slice(0, 100),
+            type: 'system',
+            link: newPostId ? ('fil:' + newPostId) : null
+          })
+        });
+        if (broadcastResp.ok) {
+          console.log('[GSC Community] createPost → diffusion push OS envoyée à tous les abonnés');
+        } else {
+          const errBody = await broadcastResp.text().catch(() => '(réponse illisible)');
+          console.warn('[GSC Community] createPost → Worker /push/broadcast-post a répondu', broadcastResp.status, '—', errBody);
+        }
+      } catch (broadcastErr) {
+        console.warn('[GSC Community] createPost → erreur réseau diffusion push :', broadcastErr);
+      }
 
       if (ta) ta.value = '';
       clearComposerImage();
