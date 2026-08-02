@@ -214,6 +214,28 @@
   /* ══════════════════════════════════════════════════════════════════
    * 5. UPLOAD DOCUMENT (Structures)
    * ══════════════════════════════════════════════════════════════════ */
+  // Cloudinary (preset non signé) — même compte que admin-controller.js /
+  // structures-manager.js / structures-form-builder.js. Firebase Storage
+  // est indisponible sur le plan Spark de ce projet ; l'ancienne
+  // implémentation (window.firebase.storage().ref(...).put(file))
+  // échouait donc systématiquement.
+  const GSCC_CLOUDINARY_CLOUD = 'djvzc3vqp';
+  const GSCC_CLOUDINARY_PRESET = 'gsc_admin_uploads';
+
+  async function uploadToCloudinary(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', GSCC_CLOUDINARY_PRESET);
+    // /auto/upload : accepte aussi bien les images que les PDF/DOC/XLSX
+    // (les documents de conformité ne sont pas que des images).
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${GSCC_CLOUDINARY_CLOUD}/auto/upload`, { method: 'POST', body: fd });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || !data.secure_url) {
+      throw new Error((data && data.error && data.error.message) || `Échec de l'upload (HTTP ${res.status}).`);
+    }
+    return data.secure_url;
+  }
+
   async function uploadDocument(structureId, documentId, saison) {
     const input = document.createElement('input');
     input.type = 'file';
@@ -223,15 +245,7 @@
       if (!file) return;
 
       try {
-        if (!window.firebase || !window.firebase.storage) {
-          alert('Firebase Storage non disponible');
-          return;
-        }
-
-        const path = `structures/${structureId}/conformite/${saison}/${documentId}`;
-        const ref = window.firebase.storage().ref(path);
-        const snapshot = await ref.put(file);
-        const url = await snapshot.ref.getDownloadURL();
+        const url = await uploadToCloudinary(file);
 
         const compRef = getComplianceRef(structureId);
         if (compRef) {
@@ -267,15 +281,7 @@
       if (!file) return;
 
       try {
-        if (!window.firebase || !window.firebase.storage) {
-          alert('Firebase Storage non disponible');
-          return;
-        }
-
-        const path = `conformite-modeles/${discipline}/${documentId}`;
-        const ref = window.firebase.storage().ref(path);
-        const snapshot = await ref.put(file);
-        const url = await snapshot.ref.getDownloadURL();
+        const url = await uploadToCloudinary(file);
 
         const modelsRef = getModelsRef();
         if (modelsRef) {
