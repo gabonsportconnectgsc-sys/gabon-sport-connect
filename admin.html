@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>GSC Admin</title>
+
+<!-- ══ PWA — manifest + icône d'app (identique à index.html) ══
+     Sans ce lien, admin.html ne peut pas être installé comme app et
+     navigator.setAppBadge() reste inopérant même si le JS est correct. -->
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#009E60" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GSC Admin">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -12,6 +24,15 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+
+<!-- ══ SYSTÈME DE NOTIFICATIONS GSC — cloche + badge PWA (identique à index.html) ══
+     gsc-notifications.js et gsc-nav-badges.js utilisent les fonctions Firestore
+     "modulaires" (collection(), doc(), onSnapshot()…) comme fonctions globales sur
+     window — voir le shim juste après firebase-init.js plus bas, qui les fournit
+     sans toucher à window.db (laissé au SDK compat pour ne rien casser ailleurs
+     dans ce fichier, qui utilise partout window.db.collection(...).doc(...)). -->
+<script src="gsc-notifications.js"></script>
+<script src="gsc-nav-badges.js"></script>
 
 <!-- Chart.js (requis par l'onglet Rapports) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -859,9 +880,22 @@ tr.is-demo-row td { opacity: .82; }
     <div class="topbar">
       <button class="btn-menu">☰</button>
       <div class="topbar-title" id="topbar-title">Dashboard<span class="topbar-sub" id="topbar-sub"></span></div>
+      <!-- Ancre invisible : gsc-notifications.js insère sa cloche juste avant cet
+           élément (identique au mécanisme utilisé sur #nav-visitor-banner dans
+           index.html). Le CSS ci-dessous adapte la cloche au fond blanc du topbar
+           admin (elle est conçue par défaut pour un fond navy). -->
+      <div id="nav-visitor-banner" style="display:none;"></div>
       <div class="sync-indicator" id="sync-indicator" style="display: none;"><div class="sync-dot"></div><span>Sync…</span></div>
       <div id="realtime-status" class="realtime-badge" style="display: inline-flex;"><div class="realtime-dot"></div><span>Temps réel</span></div>
     </div>
+    <style>
+      /* Cloche notifications sur fond clair (topbar admin est blanc, pas navy comme index.html) */
+      .topbar .notif-bell-btn{ color: var(--navy); }
+      .topbar .notif-bell-btn:hover{ background: var(--gray-bg); }
+      .topbar .notif-bell-btn svg{ stroke: var(--navy); }
+      .topbar .notif-bell-badge{ border-color: #fff; }
+      .topbar .notif-bell-wrap{ margin-right: 4px; }
+    </style>
 
     <!-- Badge sync global (utilisé par realtime-sync-module.js) -->
     <div id="gsc-sync-badge"><div class="gsc-sync-dot"></div><span class="gsc-sync-label">Synchronisation…</span></div>
@@ -1926,6 +1960,73 @@ tr.is-demo-row td { opacity: .82; }
 
 <!-- Module de synchronisation temps réel -->
 <script src="firebase-init.js"></script>
+
+<!-- ══ PONT MODULAIRE FIRESTORE — requis par gsc-notifications.js / gsc-nav-badges.js ══
+     Ces deux fichiers appellent collection(), doc(), onSnapshot()... comme des
+     fonctions globales (style SDK modulaire), alors que firebase-init.js ci-dessus
+     initialise Firestore en SDK "compat" (window.db = firebase.firestore()).
+     On importe donc UNIQUEMENT les fonctions modulaires (pas une 2e instance de
+     base — window.db n'est PAS réassigné, pour ne rien casser des ~6 endroits de
+     ce fichier qui font encore window.db.collection(...).doc(...) en style compat).
+     Le SDK Firebase v9+ est prévu pour cette interopérabilité : ces fonctions
+     modulaires acceptent en argument une instance Firestore obtenue via le SDK
+     compat (firebase.firestore()) sans problème. -->
+<script type="module">
+  import {
+    collection, doc, setDoc, getDoc, updateDoc, addDoc, getDocs,
+    query, orderBy, where, limit, onSnapshot, serverTimestamp,
+    deleteDoc, deleteField, increment, collectionGroup
+  } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  window.collection = collection; window.doc = doc; window.setDoc = setDoc;
+  window.getDoc = getDoc; window.updateDoc = updateDoc; window.addDoc = addDoc;
+  window.getDocs = getDocs; window.query = query; window.orderBy = orderBy;
+  window.where = where; window.limit = limit; window.onSnapshot = onSnapshot;
+  window.serverTimestamp = serverTimestamp; window.deleteDoc = deleteDoc;
+  window.deleteField = deleteField; window.increment = increment;
+  window.collectionGroup = collectionGroup;
+</script>
+
+<!-- ══ SERVICE WORKER — requis pour le badge PWA hors application (identique à index.html) ══ -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js', { scope: '/' })
+      .then(function(registration) {
+        console.log('[GSC Admin] Service Worker enregistré :', registration);
+      })
+      .catch(function(error) {
+        console.log('[GSC Admin] Échec enregistrement Service Worker :', error);
+      });
+  });
+  navigator.serviceWorker.addEventListener('message', function(event){
+    if(!event.data) return;
+    if(event.data.type === 'NOTIF_CLICK' && event.data.link && typeof window.handleNotifLink === 'function'){
+      window.handleNotifLink(event.data.link);
+    }
+  });
+}
+
+/* Route un lien de notification depuis le dashboard admin.
+   Le fil communautaire ('fil:postId') vit dans index.html, pas ici : on l'ouvre
+   dans un nouvel onglet. Les autres liens tentent une navigation interne via
+   showSection (déjà défini plus bas dans ce fichier comme filet de sécurité). */
+window.handleNotifLink = function(link){
+  if(!link) return;
+  if(link.indexOf('fil:') === 0){
+    window.open('index.html?goto=' + encodeURIComponent(link), '_blank');
+    return;
+  }
+  const view = link.replace('index.html','').replace('#','').replace('/','');
+  if(view && typeof window.showSection === 'function') window.showSection(view);
+};
+
+/* Démarrage du système de notifications en mode "visiteur" (avant connexion admin) —
+   sera re-synchronisé avec le vrai uid dans showApp() après login. */
+document.addEventListener('DOMContentLoaded', function(){
+  if(window.GSCNotif) window.GSCNotif.init(null);
+});
+</script>
+
 <script src="seed-data.js"></script>
 <script src="realtime-sync-module.js"></script>
 <script src="admin-controller.js"></script>
@@ -3029,6 +3130,14 @@ tr.is-demo-row td { opacity: .82; }
     // quoi que ce soit, plutôt que de se reposer uniquement sur le fait
     // que #app soit masqué en CSS tant qu'on n'est pas connecté.
     window.__gscAdminVerified = true;
+    // ── NOTIFICATIONS : connecter l'admin (cloche + badge PWA sur l'icône) ──
+    const _adminUid = window.__gscAdminIdentity && window.__gscAdminIdentity.uid;
+    if(window.GSCNotif && _adminUid){
+      window.GSCNotif.onLogin(_adminUid);
+    }
+    if(window.GSCNavBadges && _adminUid){
+      window.GSCNavBadges.init(_adminUid);
+    }
     // Fix #3 — charger les stats dynamiques depuis Firestore (SDK compat déjà initialisé)
     loadDashboardStats();
   }
@@ -3300,6 +3409,9 @@ tr.is-demo-row td { opacity: .82; }
 
   async function handleAdminLogout(){
     try{ if(sb) await sb.auth.signOut(); }catch(e){}
+    // ── NOTIFICATIONS : déconnecter proprement (arrête le listener Firestore) ──
+    if(window.GSCNotif) window.GSCNotif.onLogout();
+    if(window.GSCNavBadges) window.GSCNavBadges.onLogout();
     showLogin();
   }
 
