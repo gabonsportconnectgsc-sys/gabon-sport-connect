@@ -146,6 +146,8 @@
 .notif-panel-btn:hover{background:#e2e8f0;color:#0A1628;}
 .notif-panel-btn.primary{background:#009E60;color:#fff;border-color:#009E60;}
 .notif-panel-btn.primary:hover{background:#007a47;}
+.notif-panel-btn.notif-panel-close{padding:5px 9px;font-size:13px;font-weight:800;}
+.notif-panel-btn.notif-panel-close:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca;}
 
 /* Onglets */
 .notif-tabs{display:flex;border-bottom:1px solid #f1f5f9;flex-shrink:0;padding:0 6px;}
@@ -364,6 +366,7 @@
         <div class="notif-panel-actions">
           <button class="notif-panel-btn" onclick="GSCNotif.markAllRead()" title="Tout marquer comme lu">✓ Tout lire</button>
           <button class="notif-panel-btn" onclick="GSCNotif.openPrefs()" title="Préférences">⚙️</button>
+          <button class="notif-panel-btn notif-panel-close" onclick="GSCNotif.closeAll()" title="Fermer" aria-label="Fermer les notifications">✕</button>
         </div>
       </div>
       <div class="notif-tabs">
