@@ -8977,6 +8977,22 @@ window.openActorDetail = function(uid){
   });
 })();
 
+// Handle deep link ?post=id — ouvre directement la publication partagée dans
+// le fil communautaire (au lieu de rester sur la page d'accueil). Sans ce
+// bloc, un lien partagé via sharePost() (gsc-community.js) ne fait qu'ouvrir
+// l'app à sa racine : ?post= n'était jamais lu. Même schéma que ?actor= ci-dessus.
+(function handlePostDeepLink(){
+  const postId = new URLSearchParams(window.location.search).get('post');
+  if(!postId) return;
+  document.addEventListener('firebase-ready', ()=>{
+    setTimeout(()=>{
+      if(window.GSCCommunity && typeof window.GSCCommunity.openPost === 'function'){
+        window.GSCCommunity.openPost(postId);
+      }
+    }, 800);
+  });
+})();
+
 window.openProfileQrModal = openProfileQrModal;
 window.closeProfileQrModal = closeProfileQrModal;
 window.printProfileQr = printProfileQr;

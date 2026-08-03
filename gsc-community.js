@@ -84,7 +84,8 @@
   let _openMenus = new Set();
   let _commentsCache = {};
   let _extraFns = null;
-  let _composerImage = null;
+  let _composerImages = []; // [{ file, dataUrl }, …] — sélection multiple, max GSC_COMPOSER_MAX_IMAGES
+  const GSC_COMPOSER_MAX_IMAGES = 6;
   let _reportCtx = null;
   let _mentionState = null; // { scope:'composer'|'comment', postId, start, query }
 
@@ -517,7 +518,7 @@
       <div class="gsc-composer">
         <div class="gsc-composer-head">
           <div class="gsc-avatar clickable" id="gsc-composer-avatar">${photo ? `<img src="${esc(photo)}" alt="">` : esc(initials(authorName(profile)))}</div>
-          <textarea id="gsc-composer-text" placeholder="Partagez une actualité, un résultat, une question avec la communauté… (utilisez @Nom pour mentionner quelqu'un)" maxlength="1000"></textarea>
+          <textarea id="gsc-composer-text" rows="4" style="min-height:110px;resize:vertical;" placeholder="Partagez une actualité, un résultat, une question avec la communauté… (utilisez @Nom pour mentionner quelqu'un)" maxlength="1000"></textarea>
           <div class="gsc-mention-pop" id="gsc-composer-mention-pop"></div>
         </div>
         <div id="gsc-composer-preview-zone"></div>
@@ -531,7 +532,7 @@
           </select>
         </div>
         <div class="gsc-composer-foot">
-          <label class="gsc-composer-imgbtn">📷 Photo<input type="file" accept="image/*" id="gsc-composer-file" style="display:none;"></label>
+          <label class="gsc-composer-imgbtn">📷 Photos<input type="file" accept="image/*" id="gsc-composer-file" multiple style="display:none;"></label>
           <button class="gsc-composer-publish" id="gsc-composer-publish" type="button">Publier</button>
         </div>
       </div>`;
@@ -540,23 +541,71 @@
     zone.querySelector('#gsc-composer-publish').addEventListener('click', createPost);
     zone.querySelector('#gsc-composer-text').addEventListener('input', (e) => onMentionInput(e, 'composer'));
     zone.querySelector('#gsc-composer-text').addEventListener('keydown', (e) => onMentionKeydown(e, 'composer'));
+    zone.querySelector('#gsc-composer-text').addEventListener('input', autoGrowTextarea);
+  }
+
+  /* Agrandit automatiquement le textarea du composer à mesure qu'on tape,
+     pour éviter d'avoir à faire défiler dans une petite zone fixe. */
+  function autoGrowTextarea(e) {
+    const ta = e.target;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   }
 
   function onComposerFile(e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      _composerImage = { file, dataUrl: reader.result };
-      const pz = document.getElementById('gsc-composer-preview-zone');
-      if (pz) pz.innerHTML = `<div class="gsc-composer-preview"><img src="${reader.result}" alt=""><button type="button" id="gsc-composer-img-remove">✕</button></div>`;
-      const rmBtn = document.getElementById('gsc-composer-img-remove');
-      if (rmBtn) rmBtn.addEventListener('click', clearComposerImage);
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []).filter(f => f.type && f.type.startsWith('image/'));
+    if (!files.length) return;
+
+    const room = GSC_COMPOSER_MAX_IMAGES - _composerImages.length;
+    if (room <= 0) {
+      toastMsg(`Maximum ${GSC_COMPOSER_MAX_IMAGES} images par publication.`, 'info');
+      e.target.value = '';
+      return;
+    }
+    const toAdd = files.slice(0, room);
+    if (files.length > toAdd.length) {
+      toastMsg(`Seules les ${toAdd.length} premières images ont été ajoutées (max ${GSC_COMPOSER_MAX_IMAGES}).`, 'info');
+    }
+
+    let pending = toAdd.length;
+    toAdd.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        _composerImages.push({ file, dataUrl: reader.result });
+        pending--;
+        if (pending === 0) renderComposerPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = ''; // permet de re-sélectionner les mêmes fichiers plus tard
   }
+
+  function renderComposerPreview() {
+    const pz = document.getElementById('gsc-composer-preview-zone');
+    if (!pz) return;
+    if (!_composerImages.length) { pz.innerHTML = ''; return; }
+    pz.innerHTML = `<div class="gsc-composer-preview-grid">${_composerImages.map((img, i) => `
+      <div class="gsc-composer-preview-item">
+        <img src="${img.dataUrl}" alt="">
+        <button type="button" class="gsc-composer-img-remove" data-idx="${i}">✕</button>
+      </div>`).join('')}
+      ${_composerImages.length < GSC_COMPOSER_MAX_IMAGES ? `<label class="gsc-composer-preview-add" id="gsc-composer-preview-add">➕<input type="file" accept="image/*" multiple style="display:none;"></label>` : ''}
+    </div>`;
+    pz.querySelectorAll('.gsc-composer-img-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeComposerImage(parseInt(btn.dataset.idx, 10)));
+    });
+    const addTile = document.getElementById('gsc-composer-preview-add');
+    if (addTile) addTile.querySelector('input').addEventListener('change', onComposerFile);
+  }
+
+  function removeComposerImage(idx) {
+    _composerImages.splice(idx, 1);
+    renderComposerPreview();
+  }
+
   function clearComposerImage() {
-    _composerImage = null;
+    _composerImages = [];
     const pz = document.getElementById('gsc-composer-preview-zone');
     if (pz) pz.innerHTML = '';
     const fi = document.getElementById('gsc-composer-file');
@@ -721,23 +770,31 @@
     const text = (ta?.value || '').trim();
     const cat = document.getElementById('gsc-composer-cat')?.value || 'general';
     const targetRole = document.getElementById('gsc-composer-target')?.value || null;
-    if (!text && !_composerImage) { toastMsg('Écrivez un message ou ajoutez une image.', 'info'); return; }
+    if (!text && !_composerImages.length) { toastMsg('Écrivez un message ou ajoutez une image.', 'info'); return; }
 
     setPublishBtnState('Publication…', true);
 
     try {
-      let imageURL = null;
+      let imageURLs = [];
 
-      if (_composerImage && _composerImage.file) {
-        /* ── Upload Cloudinary (même système que uploadProfilePhoto) ── */
-        setPublishBtnState('⚙️ Compression…', true);
-        try {
-          imageURL = await uploadImageToCloudinary(_composerImage.file);
-        } catch (uploadErr) {
-          console.warn('GSC Community: Cloudinary échoué —', uploadErr.message);
-          /* Fallback : base64 compressé si Cloudinary indisponible */
-          toastMsg('⚠️ Upload image échoué — publication sans image.', 'warn');
-          imageURL = null;
+      if (_composerImages.length) {
+        /* ── Upload Cloudinary séquentiel (même système que uploadProfilePhoto) ──
+           Séquentiel plutôt qu'en parallèle : évite de saturer la connexion sur
+           mobile/3G et permet un vrai indicateur de progression "2/4". */
+        const total = _composerImages.length;
+        for (let i = 0; i < total; i++) {
+          setPublishBtnState(`⚙️ Image ${i + 1}/${total}…`, true);
+          try {
+            const url = await uploadImageToCloudinary(_composerImages[i].file);
+            imageURLs.push(url);
+          } catch (uploadErr) {
+            console.warn('GSC Community: Cloudinary échoué —', uploadErr.message);
+          }
+        }
+        if (!imageURLs.length) {
+          toastMsg('⚠️ Upload des images échoué — publication sans image.', 'warn');
+        } else if (imageURLs.length < total) {
+          toastMsg(`⚠️ ${total - imageURLs.length} image(s) sur ${total} n'ont pas pu être envoyées.`, 'warn');
         }
       }
 
@@ -750,7 +807,8 @@
         authorRole: profile.role || 'membre',
         authorPhoto: profile.photoURL || null,
         text,
-        imageURL,
+        imageURLs,
+        imageURL: imageURLs[0] || null, // rétrocompatibilité (anciens posts / code externe)
         category: cat,
         targetRole: targetRole || null,
         reactions: {},
@@ -808,7 +866,7 @@
         console.warn('[GSC Community] createPost → erreur réseau diffusion push :', broadcastErr);
       }
 
-      if (ta) ta.value = '';
+      if (ta) { ta.value = ''; ta.style.height = 'auto'; }
       clearComposerImage();
       const targetSel = document.getElementById('gsc-composer-target');
       if (targetSel) targetSel.value = '';
@@ -886,6 +944,37 @@
     return { counts, mine };
   }
 
+  /* ── Grille d'images d'un post (1 à 6 images, rétrocompatible avec l'ancien
+     champ imageURL unique). Chaque vignette ouvre sa propre image en plein
+     écran via openPhotoFullscreen — pas de navigation prev/next entre les
+     images d'un même post (openGalleryModal ne gère qu'une image à la fois,
+     voir index.html). ── */
+  function postImagesHTML(post) {
+    let images = Array.isArray(post.imageURLs) && post.imageURLs.length
+      ? post.imageURLs
+      : (post.imageURL ? [post.imageURL] : []);
+    images = images.filter(Boolean);
+    if (!images.length) return '';
+
+    if (images.length === 1) {
+      return `<img class="gsc-post-img" src="${esc(images[0])}" alt="" loading="lazy" data-action="view-photo" data-photo="${esc(images[0])}">`;
+    }
+
+    const MAX_TILES = 4;
+    const shown = images.slice(0, MAX_TILES);
+    const extra = images.length - shown.length;
+
+    const tiles = shown.map((url, i) => {
+      const isLast = i === shown.length - 1 && extra > 0;
+      return `<div class="gsc-post-gallery-item" data-action="view-photo" data-photo="${esc(url)}">
+        <img src="${esc(url)}" alt="" loading="lazy">
+        ${isLast ? `<div class="gsc-post-gallery-more">+${extra}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="gsc-post-gallery gsc-post-gallery-${shown.length}">${tiles}</div>`;
+  }
+
   function postCardHTML(post) {
     const { counts, mine } = reactionSummary(post);
     const isOwner = window.currentUser && post.authorId === window.currentUser.uid;
@@ -922,7 +1011,7 @@
         </div>
       </div>
       ${post.text ? `<div class="gsc-post-text">${renderTextWithMentions(post.text)}</div>` : ''}
-      ${post.imageURL ? `<img class="gsc-post-img" src="${esc(post.imageURL)}" alt="" loading="lazy" data-action="view-photo" data-photo="${esc(post.imageURL)}">` : ''}
+      ${postImagesHTML(post)}
       <div class="gsc-react-row">
         ${REACTIONS.map(r => `<button class="gsc-react-btn${mine === r.key ? ' mine' : ''}" data-action="react" data-key="${r.key}" type="button">${r.icon}${counts[r.key] ? ` ${counts[r.key]}` : ''}</button>`).join('')}
       </div>
