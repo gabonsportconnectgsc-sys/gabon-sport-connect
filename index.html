@@ -2857,28 +2857,37 @@
           </div>
           <div class="legal-pane active" id="legal-roles">
             <h3>Architecture des accès</h3>
-            <div class="info">GSC distingue 6 types d'acteurs avec des droits différenciés.</div>
+            <div class="info">GSC distingue deux portes d'entrée à l'inscription — <strong>Visiteur</strong> (compte simple) et <strong>Acteur sportif</strong> — puis 15 rôles d'acteur, chacun avec des droits différenciés.</div>
+
             <h3>👁️ Visiteur (non connecté)</h3>
-            <p>Accès <strong>lecture seule</strong> à l'annuaire complet, aux statistiques, à la carte et aux actualités. Aucune modification possible.</p>
-            <h3>🏛️ Fédération sportive</h3>
-            <p>Gère les acteurs <strong>professionnels</strong> : enregistre et met à jour les fiches des joueurs pro, arbitres officiels, entraîneurs de clubs professionnels. Saisit les mandats, l'historique des clubs, les licences. Compte accordé sur demande par l'admin GSC.</p>
-            <h3>🏟️ Club / Association / Comité</h3>
-            <p>Crée et gère sa propre fiche d'organisation : informations du club, équipes, tournois organisés, sites sportifs associés.</p>
-            <h3>⚽ Joueur / Athlète (amateur/individuel)</h3>
-            <p>Crée et gère sa propre fiche sportive. Les joueurs professionnels voient leurs données de mandat gérées par leur fédération, mais conservent la gestion de leur profil personnel.</p>
-            <h3>🟨 Arbitre / 📋 Entraîneur</h3>
-            <p>Crée sa fiche personnelle. Peut être rattaché à une fédération pour validation de sa licence officielle.</p>
+            <p>Accès en <strong>lecture seule</strong> à l'annuaire complet, aux statistiques, à la carte des sites sportifs et au Forum communautaire. Aucune inscription requise pour consulter.</p>
+
+            <h3>🙋 Compte Visiteur (inscrit, sans fiche sportive)</h3>
+            <p>Un compte simple (prénom, nom, ville, sport favori) pour suivre l'actualité, publier et commenter dans le Forum, sans fiche sportive détaillée. Peut à tout moment s'auto-déclarer <strong>💗 Supporter</strong> depuis son profil.</p>
+
+            <h3>⚽ Acteurs individuels (11 rôles)</h3>
+            <p><strong>Joueur, Athlète, Entraîneur, Arbitre, Indépendant, Élève/Étudiant, Sportif étranger, Sportif handisport, Ancien Sportif, Formateur, Supporter.</strong> Chacun a sa propre fiche détaillée (photo, historique, palmarès…) et gère lui-même son profil et ses publications — <u>sauf exception ci-dessous</u>.</p>
+
+            <h3>🔒 Fiche « gérée par un tiers »</h3>
+            <p>Un joueur peut ne <strong>plus</strong> pouvoir éditer sa propre fiche dans deux cas précis : s'il a été <strong>réclamé et accepté</strong> par un club (le club envoie une offre de rattachement, le joueur l'accepte lui-même), ou si son niveau (National/International) le place automatiquement sous la responsabilité de sa <strong>fédération</strong>. Dans ce cas, une bannière l'indique clairement sur sa fiche, avec le nom de la structure à contacter pour toute modification.</p>
+
+            <h3>🏟️🏛️🤝🎪 Structures (4 rôles)</h3>
+            <p><strong>Club, Fédération, Association, Organisateur.</strong> Gèrent une fiche d'organisation distincte de leur compte personnel : identité, gouvernance, effectifs par saison, infrastructures. Doivent déposer leurs <strong>documents administratifs obligatoires</strong> (statuts, récépissé, licence fédérale…), dont la liste s'adapte automatiquement à leur discipline — un badge Bronze/Argent/Or reflète leur niveau de conformité. Le grand public ne voit jamais la liste nominative de leurs membres, seulement des effectifs agrégés (comptages par catégorie).</p>
+
+            <h3>⏳ Compte en attente de validation</h3>
+            <p>Toute nouvelle inscription reste en statut <strong>« en attente »</strong> jusqu'à validation par l'administration GSC, qui vérifie l'exactitude des informations avant de rendre la fiche visible dans l'annuaire public.</p>
+
             <h3>⚙️ Administrateur GSC</h3>
-            <p>Contrôle total : gestion des comptes, validation des fédérations, publication d'actualités, suppression de contenu.</p>
+            <p>Contrôle total : validation des inscriptions, vérification documentaire, gestion des rattachements club/fédération, modération du Forum et des signalements, suppression de contenu ou de compte.</p>
           </div>
           <div class="legal-pane" id="legal-donnees">
             <h3>Protection des données</h3>
             <p>Les données personnelles saisies sur GSC sont stockées de manière sécurisée sur Firebase (Google Cloud). Elles ne sont pas revendues à des tiers.</p>
-            <p>Chaque acteur peut modifier ou supprimer ses propres données depuis son profil. Les données de mandat professionnel sont sous la responsabilité de la fédération concernée.</p>
+            <p>Chaque acteur peut modifier ou supprimer ses propres données depuis son profil, sauf lorsque sa fiche est gérée par un club ou une fédération (voir onglet Rôles). Les documents administratifs des structures (statuts, licences…) ne sont visibles que par la structure elle-même et l'administration — jamais par le grand public.</p>
             <h3>Hébergement</h3>
             <p>La plateforme est hébergée sur Firebase Hosting (Google) et GitHub Pages. Les données sont stockées dans Cloud Firestore, infrastructure Google Cloud.</p>
             <h3>Cookies</h3>
-            <p>GSC utilise uniquement les cookies techniques nécessaires à l'authentification Firebase. Aucun cookie publicitaire n'est utilisé.</p>
+            <p>GSC utilise uniquement les cookies techniques nécessaires à l'authentification. Aucun cookie publicitaire n'est utilisé.</p>
           </div>
           <div class="legal-pane" id="legal-contact">
             <h3>Contact</h3>

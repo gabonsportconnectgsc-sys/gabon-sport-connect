@@ -319,6 +319,20 @@ img, svg, canvas { max-width: 100%; }
 
 .page-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--navy); }
 
+/* ── Boîte d'aide contextuelle par page (03/08/2026) ──
+   Repliable (<details>) pour ne pas encombrer l'écran des admins qui
+   connaissent déjà l'outil, mais toujours accessible en un tap pour se
+   rappeler à quoi sert chaque page et chaque bouton. */
+.adm-page-help { background:#f0faf5; border:1.5px solid var(--green); border-radius:10px; margin:10px 0 18px; font-size:12.5px; color:#1a3a2e; }
+.adm-page-help summary { padding:9px 14px; cursor:pointer; font-weight:700; color:var(--navy); list-style:none; display:flex; align-items:center; gap:6px; }
+.adm-page-help summary::-webkit-details-marker { display:none; }
+.adm-page-help summary::before { content:'ℹ️'; }
+.adm-page-help[open] summary::before { content:'✕'; }
+.adm-page-help-body { padding:0 14px 12px; line-height:1.55; }
+.adm-page-help-body ul { margin:6px 0 0; padding-left:18px; }
+.adm-page-help-body li { margin-bottom:4px; }
+.adm-page-help-body strong { color:var(--navy); }
+
 .filters-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 16px; align-items: stretch; }
 
 .filter-btn { width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-bd); background: rgb(255, 255, 255); color: var(--navy); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -908,6 +922,12 @@ tr.is-demo-row td { opacity: .82; }
           <div class="admin-header-title">⚙️ Panneau d'administration</div>
           <div class="admin-header-sub">Gestion centralisée des membres, photos et matchs</div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Vue d'ensemble de la plateforme. Les 4 cartes en haut sont cliquables et t'emmènent directement vers la liste filtrée correspondante (ex. clique sur "Masqués" pour voir uniquement les fiches cachées). Le bloc <strong>⚡ Actions rapides</strong> est un raccourci vers les pages les plus utilisées — il ne fait rien de plus que les onglets du menu latéral, c'est juste plus rapide.
+          </div>
+        </details>
         <div class="stats-grid">
           <div class="stat-card c1 clickable" onclick="window.gscGoToFiltered({roles:'all', title:'Gestion des Acteurs'})" style="cursor:pointer;"><div class="stat-icon">👥</div><div class="stat-data"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Fiches totales</div><div class="stat-trend">Total inscrits</div></div></div>
           <div class="stat-card c2 clickable" onclick="window.gscGoToFiltered({roles:'all', status:'active', title:'Acteurs actifs'})" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-data"><div class="stat-value" id="stat-verified">—</div><div class="stat-label">Actifs (= app)</div><div class="stat-trend">Comptes actifs</div></div></div>
@@ -1083,6 +1103,20 @@ tr.is-demo-row td { opacity: .82; }
       <!-- JOUEURS -->
       <div id="joueurs" class="section">
         <div class="page-header"><div class="page-title">Gestion des Acteurs</div></div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            La liste complète des 15 rôles de la plateforme (joueur, athlète, club, fédération, supporter…). Les boutons du haut filtrent par rôle. Depuis cette table tu peux :
+            <ul>
+              <li><strong>✅ Valider / ✕ Rejeter</strong> une fiche fraîchement inscrite (statut « en attente »)</li>
+              <li><strong>🙈 Masquer / 👁️ Réafficher</strong> une fiche sans la supprimer (elle disparaît de l'annuaire public mais reste en base)</li>
+              <li><strong>✅/⏳ Vérifier les documents</strong> — bascule le badge "Vérifié" affiché publiquement</li>
+              <li><strong>🏛️ Gestion fédération</strong> — donne à la fédération le contrôle de la fiche d'un joueur National/International</li>
+              <li><strong>🗑️ Supprimer</strong> définitivement un compte (irréversible — supprime aussi l'accès à l'application)</li>
+              <li>La colonne <strong>📎 Docs</strong> indique le nombre de pièces jointes archivées pour cet acteur</li>
+            </ul>
+          </div>
+        </details>
         <div class="filters-bar">
           <button class="filter-btn role-all active">👥 Tous</button>
           <button class="filter-btn role-joueur">⚽ Joueurs</button>
@@ -1116,6 +1150,16 @@ tr.is-demo-row td { opacity: .82; }
         <div class="page-header">
           <div class="page-title">📸 Photos &amp; Logos de profil</div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Deux usages bien distincts sur cette page :
+            <ul>
+              <li><strong>🖼️ Photos/logos par défaut</strong> (en haut) : une image générique par catégorie de rôle (ex. silhouette de footballeur pour "joueur"), affichée automatiquement tant qu'un acteur n'a pas mis sa propre photo. Change ici l'image par défaut de toute une catégorie d'un coup.</li>
+              <li><strong>Grille du bas</strong> : la photo de profil individuelle de chaque acteur, importable directement depuis le téléphone de l'admin (en attendant que chaque membre puisse le faire lui-même). Filtre par rôle avec les boutons au-dessus.</li>
+            </ul>
+          </div>
+        </details>
         <!-- Stats -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
           <div class="stat-card"><div class="stat-val" id="ph-stat-total">0</div><div class="stat-lbl">Acteurs</div></div>
@@ -1167,6 +1211,12 @@ tr.is-demo-row td { opacity: .82; }
           <div class="page-title">Gestion des Matchs</div>
           <button class="btn-add" id="btn-add-match">➕ Ajouter</button>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Calendrier des rencontres affichées publiquement dans l'app (onglet Sport). <strong>➕ Ajouter</strong> crée un nouveau match (équipes, date, lieu, discipline). Les onglets <strong>Tous / À venir / Joués</strong> filtrent la liste. C'est aussi ce qui alimente la carte "📅 Prochain match" du tableau de bord.
+          </div>
+        </details>
         <div class="match-tabs">
           <button class="match-tab active" data-filter="all">Tous</button>
           <button class="match-tab" data-filter="upcoming">À venir</button>
@@ -1184,6 +1234,12 @@ tr.is-demo-row td { opacity: .82; }
             <button class="btn-report primary" id="btn-print-rapports">🖨️ Imprimer</button>
           </div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Tableau de bord statistique en lecture seule. Les 4 cartes du haut sont cliquables (ex. clique sur "Organisations" pour voir la liste filtrée club/fédération/association). Les graphiques détaillent la répartition par rôle, statut, club et le classement des meilleurs buteurs/marqueurs. <strong>🔄 Actualiser</strong> recalcule tout depuis les données actuelles ; <strong>🖨️ Imprimer</strong> génère une version papier/PDF de ce rapport.
+          </div>
+        </details>
         <div class="report-meta-line" id="report-generated-line">Généré le —</div>
 
         <div class="stats-grid">
@@ -1346,6 +1402,12 @@ tr.is-demo-row td { opacity: .82; }
     <div class="page-title">🏢 Gestion des Structures Sportives</div>
     <button class="btn-add" onclick="AdminStructures.openCreateForm()">➕ Ajouter une structure</button>
   </div>
+  <details class="adm-page-help">
+    <summary>À quoi sert cette page ?</summary>
+    <div class="adm-page-help-body">
+      Les fiches des clubs, fédérations, associations et organisateurs (distinctes des comptes utilisateurs — voir <strong>🔗 Liaison Clubs</strong> pour le lien entre les deux). <strong>➕ Ajouter une structure</strong> crée une fiche manuellement (utile pour préremplir un club avant même que son responsable ne s'inscrive). Les 4 cartes cliquables filtrent la liste ; les 2 dernières ("Conformes" / "Profils incomplets") t'emmènent vers la page <strong>Conformité Administrative</strong>. La colonne <strong>Conformité</strong> reflète le badge Bronze/Argent/Or de dépôt de documents obligatoires.
+    </div>
+  </details>
 
   <div class="filters-bar">
     <button class="filter-btn active" data-struct-filter="all" onclick="AdminStructures.filterByDiscipline('all', this)">📊 Toutes</button>
@@ -1408,6 +1470,12 @@ tr.is-demo-row td { opacity: .82; }
   <div class="page-header">
     <div class="page-title">🔗 Liaison Clubs (comptes ↔ fiches structures)</div>
   </div>
+  <details class="adm-page-help">
+    <summary>À quoi sert cette page ?</summary>
+    <div class="adm-page-help-body">
+      Un compte utilisateur (celui du dirigeant qui se connecte) et une fiche structure (l'identité publique du club) sont deux choses différentes dans la base de données — cette page relie les deux (champ <strong>structureId</strong>). Sans cette liaison, un dirigeant connecté ne peut ni éditer sa fiche club ni y déposer ses documents de conformité (GED). Utile quand une structure a été pré-créée par l'admin avant l'inscription de son responsable.
+    </div>
+  </details>
   <div id="liaison-content">
     <p style="font-size:13px;color:var(--gray-txt);">Chargement…</p>
   </div>
@@ -1418,6 +1486,17 @@ tr.is-demo-row td { opacity: .82; }
   <div class="page-header">
     <div class="page-title">📋 Conformité Administrative</div>
   </div>
+  <details class="adm-page-help">
+    <summary>À quoi sert cette page ?</summary>
+    <div class="adm-page-help-body">
+      Suivi des documents obligatoires (statuts, récépissé, PV d'assemblée, licence fédérale…) que chaque structure doit déposer, avec un badge de complétude automatique. Un club/fédération dépose ses propres documents depuis son espace (visibles ici, jamais par le grand public). Section <strong>📄 Modèles Officiels</strong> en bas : les modèles téléchargeables que tu mets à disposition des structures pour chaque discipline (ex. un modèle vierge de PV d'assemblée) — ce sont ces mêmes modèles qui apparaissent à l'inscription (<em>ged-inscription-preview.js</em>).
+      <ul>
+        <li><span style="color:#CD7F32;font-weight:700;">Bronze</span> = moins de 50% des documents requis déposés</li>
+        <li><span style="color:#C0C0C0;font-weight:700;">Argent</span> = 50% ou plus</li>
+        <li><span style="color:#FFD700;font-weight:700;">Or</span> = 100%, dossier complet</li>
+      </ul>
+    </div>
+  </details>
 
   <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
     Documentation requise par discipline et organisme (Ministère, Fédération, Ligue, FIFA, CAF, etc.).
@@ -1445,6 +1524,12 @@ tr.is-demo-row td { opacity: .82; }
   <div class="page-header">
     <div class="page-title">🏗️ Gestion des Infrastructures</div>
   </div>
+  <details class="adm-page-help">
+    <summary>À quoi sert cette page ?</summary>
+    <div class="adm-page-help-body">
+      Les installations sportives (stades, terrains, salles) rattachées à une structure précise — sélectionne d'abord la structure dans la liste déroulante. Différent de la <strong>🗺️ Carte</strong> publique (sites sportifs géolocalisés, ouverts à tous) : ici, ce sont les infrastructures propres à un club/une fédération, avec galeries photos.
+    </div>
+  </details>
 
   <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
     Installations sportives (stades, terrains, salles) avec galeries photos, aperçus et affichage plein écran.
@@ -1465,6 +1550,12 @@ tr.is-demo-row td { opacity: .82; }
   <div class="page-header">
     <div class="page-title">📚 Archivage Historique</div>
   </div>
+  <details class="adm-page-help">
+    <summary>À quoi sert cette page ?</summary>
+    <div class="adm-page-help-body">
+      Garde une trace des structures, dirigeants et joueurs saison par saison — utile quand une composition de bureau ou un effectif change d'une année sur l'autre, pour ne pas perdre l'historique. Ne modifie rien sur les fiches actuelles, c'est une consultation d'archives.
+    </div>
+  </details>
 
   <p style="font-size:13px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
     Historisation centralisée des structures, dirigeants et joueurs par saison/année/période.
@@ -1564,6 +1655,12 @@ tr.is-demo-row td { opacity: .82; }
             <button class="btn-report outline" id="btn-refresh-signalements">🔄 Actualiser</button>
           </div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Modération : quand un utilisateur signale une fiche ou un post du Forum (contenu inapproprié, faux profil, usurpation…), ça atterrit ici. <strong>⏳ En attente</strong> = à traiter (tu peux masquer/supprimer la fiche concernée, ou classer le signalement sans suite). <strong>📜 Historique</strong> = signalements déjà traités, pour référence.
+          </div>
+        </details>
         <div class="report-meta-line">Profils de l'annuaire signalés par les utilisateurs, en attente de modération.</div>
 
         <div class="dash-card" style="margin-top:16px;">
@@ -1589,6 +1686,12 @@ tr.is-demo-row td { opacity: .82; }
             <button class="btn-report outline" id="btn-print-documents">🖨️ Imprimer la liste</button>
           </div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Différent de la <strong>Conformité Administrative</strong> (documents des structures) : ici ce sont les pièces jointes individuelles de chaque acteur (carte d'identité, licence, justificatifs). Un document marqué <strong>🔒 sous contrat</strong> est protégé — ni le membre ni son club ne peuvent le supprimer tant que l'admin n'a pas levé le verrou (évite qu'un joueur sous contrat efface une pièce probante en cours de litige).
+          </div>
+        </details>
         <p style="font-size:12px;color:var(--gray-txt);margin-bottom:8px;max-width:680px;">
           Archive des pièces jointes (carte d'identité, justificatifs, licences…) associées à chaque acteur.
           Le membre lui-même, le club/l'association qui l'emploie, et l'administrateur peuvent ajouter ou supprimer un document.
@@ -1626,6 +1729,12 @@ tr.is-demo-row td { opacity: .82; }
         <div class="page-header">
           <div class="page-title">🌍 Vérification internationale</div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Deux tableaux distincts sur cette page : le statut documentaire des <strong>sportifs étrangers</strong> (vérification d'identité et de contrat, avec liens rapides vers FIFA TMS, Transfermarkt, CAF, FIBA pour recouper les informations) ; et la liste des <strong>établissements scolaires/universitaires reconnus</strong> pour les profils Élève/Étudiant, afin de garantir que l'établissement déclaré à l'inscription existe réellement.
+          </div>
+        </details>
         <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
           Centralise la vérification des sportifs étrangers (document d'identité, statut contractuel) via les registres
           internationaux de référence, et liste les établissements scolaires/universitaires reconnus pour les profils Élève/Étudiant.
@@ -1667,6 +1776,12 @@ tr.is-demo-row td { opacity: .82; }
         <div class="page-header">
           <div class="page-title">📷 Scanner QR — Identification des membres</div>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Chaque acteur inscrit a un GSC-ID + QR code personnel (visible sur sa fiche). Utile sur le terrain (contrôle d'accès à un match, vérification rapide d'identité) : scanne le QR imprimé/affiché par la personne pour ouvrir directement sa fiche complète, sans recherche manuelle. La recherche manuelle en dessous fait la même chose par nom si tu n'as pas de caméra disponible.
+          </div>
+        </details>
         <p style="font-size:12px;color:var(--gray-txt);margin-bottom:16px;max-width:680px;">
           Scannez le QR Code imprimé ou affiché par un membre (joueur, club, fédération, indépendant…) pour
           ouvrir directement sa fiche. Fonctionne avec tous les acteurs réels et les fiches de démonstration.
