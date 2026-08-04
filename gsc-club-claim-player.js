@@ -42,10 +42,29 @@
     if (!p || !ORG_ROLES.includes(p.role)) return [];
     const usersRef = window.collection(window.db, 'users');
 
-    const [libreSnap, allSnap] = await Promise.all([
-      window.getDocs(window.query(usersRef, window.where('statut', '==', 'libre'))),
-      window.getDocs(usersRef) // lecture publique — filtrage employeur côté client
-    ]);
+    // ── CORRECTIF (03/08/2026) : searchCandidates() téléchargeait auparavant
+    // TOUTE la collection users (getDocs(usersRef) sans filtre) pour ne
+    // garder que les quelques profils dont le champ "employeur" (texte libre)
+    // correspondait au nom de la structure — filtrage fait côté client après
+    // coup. Autorisé par les règles Firestore (lecture publique), mais très
+    // coûteux (une lecture facturée par utilisateur de la plateforme, à
+    // chaque recherche) et expose au navigateur du club l'intégralité du
+    // profil de chaque membre, pas seulement les quelques correspondances
+    // affichées. Remplacé par une requête ciblée sur le champ "employeur"
+    // (égalité exacte, sensible à la casse — accepte de rater les variantes
+    // de casse/espaces plutôt que de re-scanner toute la base ; en pratique
+    // la plupart des joueurs sélectionnent leur club dans la liste déroulante
+    // à l'inscription, donc le nom est déjà celui exact de la structure).
+    const orgName = (p.nomOrganisation || '').trim();
+    const queries = [
+      window.getDocs(window.query(usersRef, window.where('statut', '==', 'libre')))
+    ];
+    if (orgName) {
+      queries.push(window.getDocs(window.query(usersRef, window.where('employeur', '==', orgName))));
+    }
+    const results = await Promise.all(queries);
+    const libreSnap = results[0];
+    const mentionSnap = results[1] || null;
 
     const seen = new Set();
     const candidates = [];
@@ -54,15 +73,11 @@
       seen.add(d.id);
       candidates.push({ id: d.id, ...d.data(), _matchType: 'libre' });
     });
-    const orgName = norm(p.nomOrganisation);
-    if (orgName) {
-      allSnap.docs.forEach(d => {
+    if (mentionSnap) {
+      mentionSnap.docs.forEach(d => {
         if (seen.has(d.id) || d.id === p.uid) return;
-        const u = d.data();
-        if (u.employeur && norm(u.employeur) === orgName) {
-          seen.add(d.id);
-          candidates.push({ id: d.id, ...u, _matchType: 'mention' });
-        }
+        seen.add(d.id);
+        candidates.push({ id: d.id, ...d.data(), _matchType: 'mention' });
       });
     }
     return candidates;
@@ -102,6 +117,22 @@
     const p = window.userProfile;
     if (!p || !window.currentUser) return;
     try {
+      // ── CORRECTIF (03/08/2026) : aucune vérification n'empêchait d'envoyer
+      // plusieurs offres en rafale vers la même personne (spam de
+      // notifications côté joueur, pollution de clubClaimOffers). On
+      // vérifie qu'une offre "pending" de cette structure vers cette cible
+      // n'existe pas déjà avant d'en créer une nouvelle.
+      const dupSnap = await window.getDocs(window.query(
+        window.collection(window.db, 'clubClaimOffers'),
+        window.where('targetUid', '==', targetUid),
+        window.where('structureOwnerUid', '==', window.currentUser.uid),
+        window.where('status', '==', 'pending')
+      ));
+      if (!dupSnap.empty) {
+        alert('Une offre est déjà en attente pour cette personne.');
+        return;
+      }
+
       await window.addDoc(window.collection(window.db, 'clubClaimOffers'), {
         targetUid,
         targetNom: targetName,
@@ -141,7 +172,20 @@
     const ref = window.collection(window.db, 'clubClaimOffers');
     const q = window.query(ref, window.where('targetUid', '==', window.currentUser.uid), window.where('status', '==', 'pending'));
     const snap = await window.getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now = Date.now();
+    // ── CORRECTIF (03/08/2026) : expiresAt (72h) était stocké à la création
+    // mais jamais vérifié nulle part — une offre restait acceptable/refusable
+    // indéfiniment après son "expiration" affichée. On filtre ici les offres
+    // dont l'échéance est dépassée (elles restent en base avec status
+    // 'pending', un nettoyage périodique côté admin/Cloud Function serait
+    // l'endroit propre pour les faire passer à 'expired', hors du périmètre
+    // de ce fichier).
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(o => {
+        const exp = o.expiresAt?.toDate ? o.expiresAt.toDate().getTime() : (o.expiresAt ? new Date(o.expiresAt).getTime() : null);
+        return !exp || exp > now;
+      });
   }
 
   function renderOfferBanner(offers) {
@@ -161,23 +205,55 @@
   async function respond(offerId, accept) {
     try {
       const offerRef = window.doc(window.db, 'clubClaimOffers', offerId);
-      await window.updateDoc(offerRef, { status: accept ? 'accepted' : 'refused', respondedAt: window.serverTimestamp ? window.serverTimestamp() : new Date() });
 
+      // ── CORRECTIF (03/08/2026) — bug d'ordre des écritures ──
+      // Avant ce correctif, le statut de l'offre était marqué 'accepted' EN
+      // PREMIER, puis le profil du joueur était mis à jour ensuite. Si cette
+      // deuxième écriture échouait (ce qui est actuellement TOUJOURS le cas
+      // pour le champ structureId — voir note ci-dessous), l'offre restait
+      // marquée 'accepted' alors que le rattachement réel n'avait jamais eu
+      // lieu : état incohérent silencieux (le club voit "accepté", le joueur
+      // n'est en réalité relié à rien). On inverse l'ordre : la mise à jour
+      // du profil doit réussir AVANT que l'offre soit marquée acceptée.
+      //
+      // ⚠️ LIMITATION CONNUE ET NON RÉSOLUE ICI : la règle Firestore sur
+      // users/{uid} interdit désormais l'auto-modification du champ
+      // structureId (LOCKED_SELF_FIELDS, voir firestore.rules) — verrou
+      // ajouté pour empêcher un compte de s'auto-rattacher à n'importe
+      // quelle structure. Cette écriture va donc échouer avec
+      // "permission-denied" tant qu'un point d'entrée serveur de confiance
+      // (Cloudflare Worker + compte de service, sur le modèle de
+      // gsc-auth-bridge.js) n'aura pas été ajouté pour appliquer cette
+      // acceptation précise après vérification de l'offre. Ce correctif
+      // empêche au moins l'état incohérent ; il ne rend pas la fonctionnalité
+      // pleinement opérationnelle.
       if (accept) {
-        const offers = await loadMyOffers(); // relit pour retrouver les détails avant filtrage 'pending'
         const snap = await window.getDoc(offerRef);
         const o = snap.data();
-        await window.updateDoc(window.doc(window.db, 'users', window.currentUser.uid), {
-          employeur: o.structureNom || '',
-          structureId: o.structureId || null,
-          statut: 'sous_contrat'
-        });
+        if (!o || o.status !== 'pending') {
+          alert('Cette offre n\'est plus disponible.');
+          await refreshOfferBanner();
+          return;
+        }
+        try {
+          await window.updateDoc(window.doc(window.db, 'users', window.currentUser.uid), {
+            employeur: o.structureNom || '',
+            structureId: o.structureId || null,
+            statut: 'sous_contrat'
+          });
+        } catch (profileErr) {
+          console.error('[GSCClubClaim] Échec de la mise à jour du profil à l\'acceptation :', profileErr);
+          alert('❌ Le rattachement n\'a pas pu être appliqué à votre profil (permissions insuffisantes). L\'offre reste en attente — contactez un administrateur.');
+          return; // offre NON marquée acceptée — reste 'pending', rien d'incohérent
+        }
         if (window.userProfile) {
           window.userProfile.employeur = o.structureNom || '';
           window.userProfile.structureId = o.structureId || null;
           window.userProfile.statut = 'sous_contrat';
         }
       }
+
+      await window.updateDoc(offerRef, { status: accept ? 'accepted' : 'refused', respondedAt: window.serverTimestamp ? window.serverTimestamp() : new Date() });
 
       if (typeof window.toast === 'function') window.toast(accept ? '✅ Rattachement confirmé.' : 'Demande refusée.', 'success');
       await refreshOfferBanner();

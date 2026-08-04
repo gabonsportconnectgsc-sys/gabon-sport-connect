@@ -468,6 +468,21 @@
       updates.ownerUid = owner ? (owner.uid || owner.id) : chosenOwnerId;
       updates.ownershipStatus = 'owner_confirmed';
       updates.ownerConfirmedAt = new Date();
+      // ── CORRECTIF (03/08/2026) ──
+      // Cette fonction n'écrivait que ownerUid (un simple uid). Or la
+      // bannière "Fiche gérée par ..." affichée au joueur (index.html,
+      // 3 emplacements) lit exclusivement p.ownerRef?.clubName — jamais
+      // ownerUid. Résultat : même après une assignation correcte côté admin,
+      // le joueur ne voyait jamais le vrai nom du club, seulement le texte
+      // générique de repli "votre club/employeur". On écrit maintenant aussi
+      // ownerRef, dans le même format que celui déjà utilisé ailleurs dans
+      // ce fichier ({clubName, email, contactName} — voir commentaire ligne
+      // ~340 et l'affichage de u.ownerRef?.clubName plus haut).
+      updates.ownerRef = owner ? {
+        clubName: fullName(owner),
+        email: owner.email || '',
+        contactName: ''
+      } : null;
     }
 
     try {
@@ -514,7 +529,9 @@
       await withAuth(() => window.db.collection('users').doc(id).update({
         ownerUid: owner ? (owner.uid || owner.id) : chosenOwnerId,
         ownershipStatus: 'owner_confirmed',
-        ownerConfirmedAt: new Date()
+        ownerConfirmedAt: new Date(),
+        // ── CORRECTIF (03/08/2026) — voir même note dans validateActor() ──
+        ownerRef: owner ? { clubName: fullName(owner), email: owner.email || '', contactName: '' } : null
       }));
       toast('🏢 Propriétaire assigné.', 'success');
     } catch (e) {
