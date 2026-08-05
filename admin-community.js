@@ -1,23 +1,32 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    ADMIN-COMMUNITY.JS — Système d'Administration et Modération Communautaire
-   Version 1.0 — Gestion des posts, commentaires, signalements, utilisateurs
+   Version 1.1 — Gestion des posts, commentaires, signalements, utilisateurs
    Firebase Firestore v10 Modulaire — Temps réel
+
+   ── CORRECTIF (04/08/2026) ──
+   Ce fichier ciblait des noms de collections inventés/obsolètes
+   ('community_posts', 'community_comments', 'community_reactions',
+   'community_reports', 'community_blocks') qui n'existent pas dans la base —
+   le vrai Forum (gsc-community.js) utilise 'communityPosts', une sous-
+   collection 'comments' PAR POST (pas de collection globale), les réactions
+   comme simple champ `reactions` (map uid→emoji) embarqué dans chaque post
+   plutôt qu'une collection séparée, 'signalements' pour les signalements et
+   'blocages' pour les blocages. Ce panneau ne pouvait donc afficher aucune
+   donnée réelle. Corrigé ci-dessous — voir chaque fonction modifiée pour le
+   détail de ce qui a changé.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 (function(window){
   'use strict';
 
-  const POSTS_COLLECTION = 'community_posts';
-  const COMMENTS_COLLECTION = 'community_comments';
-  const REACTIONS_COLLECTION = 'community_reactions';
-  const REPORTS_COLLECTION = 'community_reports';
-  const BLOCKS_COLLECTION = 'community_blocks';
+  const POSTS_COLLECTION = 'communityPosts';       // était 'community_posts'
+  const COMMENTS_SUBCOLLECTION = 'comments';        // sous-collection par post, lue via collectionGroup
+  const REPORTS_COLLECTION = 'signalements';        // était 'community_reports'
+  const BLOCKS_COLLECTION = 'blocages';             // était 'community_blocks'
 
   let _posts = {};
   let _comments = {};
-  let _reactions = {};
   let _reports = {};
-  let _blocks = {};
   let _unsubscribers = [];
   let _filters = { status: 'all', searchTerm: '' };
   let _stats = { totalPosts: 0, totalComments: 0, totalReports: 0, activeUsers: 0, totalReactions: 0 };
@@ -44,7 +53,10 @@
   function updateStats() {
     _stats.totalPosts = Object.keys(_posts).length;
     _stats.totalComments = Object.keys(_comments).length;
-    _stats.totalReactions = Object.keys(_reactions).length;
+    // ── CORRECTIF : les réactions ne sont pas une collection séparée mais un
+    // champ `reactions` (map uid→emoji) embarqué dans chaque post — on les
+    // compte directement depuis _posts au lieu d'une souscription dédiée.
+    _stats.totalReactions = Object.values(_posts).reduce((sum, p) => sum + Object.keys(p.reactions || {}).length, 0);
     _stats.totalReports = Object.keys(_reports).length;
     const uniqueAuthors = new Set();
     Object.values(_posts).forEach(p => uniqueAuthors.add(p.authorId));
@@ -113,12 +125,18 @@
     posts.forEach(post => {
       const reportCount = Object.values(_reports).filter(r => r.postId === post.id).length;
       const commentCount = Object.values(_comments).filter(c => c.postId === post.id).length;
-      const reactionCount = Object.values(_reactions).filter(r => r.postId === post.id).length;
-      const contentPreview = post.content.substring(0, 50) + (post.content.length > 50 ? '...' : '');
+      // ── CORRECTIF : reactions est un champ (map uid→emoji) sur le post lui-même,
+      // pas une collection filtrable par postId.
+      const reactionCount = Object.keys(post.reactions || {}).length;
+      // ── CORRECTIF : le champ texte d'un post s'appelle "text", pas "content"
+      // (voir gsc-community.js createPost). "content" était toujours undefined,
+      // ce qui aurait fait planter .substring() sur le premier post affiché.
+      const postText = post.text || '';
+      const contentPreview = postText.substring(0, 50) + (postText.length > 50 ? '...' : '');
 
       html += `<tr style="border-bottom:1px solid #e2e8f0;hover:background:#f8fafc;">`;
       html += `<td style="padding:12px;"><strong>${escapeHtml(post.authorName)}</strong><br><small style="color:#94a3b8;">${post.authorId}</small></td>`;
-      html += `<td style="padding:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(contentPreview)}</td>`;
+      html += `<td style="padding:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(contentPreview)}${post.imageURLs?.length || post.imageURL ? ' 📷' : ''}</td>`;
       html += `<td style="padding:12px;text-align:center;color:#f59e0b;font-weight:600;">${reactionCount}</td>`;
       html += `<td style="padding:12px;text-align:center;color:#3b82f6;font-weight:600;">${commentCount}</td>`;
       html += `<td style="padding:12px;text-align:center;"><span style="background:${reportCount > 0 ? '#fee2e2' : '#e6f7ef'};color:${reportCount > 0 ? '#ef4444' : '#009E60'};padding:4px 8px;border-radius:4px;font-weight:600;">${reportCount}</span></td>`;
@@ -174,7 +192,7 @@
       html += `<tr style="border-bottom:1px solid #e2e8f0;">`;
       html += `<td style="padding:12px;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:3px;font-size:11px;">${report.postId.substring(0, 8)}...</code></td>`;
       html += `<td style="padding:12px;"><strong>${escapeHtml(report.reason)}</strong></td>`;
-      html += `<td style="padding:12px;font-size:12px;color:#94a3b8;">${report.reportedBy}</td>`;
+      html += `<td style="padding:12px;font-size:12px;color:#94a3b8;">${escapeHtml(report.reporterName || report.reporterId || '')}</td>`;
       html += `<td style="padding:12px;"><span style="background:${statusBg};color:${statusColor};padding:4px 8px;border-radius:4px;font-weight:600;font-size:11px;">${statusLabel}</span></td>`;
       html += `<td style="padding:12px;color:#94a3b8;">${timeAgo(report.createdAt)}</td>`;
       html += `<td style="padding:12px;text-align:center;">`;
@@ -200,14 +218,14 @@
     const userActivity = {};
     Object.values(_posts).forEach(p => {
       if (!userActivity[p.authorId]) {
-        userActivity[p.authorId] = { name: p.authorName, posts: 0, comments: 0, avatar: p.authorAvatar };
+        userActivity[p.authorId] = { name: p.authorName, posts: 0, comments: 0, avatar: p.authorPhoto };
       }
       userActivity[p.authorId].posts++;
     });
 
     Object.values(_comments).forEach(c => {
       if (!userActivity[c.authorId]) {
-        userActivity[c.authorId] = { name: c.authorName, posts: 0, comments: 0, avatar: c.authorAvatar };
+        userActivity[c.authorId] = { name: c.authorName, posts: 0, comments: 0, avatar: c.authorPhoto };
       }
       userActivity[c.authorId].comments++;
     });
@@ -237,7 +255,7 @@
       html += `<td style="padding:12px;text-align:center;color:#3b82f6;font-weight:600;">${userData.comments}</td>`;
       html += `<td style="padding:12px;text-align:center;font-weight:600;color:#009E60;">${total}</td>`;
       html += `<td style="padding:12px;text-align:center;">`;
-      html += `<button class="btn-block-user" data-user-id="${userId}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">🔒 Bloquer</button>`;
+      html += `<button class="btn-block-user" data-user-id="${userId}" title="Masque ce membre de ton fil admin uniquement — n'affecte pas les autres membres. Pour suspendre le compte, utilise Gestion des Acteurs." style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">🙈 Masquer (mon fil)</button>`;
       html += `</td>`;
       html += `</tr>`;
     });
@@ -341,18 +359,35 @@
     }
   }
 
+  // ── CORRECTIF (04/08/2026) ──
+  // Deux problèmes corrigés ici :
+  // 1) blockerId: 'admin' était un littéral, jamais un vrai uid — la règle
+  //    Firestore exige request.auth.uid == blockerId, donc cette écriture
+  //    échouait TOUJOURS avec permission-denied (bouton cassé).
+  // 2) "blocages" est un filtre personnel : blockerId=X n'empêche cet
+  //    utilisateur X de voir les posts de "blockedId" que dans SON PROPRE
+  //    fil. Ça ne retire rien pour les autres membres et ne sanctionne pas
+  //    le compte visé. Utile pour l'admin qui veut lui-même arrêter de voir
+  //    un membre problématique en modérant, mais PAS un outil de suspension
+  //    de compte. Pour une vraie sanction (empêcher ce membre de publier,
+  //    masquer ses posts pour tout le monde), utilise la page
+  //    "Gestion des Acteurs" (masquer/supprimer le compte) — un lien y est
+  //    ajouté ci-dessous.
   async function blockUser(userId) {
     try {
       const { collection, addDoc, serverTimestamp } = window;
       if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
         await window.ensureFirebaseAuthViaSupabase();
       }
+      const adminUid = (typeof firebase !== 'undefined' && firebase.auth().currentUser)
+        ? firebase.auth().currentUser.uid : null;
+      if (!adminUid) { showToast('Session admin non authentifiée — réessaie.', 'error'); return; }
       await addDoc(collection(window.db, BLOCKS_COLLECTION), {
-        blockerId: 'admin',
+        blockerId: adminUid,
         blockedId: userId,
         createdAt: serverTimestamp()
       });
-      showToast('Utilisateur bloqué', 'success');
+      showToast('Masqué de ton fil admin. Pour suspendre réellement ce compte, utilise "Gestion des Acteurs".', 'success');
       renderUsersList();
     } catch (error) {
       console.error('Erreur blocage:', error);
@@ -441,37 +476,28 @@
     _unsubscribers.push(unsubscribe);
   }
 
+  // ── CORRECTIF : les commentaires sont une sous-collection PAR POST
+  // (communityPosts/{postId}/comments), il n'existe aucune collection globale
+  // 'community_comments'. On utilise donc collectionGroup('comments') pour
+  // écouter tous les commentaires de tous les posts en une seule requête
+  // (autorisé par la règle Firestore existante : lecture publique sur
+  // communityPosts/{postId}/comments). Les documents commentaires ne stockent
+  // pas leur propre postId (voir gsc-community.js sendComment) — on le
+  // retrouve via doc.ref.parent.parent.id (l'id du post parent).
   function subscribeToComments() {
-    if (!window.db) return;
-    const { collection, onSnapshot } = window;
+    if (!window.db || typeof window.collectionGroup !== 'function') return;
+    const { collectionGroup, onSnapshot } = window;
     const unsubscribe = onSnapshot(
-      collection(window.db, COMMENTS_COLLECTION),
+      collectionGroup(window.db, COMMENTS_SUBCOLLECTION),
       (snap) => {
         _comments = {};
-        snap.docs.forEach(doc => {
-          _comments[doc.id] = { id: doc.id, ...doc.data() };
+        snap.docs.forEach(d => {
+          _comments[d.id] = { id: d.id, postId: d.ref.parent.parent?.id || null, ...d.data() };
         });
         renderUsersList();
         updateStats();
       },
       (error) => console.error('Comments sync error:', error)
-    );
-    _unsubscribers.push(unsubscribe);
-  }
-
-  function subscribeToReactions() {
-    if (!window.db) return;
-    const { collection, onSnapshot } = window;
-    const unsubscribe = onSnapshot(
-      collection(window.db, REACTIONS_COLLECTION),
-      (snap) => {
-        _reactions = {};
-        snap.docs.forEach(doc => {
-          _reactions[doc.id] = { id: doc.id, ...doc.data() };
-        });
-        updateStats();
-      },
-      (error) => console.error('Reactions sync error:', error)
     );
     _unsubscribers.push(unsubscribe);
   }
@@ -511,7 +537,6 @@
       } catch (e) { console.warn('[GSC Admin Community] pont Firebase Auth indisponible —', e); }
       subscribeToPosts();
       subscribeToComments();
-      subscribeToReactions();
       subscribeToReports();
     },
     renderAll() {

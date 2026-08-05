@@ -122,6 +122,12 @@
       <div class="admin-header-title">🎨 CMS &amp; Apparence — Édition Visuelle</div>
       <div class="admin-header-sub">Personnalisez les zones de texte, images, polices et tailles — modifications en temps réel</div>
     </div>
+    <details class="adm-page-help">
+      <summary>À quoi sert cette page ?</summary>
+      <div class="adm-page-help-body">
+        Change l'apparence visuelle de l'application publique <strong>sans toucher au code</strong> : couleurs de thème (onglet Couleurs), polices et tailles de texte (Typographies), contenus des zones de texte affichées sur l'accueil (Zones textes), images/icônes par défaut (Images/Icônes). Les changements s'appliquent en temps réel à toute l'app — vérifie toujours le rendu sur l'app publique après une modification, surtout pour les couleurs (contraste texte/fond) et les tailles de police (lisibilité mobile).
+      </div>
+    </details>
 
     <!-- Onglets -->
     <div class="cms-tabs" style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;">

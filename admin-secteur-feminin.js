@@ -102,6 +102,12 @@
             Vue consolidée des actrices et des structures ayant des effectifs féminins, saison en cours.
           </p>
         </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Page de suivi en <strong>lecture seule</strong> (rien ne se modifie ici) : elle recoupe automatiquement les fiches acteurs et structures déjà saisies ailleurs pour donner une vue d'ensemble du sport féminin — répartition des actrices par rôle, par discipline, référentiel de documents spécifiques (championnats dames, organismes dédiés), et structures ayant déclaré des effectifs de joueuses. Pour corriger une donnée que tu vois ici, retourne sur la fiche acteur ou structure concernée dans <strong>Gestion des Acteurs</strong> ou <strong>Gestion des Structures</strong> — cette page ne fait qu'agréger, jamais éditer.
+          </div>
+        </details>
         <div class="fem-stats-grid" id="fem-stats-grid"></div>
         <div class="dash-card mb-16">
           <div class="dash-card-title">Répartition des actrices par rôle</div>

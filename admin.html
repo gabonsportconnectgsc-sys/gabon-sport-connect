@@ -847,6 +847,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-signalements">
           <span class="nav-icon">🚩</span><span>Signalements</span><span class="nav-badge-count" id="nav-signalements-count" style="display:none;"></span>
         </button>
+        <button class="nav-item" id="nav-community">
+          <span class="nav-icon">💬</span><span>Forum &amp; Modération</span>
+        </button>
         <button class="nav-item" id="nav-documents">
           <span class="nav-icon">📁</span><span>Documents</span>
         </button>
@@ -1678,6 +1681,41 @@ tr.is-demo-row td { opacity: .82; }
         </div>
       </div>
 
+      <!-- FORUM & MODÉRATION (communauté publique — gsc-community.js côté app) -->
+      <div id="community" class="section">
+        <div class="page-header">
+          <div class="page-title">💬 Forum &amp; Modération</div>
+        </div>
+        <details class="adm-page-help">
+          <summary>À quoi sert cette page ?</summary>
+          <div class="adm-page-help-body">
+            Vue d'ensemble et modération du Forum communautaire (l'onglet "Forum" de l'app publique) :
+            <ul>
+              <li><strong>Posts</strong> : tous les posts publiés, avec leur nombre de réactions/commentaires/signalements. 👁️ pour prévisualiser, 📋 pour voir le détail des signalements sur ce post, 🗑️ pour supprimer définitivement.</li>
+              <li><strong>Signalements</strong> : les posts signalés par les membres (distinct de la page <strong>🚩 Signalements</strong> du menu, qui concerne les fiches acteurs — ici c'est spécifique au contenu du Forum). ✓ classe le signalement comme traité sans action, ✕ le rejette.</li>
+              <li><strong>Membres actifs</strong> : classement par volume de publications/commentaires. Le bouton <strong>🙈 Masquer (mon fil)</strong> ne fait disparaître ce membre que de <em>ton</em> affichage admin — ça n'affecte aucun autre utilisateur et ce n'est pas une sanction. Pour vraiment suspendre un compte problématique, utilise <strong>Gestion des Acteurs</strong>.</li>
+            </ul>
+          </div>
+        </details>
+
+        <div id="admin-community-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px;"></div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">📝 Posts</div>
+          <div id="admin-community-posts-table"><p style="color:var(--gray-txt);font-size:13px;">Chargement…</p></div>
+        </div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">🚩 Signalements de posts</div>
+          <div id="admin-community-reports-table"><p style="color:var(--gray-txt);font-size:13px;">Chargement…</p></div>
+        </div>
+
+        <div class="dash-card" style="margin-top:16px;">
+          <div class="dash-card-title">👥 Membres actifs</div>
+          <div id="admin-community-users-list"><p style="color:var(--gray-txt);font-size:13px;">Chargement…</p></div>
+        </div>
+      </div>
+
       <!-- DOCUMENTS (archive des dossiers d'inscription) -->
       <div id="documents" class="section">
         <div class="page-header">
@@ -2062,6 +2100,7 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-matchs"><span class="mn-icon">📅</span><span>Matchs</span></button>
   <button class="mn-btn" id="mnav-rapports"><span class="mn-icon">📈</span><span>Rapports</span></button>
   <button class="mn-btn" id="mnav-signalements"><span class="mn-icon">🚩</span><span>Signalts</span></button>
+  <button class="mn-btn" id="mnav-community"><span class="mn-icon">💬</span><span>Forum</span></button>
   <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
   <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
@@ -2669,11 +2708,52 @@ document.addEventListener('DOMContentLoaded', function(){
     renderSignalementsHistory();
   }
 
+  // ── Forum & Modération (ajouté 04/08/2026 — même schéma que showSignalementsSection) ──
+  function showCommunitySection() {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('community');
+    if (target) target.classList.add('active');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mn-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav-community');
+    if (navBtn) navBtn.classList.add('active');
+    const mNavBtn = document.getElementById('mnav-community');
+    if (mNavBtn) mNavBtn.classList.add('active');
+
+    const topbarTitle = document.getElementById('topbar-title');
+    if (topbarTitle && topbarTitle.firstChild) topbarTitle.firstChild.textContent = 'Forum & Modération';
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+
+    if (window.GSCAdminCommunity && typeof window.GSCAdminCommunity.renderAll === 'function') {
+      window.GSCAdminCommunity.renderAll();
+    }
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
     const navBtn = document.getElementById('nav-signalements');
     if (navBtn) navBtn.addEventListener('click', showSignalementsSection);
     const mNavBtn = document.getElementById('mnav-signalements');
     if (mNavBtn) mNavBtn.addEventListener('click', showSignalementsSection);
+
+    const communityNavBtn = document.getElementById('nav-community');
+    if (communityNavBtn) communityNavBtn.addEventListener('click', showCommunitySection);
+    const communityMNavBtn = document.getElementById('mnav-community');
+    if (communityMNavBtn) communityMNavBtn.addEventListener('click', showCommunitySection);
+    // Les écouteurs temps réel (onSnapshot) du module doivent tourner en
+    // permanence, pas seulement à l'ouverture de la page — sinon les
+    // compteurs affichés à l'ouverture seraient basés sur des données
+    // potentiellement périmées.
+    document.addEventListener('firebase-ready', () => {
+      if (window.GSCAdminCommunity && typeof window.GSCAdminCommunity.init === 'function') {
+        window.GSCAdminCommunity.init();
+      }
+    });
     const refreshBtn = document.getElementById('btn-refresh-signalements');
     if (refreshBtn) refreshBtn.addEventListener('click', () => { renderSignalementsList(); renderSignalementsHistory(); });
 
