@@ -30,6 +30,27 @@
   'use strict';
 
   const ORG_ROLES = ['club', 'association', 'federation'];
+
+  // ── CORRECTIF (06/08/2026) ──
+  // Même Worker que le pont d'authentification et les actions admin (voir
+  // admin-controller.js) — utilisé ici pour l'endpoint /accept-club-offer.
+  // L'écriture de structureId sur son propre profil est verrouillée côté
+  // firestore.rules (LOCKED_SELF_FIELDS) et échouait systématiquement en
+  // permission-denied ; elle passe désormais par ce Worker (compte de
+  // service), qui revérifie l'offre côté serveur avant de l'appliquer.
+  const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+
+  async function getMyAccessToken() {
+    if (!window._sb) throw new Error('Session introuvable (Supabase non initialisé).');
+    let { data: { session } } = await window._sb.auth.getSession();
+    if (!session) {
+      const refreshed = await window._sb.auth.refreshSession();
+      session = refreshed.data && refreshed.data.session;
+    }
+    if (!session || !session.access_token) throw new Error('Session expirée — reconnectez-vous.');
+    return session.access_token;
+  }
+
   function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function fmtDate(d) { try { return d ? new Date(d.toDate ? d.toDate() : d).toLocaleDateString('fr-FR') : '—'; } catch (e) { return '—'; } }
   function norm(s) { return (s || '').toString().trim().toLowerCase(); }
@@ -206,27 +227,19 @@
     try {
       const offerRef = window.doc(window.db, 'clubClaimOffers', offerId);
 
-      // ── CORRECTIF (03/08/2026) — bug d'ordre des écritures ──
-      // Avant ce correctif, le statut de l'offre était marqué 'accepted' EN
-      // PREMIER, puis le profil du joueur était mis à jour ensuite. Si cette
-      // deuxième écriture échouait (ce qui est actuellement TOUJOURS le cas
-      // pour le champ structureId — voir note ci-dessous), l'offre restait
-      // marquée 'accepted' alors que le rattachement réel n'avait jamais eu
-      // lieu : état incohérent silencieux (le club voit "accepté", le joueur
-      // n'est en réalité relié à rien). On inverse l'ordre : la mise à jour
-      // du profil doit réussir AVANT que l'offre soit marquée acceptée.
-      //
-      // ⚠️ LIMITATION CONNUE ET NON RÉSOLUE ICI : la règle Firestore sur
-      // users/{uid} interdit désormais l'auto-modification du champ
-      // structureId (LOCKED_SELF_FIELDS, voir firestore.rules) — verrou
-      // ajouté pour empêcher un compte de s'auto-rattacher à n'importe
-      // quelle structure. Cette écriture va donc échouer avec
-      // "permission-denied" tant qu'un point d'entrée serveur de confiance
-      // (Cloudflare Worker + compte de service, sur le modèle de
-      // gsc-auth-bridge.js) n'aura pas été ajouté pour appliquer cette
-      // acceptation précise après vérification de l'offre. Ce correctif
-      // empêche au moins l'état incohérent ; il ne rend pas la fonctionnalité
-      // pleinement opérationnelle.
+      // ── CORRECTIF (06/08/2026) ──
+      // La règle Firestore sur users/{uid} interdit l'auto-modification du
+      // champ structureId (LOCKED_SELF_FIELDS, voir firestore.rules) —
+      // verrou légitime anti-usurpation (empêche un compte de s'auto-
+      // rattacher à n'importe quelle structure). Cette écriture échouait
+      // donc systématiquement en permission-denied lors de l'acceptation
+      // d'une offre pourtant légitime. Elle passe désormais par le Worker
+      // gsc-auth-bridge (/accept-club-offer, compte de service), qui
+      // revérifie côté serveur que l'offre cible bien ce joueur, qu'elle
+      // est 'pending' et non expirée, avant d'appliquer le rattachement.
+      // Le Worker applique lui-même l'ordre d'écriture sûr : profil
+      // rattaché AVANT que l'offre soit marquée 'accepted' (jamais d'offre
+      // "accepted" sans rattachement réel derrière).
       if (accept) {
         const snap = await window.getDoc(offerRef);
         const o = snap.data();
@@ -235,27 +248,42 @@
           await refreshOfferBanner();
           return;
         }
+
         try {
-          await window.updateDoc(window.doc(window.db, 'users', window.currentUser.uid), {
-            employeur: o.structureNom || '',
-            structureId: o.structureId || null,
-            statut: 'sous_contrat'
+          const token = await getMyAccessToken();
+          const resp = await fetch(GSC_WORKER_URL + '/accept-club-offer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ offerId, accept: true })
           });
+          if (!resp.ok) {
+            const txt = await resp.text().catch(() => '');
+            throw new Error(`HTTP ${resp.status} ${txt}`);
+          }
         } catch (profileErr) {
           console.error('[GSCClubClaim] Échec de la mise à jour du profil à l\'acceptation :', profileErr);
-          alert('❌ Le rattachement n\'a pas pu être appliqué à votre profil (permissions insuffisantes). L\'offre reste en attente — contactez un administrateur.');
-          return; // offre NON marquée acceptée — reste 'pending', rien d'incohérent
+          alert('❌ Le rattachement n\'a pas pu être appliqué à votre profil : ' + (profileErr.message || profileErr));
+          return; // offre NON marquée acceptée côté Worker — reste 'pending', rien d'incohérent
         }
+
         if (window.userProfile) {
           window.userProfile.employeur = o.structureNom || '';
           window.userProfile.structureId = o.structureId || null;
           window.userProfile.statut = 'sous_contrat';
         }
+
+        // Le Worker a déjà marqué l'offre 'accepted' côté serveur après
+        // rattachement réussi — pas de second updateDoc client ici.
+        if (typeof window.toast === 'function') window.toast('✅ Rattachement confirmé.', 'success');
+        await refreshOfferBanner();
+        if (typeof window.renderProfile === 'function') window.renderProfile();
+        return;
       }
 
-      await window.updateDoc(offerRef, { status: accept ? 'accepted' : 'refused', respondedAt: window.serverTimestamp ? window.serverTimestamp() : new Date() });
+      // ── Cas refus : inchangé, toujours autorisé directement côté client ──
+      await window.updateDoc(offerRef, { status: 'refused', respondedAt: window.serverTimestamp ? window.serverTimestamp() : new Date() });
 
-      if (typeof window.toast === 'function') window.toast(accept ? '✅ Rattachement confirmé.' : 'Demande refusée.', 'success');
+      if (typeof window.toast === 'function') window.toast('Demande refusée.', 'success');
       await refreshOfferBanner();
       if (typeof window.renderProfile === 'function') window.renderProfile();
     } catch (err) {
