@@ -518,7 +518,7 @@
       <div class="gsc-composer">
         <div class="gsc-composer-head">
           <div class="gsc-avatar clickable" id="gsc-composer-avatar">${photo ? `<img src="${esc(photo)}" alt="">` : esc(initials(authorName(profile)))}</div>
-          <textarea id="gsc-composer-text" rows="4" style="min-height:110px;resize:vertical;" placeholder="Partagez une actualité, un résultat, une question avec la communauté… (utilisez @Nom pour mentionner quelqu'un)" maxlength="1000"></textarea>
+          <textarea id="gsc-composer-text" rows="4" style="min-height:110px;max-height:340px;resize:vertical;overflow-y:auto;" placeholder="Partagez une actualité, un résultat, une question avec la communauté… (utilisez @Nom pour mentionner quelqu'un)" maxlength="5000"></textarea>
           <div class="gsc-mention-pop" id="gsc-composer-mention-pop"></div>
         </div>
         <div id="gsc-composer-preview-zone"></div>
