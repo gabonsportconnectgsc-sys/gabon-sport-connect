@@ -552,14 +552,13 @@
     ta.style.height = ta.scrollHeight + 'px';
   }
 
-  function onComposerFile(e) {
-    const files = Array.from(e.target.files || []).filter(f => f.type && f.type.startsWith('image/'));
-    if (!files.length) return;
+  function addImagesToComposer(files, onDone) {
+    if (!files.length) { if (onDone) onDone(); return; }
 
     const room = GSC_COMPOSER_MAX_IMAGES - _composerImages.length;
     if (room <= 0) {
       toastMsg(`Maximum ${GSC_COMPOSER_MAX_IMAGES} images par publication.`, 'info');
-      e.target.value = '';
+      if (onDone) onDone();
       return;
     }
     const toAdd = files.slice(0, room);
@@ -573,12 +572,16 @@
       reader.onload = () => {
         _composerImages.push({ file, dataUrl: reader.result });
         pending--;
-        if (pending === 0) renderComposerPreview();
+        if (pending === 0) { renderComposerPreview(); if (onDone) onDone(); }
       };
       reader.readAsDataURL(file);
     });
+  }
 
+  function onComposerFile(e) {
+    const files = Array.from(e.target.files || []).filter(f => f.type && f.type.startsWith('image/'));
     e.target.value = ''; // permet de re-sélectionner les mêmes fichiers plus tard
+    addImagesToComposer(files);
   }
 
   function renderComposerPreview() {
@@ -1334,6 +1337,28 @@
   else document.addEventListener('DOMContentLoaded', init);
   document.addEventListener('firebase-ready', () => { renderComposer(); });
 
-  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed, refreshComposer: renderComposer, openPost };
+  // ── NOUVEAU — préremplissage du composeur depuis un partage entrant
+  // (Web Share Target, voir manifest.json + handleIncomingShare dans
+  // index.html + handleShareTarget dans sw.js pour les images). 
+  // ensureSubscribed() construit d'abord le composeur (appel synchrone à
+  // renderComposer()), donc #gsc-composer-text existe forcément juste après.
+  function prefillComposer(text, files) {
+    ensureSubscribed();
+    const ta = document.getElementById('gsc-composer-text');
+    if (ta && text) {
+      ta.value = (ta.value ? ta.value + '\n\n' : '') + text;
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 340) + 'px';
+    }
+    if (files && files.length) {
+      addImagesToComposer(files);
+    }
+    if (ta) {
+      ta.focus();
+      ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  window.GSCCommunity = { refresh: renderFeed, ensureSubscribed, refreshComposer: renderComposer, openPost, prefillComposer };
 
 })(window);

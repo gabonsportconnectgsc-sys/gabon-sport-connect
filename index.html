@@ -2801,6 +2801,12 @@
         </div>
       </div>
 
+      <!-- Prochains matchs (NOUVEAU — lit la collection Firestore 'matchs',
+           la même que celle gérée depuis l'admin "Gestion des Matchs".
+           Avant ce correctif, un match créé côté admin n'apparaissait
+           jamais nulle part côté public.) -->
+      <div id="public-matchs-section" class="fade-up mb-16"></div>
+
       <!-- Federation card -->
       <div id="federation-detail" class="fade-up"></div>
 
@@ -8058,7 +8064,74 @@ let currentDivIndex = null;
 function initSportView() {
   renderDisciplineTabs();
   renderSportDetail(currentSportId);
+  renderPublicMatches();
 }
+
+/* ── Calendrier public des matchs (NOUVEAU) ──────────────────────────────
+   Lit la collection Firestore 'matchs' — la même que celle gérée depuis
+   l'admin "Gestion des Matchs" (voir admin-controller.js / saveMatch()).
+   Avant ce correctif, aucun affichage public n'existait : un match créé
+   en admin restait invisible pour tout le monde. Cache 30s comme le reste
+   des lectures publiques (voir _structCountCache) pour éviter de refaire
+   un getDocs() complet à chaque fois qu'on rouvre l'onglet Sport. ────── */
+let _publicMatchsCache = null;
+async function renderPublicMatches() {
+  const el = document.getElementById('public-matchs-section');
+  if (!el || !db) return;
+  try {
+    const now = Date.now();
+    let matchsData;
+    if (_publicMatchsCache && (now - _publicMatchsCache.ts) < 30000) {
+      matchsData = _publicMatchsCache.data;
+    } else {
+      const snap = await getDocs(collection(db, 'matchs'));
+      matchsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _publicMatchsCache = { data: matchsData, ts: now };
+    }
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const upcoming = matchsData
+      .filter(m => m.status !== 'deleted' && m.date && new Date(m.date) >= today)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 5);
+
+    if (!upcoming.length) {
+      el.innerHTML = `
+        <div class="card">
+          <div class="card-body" style="padding:14px;">
+            <div style="font-size:12px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">📅 Prochains matchs</div>
+            <div style="font-size:12.5px;color:var(--gray-txt);text-align:center;padding:8px 0;">Aucun match à venir programmé pour le moment.</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const rows = upcoming.map(m => {
+      const d = new Date(m.date);
+      const dateTxt = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-bg);">
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);">${esc(m.home || '?')} <span style="color:var(--gray-txt);font-weight:500;">vs</span> ${esc(m.away || '?')}</div>
+            <div style="font-size:11px;color:var(--gray-txt);margin-top:2px;">${esc(dateTxt)}${m.time ? ' · ' + esc(m.time) : ''}${m.lieu ? ' · ' + esc(m.lieu) : ''}</div>
+          </div>
+          ${m.competition ? `<span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-lt);border-radius:6px;padding:3px 8px;white-space:nowrap;margin-left:8px;">${esc(m.competition)}</span>` : ''}
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-body" style="padding:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">📅 Prochains matchs</div>
+          ${rows}
+        </div>
+      </div>`;
+  } catch (e) {
+    console.warn('renderPublicMatches:', e);
+    el.innerHTML = '';
+  }
+}
+window.renderPublicMatches = renderPublicMatches;
 
 function renderDisciplineTabs() {
   const c = document.getElementById('discipline-tabs');
@@ -9002,7 +9075,66 @@ window.openActorDetail = function(uid){
   });
 })();
 
-window.openProfileQrModal = openProfileQrModal;
+// Handle Web Share Target (?title=&text=&url= via GET, ou ?shared_post=1
+// via POST — voir manifest.json > share_target + sw.js > handleShareTarget).
+// Quand quelqu'un partage un lien/texte/image depuis une autre app
+// (Facebook, WhatsApp…) vers GSC via le sélecteur de partage Android,
+// l'app doit s'ouvrir directement sur le composeur du fil communautaire,
+// pré-rempli avec le contenu partagé. Même schéma que ?actor= et ?post=
+// ci-dessus. Le cas GET (title/text/url) est géré ici directement ; le cas
+// POST (images) passe par sw.js qui stocke tout dans un Cache API partagé
+// (même origine = accessible depuis la page, pas besoin de postMessage)
+// avant de rediriger ici avec ?shared_post=1.
+(function handleIncomingShare(){
+  const params = new URLSearchParams(window.location.search);
+  const sTitle = params.get('title');
+  const sText = params.get('text');
+  const sUrl = params.get('url');
+  const sharedPost = params.get('shared_post') === '1';
+  if(!sTitle && !sText && !sUrl && !sharedPost) return;
+
+  // Nettoie l'URL tout de suite pour éviter un nouveau préremplissage si
+  // l'utilisateur recharge la page ou revient en arrière.
+  history.replaceState({}, '', location.pathname + location.hash);
+
+  async function openComposerWithShare(){
+    let combinedText = [sTitle, sText, sUrl].filter(Boolean).join('\n\n');
+    let files = [];
+
+    if(sharedPost && 'caches' in window){
+      try{
+        const cache = await caches.open('gsc-share-target-v1');
+        const metaRes = await cache.match('share-meta');
+        if(metaRes){
+          const meta = await metaRes.json();
+          combinedText = [meta.title, meta.text, meta.url].filter(Boolean).join('\n\n') || combinedText;
+          for(let i=0; i<(meta.count||0); i++){
+            const imgRes = await cache.match(`share-image-${i}`);
+            if(imgRes){
+              const blob = await imgRes.blob();
+              files.push(new File([blob], `partage-${i}.jpg`, { type: blob.type || 'image/jpeg' }));
+            }
+          }
+        }
+        // Nettoyage — évite qu'un futur chargement de la page ne retrouve
+        // par erreur les mêmes images si ?shared_post=1 traînait encore.
+        const keys = await cache.keys();
+        await Promise.all(keys.map(k => cache.delete(k)));
+      }catch(e){ console.warn('handleIncomingShare cache:', e); }
+    }
+
+    if(typeof showView === 'function') showView('actualites');
+    setTimeout(()=>{
+      if(window.GSCCommunity && typeof window.GSCCommunity.prefillComposer === 'function'){
+        window.GSCCommunity.prefillComposer(combinedText, files);
+      }
+    }, 600);
+  }
+
+  document.addEventListener('firebase-ready', ()=>{
+    setTimeout(openComposerWithShare, 800);
+  });
+})();
 window.closeProfileQrModal = closeProfileQrModal;
 window.printProfileQr = printProfileQr;
 window.downloadProfileQr = downloadProfileQr;

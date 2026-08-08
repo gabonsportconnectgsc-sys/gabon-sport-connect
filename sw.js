@@ -16,6 +16,10 @@
    fichiers JS/CSS de l'app (voir plus bas) afin que ce problème ne se
    reproduise plus à chaque futur correctif. */
 const CACHE_NAME = 'gsc-v7';
+// ── NOUVEAU — cache dédié au Web Share Target (POST), voir handleShareTarget()
+// et le handler 'fetch' plus bas. Séparé de CACHE_NAME pour ne jamais être
+// purgé par la logique de versioning de l'app (activate ci-dessous).
+const SHARE_CACHE = 'gsc-share-target-v1';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -44,7 +48,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames =>
-      Promise.all(cacheNames.map(n => n !== CACHE_NAME ? caches.delete(n) : null))
+      Promise.all(cacheNames.map(n => (n !== CACHE_NAME && n !== SHARE_CACHE) ? caches.delete(n) : null))
     )
   );
   self.clients.claim();
@@ -54,6 +58,19 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
+
+  /* ── NOUVEAU — Web Share Target (POST), voir manifest.json > share_target.
+     DOIT être intercepté ICI, avant le filtre GET-only juste en dessous :
+     sans ce bloc, la requête POST du partage repartirait telle quelle vers
+     GitHub Pages, qui n'accepte pas POST sur un fichier statique → le
+     partage échouerait silencieusement. On stocke titre/texte/lien/images
+     dans SHARE_CACHE le temps que la page les récupère à l'ouverture (voir
+     handleIncomingShare() dans index.html), puis on redirige vers l'app. */
+  if (request.method === 'POST' && url.origin === location.origin && url.pathname.endsWith('/share-target')) {
+    event.respondWith(handleShareTarget(event));
+    return;
+  }
+
   if (request.method !== 'GET') return;
   if (url.origin !== location.origin &&
       !request.url.includes('googleapis') &&
@@ -117,8 +134,34 @@ self.addEventListener('fetch', event => {
   );
 });
 
+/* ── NOUVEAU — Web Share Target : extrait titre/texte/lien/images de la
+   requête multipart, les stocke dans SHARE_CACHE (vidé à chaque nouveau
+   partage pour ne jamais mélanger deux partages successifs), puis redirige
+   vers l'app normale avec un marqueur ?shared_post=1 dans l'URL. ────── */
+async function handleShareTarget(event) {
+  try {
+    const formData = await event.request.formData();
+    const title = formData.get('title') || '';
+    const text = formData.get('text') || '';
+    const sharedUrl = formData.get('url') || '';
+    const files = formData.getAll('images').filter(f => f && typeof f.size === 'number' && f.size > 0);
+
+    const cache = await caches.open(SHARE_CACHE);
+    const oldKeys = await cache.keys();
+    await Promise.all(oldKeys.map(k => cache.delete(k)));
+
+    await cache.put('share-meta', new Response(JSON.stringify({ title, text, url: sharedUrl, count: files.length })));
+    await Promise.all(files.map((file, i) =>
+      cache.put(`share-image-${i}`, new Response(file, { headers: { 'Content-Type': file.type || 'image/jpeg' } }))
+    ));
+
+    return Response.redirect('./index.html?shared_post=1', 303);
+  } catch (e) {
+    return Response.redirect('./index.html', 303);
+  }
+}
+
 /* ── BADGE PERSISTANT (app fermée) ──
-   navigator.setAppBadge() ne fonctionne que depuis une page ouverte. Pour que
    le badge de l'icône continue de s'incrémenter quand l'app est totalement
    fermée (comme WhatsApp/TikTok), le SW garde son propre compteur dans
    IndexedDB : +1 à chaque push reçu, -1 quand la notif est ouverte, et
