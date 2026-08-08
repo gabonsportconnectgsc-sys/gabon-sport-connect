@@ -566,6 +566,13 @@
   }
 
   function renderPlayers() {
+    // ── NOUVEAU — applique le mode d'affichage choisi (Standard/Compact).
+    // 'displayMode' existait déjà (persisté en localStorage, mis à jour par
+    // wirePlayerFilters ci-dessous) mais n'était encore lu nulle part : les
+    // boutons .display-mode-btn n'avaient aucun effet visuel avant ce correctif.
+    const tableWrap = document.querySelector('#joueurs .users-table-wrap');
+    if (tableWrap) tableWrap.classList.toggle('compact-mode', displayMode === 'compact');
+
     let list = users.filter(u => u.status !== 'deleted');
     if (statusFilter) list = list.filter(u => (u.status || 'active') === statusFilter);
     if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
@@ -668,6 +675,9 @@
       renderPlayers();
     });
     document.querySelectorAll('.display-mode-btn')?.forEach(btn => {
+      // ── NOUVEAU — reflète l'état persisté (localStorage) dès le chargement,
+      // plutôt que de dépendre uniquement du 'active' codé en dur dans le HTML.
+      btn.classList.toggle('active', btn.dataset.mode === displayMode);
       btn.addEventListener('click', () => {
         document.querySelectorAll('.display-mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');

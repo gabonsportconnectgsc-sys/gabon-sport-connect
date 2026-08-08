@@ -361,6 +361,31 @@ table.users-table tr:last-child td { border-bottom-width: medium; border-bottom-
 
 .user-row-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
+/* ── NOUVEAU — mode d'affichage compact de la liste Joueurs ──────────────
+   Masque ID / QR / Documents, resserre les paddings. Cible [data-label]
+   plutôt que nth-child sur les <td> pour rester compatible avec la vue
+   mobile empilée existante (voir règle table.users-table td en @media
+   plus bas) — les <th> utilisent nth-child car ils n'ont pas de
+   data-label et sont de toute façon masqués en mobile (thead:none). */
+.users-table-wrap.compact-mode table.users-table td[data-label="ID"],
+.users-table-wrap.compact-mode table.users-table th:nth-child(1),
+.users-table-wrap.compact-mode table.users-table td[data-label="QR"],
+.users-table-wrap.compact-mode table.users-table th:nth-child(5),
+.users-table-wrap.compact-mode table.users-table td[data-label="Documents"],
+.users-table-wrap.compact-mode table.users-table th:nth-child(7) {
+  display: none;
+}
+.users-table-wrap.compact-mode table.users-table td,
+.users-table-wrap.compact-mode table.users-table th {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.users-table-wrap.compact-mode .user-row-avatar {
+  width: 22px;
+  height: 22px;
+  font-size: 10.5px;
+}
+
 .user-name-cell { display: flex; align-items: center; gap: 10px; min-width: 0px; }
 
 .user-name-txt { font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1137,6 +1162,11 @@ tr.is-demo-row td { opacity: .82; }
           <button class="filter-btn role-handisport">🦾 Handisport</button>
           <button class="filter-btn role-ancien_sportif">🎖️ Anciens Sportifs</button>
           <button class="filter-btn role-formateur">🧑‍🏫 Formateurs</button>
+          <!-- NOUVEAU — bascule d'affichage, câblée par wirePlayerFilters()
+               dans admin-controller.js (.display-mode-btn / data-mode).
+               'grid' = tableau détaillé actuel, 'compact' = liste resserrée. -->
+          <button class="filter-btn display-mode-btn active" data-mode="grid" title="Affichage détaillé">📋 Standard</button>
+          <button class="filter-btn display-mode-btn" data-mode="compact" title="Affichage resserré, une ligne par personne">☰ Compact</button>
           <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="Nom, club, email…"></div>
         </div>
         <div class="users-table-wrap">
