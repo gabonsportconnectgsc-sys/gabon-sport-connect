@@ -82,6 +82,7 @@
   let _subscribed = false;
   let _openComments = new Set();
   let _openMenus = new Set();
+  let _editingPosts = new Set();
   let _commentsCache = {};
   let _extraFns = null;
   let _composerImages = []; // [{ file, dataUrl }, …] — sélection multiple, max GSC_COMPOSER_MAX_IMAGES
@@ -296,6 +297,31 @@
 .gsc-composer-preview{position:relative;margin-top:10px;display:inline-block;}
 .gsc-composer-preview img{max-height:140px;border-radius:var(--radius-sm);display:block;}
 .gsc-composer-preview button{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;}
+
+.gsc-composer-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
+.gsc-composer-preview-item{position:relative;aspect-ratio:1/1;border-radius:var(--radius-sm);overflow:hidden;background:var(--gray-bg);}
+.gsc-composer-preview-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.gsc-composer-preview-item.gsc-cover{grid-column:1/3;grid-row:1/3;}
+.gsc-composer-img-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1;z-index:2;}
+.gsc-composer-img-move{position:absolute;bottom:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1;z-index:2;display:flex;align-items:center;justify-content:center;}
+.gsc-composer-img-move[disabled]{opacity:.3;cursor:default;}
+.gsc-composer-img-move.left{left:4px;}
+.gsc-composer-img-move.right{right:4px;}
+.gsc-composer-img-cover-badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.55);color:#fff;font-size:9.5px;padding:2px 6px;border-radius:6px;z-index:2;}
+.gsc-composer-preview-add{aspect-ratio:1/1;border-radius:var(--radius-sm);border:2px dashed var(--gray-bd);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gray-tx,#888);cursor:pointer;background:var(--gray-bg);}
+.gsc-composer-preview-hint{grid-column:1/-1;font-size:11px;color:var(--gray-tx,#888);margin-top:2px;}
+
+.gsc-post-gallery{display:grid;gap:3px;margin-top:10px;border-radius:var(--radius-sm);overflow:hidden;}
+.gsc-post-gallery-item{position:relative;cursor:zoom-in;overflow:hidden;background:var(--gray-bg);}
+.gsc-post-gallery-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.gsc-post-gallery-more{position:absolute;inset:0;background:rgba(0,0,0,.5);color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.gsc-post-gallery-2{grid-template-columns:1fr 1fr;}
+.gsc-post-gallery-2 .gsc-post-gallery-item{aspect-ratio:1/1.05;}
+.gsc-post-gallery-3{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.gsc-post-gallery-3 .gsc-post-gallery-item:first-child{grid-row:1/3;}
+.gsc-post-gallery-3 .gsc-post-gallery-item{aspect-ratio:1/1;}
+.gsc-post-gallery-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.gsc-post-gallery-4 .gsc-post-gallery-item{aspect-ratio:1/1;}
 .gsc-cta-login{background:var(--green-lt);border:1px solid rgba(0,158,96,.25);border-radius:var(--radius-md);padding:14px 16px;text-align:center;margin-bottom:14px;font-size:13px;color:var(--green-dk);font-weight:600;}
 .gsc-cta-login button{margin-top:8px;background:var(--green);color:#fff;border:none;border-radius:18px;padding:7px 18px;font-size:12.5px;font-weight:700;cursor:pointer;}
 .gsc-post{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--gray-bd);box-shadow:var(--shadow-sm);padding:14px;margin-bottom:12px;}
@@ -314,6 +340,12 @@
 .gsc-post-menu button{display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:12.5px;color:var(--navy);cursor:pointer;}
 .gsc-post-menu button:hover{background:var(--gray-bg);}
 .gsc-post-menu button.danger{color:var(--danger);}
+.gsc-post-edit{margin:6px 0 4px;}
+.gsc-post-edit-textarea{width:100%;min-height:70px;padding:8px 10px;border:1px solid var(--gray-bd);border-radius:10px;font-size:13.5px;font-family:inherit;resize:vertical;box-sizing:border-box;}
+.gsc-post-edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+.gsc-post-edit-actions button{padding:6px 14px;border-radius:8px;border:1px solid var(--gray-bd);background:#fff;font-size:12.5px;cursor:pointer;}
+.gsc-post-edit-actions button.primary{background:var(--green,#009E60);color:#fff;border-color:transparent;}
+.gsc-post-edited-tag{font-size:11px;color:var(--gray-tx,#888);font-style:italic;}
 .gsc-post-text{font-size:13.5px;color:var(--navy);line-height:1.5;margin-top:10px;white-space:pre-wrap;word-break:break-word;}
 .gsc-post-img{margin-top:10px;border-radius:var(--radius-sm);max-width:100%;max-height:380px;width:100%;object-fit:cover;}
 .gsc-react-row{display:flex;gap:4px;margin-top:12px;flex-wrap:wrap;}
@@ -588,18 +620,36 @@
     const pz = document.getElementById('gsc-composer-preview-zone');
     if (!pz) return;
     if (!_composerImages.length) { pz.innerHTML = ''; return; }
+    const n = _composerImages.length;
     pz.innerHTML = `<div class="gsc-composer-preview-grid">${_composerImages.map((img, i) => `
-      <div class="gsc-composer-preview-item">
+      <div class="gsc-composer-preview-item${i === 0 && n > 1 ? ' gsc-cover' : ''}">
         <img src="${img.dataUrl}" alt="">
-        <button type="button" class="gsc-composer-img-remove" data-idx="${i}">✕</button>
+        ${i === 0 ? `<span class="gsc-composer-img-cover-badge">Photo principale</span>` : ''}
+        <button type="button" class="gsc-composer-img-remove" data-idx="${i}" title="Retirer">✕</button>
+        ${n > 1 ? `
+          <button type="button" class="gsc-composer-img-move left" data-idx="${i}" data-dir="-1" title="Déplacer vers la gauche" ${i === 0 ? 'disabled' : ''}>◀</button>
+          <button type="button" class="gsc-composer-img-move right" data-idx="${i}" data-dir="1" title="Déplacer vers la droite" ${i === n - 1 ? 'disabled' : ''}>▶</button>
+        ` : ''}
       </div>`).join('')}
-      ${_composerImages.length < GSC_COMPOSER_MAX_IMAGES ? `<label class="gsc-composer-preview-add" id="gsc-composer-preview-add">➕<input type="file" accept="image/*" multiple style="display:none;"></label>` : ''}
+      ${n < GSC_COMPOSER_MAX_IMAGES ? `<label class="gsc-composer-preview-add" id="gsc-composer-preview-add">➕<input type="file" accept="image/*" multiple style="display:none;"></label>` : ''}
+      ${n > 1 ? `<div class="gsc-composer-preview-hint">↔️ Utilisez ◀ ▶ pour réorganiser — la 1ère photo sera la photo principale de l'aperçu.</div>` : ''}
     </div>`;
     pz.querySelectorAll('.gsc-composer-img-remove').forEach(btn => {
       btn.addEventListener('click', () => removeComposerImage(parseInt(btn.dataset.idx, 10)));
     });
+    pz.querySelectorAll('.gsc-composer-img-move').forEach(btn => {
+      btn.addEventListener('click', () => moveComposerImage(parseInt(btn.dataset.idx, 10), parseInt(btn.dataset.dir, 10)));
+    });
     const addTile = document.getElementById('gsc-composer-preview-add');
     if (addTile) addTile.querySelector('input').addEventListener('change', onComposerFile);
+  }
+
+  function moveComposerImage(idx, dir) {
+    const target = idx + dir;
+    if (target < 0 || target >= _composerImages.length) return;
+    const [moved] = _composerImages.splice(idx, 1);
+    _composerImages.splice(target, 0, moved);
+    renderComposerPreview();
   }
 
   function removeComposerImage(idx) {
@@ -987,6 +1037,7 @@
     const targetInfo = post.targetRole ? ROLE_CATS.find(c => c.key === post.targetRole) : null;
     const menuOpen = _openMenus.has(post.id);
     const commentsOpen = _openComments.has(post.id);
+    const editing = _editingPosts.has(post.id);
     const commentsCount = post.commentsCount || 0;
     const hasProfile = !!post.authorId;
 
@@ -1007,13 +1058,24 @@
           <button class="gsc-post-menu-btn" data-action="menu-toggle" type="button">⋯</button>
           <div class="gsc-post-menu${menuOpen ? ' open' : ''}">
             <button data-action="share" type="button">🔗 Partager</button>
+            ${isOwner ? `<button data-action="edit-post" type="button">✏️ Modifier</button>` : ''}
             ${!isOwner ? `<button data-action="report-post" type="button">🚩 Signaler</button>` : ''}
             ${!isOwner ? `<button data-action="block" type="button">🚫 Bloquer ${esc((post.authorName || 'ce membre').split(' ')[0])}</button>` : ''}
             ${(isOwner || isAdmin) ? `<button class="danger" data-action="delete-post" type="button">🗑️ Supprimer</button>` : ''}
           </div>
         </div>
       </div>
-      ${post.text ? `<div class="gsc-post-text">${renderTextWithMentions(post.text)}</div>` : ''}
+      ${editing ? `
+      <div class="gsc-post-edit">
+        <textarea class="gsc-post-edit-textarea" id="gsc-edit-textarea-${post.id}">${esc(post.text || '')}</textarea>
+        <div class="gsc-post-edit-actions">
+          <button data-action="cancel-edit" type="button">Annuler</button>
+          <button class="primary" data-action="save-edit" type="button">Enregistrer</button>
+        </div>
+      </div>
+      ` : `
+      ${post.text ? `<div class="gsc-post-text">${renderTextWithMentions(post.text)}${post.editedAt ? ' <span class="gsc-post-edited-tag">(modifié)</span>' : ''}</div>` : ''}
+      `}
       ${postImagesHTML(post)}
       <div class="gsc-react-row">
         ${REACTIONS.map(r => `<button class="gsc-react-btn${mine === r.key ? ' mine' : ''}" data-action="react" data-key="${r.key}" type="button">${r.icon}${counts[r.key] ? ` ${counts[r.key]}` : ''}</button>`).join('')}
@@ -1079,6 +1141,17 @@
       case 'report-comment': openReportModal('comment', btn.dataset.commentId, postId); break;
       case 'block': blockAuthor(postId); break;
       case 'delete-post': deletePost(postId); break;
+      case 'edit-post':
+        _openMenus.clear();
+        _editingPosts.clear();
+        _editingPosts.add(postId);
+        renderFeed();
+        break;
+      case 'cancel-edit':
+        _editingPosts.delete(postId);
+        renderFeed();
+        break;
+      case 'save-edit': saveEditPost(postId); break;
       case 'send-comment': sendComment(postId); break;
       case 'delete-comment': deleteComment(postId, btn.dataset.commentId); break;
       case 'view-profile': openMemberProfile(btn.dataset.uid); break;
@@ -1235,6 +1308,30 @@
       await withAuth(() => window.updateDoc(window.doc(window.db, POSTS_COL, postId), { status: 'removed', removedAt: window.serverTimestamp(), removedBy: window.currentUser?.uid || null }));
       toastMsg('🗑️ Publication supprimée.', 'success');
     } catch (e) { console.error('GSC Community delete:', e); toastMsg('Erreur lors de la suppression : ' + (e.message || e), 'error'); }
+  }
+
+  async function saveEditPost(postId) {
+    const post = _posts.find(p => p.id === postId); if (!post) return;
+    const isOwner = window.currentUser && post.authorId === window.currentUser.uid;
+    if (!isOwner) return;
+    const textarea = document.getElementById(`gsc-edit-textarea-${postId}`);
+    const newText = (textarea?.value || '').trim();
+    if (!newText) { toastMsg('Le texte ne peut pas être vide.', 'info'); return; }
+    if (newText === (post.text || '').trim()) { _editingPosts.delete(postId); renderFeed(); return; }
+    try {
+      await withAuth(() => window.updateDoc(window.doc(window.db, POSTS_COL, postId), {
+        text: newText,
+        editedAt: window.serverTimestamp()
+      }));
+      post.text = newText;
+      post.editedAt = new Date();
+      _editingPosts.delete(postId);
+      renderFeed();
+      toastMsg('✏️ Publication modifiée.', 'success');
+    } catch (e) {
+      console.error('GSC Community edit:', e);
+      toastMsg('Erreur lors de la modification : ' + (e.message || e), 'error');
+    }
   }
 
   /* ═══ SIGNALEMENT ═══ */
