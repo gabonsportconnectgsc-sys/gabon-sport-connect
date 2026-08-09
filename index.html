@@ -9712,19 +9712,38 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   window.handleNotifLink = handleNotifLink;
 
-  /* Notification de bienvenue système au premier lancement */
+  /* Notification de bienvenue système au premier lancement — CORRIGÉ (09/08/2026) :
+     l'ancienne version envoyait recipientId:'all' (broadcast à TOUS les membres)
+     à chaque rechargement de page, car sessionStorage s'efface à chaque fermeture
+     d'onglet/app — ce qui recréait une notification globale en boucle, visible
+     par tout le monde, à chaque ouverture de la PWA. Désormais : message
+     strictement personnel (recipientId = uid du membre) et flag de "déjà vu"
+     stocké de façon permanente dans Firestore (users/{uid}.welcomeNotifSent),
+     donc envoyé une seule fois par compte, pour de bon. */
   window.addEventListener('load', function(){
-    setTimeout(function(){
-      const shown = sessionStorage.getItem('gsc_welcome_notif');
-      if(!shown && window.GSCNotif){
-        sessionStorage.setItem('gsc_welcome_notif','1');
+    setTimeout(async function(){
+      try {
+        if (!currentUser || !currentUser.uid || isVisitor || !window.GSCNotif || !db) return;
+        const userRef = window.doc ? window.doc(db, 'users', currentUser.uid) : db.collection('users').doc(currentUser.uid);
+        const snap = window.getDoc ? await window.getDoc(userRef) : await userRef.get();
+        const data = snap.exists() ? (typeof snap.data === 'function' ? snap.data() : snap.data) : null;
+        if (data && data.welcomeNotifSent) return;
+
         window.GSCNotif.push({
           type:'system',
           title:'Bienvenue sur Gabon Sport Connect !',
           body:'Plateforme nationale du sport gabonais. Consultez l\'annuaire, les actualités et plus encore.',
-          recipientId:'all',
-          personal:false,
+          recipientId: currentUser.uid,
+          personal:true,
         });
+
+        if (window.updateDoc) {
+          await window.updateDoc(userRef, { welcomeNotifSent: true });
+        } else if (userRef.set) {
+          await userRef.set({ welcomeNotifSent: true }, { merge: true });
+        }
+      } catch (e) {
+        console.error('Notif bienvenue:', e);
       }
     }, 2500);
   });
