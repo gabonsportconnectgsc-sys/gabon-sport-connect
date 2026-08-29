@@ -8482,9 +8482,19 @@ function initDashboardClock(){
 }
 
 // Service Worker Registration for PWA
+// FIX : le scope '/' forçait le SW à couvrir toute la racine du domaine.
+// Sur GitHub Pages, quand le site est servi depuis un sous-dossier
+// (ex. https://user.github.io/gabon-sport-connect/), un navigateur refuse
+// un scope plus large que le dossier contenant sw.js, donc register()
+// échouait silencieusement (juste un console.log) et AUCUN service worker
+// ne tournait jamais → rien n'était mis en cache → l'app ne pouvait pas
+// s'ouvrir hors ligne.
+// En omettant 'scope', le navigateur utilise par défaut le dossier où se
+// trouve sw.js ('./'), ce qui fonctionne aussi bien à la racine d'un domaine
+// que dans un sous-dossier GitHub Pages.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js', { scope: '/' })
+    navigator.serviceWorker.register('sw.js')
       .then(function(registration) {
         console.log('Service Worker registered successfully:', registration);
       })
@@ -9850,6 +9860,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="gsc-club-validation.js"></script>
 <script src="gsc-whatsapp-module.js"></script>
 <link rel="stylesheet" href="structures-modules.css">
+
+<!-- ══ GSC OFFLINE DATA CACHE — doit être chargé APRÈS les scripts
+     ci-dessus (loadActors/loadSites/loadNewsFromDb doivent déjà exister) ══ -->
+<script src="gsc-offline-cache.js"></script>
 <div class="page-scroll-nav" id="page-scroll-nav">
   <button class="page-scroll-btn" id="page-scroll-up" aria-label="Remonter en haut de page" title="Haut de page">▲</button>
   <button class="page-scroll-btn" id="page-scroll-down" aria-label="Descendre en bas de page" title="Bas de page">▼</button>

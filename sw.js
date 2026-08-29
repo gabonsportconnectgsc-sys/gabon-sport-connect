@@ -15,7 +15,7 @@
    on passe en stratégie "network-first / stale-while-revalidate" pour les
    fichiers JS/CSS de l'app (voir plus bas) afin que ce problème ne se
    reproduise plus à chaque futur correctif. */
-const CACHE_NAME = 'gsc-v7';
+const CACHE_NAME = 'gsc-v8';
 // ── NOUVEAU — cache dédié au Web Share Target (POST), voir handleShareTarget()
 // et le handler 'fetch' plus bas. Séparé de CACHE_NAME pour ne jamais être
 // purgé par la logique de versioning de l'app (activate ci-dessous).
@@ -72,11 +72,20 @@ self.addEventListener('fetch', event => {
   }
 
   if (request.method !== 'GET') return;
+  /* FIX — les tuiles de la carte viennent de {a,b,c}.tile.openstreetmap.org
+     (sous-domaines variables pour la répartition de charge), mais ce filtre
+     ne laissait passer que googleapis/gstatic/unpkg/jsdelivr : toute requête
+     vers un sous-domaine .tile.openstreetmap.org matchait le "return" et
+     sortait du service worker sans jamais être interceptée ni mise en
+     cache. Résultat : la carte fonctionnait en ligne (requête directe au
+     réseau) mais restait vide hors ligne, aucune tuile n'ayant jamais été
+     sauvegardée. */
   if (url.origin !== location.origin &&
       !request.url.includes('googleapis') &&
       !request.url.includes('gstatic') &&
       !request.url.includes('unpkg') &&
-      !request.url.includes('jsdelivr')) return;
+      !request.url.includes('jsdelivr') &&
+      !url.hostname.endsWith('tile.openstreetmap.org')) return;
 
   const isHTML = request.mode === 'navigate' || request.destination === 'document';
   if (isHTML) {
