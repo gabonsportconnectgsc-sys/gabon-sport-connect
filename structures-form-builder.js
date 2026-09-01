@@ -21,7 +21,7 @@
   const FORM_ROOT_ID = 'structure-form-body';
   let _currentStructure = null; // référence de travail (mutée pendant l'édition)
 
-  function esc(s) { return (s || '').toString().replace(/"/g, '&quot;'); }
+  function esc(s) { return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
   function uid() { return 'r' + Math.random().toString(36).slice(2, 9); }
 
   /* ══════════════════════════════════════════════════════════════════
