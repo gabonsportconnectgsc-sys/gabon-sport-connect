@@ -22,6 +22,6 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase Hosting
-        run: firebase deploy --only hosting --project gabon-sport-connect --non-interactive
+        run: firebase deploy --only hosting,firestore:rules --project gabon-sport-connect --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: service-account.json
