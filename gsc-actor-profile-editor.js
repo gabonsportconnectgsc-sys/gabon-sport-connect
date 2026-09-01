@@ -64,7 +64,23 @@
         </div>
         <div class="gsc-pe-field"><label>Nom / Organisation</label><input id="pe-nomOrg" placeholder="Nom du club, fédération, ou nom complet"></div>
         <div class="gsc-pe-field"><label>Ville</label><input id="pe-ville" placeholder="Ville"></div>
-        <div class="gsc-pe-field"><label>Sport / Discipline</label><input id="pe-sport" placeholder="Football, Natation…"></div>
+        <div class="gsc-pe-field"><label>Sport / Discipline</label>
+          <select id="pe-sport">
+            <option value="">-- Sélectionner --</option>
+            <option value="Football">⚽ Football</option>
+            <option value="Basketball">🏀 Basketball</option>
+            <option value="Handball">🤾 Handball</option>
+            <option value="Volleyball">🏐 Volleyball</option>
+            <option value="Athlétisme">🏃 Athlétisme</option>
+            <option value="Natation">🏊 Natation</option>
+            <option value="Boxe">🥊 Boxe</option>
+            <option value="Judo">🥋 Judo</option>
+            <option value="Tennis">🎾 Tennis</option>
+            <option value="Rugby">🏉 Rugby</option>
+            <option value="Cyclisme">🚴 Cyclisme</option>
+            <option value="Taekwondo">🥋 Taekwondo</option>
+          </select>
+        </div>
         <div class="gsc-pe-field"><label>Téléphone</label><input id="pe-telephone" placeholder="+241..."></div>
         <div class="gsc-pe-field"><label>Statut</label>
           <select id="pe-status"><option value="active">Actif</option><option value="hidden">Masqué</option></select>

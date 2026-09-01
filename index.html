@@ -1508,6 +1508,24 @@
             <option value="formateur">🧑‍🏫 Formateur</option>
           </select>
         </div>
+        <div class="form-group" id="auth-register-sport-wrap">
+          <label>Sport / Discipline *</label>
+          <select id="auth-register-sport">
+            <option value="">-- Selectionner --</option>
+            <option>⚽ Football</option>
+            <option>🏀 Basketball</option>
+            <option>🤾 Handball</option>
+            <option>🏐 Volleyball</option>
+            <option>🏃 Athletisme</option>
+            <option>🏊 Natation</option>
+            <option>🥊 Boxe</option>
+            <option>🥋 Judo</option>
+            <option>🎾 Tennis</option>
+            <option>🏉 Rugby</option>
+            <option>🚴 Cyclisme</option>
+            <option>🥋 Taekwondo</option>
+          </select>
+        </div>
         <div class="form-group" id="auth-register-supporter-wrap" style="display:none;">
           <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
             <input type="checkbox" id="auth-register-supporter" style="width:18px;height:18px;accent-color:var(--green);" onchange="document.getElementById('auth-register-club-supporte').style.display=this.checked?'':'none';">
@@ -1607,6 +1625,23 @@
       <p style="font-size:12.5px;color:var(--gray-txt);margin-bottom:16px;">Quelques infos avant de continuer — vos nom et prénom apparaîtront sur votre fiche et votre QR code d'identification.</p>
       <div class="form-group"><label>Prénom *</label><input type="text" id="complete-profile-prenom" placeholder="Prénom"></div>
       <div class="form-group"><label>Nom *</label><input type="text" id="complete-profile-nom" placeholder="Nom"></div>
+      <div class="form-group" id="complete-profile-sport-wrap" style="display:none;"><label>Sport / Discipline *</label>
+        <select id="complete-profile-sport">
+          <option value="">-- Sélectionner --</option>
+          <option>⚽ Football</option>
+          <option>🏀 Basketball</option>
+          <option>🤾 Handball</option>
+          <option>🏐 Volleyball</option>
+          <option>🏃 Athlétisme</option>
+          <option>🏊 Natation</option>
+          <option>🥊 Boxe</option>
+          <option>🥋 Judo</option>
+          <option>🎾 Tennis</option>
+          <option>🏉 Rugby</option>
+          <option>🚴 Cyclisme</option>
+          <option>🥋 Taekwondo</option>
+        </select>
+      </div>
       <button class="btn-sm" id="complete-profile-submit" onclick="handleCompleteProfile()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Continuer</button>
       <div id="complete-profile-error" style="color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
     </div>
@@ -3575,6 +3610,7 @@ window.handleResendConfirmation=handleResendConfirmation;
 function toggleSupporterOptIn(){
   const role=document.getElementById('auth-register-role')?.value;
   const wrap=document.getElementById('auth-register-supporter-wrap');
+  const sportWrap=document.getElementById('auth-register-sport-wrap');
   if(!wrap) return;
   const ORG_ROLES=['club','association','federation','organisateur'];
   wrap.style.display=ORG_ROLES.includes(role)?'none':'';
@@ -3582,6 +3618,7 @@ function toggleSupporterOptIn(){
     document.getElementById('auth-register-supporter').checked=false;
     document.getElementById('auth-register-club-supporte').style.display='none';
   }
+  if(sportWrap) sportWrap.style.display=ORG_ROLES.includes(role)?'none':'';
 }
 window.toggleSupporterOptIn=toggleSupporterOptIn;
 
@@ -3597,6 +3634,7 @@ async function handleSupabaseRegister(){
   const ddn=document.getElementById('auth-register-ddn')?.value||'';
   const nationalite=document.getElementById('auth-register-nationalite')?.value||'Gabonaise';
   const role=document.getElementById('auth-register-role')?.value||'joueur';
+  const sport=(document.getElementById('auth-register-sport')?.value||'').replace(/^[^\w]+/,'').trim();
   const statut=document.getElementById('auth-register-statut')?.value||'libre';
   const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
   const ORG_ROLES_REG=['club','association','federation','organisateur'];
@@ -3604,6 +3642,8 @@ async function handleSupabaseRegister(){
   const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
+  const ORG_ROLES_SPORT=['club','association','federation','organisateur'];
+  if(!ORG_ROLES_SPORT.includes(role) && !sport){ errEl.textContent='Veuillez sélectionner votre sport / discipline.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
   // Vérification doublon téléphone — via empreinte non réversible (telephoneHash),
   // le numéro en clair n'est jamais lu ni écrit sur le document public.
@@ -3624,7 +3664,7 @@ async function handleSupabaseRegister(){
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
-    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,statut,employeur,isSupporter:isSupporterOptIn,clubSupporte:clubSupporteOptIn};
+    const extraMeta={prenom,nom,tel,sexe,ddn,nationalite,role,sport,statut,employeur,isSupporter:isSupporterOptIn,clubSupporte:clubSupporteOptIn};
     const {data,error}=await window._sb.auth.signUp({
       email,password,
       options:{
@@ -4039,10 +4079,16 @@ function checkProfileCompletion(){
       }
     }catch(e){}
   }
-  // N'afficher le modal que si le prénom/nom sont vraiment manquants
-  if(!userProfile.prenom?.trim() || !userProfile.nom?.trim()){
+  // Le sport n'est pertinent que pour les rôles individuels (pas club/association/fédération/organisateur)
+  const ORG_ROLES_CPC=['club','association','federation','organisateur'];
+  const needsSport = !ORG_ROLES_CPC.includes(userProfile.role) && !userProfile.sport?.trim();
+  // N'afficher le modal que si le prénom/nom ou le sport sont vraiment manquants
+  if(!userProfile.prenom?.trim() || !userProfile.nom?.trim() || needsSport){
     document.getElementById('complete-profile-prenom').value = userProfile.prenom || '';
     document.getElementById('complete-profile-nom').value = userProfile.nom || '';
+    const sportWrap = document.getElementById('complete-profile-sport-wrap');
+    if(sportWrap) sportWrap.style.display = needsSport ? '' : 'none';
+    document.getElementById('complete-profile-sport').value = userProfile.sport || '';
     document.getElementById('complete-profile-error').style.display='none';
     document.getElementById('modal-complete-profile').classList.add('open');
   }
@@ -4054,11 +4100,16 @@ async function handleCompleteProfile(){
   const prenom=document.getElementById('complete-profile-prenom').value.trim();
   const nom=document.getElementById('complete-profile-nom').value.trim();
   if(!prenom||!nom){ errEl.textContent='Le prénom et le nom sont requis.'; errEl.style.display='block'; return; }
+  const sportWrap=document.getElementById('complete-profile-sport-wrap');
+  const sportVisible = sportWrap && sportWrap.style.display!=='none';
+  const sport=(document.getElementById('complete-profile-sport')?.value||'').replace(/^[^\\w]+/,'').trim();
+  if(sportVisible && !sport){ errEl.textContent='Veuillez sélectionner votre sport / discipline.'; errEl.style.display='block'; return; }
   const btn=document.getElementById('complete-profile-submit');
   btn.disabled=true; btn.textContent='Enregistrement…';
 
   // Sauvegarde locale immédiate — le modal se ferme toujours, Firestore est best-effort
   userProfile.prenom=prenom; userProfile.nom=nom;
+  if(sportVisible) userProfile.sport=sport;
 
   // Persistance localStorage pour survivre aux rechargements si Firestore échoue
   try{
@@ -4074,7 +4125,9 @@ async function handleCompleteProfile(){
   try{
     if(db && typeof setDoc==='function' && userProfile?.uid){
       await ensureFirebaseAuthViaSupabase();
-      await setDoc(doc(db,'users',userProfile.uid),{prenom,nom},{merge:true});
+      const updateData={prenom,nom};
+      if(sportVisible) updateData.sport=sport;
+      await setDoc(doc(db,'users',userProfile.uid),updateData,{merge:true});
     }
   }catch(e){
     console.warn('[GSC] handleCompleteProfile Firestore:', e?.code, e?.message);
