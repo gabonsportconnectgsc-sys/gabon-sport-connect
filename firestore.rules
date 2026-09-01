@@ -81,6 +81,10 @@ service cloud.firestore {
           && resource.data.status == 'pending'
           && request.resource.data.status == 'cancelled'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        || (request.auth.uid == uid
+          && resource.data.status in ['approved', 'rejected']
+          && !('appliedAt' in resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appliedAt']))
         || isAdmin(request.auth.uid)
         || (resource.data.structureOwnerUid != null && resource.data.structureOwnerUid == request.auth.uid)
       );
