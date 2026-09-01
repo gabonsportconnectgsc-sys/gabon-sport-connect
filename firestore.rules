@@ -1,0 +1,265 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isActiveOrLegacy(uid) {
+      let path = /databases/$(database)/documents/users/$(uid)/private/contact;
+      return !exists(path) || !('status' in get(path).data) || get(path).data.status == 'active';
+    }
+
+    function isAdmin(uid) {
+      let adminPath = /databases/$(database)/documents/admins/$(uid);
+      let userPath  = /databases/$(database)/documents/users/$(uid);
+      return exists(adminPath) || (exists(userPath) && get(userPath).data.role == 'admin');
+    }
+
+    function myRoleTag(uid) {
+      let path = /databases/$(database)/documents/users/$(uid);
+      return exists(path) ? ('role:' + get(path).data.role) : 'role:none';
+    }
+
+    function isOrgRole(uid) {
+      let userPath = /databases/$(database)/documents/users/$(uid);
+      return exists(userPath) && get(userPath).data.role in ['club', 'federation', 'association'];
+    }
+
+    function isLinkedStructureOwner(uid, structureId) {
+      let userPath = /databases/$(database)/documents/users/$(uid);
+      return exists(userPath) && get(userPath).data.structureId == structureId;
+    }
+
+    match /admins/{uid} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /app_config/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && (!('role' in request.resource.data) || request.resource.data.role != 'admin');
+
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+            ['role', 'structureId', 'documentVerifie', 'editLocked', 'ownershipStatus', 'ownerRef', 'gereParFederation', 'isDemo']
+          ))
+        || isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+
+      match /private/{doc} {
+        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin(request.auth.uid));
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.status in ['pending', 'active'];
+        allow update: if request.auth != null && (
+          (request.auth.uid == uid
+            && (!('status' in resource.data) || resource.data.status in ['active','pending'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+          || isAdmin(request.auth.uid)
+        );
+        allow delete: if request.auth != null && isAdmin(request.auth.uid);
+      }
+    }
+
+    match /clubValidationRequests/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.status == 'pending';
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && resource.data.status == 'pending'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        || isAdmin(request.auth.uid)
+        || (resource.data.structureOwnerUid != null && resource.data.structureOwnerUid == request.auth.uid)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /fraud_alerts/{alertId} {
+      allow create: if request.auth != null
+        && request.resource.data.statut == 'nouveau'
+        && request.resource.data.traitePar == null
+        && request.resource.data.traiteLe == null
+        && request.resource.data.champConflit in ['email','tel','identite']
+        && request.resource.data.keys().hasAll(['id','type','champConflit','motif','statut','tentative','fichExistante','zone','discipline','createdAt']);
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow update: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /notifications/{id} {
+      allow read: if request.auth != null &&
+        (resource.data.recipientId == request.auth.uid ||
+         resource.data.recipientId == 'all' ||
+         resource.data.recipientId == myRoleTag(request.auth.uid));
+      allow create: if request.auth != null &&
+        request.resource.data.senderId == request.auth.uid &&
+        (request.resource.data.recipientId != 'all' ||
+         isAdmin(request.auth.uid) ||
+         isActiveOrLegacy(request.auth.uid));
+      allow update, delete: if request.auth != null &&
+        (resource.data.recipientId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /notif_preferences/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /push_subscriptions/{id} {
+      allow read, write: if request.auth != null && request.auth.uid == id;
+    }
+
+    match /communityPosts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid);
+      allow update: if request.auth != null && (
+        resource.data.authorId == request.auth.uid ||
+        isAdmin(request.auth.uid) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions','commentsCount','sharesCount'])
+      );
+      allow delete: if request.auth != null &&
+        (resource.data.authorId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /communityPosts/{postId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        (resource.data.authorId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /blocages/{id} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.blockerId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.blockerId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.blockerId;
+    }
+
+    match /loginHistory/{id} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+
+    match /actualites/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /sitesSportifs/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && (resource.data.addedBy == request.auth.uid || isAdmin(request.auth.uid));
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /structuresSportives/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && (
+          resource.data.addedBy == request.auth.uid ||
+          isAdmin(request.auth.uid) ||
+          (
+            isLinkedStructureOwner(request.auth.uid, id) &&
+            request.resource.data.nom == resource.data.nom &&
+            request.resource.data.discipline == resource.data.discipline &&
+            request.resource.data.type == resource.data.type &&
+            request.resource.data.addedBy == resource.data.addedBy
+          )
+        );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+
+      match /infrastructures/{infraId} {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
+      }
+      match /archives/{archiveId} {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
+      }
+
+      match /conformite/{saisonId} {
+        allow read, write: if request.auth != null && (
+          isAdmin(request.auth.uid) ||
+          isLinkedStructureOwner(request.auth.uid, id) ||
+          get(/databases/$(database)/documents/structuresSportives/$(id)).data.addedBy == request.auth.uid
+        );
+      }
+    }
+
+    match /whatsapp_contacts/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /message_templates/{id} {
+      allow read, create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /signalements/{signalementId} {
+      allow read, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reason is string
+        && (
+          (request.resource.data.reportedBy == request.auth.uid &&
+           request.resource.data.targetUid is string &&
+           request.resource.data.targetUid != request.auth.uid)
+          ||
+          (request.resource.data.reporterId == request.auth.uid &&
+           request.resource.data.targetId is string)
+        );
+    }
+
+    match /ged_catalogue/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /ged_modeles/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /clubClaimOffers/{offerId} {
+      allow read: if request.auth != null && (
+        resource.data.targetUid == request.auth.uid ||
+        resource.data.structureOwnerUid == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth != null
+        && request.resource.data.structureOwnerUid == request.auth.uid
+        && isOrgRole(request.auth.uid)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid != request.auth.uid;
+      allow update: if request.auth != null && (
+        (resource.data.targetUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt']))
+        || isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth != null &&
+        (resource.data.structureOwnerUid == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /{document=**} {
+      allow read: if true;
+      allow create, update: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+  }
+}
