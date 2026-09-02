@@ -526,6 +526,7 @@
             <div class="fg"><label>Filière / Spécialité</label><input type="text" id="a-filiere" placeholder="ex: Sciences, Lettres, Droit, Gestion…"/></div>
           </div>
 
+          <div id="section-3b-joueur" class="section-3b" style="display:none;">
           <!-- MORPHOLOGIE -->
           <div class="subsection">📐 Morphologie</div>
           <div class="form-row-3" id="ex-joueur-equipe">
@@ -602,6 +603,7 @@
             <div class="form-hint">Max 500 caractères</div>
           </div>
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-palmares" placeholder="ex: Champion national 2023, Meilleur buteur ligue 2022…"></textarea></div>
+          </div><!-- /section-3b-joueur -->
         </div>
         <!-- Champs club/fédération/association/organisateur -->
         <div class="extra" id="ex-org">
@@ -621,6 +623,7 @@
             <div class="fg"><label>Téléphone du président</label><input type="tel" id="a-org-president-tel" placeholder="+241 XX XX XX XX"/></div>
           </div>
 
+          <div id="section-3b-org" class="section-3b" style="display:none;">
           <div class="subsection">👥 Effectifs</div>
           <div class="form-row">
             <div class="fg"><label>Nombre de joueurs / athlètes</label><input type="number" id="a-org-effectif" placeholder="ex: 45" min="0"/></div>
@@ -644,12 +647,15 @@
           <div class="subsection">✍️ Présentation</div>
           <div class="fg"><label>Biographie / présentation (optionnel)</label><textarea id="a-org-bio" placeholder="Histoire, valeurs, ambitions de la structure…"></textarea><div class="form-hint">Max 500 caractères</div></div>
           <div class="fg"><label>Palmarès / distinctions</label><textarea id="a-org-palmares" placeholder="ex: Champion national 2019, Vainqueur Coupe du Gabon 2021…"></textarea></div>
+          </div><!-- /section-3b-org -->
         </div>
         <!-- Champs entraîneur/arbitre -->
         <div class="extra" id="ex-off">
+          <div id="section-3b-off" class="section-3b" style="display:none;">
           <div class="fg"><label>Niveau de licence</label>
             <select id="a-licence"><option value="">Niveau</option><option>Régional</option><option>National</option><option>International</option><option>CAF</option><option>FIFA / Fédération internationale</option></select>
           </div>
+          </div><!-- /section-3b-off -->
         </div>
         <!-- Champs sportif en situation de handicap (para-sport / handisport) -->
         <div class="extra" id="ex-handisport">
@@ -679,6 +685,7 @@
             <input type="text" id="a-hs-precision" placeholder="ex: amputation tibiale droite, surdité bilatérale…"/>
           </div>
 
+          <div id="section-3b-handisport" class="section-3b" style="display:none;">
           <!-- CLASSIFICATION SPORTIVE -->
           <div class="subsection">🏷️ Classification sportive officielle</div>
           <div class="form-row">
@@ -760,6 +767,7 @@
           <div class="subsection">✍️ Présentation personnelle</div>
           <div class="fg"><label>Bio / Parcours sportif (optionnel)</label><textarea id="a-hs-bio" placeholder="Votre parcours, vos ambitions, vos performances…"></textarea></div>
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-hs-palmares" placeholder="ex: Médaillé Jeux Africains 2023, Sélection paralympique…"></textarea></div>
+          </div><!-- /section-3b-handisport -->
         </div>
         <!-- Champs ancien sportif (carrière terminée) -->
         <div class="extra" id="ex-ancien">
@@ -773,6 +781,7 @@
               <select id="a-anc-niveau"><option value="">Niveau</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
             </div>
           </div>
+          <div id="section-3b-ancien" class="section-3b" style="display:none;">
           <div class="form-row">
             <div class="fg"><label>Année de début de carrière</label><input type="number" id="a-anc-debut" placeholder="ex: 1998" min="1930" max="2026"/></div>
             <div class="fg"><label>Année de fin de carrière</label><input type="number" id="a-anc-fin" placeholder="ex: 2018" min="1930" max="2026"/></div>
@@ -797,6 +806,7 @@
           <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-anc-bio" placeholder="Décrivez votre carrière, vos moments marquants…"></textarea><div class="form-hint">Max 500 caractères</div></div>
           <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-anc-palmares" placeholder="ex: Champion national 1999, Vainqueur Coupe du Gabon 2005…"></textarea></div>
           <div class="fg"><label>Faits marquants / records</label><textarea id="a-anc-faits" placeholder="ex: Meilleur buteur du championnat 2004, record national du 100m…"></textarea></div>
+          </div><!-- /section-3b-ancien -->
         </div>
         <!-- Champs formateur (formation, certification, transmission) -->
         <div class="extra" id="ex-formateur">
@@ -810,6 +820,7 @@
               <select id="a-for-niveau"><option value="">Niveau</option><option>Local</option><option>Régional</option><option>National</option><option>International</option></select>
             </div>
           </div>
+          <div id="section-3b-formateur" class="section-3b" style="display:none;">
           <div class="form-row">
             <div class="fg"><label>Organisme certificateur</label><input type="text" id="a-for-organisme" placeholder="ex: DTN, Fédération, CNOSF…"/></div>
             <div class="fg"><label>Structure de rattachement</label><input type="text" id="a-for-structure" placeholder="ex: club, fédération, indépendant…"/></div>
@@ -824,6 +835,7 @@
           <div class="subsection">✍️ Présentation personnelle</div>
           <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-for-bio" placeholder="Décrivez votre parcours de formateur…"></textarea><div class="form-hint">Max 500 caractères</div></div>
           <div class="fg"><label>Palmarès / Certifications</label><textarea id="a-for-palmares" placeholder="ex: Certifié CAF B, formateur DTN depuis 2015…"></textarea></div>
+          </div><!-- /section-3b-formateur -->
         </div>
         <div class="cb-row"><input type="checkbox" id="a-cgu" checked/><label for="a-cgu">J'accepte les <a style="color:var(--green-dk);font-weight:600;">Conditions Générales</a> et la <a style="color:var(--green-dk);font-weight:600;">Politique de confidentialité</a>.</label></div>
         <div class="cb-row"><input type="checkbox" id="a-exact"/><label for="a-exact">Je certifie que les informations fournies sont exactes et me concernent personnellement.</label></div>
