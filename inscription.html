@@ -460,8 +460,10 @@
           <div class="fg"><label>Prénom *</label><input type="text" id="a-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
           <div class="fg"><label>Nom *</label><input type="text" id="a-nom" placeholder="Nom" autocomplete="family-name"/></div>
         </div>
+        <div class="fg"><label>Pseudo *</label><input type="text" id="a-pseudo" placeholder="Pseudo affiché publiquement" autocomplete="nickname"/></div>
         <div class="fg"><label>Email *</label><div class="fg-icon"><span class="fi">✉️</span><input type="email" id="a-email" placeholder="votre@email.com" autocomplete="email"/></div></div>
-        <div class="fg"><label>Téléphone</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <div class="fg"><label>Téléphone privé (visible admin uniquement)</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <div class="fg" id="fg-whatsapp"><label>Téléphone public WhatsApp (visible sur votre profil, réservé aux majeurs)</label><div class="fg-icon"><span class="fi">💬</span><input type="tel" id="a-whatsapp" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
         <!-- Sexe / Date de naissance : concerne les personnes physiques uniquement.
              Masqué pour club/fédération/association/organisateur via goToActeurForm(). -->
         <div class="extra" id="ex-personne">
@@ -1496,8 +1498,10 @@
     document.getElementById('a-err').style.display = 'none';
     const prenom = document.getElementById('a-prenom').value.trim();
     const nom    = document.getElementById('a-nom').value.trim();
+    const pseudo = document.getElementById('a-pseudo').value.trim();
     const email  = document.getElementById('a-email').value.trim();
     const tel    = document.getElementById('a-tel').value.trim();
+    const whatsapp = document.getElementById('a-whatsapp')?.value?.trim() || '';
     const pw     = document.getElementById('a-pw').value;
     const sport  = document.getElementById('a-sport').value;
     const ville  = document.getElementById('a-ville').value;
@@ -1597,6 +1601,7 @@
     const forBio            = isFormateurRole ? (document.getElementById('a-for-bio')?.value?.trim() || '').slice(0,500) : '';
     const forPalmares       = isFormateurRole ? (document.getElementById('a-for-palmares')?.value?.trim() || '') : '';
     if (!prenom || !nom) { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
+    if (!pseudo)         { errMsg('a-err','Veuillez choisir un pseudo.'); return; }
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
     if (!sport)          { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
@@ -1624,6 +1629,13 @@
         if (!telSnap.empty) { errMsg('a-err','Ce numéro de téléphone est déjà utilisé par un autre compte.'); return; }
       } catch(e) { console.warn('Vérification téléphone:', e); }
     }
+    // Vérification doublon pseudo
+    if (pseudo && db && _getDocs && _query && _collection && _where) {
+      try {
+        const pseudoSnap = await _getDocs(_query(_collection(db,'users'), _where('pseudo','==',pseudo)));
+        if (!pseudoSnap.empty) { errMsg('a-err','Ce pseudo est déjà utilisé par un autre compte.'); return; }
+      } catch(e) { console.warn('Vérification pseudo:', e); }
+    }
 
     const btn = document.getElementById('a-btn');
     btn.disabled = true; btn.textContent = 'Création en cours…';
@@ -1646,8 +1658,8 @@
           : null;
 
         const profile = {
-          prenom, nom, role: selectedRole, accountType: 'acteur',
-          sport, ville, telephone: tel, sexe, dateNaissance: ddn,
+          prenom, nom, pseudo, role: selectedRole, accountType: 'acteur',
+          sport, ville, telephone: tel, whatsapp, sexe, dateNaissance: ddn,
           poste, niveau, nomOrganisation: org, licence,
           // Champs enrichis joueur/athlète (vides pour les autres rôles)
           ...(isJoueurRole && {
