@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#009E60"/>
+  <title>Mon Profil — Gabon Sport Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link rel="stylesheet" href="css/ged-public.css">
+  <!-- Firebase (Firestore pour le profil) -->
+  <link rel="stylesheet" href="css/form-styles.css">
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-logo" onclick="window.location.href='index.html'">
+    <span class="l-g">Gabon</span><span class="l-s">Sport</span><span class="l-c">Connect</span>
+  </div>
+  <button class="topbar-login" onclick="window.location.href='index.html'">← Retour à l'accueil</button>
+</nav>
+
+<main class="page">
+  <div class="card" id="card">
+
+    <!-- ══ ÉCRAN GARDE : NON CONNECTÉ ══ -->
+    <div id="pguard" class="fade-in" style="display:none;">
+      <div class="card-header">
+        <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">S</span><span class="l-c">C</span></div>
+        <div class="card-title">Vous n'êtes pas connecté</div>
+        <div class="card-sub">Connectez-vous pour accéder à votre profil</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13.5px;color:var(--gray-txt);line-height:1.6;margin-bottom:18px;">
+          Pour consulter ou modifier votre fiche, vous devez d'abord vous connecter à votre compte GSC.
+        </p>
+        <button class="btn-p" onclick="window.location.href='index.html?auth=login'">Se connecter</button>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN CHARGEMENT ══ -->
+    <div id="ploading" class="fade-in" style="display:none;">
+      <div class="card-header">
+        <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">C</span><span class="l-c">C</span></div>
+        <div class="card-title">Mon Profil</div>
+        <div class="card-sub">Chargement de votre fiche…</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13.5px;color:var(--gray-txt);text-align:center;padding:30px 0;">⏳ Un instant…</p>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN ERREUR CHARGEMENT ══ -->
+    <div id="perror" class="fade-in" style="display:none;">
+      <div class="card-header">
+        <div class="card-header-logo"><span class="l-g">G</span><span class="l-s">C</span><span class="l-c">C</span></div>
+        <div class="card-title">Profil introuvable</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13.5px;color:var(--gray-txt);line-height:1.6;margin-bottom:18px;" id="perror-msg">
+          Impossible de charger votre fiche pour le moment.
+        </p>
+        <button class="btn-p" onclick="window.location.reload()">Réessayer</button>
+        <button class="btn-s" style="margin-top:10px;" onclick="window.location.href='index.html'">Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN PROFIL : FORMULAIRE ══ -->
+    <div id="s2a" style="display:none;">
+      <div class="card-header">
+        <div class="card-title" id="a-title">Mon profil sportif</div>
+        <div class="card-sub">Consultez et modifiez vos informations</div>
+        <div class="account-tag acteur" id="a-tag">🏅 Acteur Sportif</div>
+      </div>
+      <div class="card-body">
+        <div class="a-avatar-upload-wrap">
+          <div class="a-avatar" id="a-avatar-preview">📷</div>
+          <label class="a-edit-btn" for="a-photo-input" title="Ajouter une photo (JPG, PNG, WEBP — max 5 Mo)">📷</label>
+          <input type="file" id="a-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleActeurPhotoSelect(this)">
+        </div>
+        <div class="a-avatar-hint" id="a-avatar-hint">Photo de profil / logo (optionnel) · min. 200×200 px · max 5 Mo</div>
+        <div class="form-row">
+          <div class="fg"><label>Prénom *</label><input type="text" id="a-prenom" placeholder="Prénom" autocomplete="given-name"/></div>
+          <div class="fg"><label>Nom *</label><input type="text" id="a-nom" placeholder="Nom" autocomplete="family-name"/></div>
+        </div>
+        <div class="fg"><label>Pseudo *</label><input type="text" id="a-pseudo" placeholder="Pseudo affiché publiquement" autocomplete="nickname"/></div>
+        <div class="fg"><label>Email *</label><div class="fg-icon"><span class="fi">✉️</span><input type="email" id="a-email" placeholder="votre@email.com" autocomplete="email"/></div></div>
+        <div class="fg"><label>Téléphone privé (visible admin uniquement)</label><div class="fg-icon"><span class="fi">📱</span><input type="tel" id="a-tel" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <div class="fg" id="fg-whatsapp"><label>Téléphone public WhatsApp (visible sur votre profil, réservé aux majeurs)</label><div class="fg-icon"><span class="fi">💬</span><input type="tel" id="a-whatsapp" placeholder="+241 XX XX XX XX" autocomplete="tel"/></div></div>
+        <!-- Sexe / Date de naissance : concerne les personnes physiques uniquement.
+             Masqué pour club/fédération/association/organisateur via goToActeurForm(). -->
+        <div class="extra" id="ex-personne">
+          <div class="form-row">
+            <div class="fg"><label>Sexe *</label>
+              <select id="a-sexe"><option value="">—</option><option value="M">Masculin</option><option value="F">Féminin</option></select>
+            </div>
+            <div class="fg"><label>Date de naissance</label><input type="date" id="a-ddn" max="2010-12-31"/></div>
+          </div>
+        </div>
+        <div class="section-sep">Informations sportives</div>
+        <div class="fg">
+          <label id="a-sport-label">Sport principal *</label>
+          <select id="a-sport" onchange="updateTeamFieldsVisibility()">
+            <option value="">Choisir un sport</option>
+            <option>Football</option><option>Basketball</option><option>Athlétisme</option>
+            <option>Judo</option><option>Boxe</option><option>Natation</option>
+            <option>Handball</option><option>Volleyball</option><option>Tennis</option>
+            <option>Rugby</option><option>Cyclisme</option><option>Taekwondo</option>
+            <option>Karaté</option><option>Lutte</option><option>Autre</option>
+          </select>
+          <div class="form-hint" id="a-sport-hint" style="display:none;"></div>
+        </div>
+        <div class="fg">
+          <label>Ville / Province *</label>
+          <select id="a-ville">
+            <option value="">Sélectionner</option>
+            <option>Libreville</option><option>Port-Gentil</option><option>Franceville</option>
+            <option>Oyem</option><option>Moanda</option><option>Mouila</option>
+            <option>Lambaréné</option><option>Tchibanga</option><option>Koulamoutou</option>
+            <option>Makokou</option><option>Autre</option>
+          </select>
+        </div>
+        <!-- Champs joueur/indépendant/étudiant — FORMULAIRE ENRICHI -->
+        <div class="extra" id="ex-joueur">
+
+          <!-- SCOLARITÉ (Élève / Étudiant uniquement) -->
+          <div class="extra" id="ex-etudiant-scol">
+            <div class="subsection">🎓 Scolarité</div>
+            <div class="form-row">
+              <div class="fg">
+                <label>Niveau scolaire</label>
+                <select id="a-niveau-scolaire">
+                  <option value="">—</option>
+                  <option>6ème</option><option>5ème</option><option>4ème</option><option>3ème</option>
+                  <option>2nde</option><option>1ère</option><option>Terminale</option>
+                  <option>Licence 1</option><option>Licence 2</option><option>Licence 3</option>
+                  <option>Master 1</option><option>Master 2</option><option>Doctorat</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Université / Établissement *</label>
+                <select id="a-etablissement" onchange="onEtablissementChange()">
+                  <option value="">Sélectionner…</option>
+                </select>
+                <input type="text" id="a-etablissement-autre" placeholder="Nom de l'établissement" style="margin-top:8px;display:none;"/>
+              </div>
+            </div>
+            <div class="fg"><label>Filière / Spécialité</label><input type="text" id="a-filiere" placeholder="ex: Sciences, Lettres, Droit, Gestion…"/></div>
+          </div>
+
+          <div id="section-3b-joueur" class="section-3b" style="display:none;">
+          <!-- MORPHOLOGIE -->
+          <div class="subsection">📐 Morphologie</div>
+          <div class="form-row-3" id="ex-joueur-equipe">
+            <div class="fg"><label>Taille (cm)</label><input type="number" id="a-taille" placeholder="ex: 178" min="100" max="250"/></div>
+            <div class="fg"><label>Poids (kg)</label><input type="number" id="a-poids" placeholder="ex: 72" min="30" max="200"/></div>
+            <div class="fg" id="ex-pied-fort"><label>Pied fort</label>
+              <select id="a-pied"><option value="">—</option><option>Droit</option><option>Gauche</option><option>Les deux</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label id="a-poste-label">Poste / Spécialité *</label><input type="text" id="a-poste" placeholder="ex: Attaquant, 100m…"/></div>
+            <div class="fg"><label id="a-poste2-label">Poste secondaire</label><input type="text" id="a-poste2" placeholder="ex: Milieu, 200m…"/></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Niveau</label>
+              <select id="a-niveau"><option value="">Niveau</option><option>Débutant</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
+            </div>
+            <div class="fg" id="ex-maillot"><label>Numéro de maillot</label><input type="number" id="a-maillot" placeholder="ex: 10" min="1" max="99"/></div>
+          </div>
+
+          <!-- CARACTÉRISTIQUES PHYSIQUES -->
+          <div class="subsection">⚡ Caractéristiques physiques</div>
+          <div id="phys-ratings">
+            <div class="rating-row"><span class="rating-label">Vitesse</span><div class="rating-stars" data-field="vitesse"></div></div>
+            <div class="rating-row"><span class="rating-label">Force</span><div class="rating-stars" data-field="force"></div></div>
+            <div class="rating-row"><span class="rating-label">Endurance</span><div class="rating-stars" data-field="endurance"></div></div>
+            <div class="rating-row"><span class="rating-label">Agilité</span><div class="rating-stars" data-field="agilite"></div></div>
+            <div class="rating-row"><span class="rating-label">Détente</span><div class="rating-stars" data-field="detente"></div></div>
+          </div>
+
+          <!-- DONNÉES TECHNIQUES -->
+          <div class="subsection" id="tech-section">🎯 Données techniques</div>
+          <div id="tech-ratings">
+            <div class="rating-row"><span class="rating-label">Tir / Finition</span><div class="rating-stars" data-field="tir"></div></div>
+            <div class="rating-row"><span class="rating-label">Passes</span><div class="rating-stars" data-field="passes"></div></div>
+            <div class="rating-row"><span class="rating-label">Dribble</span><div class="rating-stars" data-field="dribble"></div></div>
+            <div class="rating-row"><span class="rating-label">Défense</span><div class="rating-stars" data-field="defense"></div></div>
+            <div class="rating-row"><span class="rating-label">Vision du jeu</span><div class="rating-stars" data-field="vision"></div></div>
+          </div>
+
+          <!-- HISTORIQUE DE CARRIÈRE -->
+          <div class="subsection">📋 Historique de carrière</div>
+          <div id="career-list"></div>
+          <button type="button" class="add-entry-btn" onclick="addCareerEntry()">＋ Ajouter une expérience</button>
+
+          <!-- CONTRATS / MANDATS -->
+          <div class="subsection">📄 Contrat / Mandat actuel</div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Club / Structure actuel(le)</label>
+              <select id="a-club-select" onchange="onClubSelectChange()">
+                <option value="">Sélectionner un club existant…</option>
+                <option value="__autre__">➕ Club non listé / autre</option>
+              </select>
+              <input type="text" id="a-club-actuel" placeholder="Nom du club ou structure" style="margin-top:8px;display:none;"/>
+              <input type="hidden" id="a-club-structure-id" value=""/>
+              <div class="form-hint" id="a-club-hint" style="display:none;"></div></div>
+            </div>
+            <div class="fg"><label>Type de contrat</label>
+              <select id="a-contrat-type"><option value="">—</option><option>Professionnel</option><option>Semi-professionnel</option><option>Amateur</option><option>Bénévole</option><option>Libre (sans club)</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Début de contrat</label><input type="month" id="a-contrat-debut"/></div>
+            <div class="fg"><label>Fin de contrat</label><input type="month" id="a-contrat-fin"/></div>
+          </div>
+          <div class="fg"><label>Agent / Mandataire (optionnel)</label><input type="text" id="a-agent" placeholder="Nom de l'agent ou mandataire"/></div>
+
+          <!-- BIOGRAPHIE COURTE -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg">
+            <label>Bio / Présentation (optionnel)</label>
+            <textarea id="a-bio" placeholder="Décrivez votre parcours, vos points forts, vos objectifs…"></textarea>
+            <div class="form-hint">Max 500 caractères</div>
+          </div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-palmares" placeholder="ex: Champion national 2023, Meilleur buteur ligue 2022…"></textarea></div>
+          </div><!-- /section-3b-joueur -->
+        </div>
+        <!-- Champs club/fédération/association/organisateur -->
+        <div class="extra" id="ex-org">
+          <div class="notice"><span>🏟️</span><span>Ce profil décrit une structure (club, fédération, association ou organisateur), pas une personne physique : les informations demandées ci-dessous concernent l'organisation elle-même.</span></div>
+
+          <div class="subsection">🏟️ Identité de la structure</div>
+          <div class="fg"><label>Nom de l'organisation *</label><input type="text" id="a-org" placeholder="Nom officiel"/></div>
+          <div class="form-row">
+            <div class="fg"><label>Sigle (optionnel)</label><input type="text" id="a-org-sigle" placeholder="ex: FC105"/></div>
+            <div class="fg"><label>Slogan (optionnel)</label><input type="text" id="a-org-slogan" placeholder="ex: Ensemble vers la victoire"/></div>
+          </div>
+          <div class="fg"><label>Date de création</label><input type="date" id="a-annee" max="2026-12-31"/></div>
+
+          <div class="subsection">🏛️ Gouvernance</div>
+          <div class="form-row">
+            <div class="fg"><label>Nom du président / responsable *</label><input type="text" id="a-org-president" placeholder="Nom complet"/></div>
+            <div class="fg"><label>Téléphone du président</label><input type="tel" id="a-org-president-tel" placeholder="+241 XX XX XX XX"/></div>
+          </div>
+
+          <div id="section-3b-org" class="section-3b" style="display:none;">
+          <div class="subsection">👥 Effectifs</div>
+          <div class="form-row">
+            <div class="fg"><label>Nombre de joueurs / athlètes</label><input type="number" id="a-org-effectif" placeholder="ex: 45" min="0"/></div>
+            <div class="fg"><label>Catégories encadrées</label><input type="text" id="a-org-categories" placeholder="ex: Seniors, U20, U17, U15…"/></div>
+          </div>
+
+          <div class="subsection">📍 Sites & infrastructures</div>
+          <div class="fg"><label>Siège social / adresse</label><input type="text" id="a-org-siege" placeholder="ex: Quartier Nzeng-Ayong, Libreville"/></div>
+          <div class="fg">
+            <label>Géolocalisation (optionnel)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="a-org-geoloc" placeholder="Coordonnées GPS" readonly style="flex:1;background:#f5f5f5;"/>
+              <button type="button" class="btn-sec" style="white-space:nowrap;padding:10px 14px;" onclick="useCurrentLocationOrg()">📍 Ma position</button>
+            </div>
+            <input type="hidden" id="a-org-lat"/><input type="hidden" id="a-org-lng"/>
+            <div class="form-hint">Utilisé pour situer précisément vos sites de pratique sur la carte.</div>
+          </div>
+          <div class="fg"><label>Infrastructures</label><textarea id="a-org-infra" placeholder="ex: Stade 2000 places, siège social, internat, terrain d'entraînement annexe…"></textarea></div>
+          <div class="fg"><label>WhatsApp officiel</label><input type="tel" id="a-org-whatsapp" placeholder="+241 XX XX XX XX"/></div>
+
+          <div class="subsection">✍️ Présentation</div>
+          <div class="fg"><label>Biographie / présentation (optionnel)</label><textarea id="a-org-bio" placeholder="Histoire, valeurs, ambitions de la structure…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / distinctions</label><textarea id="a-org-palmares" placeholder="ex: Champion national 2019, Vainqueur Coupe du Gabon 2021…"></textarea></div>
+          </div><!-- /section-3b-org -->
+        </div>
+        <!-- Champs entraîneur/arbitre -->
+        <div class="extra" id="ex-off">
+          <div id="section-3b-off" class="section-3b" style="display:none;">
+          <div class="fg"><label>Niveau de licence</label>
+            <select id="a-licence"><option value="">Niveau</option><option>Régional</option><option>National</option><option>International</option><option>CAF</option><option>FIFA / Fédération internationale</option></select>
+          </div>
+          </div><!-- /section-3b-off -->
+        </div>
+        <!-- Champs sportif en situation de handicap (para-sport / handisport) -->
+        <div class="extra" id="ex-handisport">
+          <div class="notice" style="background:#eef2ff;border-color:rgba(99,102,241,.25);color:#3730a3;">
+            <span>♿</span><span>Ces informations permettent d'adapter votre fiche, votre classification sportive et l'accompagnement proposé. Elles restent confidentielles et ne sont visibles que par vous et l'administration GSC.</span>
+          </div>
+
+          <!-- TYPE DE DÉFICIENCE -->
+          <div class="subsection">🩺 Type de déficience (catégories du Comité Paralympique International)</div>
+          <div class="fg">
+            <label>Catégorie principale *</label>
+            <select id="a-hs-categorie" onchange="onHandisportCategorieChange()">
+              <option value="">Sélectionner…</option>
+              <option value="visuelle">👁️ Déficience visuelle (basse vision / cécité)</option>
+              <option value="auditive">👂 Déficience auditive (surdité / malentendance)</option>
+              <option value="motrice_amputation">🦵 Amputation / déficience des membres</option>
+              <option value="motrice_paralysie">🧠 Paralysie cérébrale / lésion cérébrale</option>
+              <option value="motrice_moelle">🦽 Lésion médullaire (paraplégie / tétraplégie)</option>
+              <option value="motrice_autre">🚶 Autre déficience motrice (force musculaire, amplitude articulaire, stature)</option>
+              <option value="intellectuelle">🧩 Déficience intellectuelle</option>
+              <option value="multiple">➕ Déficiences multiples / polyhandicap</option>
+              <option value="autre">📋 Autre (à préciser)</option>
+            </select>
+          </div>
+          <div class="fg" id="hs-precision-wrap" style="display:none;">
+            <label>Précision sur la déficience</label>
+            <input type="text" id="a-hs-precision" placeholder="ex: amputation tibiale droite, surdité bilatérale…"/>
+          </div>
+
+          <div id="section-3b-handisport" class="section-3b" style="display:none;">
+          <!-- CLASSIFICATION SPORTIVE -->
+          <div class="subsection">🏷️ Classification sportive officielle</div>
+          <div class="form-row">
+            <div class="fg"><label>Classe / Catégorie de compétition</label>
+              <input type="text" id="a-hs-classe" placeholder="ex: T44, S9, BC3, F40, B2…"/>
+              <div class="form-hint">Selon le système de classification de votre discipline (athlétisme, natation, boccia, etc.). Laissez vide si non classifié(e).</div>
+            </div>
+            <div class="fg"><label>Organisme classificateur</label>
+              <select id="a-hs-classificateur">
+                <option value="">—</option>
+                <option>Fégoph (Fédération Gabonaise Omnisports pour Personnes Handicapées)</option>
+                <option>Comité Paralympique Gabonais</option>
+                <option>Fédération internationale du sport (IPC / IBSA / ICSD…)</option>
+                <option>Non classifié(e) à ce jour</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CADRE DE PRATIQUE -->
+          <div class="subsection">🏛️ Cadre de pratique</div>
+          <div class="fg">
+            <label>Vous pratiquez…</label>
+            <select id="a-hs-cadre">
+              <option value="federation">Au sein de la Fégoph / Comité Paralympique Gabonais</option>
+              <option value="club_ordinaire">Dans un club ordinaire avec section adaptée</option>
+              <option value="independant">En indépendant, hors structure fédérale</option>
+              <option value="etablissement">Dans un établissement spécialisé / centre de rééducation</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Discipline para-sportive</label>
+              <select id="a-hs-discipline">
+                <option value="">Choisir…</option>
+                <option>Para-athlétisme</option><option>Para-natation</option><option>Basketball fauteuil</option>
+                <option>Volleyball assis</option><option>Goalball (cécité)</option><option>Cécifoot (football à 5)</option>
+                <option>Boccia</option><option>Para-judo (déficients visuels)</option><option>Para-taekwondo</option>
+                <option>Para-cyclisme</option><option>Tennis de table adapté</option><option>Football amputés</option>
+                <option>Rugby fauteuil</option><option>Para-tir sportif</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="fg"><label>Niveau de pratique</label>
+              <select id="a-hs-niveau"><option value="">Niveau</option><option>Loisir / Initiation</option><option>Amateur / Club</option><option>National</option><option>International / Paralympique</option></select>
+            </div>
+          </div>
+          <div class="fg"><label>Club / Structure d'accueil</label><input type="text" id="a-hs-club" placeholder="Nom du club ou de la structure"/></div>
+
+          <!-- AIDES TECHNIQUES & ACCOMPAGNEMENT -->
+          <div class="subsection">🦽 Aides techniques & accompagnement</div>
+          <div class="fg">
+            <label>Équipement(s) utilisé(s) en pratique sportive</label>
+            <select id="a-hs-equipement" multiple style="min-height:84px;">
+              <option>Fauteuil roulant de sport</option>
+              <option>Prothèse de course / sportive</option>
+              <option>Canne / appui de marche</option>
+              <option>Guide / accompagnateur sportif (cécité)</option>
+              <option>Aide auditive (hors compétition selon règlement)</option>
+              <option>Casque de protection adapté</option>
+              <option>Aucun équipement spécifique</option>
+            </select>
+            <div class="form-hint">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs options.</div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Besoin d'un(e) guide / accompagnateur sportif ?</label>
+              <select id="a-hs-guide"><option value="non">Non</option><option value="oui">Oui</option></select>
+            </div>
+            <div class="fg"><label>Nom du guide / accompagnateur (optionnel)</label><input type="text" id="a-hs-guide-nom" placeholder="Si applicable"/></div>
+          </div>
+
+          <!-- LICENCE & SUIVI MÉDICAL -->
+          <div class="subsection">🪪 Licence & suivi</div>
+          <div class="form-row">
+            <div class="fg"><label>Licence Fégoph / fédération sportive</label><input type="text" id="a-hs-licence-num" placeholder="N° de licence (si applicable)"/></div>
+            <div class="fg"><label>Carte d'invalidité / reconnaissance officielle</label>
+              <select id="a-hs-carte"><option value="">—</option><option value="oui">Oui, je possède une carte officielle</option><option value="non">Non / pas encore</option></select>
+            </div>
+          </div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours sportif (optionnel)</label><textarea id="a-hs-bio" placeholder="Votre parcours, vos ambitions, vos performances…"></textarea></div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-hs-palmares" placeholder="ex: Médaillé Jeux Africains 2023, Sélection paralympique…"></textarea></div>
+          </div><!-- /section-3b-handisport -->
+        </div>
+        <!-- Champs ancien sportif (carrière terminée) -->
+        <div class="extra" id="ex-ancien">
+          <div class="notice"><span>🎖️</span><span>Ce profil met en avant votre carrière passée : palmarès, clubs représentés et reconversion. Il n'inclut pas de statistiques de saison en cours.</span></div>
+
+          <!-- CARRIÈRE -->
+          <div class="subsection">📋 Carrière sportive</div>
+          <div class="form-row">
+            <div class="fg"><label>Poste / Spécialité *</label><input type="text" id="a-anc-poste" placeholder="ex: Attaquant, 100m, Poids lourd…"/></div>
+            <div class="fg"><label>Niveau atteint</label>
+              <select id="a-anc-niveau"><option value="">Niveau</option><option>Amateur</option><option>Semi-pro</option><option>Professionnel</option><option>National</option><option>International</option></select>
+            </div>
+          </div>
+          <div id="section-3b-ancien" class="section-3b" style="display:none;">
+          <div class="form-row">
+            <div class="fg"><label>Année de début de carrière</label><input type="number" id="a-anc-debut" placeholder="ex: 1998" min="1930" max="2026"/></div>
+            <div class="fg"><label>Année de fin de carrière</label><input type="number" id="a-anc-fin" placeholder="ex: 2018" min="1930" max="2026"/></div>
+          </div>
+          <div class="fg"><label>Club(s) / équipe(s) représenté(s)</label><input type="text" id="a-anc-clubs" placeholder="ex: FC 105 Libreville, AS Stade Mandji…"/></div>
+          <div class="cb-row"><input type="checkbox" id="a-anc-selection" onchange="onAncienSelectionChange()"/><label for="a-anc-selection">A représenté une sélection nationale</label></div>
+          <div class="fg" id="anc-selection-wrap" style="display:none;"><label>Nombre de sélections</label><input type="number" id="a-anc-nbselections" placeholder="ex: 24" min="0"/></div>
+          <div class="fg"><label>Raison de fin de carrière</label>
+            <select id="a-anc-raison"><option value="">—</option><option>Retraite sportive</option><option>Blessure</option><option>Reconversion professionnelle</option><option>Fin de contrat</option><option>Autre</option></select>
+          </div>
+
+          <!-- RECONVERSION -->
+          <div class="subsection">🔄 Reconversion</div>
+          <div class="form-row">
+            <div class="fg"><label>Activité actuelle</label><input type="text" id="a-anc-reconversion" placeholder="ex: Consultant, entraîneur, entrepreneur…"/></div>
+            <div class="fg"><label>Structure actuelle (optionnel)</label><input type="text" id="a-anc-structure" placeholder="ex: club, fédération, ambassadeur…"/></div>
+          </div>
+          <div class="cb-row"><input type="checkbox" id="a-anc-mentorat"/><label for="a-anc-mentorat">Disponible pour du mentorat / des interventions auprès des jeunes sportifs</label></div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-anc-bio" placeholder="Décrivez votre carrière, vos moments marquants…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / Distinctions</label><textarea id="a-anc-palmares" placeholder="ex: Champion national 1999, Vainqueur Coupe du Gabon 2005…"></textarea></div>
+          <div class="fg"><label>Faits marquants / records</label><textarea id="a-anc-faits" placeholder="ex: Meilleur buteur du championnat 2004, record national du 100m…"></textarea></div>
+          </div><!-- /section-3b-ancien -->
+        </div>
+        <!-- Champs formateur (formation, certification, transmission) -->
+        <div class="extra" id="ex-formateur">
+          <div class="notice"><span>🧑‍🏫</span><span>Ce profil met en avant votre activité de formation : spécialité, certifications et disponibilité pour de nouvelles sessions.</span></div>
+
+          <!-- SPÉCIALITÉ & CERTIFICATION -->
+          <div class="subsection">🧑‍🏫 Profil formateur</div>
+          <div class="form-row">
+            <div class="fg"><label>Spécialité de formation *</label><input type="text" id="a-for-specialite" placeholder="ex: Préparation physique, Arbitrage, Coaching jeunes…"/></div>
+            <div class="fg"><label>Niveau de certification</label>
+              <select id="a-for-niveau"><option value="">Niveau</option><option>Local</option><option>Régional</option><option>National</option><option>International</option></select>
+            </div>
+          </div>
+          <div id="section-3b-formateur" class="section-3b" style="display:none;">
+          <div class="form-row">
+            <div class="fg"><label>Organisme certificateur</label><input type="text" id="a-for-organisme" placeholder="ex: DTN, Fédération, CNOSF…"/></div>
+            <div class="fg"><label>Structure de rattachement</label><input type="text" id="a-for-structure" placeholder="ex: club, fédération, indépendant…"/></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Années d'expérience</label><input type="number" id="a-for-experience" placeholder="ex: 8" min="0"/></div>
+            <div class="fg"><label>Nombre d'apprenants formés</label><input type="number" id="a-for-apprenants" placeholder="ex: 150" min="0"/></div>
+          </div>
+          <div class="cb-row"><input type="checkbox" id="a-for-dispo"/><label for="a-for-dispo">Disponible pour de nouvelles sessions de formation</label></div>
+
+          <!-- PRÉSENTATION -->
+          <div class="subsection">✍️ Présentation personnelle</div>
+          <div class="fg"><label>Bio / Parcours (optionnel)</label><textarea id="a-for-bio" placeholder="Décrivez votre parcours de formateur…"></textarea><div class="form-hint">Max 500 caractères</div></div>
+          <div class="fg"><label>Palmarès / Certifications</label><textarea id="a-for-palmares" placeholder="ex: Certifié CAF B, formateur DTN depuis 2015…"></textarea></div>
+          </div><!-- /section-3b-formateur -->
+        </div>
+        <div id="a-err" class="err-msg"></div>
+        <button class="btn-p" id="a-btn" onclick="saveProfileEdits()">💾 Enregistrer mes modifications</button>
+      </div>
+    </div>
+
+    <!-- ══ ÉCRAN SUCCÈS ENREGISTREMENT ══ -->
+    <div id="psaved" style="display:none;">
+      <div class="success-wrap fade-in">
+        <div class="success-ico g">✅</div>
+        <div class="success-title">Modifications enregistrées</div>
+        <div class="success-desc">Votre fiche a bien été mise à jour.</div>
+        <button class="btn-p" onclick="show('s2a')">← Retour à mon profil</button>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</main>
+<script>
+  // ── CONFIG SUPABASE (même projet que index.html / inscription.html) ──
+  const SUPABASE_URL = "https://ibyftjlgmlaopsgddyzm.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_nKGEuM00uJM0Mgp5UmIGUw_horkQPdr";
+  let _sb;
+  try { _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'sb-gsc-player-auth', persistSession: true, autoRefreshToken: true } }); } catch(e) { _sb = null; }
+
+  // ── FIREBASE FIRESTORE ──
+  let db = null, _setDoc, _doc, _getDoc, _collection, _query, _where, _getDocs, _serverTimestamp;
+  let _fbApp = null;
+  (async () => {
+    try {
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+      const { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const app = initializeApp({
+        apiKey:"AIzaSyDYvkHiYd2c3XtBiPh9L1Ixu0Kx3RiKfQo",
+        authDomain:"gabon-sport-connect.firebaseapp.com",
+        projectId:"gabon-sport-connect"
+      }, "gsc-profil");
+      _fbApp = app;
+      db = getFirestore(app);
+      _doc = doc; _setDoc = setDoc; _getDoc = getDoc;
+      _collection = collection; _query = query; _where = where; _getDocs = getDocs;
+      _serverTimestamp = serverTimestamp;
+    } catch(e) { console.warn("Firestore non disponible:", e); }
+    try {
+      const fa = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      window._fbAuth = fa.getAuth(_fbApp);
+      window._signInWithCustomToken = fa.signInWithCustomToken;
+    } catch(e) { console.warn("Firebase Auth non disponible:", e); }
+  })();
+
+  // ── Pont d'authentification : Supabase → Firebase Custom Token (via Cloudflare Worker) ──
+  const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
+  async function ensureFirebaseAuthViaSupabase(uid, attempts = 3) {
+    if (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === uid) {
+      return window._fbAuth.currentUser;
+    }
+    let lastErr = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        if (!_sb) throw new Error('Supabase non initialisé.');
+        const { data: { session } } = await _sb.auth.getSession();
+        if (!session || !session.access_token) throw new Error('Aucune session Supabase active.');
+
+        const res = await fetch(GSC_AUTH_WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ supabaseAccessToken: session.access_token })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.firebaseToken) {
+          throw new Error(data?.error || "Le pont d'authentification a refusé la demande.");
+        }
+        if (!window._fbAuth || !window._signInWithCustomToken) {
+          throw new Error('Firebase Auth (signInWithCustomToken) non disponible.');
+        }
+        const cred = await window._signInWithCustomToken(window._fbAuth, data.firebaseToken);
+        return cred.user;
+      } catch (e) {
+        lastErr = e;
+        console.warn(`Pont Firebase Auth — tentative ${i + 1}/${attempts} échouée :`, e);
+        if (i < attempts - 1) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+    throw lastErr || new Error("Pont d'authentification Firebase indisponible après plusieurs tentatives.");
+  }
+
+  const ROLE_LABELS = {
+    joueur:'⚽ Joueur', athlete:'🏃 Athlète', entraineur:'📋 Entraîneur', arbitre:'🟨 Arbitre',
+    club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
+    association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
+    handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
+    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
+    formateur:'🧑‍🏫 Formateur'
+  };
+
+  const SPORTS_COLLECTIFS = ['Football','Basketball','Handball','Volleyball','Rugby'];
+  const SPORTS_INDIVIDUELS = ['Athlétisme','Judo','Boxe','Natation','Tennis','Cyclisme','Taekwondo','Karaté','Lutte'];
+  const SPORTS_TOUS = ['Football','Basketball','Athlétisme','Judo','Boxe','Natation','Handball','Volleyball','Tennis','Rugby','Cyclisme','Taekwondo','Karaté','Lutte'];
+
+  const ETABLISSEMENTS_GA = [
+    {nom:'Université Omar Bongo (UOB)', ville:'Libreville', type:'Université'},
+    {nom:'Université des Sciences et Techniques de Masuku (USTM)', ville:'Franceville', type:'Université'},
+    {nom:'Université des Sciences de la Santé (USS)', ville:'Libreville (Owendo)', type:'Université'},
+    {nom:'École Normale Supérieure (ENS) Libreville', ville:'Libreville', type:'Université'},
+    {nom:"École Normale Supérieure de l'Enseignement Technique (ENSET)", ville:'Libreville', type:'Université'},
+    {nom:'Institut National des Sciences de Gestion (INSG)', ville:'Libreville', type:'Université'},
+    {nom:'Institut Supérieur de Technologie (IST)', ville:'Libreville', type:'Université'},
+    {nom:'Université Internationale de Libreville (UIL)', ville:'Libreville', type:'Université'},
+    {nom:'Lycée National Léon Mba', ville:'Libreville', type:'Lycée'},
+    {nom:'Lycée Quaben', ville:'Libreville', type:'Lycée'},
+    {nom:'Collège Bessieux', ville:'Libreville', type:'Collège'},
+    {nom:'Lycée Technique National Omar Bongo', ville:'Libreville', type:'Lycée'},
+    {nom:"Lycée d'État de Port-Gentil", ville:'Port-Gentil', type:'Lycée'},
+    {nom:'Lycée Provincial de Franceville', ville:'Franceville', type:'Lycée'},
+    {nom:'Établissement international (hors Gabon)', ville:'International', type:'International'}
+  ];
+
+  function populateEtablissementSelect() {
+    const sel = document.getElementById('a-etablissement');
+    if (!sel) return;
+    const groups = {};
+    ETABLISSEMENTS_GA.forEach(e => { (groups[e.type] = groups[e.type] || []).push(e); });
+    const order = ['Université', 'Lycée', 'Collège', 'International'];
+    let html = '<option value="">Sélectionner…</option>';
+    order.forEach(type => {
+      if (!groups[type]) return;
+      html += '<optgroup label="' + (type === 'Université' ? '🎓 Université' : type) + '">';
+      html += groups[type].map(e => '<option value="' + e.nom + '">' + e.nom + ' — ' + e.ville + '</option>').join('');
+      html += '</optgroup>';
+    });
+    html += '<option value="__autre__">➕ Établissement non listé</option>';
+    sel.innerHTML = html;
+  }
+
+  function onEtablissementChange() {
+    const sel = document.getElementById('a-etablissement');
+    const autre = document.getElementById('a-etablissement-autre');
+    if (!sel || !autre) return;
+    autre.style.display = sel.value === '__autre__' ? 'block' : 'none';
+    if (sel.value !== '__autre__') autre.value = '';
+  }
+
+  function updateSportOptions(role) {
+    const sel = document.getElementById('a-sport');
+    const label = document.getElementById('a-sport-label');
+    const hint = document.getElementById('a-sport-hint');
+    if (!sel) return;
+    let list, labelTxt, hintTxt;
+    if (role === 'joueur') {
+      list = SPORTS_COLLECTIFS; labelTxt = 'Sport collectif *';
+      hintTxt = 'Réservé aux sports d\'équipe. Vous pratiquez un sport individuel ? Choisissez plutôt le rôle Athlète.';
+    } else if (role === 'athlete') {
+      list = SPORTS_INDIVIDUELS; labelTxt = 'Sport individuel *';
+      hintTxt = 'Réservé aux sports individuels. Vous pratiquez un sport d\'équipe ? Choisissez plutôt le rôle Joueur.';
+    } else {
+      list = SPORTS_TOUS; labelTxt = 'Sport principal *'; hintTxt = '';
+    }
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Choisir un sport</option>' +
+      list.map(s => `<option${s===current?' selected':''}>${s}</option>`).join('') +
+      '<option' + (current==='Autre'?' selected':'') + '>Autre</option>';
+    if (label) label.textContent = labelTxt;
+    if (hint) { hint.textContent = hintTxt; hint.style.display = hintTxt ? 'block' : 'none'; }
+  }
+
+  // ── GÉOLOCALISATION STRUCTURE (club/fédération/association/organisateur) ──
+  function useCurrentLocationOrg() {
+    const field = document.getElementById('a-org-geoloc');
+    if (!navigator.geolocation) { field.value = 'Géolocalisation non supportée par ce navigateur'; return; }
+    field.value = 'Localisation en cours…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        document.getElementById('a-org-lat').value = lat;
+        document.getElementById('a-org-lng').value = lng;
+        field.value = lat.toFixed(5) + ', ' + lng.toFixed(5);
+      },
+      () => { field.value = ''; errMsg('a-err','Impossible de récupérer votre position (autorisation refusée ou signal indisponible).'); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  let selectedRole = null;
+  let aPhotoURL = '';
+  let currentUid = null;
+  let currentEmail = '';
+
+  function show(id) {
+    ['pguard','ploading','perror','s2a','psaved'].forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = 'none';
+    });
+    const t = document.getElementById(id);
+    if (t) { t.style.display = 'block'; t.classList.add('fade-in'); setTimeout(()=>t.classList.remove('fade-in'),300); }
+    const card = document.getElementById('card');
+    if (card) card.scrollTop = 0;
+    window.scrollTo(0,0);
+  }
+
+  function toggleShow(id, cond) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('show', cond);
+  }
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (!el || val === undefined || val === null) return;
+    if (el.type === 'checkbox') el.checked = !!val;
+    else el.value = val;
+  }
+
+  // Champs pertinents uniquement pour un sport d'équipe
+  function updateTeamFieldsVisibility() {
+    const sport = document.getElementById('a-sport')?.value || '';
+    const isTeamPlayer = SPORTS_COLLECTIFS.includes(sport) || (selectedRole === 'joueur' && !sport);
+    const pied = document.getElementById('ex-pied-fort');
+    const maillot = document.getElementById('ex-maillot');
+    if (pied) pied.style.display = isTeamPlayer ? '' : 'none';
+    if (maillot) maillot.style.display = isTeamPlayer ? '' : 'none';
+    const posteLbl = document.getElementById('a-poste-label');
+    const poste2Lbl = document.getElementById('a-poste2-label');
+    if (posteLbl) posteLbl.textContent = isTeamPlayer ? 'Poste *' : 'Discipline / Épreuve *';
+    if (poste2Lbl) poste2Lbl.textContent = isTeamPlayer ? 'Poste secondaire' : 'Épreuve secondaire';
+    const posteInput = document.getElementById('a-poste');
+    const poste2Input = document.getElementById('a-poste2');
+    if (posteInput) posteInput.placeholder = isTeamPlayer ? 'ex: Attaquant, Gardien…' : 'ex: 100m, Judo -73kg…';
+    if (poste2Input) poste2Input.placeholder = isTeamPlayer ? 'ex: Milieu' : 'ex: 200m';
+    const techSection = document.getElementById('tech-section');
+    const techRatings = document.getElementById('tech-ratings');
+    if (techSection) techSection.style.display = isTeamPlayer ? '' : 'none';
+    if (techRatings) techRatings.style.display = isTeamPlayer ? '' : 'none';
+  }
+
+  // ── SÉLECTION D'UN CLUB EXISTANT ──
+  let _clubsCache = {};
+
+  async function loadClubOptionsForSport(sport) {
+    const sel = document.getElementById('a-club-select');
+    const hint = document.getElementById('a-club-hint');
+    const input = document.getElementById('a-club-actuel');
+    if (!sel) return;
+    const fallbackHtml = '<option value="">Sélectionner un club existant…</option><option value="__autre__">➕ Club non listé / autre</option>';
+    if (!sport) { sel.innerHTML = fallbackHtml; if (hint) hint.style.display = 'none'; return; }
+    sel.innerHTML = '<option value="">Chargement des clubs…</option>';
+    if (!db || typeof _getDocs !== 'function') {
+      await new Promise(r => setTimeout(r, 800));
+      if (!db || typeof _getDocs !== 'function') { sel.innerHTML = fallbackHtml; return; }
+    }
+    try {
+      let clubs = _clubsCache[sport];
+      if (!clubs) {
+        const snap = await _getDocs(_query(_collection(db, 'structuresSportives'), _where('discipline', '==', sport), _where('type', '==', 'Club')));
+        clubs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+        _clubsCache[sport] = clubs;
+      }
+      sel.innerHTML = '<option value="">Sélectionner un club existant…</option>' +
+        clubs.map(c => `<option value="${c.id}" data-nom="${(c.nom || '').replace(/"/g, '&quot;')}">${c.nom || 'Club sans nom'}${c.ville ? ' — ' + c.ville : ''}</option>`).join('') +
+        '<option value="__autre__">➕ Club non listé / autre</option>';
+      if (hint) {
+        hint.style.display = clubs.length ? 'none' : 'block';
+        hint.textContent = 'Votre club n\'apparaît pas ? Choisissez « Club non listé / autre » pour saisir son nom manuellement.';
+      }
+      if (input && input.value) {
+        const match = clubs.find(c => c.nom === input.value);
+        if (match) {
+          sel.value = match.id;
+          input.style.display = 'none';
+          const structIdField = document.getElementById('a-club-structure-id');
+          if (structIdField) structIdField.value = match.id;
+        }
+      }
+    } catch (e) {
+      console.warn('loadClubOptionsForSport:', e);
+      sel.innerHTML = fallbackHtml;
+      if (hint) { hint.style.display = 'block'; hint.textContent = 'Liste des clubs indisponible pour le moment — saisissez le nom manuellement.'; }
+    }
+  }
+
+  function onClubSelectChange() {
+    const sel = document.getElementById('a-club-select');
+    const input = document.getElementById('a-club-actuel');
+    const structIdField = document.getElementById('a-club-structure-id');
+    if (!sel || !input) return;
+    if (sel.value === '__autre__') {
+      input.style.display = 'block';
+      input.value = '';
+      input.focus();
+      if (structIdField) structIdField.value = '';
+    } else if (sel.value === '') {
+      input.style.display = 'none';
+      input.value = '';
+      if (structIdField) structIdField.value = '';
+    } else {
+      const opt = sel.options[sel.selectedIndex];
+      input.style.display = 'none';
+      input.value = opt?.dataset.nom || '';
+      if (structIdField) structIdField.value = sel.value;
+    }
+  }
+
+  async function resolveClubStructureId(uid, nom, sport, ville) {
+    if (!nom || !db || !_getDocs || !_setDoc || !_doc || !_collection || !_query || !_where) return null;
+    try {
+      await ensureFirebaseAuthViaSupabase(uid);
+
+      const structIdField = document.getElementById('a-club-structure-id');
+      if (structIdField && structIdField.value) return structIdField.value;
+
+      const dupSnap = await _getDocs(_query(
+        _collection(db, 'structuresSportives'),
+        _where('nom', '==', nom),
+        _where('type', '==', 'Club')
+      ));
+      if (!dupSnap.empty) return dupSnap.docs[0].id;
+
+      const ref = _doc(_collection(db, 'structuresSportives'));
+      await _setDoc(ref, {
+        nom, type: 'Club', discipline: sport || '', ville: ville || '',
+        status: 'active',
+        createdAt: _serverTimestamp ? _serverTimestamp() : new Date(),
+        updatedAt: _serverTimestamp ? _serverTimestamp() : new Date(),
+        addedBy: uid, addedVia: 'profil-club-autre'
+      });
+      return ref.id;
+    } catch (e) {
+      console.warn('resolveClubStructureId:', e);
+      return null;
+    }
+  }
+
+  function onHandisportCategorieChange() {
+    const cat = document.getElementById('a-hs-categorie')?.value || '';
+    const wrap = document.getElementById('hs-precision-wrap');
+    if (wrap) wrap.style.display = cat ? 'block' : 'none';
+  }
+
+  function onAncienSelectionChange() {
+    const checked = document.getElementById('a-anc-selection')?.checked;
+    const wrap = document.getElementById('anc-selection-wrap');
+    if (wrap) wrap.style.display = checked ? 'block' : 'none';
+  }
+
+  function toast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = type; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  function errMsg(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  // ── Photo de profil / logo — même compte Cloudinary que inscription.html ──
+  const INSC_CLOUDINARY_CLOUD = 'djvzc3vqp';
+  const INSC_CLOUDINARY_PRESET = 'gsc_admin_uploads';
+
+  async function uploadInscriptionPhoto(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', INSC_CLOUDINARY_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${INSC_CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok || !data.secure_url) throw new Error((data && data.error && data.error.message) || "Échec de l'upload de la photo.");
+    return data.secure_url;
+  }
+
+  async function handleRegistrationPhotoSelect(input, kind) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    const preview = document.getElementById(kind + '-avatar-preview');
+    const hint = document.getElementById(kind + '-avatar-hint');
+    const allowed = ['image/jpeg','image/png','image/webp','image/gif','image/avif','image/heic','image/heif'];
+    if (!allowed.includes(file.type) && !file.type.startsWith('image/')) {
+      if (hint) { hint.textContent = 'Format non autorisé. Utilisez une image (JPG, PNG, WEBP…).'; hint.style.color = 'var(--danger)'; }
+      return;
+    }
+    if (file.size > 5*1024*1024) {
+      if (hint) { hint.textContent = 'Photo trop lourde (max 5 Mo).'; hint.style.color = 'var(--danger)'; }
+      return;
+    }
+    const localUrl = URL.createObjectURL(file);
+    if (preview) preview.innerHTML = `<img src="${localUrl}">`;
+    if (hint) { hint.textContent = '📤 Envoi en cours…'; hint.style.color = ''; }
+    try {
+      const url = await uploadInscriptionPhoto(file);
+      if (kind === 'a') aPhotoURL = url;
+      if (preview) preview.innerHTML = `<img src="${url}">`;
+      if (hint) { hint.textContent = '✅ Photo mise à jour — pensez à enregistrer.'; hint.style.color = 'var(--green)'; }
+    } catch (e) {
+      if (preview) preview.innerHTML = aPhotoURL ? `<img src="${aPhotoURL}">` : '📷';
+      if (hint) { hint.textContent = 'Erreur upload : ' + (e.message || e); hint.style.color = 'var(--danger)'; }
+    }
+  }
+  function handleActeurPhotoSelect(input) { handleRegistrationPhotoSelect(input, 'a'); }
+
+  // ── RATINGS (étoiles cliquables) ──
+  const _ratings = {};
+
+  function initRatings() {
+    document.querySelectorAll('.rating-stars').forEach(container => {
+      const field = container.dataset.field;
+      _ratings[field] = 0;
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.val = i;
+        star.onclick = () => setRating(field, i);
+        container.appendChild(star);
+      }
+    });
+  }
+
+  function setRating(field, val) {
+    _ratings[field] = val;
+    const container = document.querySelector(`.rating-stars[data-field="${field}"]`);
+    if (!container) return;
+    container.querySelectorAll('.star').forEach(s => {
+      s.classList.toggle('on', parseInt(s.dataset.val) <= val);
+    });
+  }
+
+  function collectRatings(containerId) {
+    const result = {};
+    const container = document.getElementById(containerId);
+    if (!container) return result;
+    container.querySelectorAll('.rating-stars').forEach(el => {
+      const field = el.dataset.field;
+      result[field] = _ratings[field] || 0;
+    });
+    return result;
+  }
+
+  // ── CARRIÈRE ──
+  let _careerCount = 0;
+
+  function addCareerEntry(prefill) {
+    _careerCount++;
+    const id = _careerCount;
+    const list = document.getElementById('career-list');
+    const div = document.createElement('div');
+    div.className = 'career-entry';
+    div.id = 'career-' + id;
+    div.innerHTML = `
+      <button type="button" class="remove-btn" onclick="removeCareerEntry(${id})" title="Supprimer">✕</button>
+      <div class="form-row" style="margin-bottom:8px;">
+        <div class="fg"><label>Club / Structure</label><input type="text" id="c${id}-club" placeholder="Nom du club"/></div>
+        <div class="fg"><label>Saison / Période</label><input type="text" id="c${id}-periode" placeholder="ex: 2021–2023"/></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Poste</label><input type="text" id="c${id}-poste" placeholder="Poste occupé"/></div>
+        <div class="fg"><label>Matchs joués</label><input type="number" id="c${id}-matchs" placeholder="ex: 24" min="0"/></div>
+      </div>
+      <div class="fg"><label>Statistiques clés</label><input type="text" id="c${id}-stats" placeholder="ex: 12 victoires, 3 titres — adapté à votre discipline"/></div>
+    `;
+    list.appendChild(div);
+    if (prefill) {
+      setVal('c'+id+'-club', prefill.club);
+      setVal('c'+id+'-periode', prefill.periode);
+      setVal('c'+id+'-poste', prefill.poste);
+      setVal('c'+id+'-matchs', prefill.matchs);
+      setVal('c'+id+'-stats', prefill.stats);
+    }
+  }
+
+  function removeCareerEntry(id) {
+    const el = document.getElementById('career-' + id);
+    if (el) el.remove();
+  }
+
+  function collectCareerEntries() {
+    const entries = [];
+    document.querySelectorAll('.career-entry').forEach(el => {
+      const id = el.id.replace('career-', '');
+      const club    = document.getElementById('c' + id + '-club')?.value?.trim() || '';
+      const periode = document.getElementById('c' + id + '-periode')?.value?.trim() || '';
+      const poste   = document.getElementById('c' + id + '-poste')?.value?.trim() || '';
+      const matchs  = document.getElementById('c' + id + '-matchs')?.value || '';
+      const stats   = document.getElementById('c' + id + '-stats')?.value?.trim() || '';
+      if (club || periode) entries.push({ club, periode, poste, matchs, stats });
+    });
+    return entries;
+  }
+
+  initRatings();
+
+  // Labels techniques adaptés au sport sélectionné (mêmes libellés qu'à l'inscription,
+  // pour que les clés de notation "technique" restent identiques d'un écran à l'autre)
+  const TECH_LABELS_BY_SPORT = {
+    'Football':    ['Tir / Finition','Passes','Dribble','Défense','Vision du jeu'],
+    'Basketball':  ['Tir','Passes','Dribble','Défense','Vision du jeu'],
+    'Handball':    ['Tir','Passes','Feinte','Défense','Jeu collectif'],
+    'Volleyball':  ['Service','Passe','Smash','Réception','Lecture du jeu'],
+    'Rugby':       ['Plaquage','Passes','Percussion','Défense','Jeu au pied'],
+    'Athlétisme':  ['Départ réaction','Allure de course','Technique de saut','Lancer','Résistance'],
+    'Judo':        ['Attaque','Défense','Projection','Sol','Stratégie'],
+    'Boxe':        ['Jab','Cross','Crochet','Uppercut','Défense'],
+    'Natation':    ['Départ','Virage','Nage libre','Endurance','Technique bras'],
+    'Tennis':      ['Service','Revers','Coup droit','Vollée','Mental'],
+    'Cyclisme':    ['Sprint','Endurance','Technique de descente','Gestion de l\'effort','Positionnement'],
+    'Taekwondo':   ['Coups de pied','Défense','Enchaînements','Esquive','Stratégie'],
+    'Karaté':      ['Kata','Kumite','Défense','Précision','Stratégie'],
+    'Lutte':       ['Prise / Amenée au sol','Défense','Retournement','Contrôle','Stratégie'],
+    'Autre':       ['Technique 1','Technique 2','Technique 3','Technique 4','Stratégie'],
+  };
+
+  function applyTechLabelsForSport(sportVal) {
+    const labels = TECH_LABELS_BY_SPORT[sportVal] || TECH_LABELS_BY_SPORT['Autre'];
+    if (!labels) return;
+    const container = document.getElementById('tech-ratings');
+    const rows = container?.querySelectorAll('.rating-row');
+    if (!rows) return;
+    rows.forEach((row, i) => {
+      const labelEl = row.querySelector('.rating-label');
+      const starsEl = row.querySelector('.rating-stars');
+      if (labelEl && labels[i]) labelEl.textContent = labels[i];
+      if (starsEl && labels[i]) {
+        const field = starsEl.dataset.field;
+        const newField = labels[i].toLowerCase().replace(/[^a-z]/g,'').slice(0,10);
+        starsEl.dataset.field = newField;
+        _ratings[newField] = _ratings[field] || 0;
+      }
+    });
+  }
+  document.getElementById('a-sport')?.addEventListener('change', function() {
+    applyTechLabelsForSport(this.value);
+    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
+      loadClubOptionsForSport(this.value);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // ── CHARGEMENT DU PROFIL EXISTANT ──
+  // ═══════════════════════════════════════════════════════════════
+
+  function populateFieldsFromProfile(uid, email, data) {
+    currentUid = uid;
+    currentEmail = email;
+    const role = data.role || '';
+    selectedRole = role;
+    const isOrgRole = ['club','federation','association','organisateur'].includes(role);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(role);
+    const isEtudiantRole = role === 'eleve_etudiant';
+    const isHandisportRole = role === 'handisport';
+    const isAncienSportifRole = role === 'ancien_sportif';
+    const isFormateurRole = role === 'formateur';
+
+    document.getElementById('a-title').textContent = ROLE_LABELS[role] || 'Mon profil sportif';
+    document.getElementById('a-tag').textContent = ROLE_LABELS[role] || role;
+
+    aPhotoURL = data.photoURL || '';
+    const preview = document.getElementById('a-avatar-preview');
+    if (preview) preview.innerHTML = aPhotoURL ? `<img src="${aPhotoURL}">` : '📷';
+
+    setVal('a-prenom', data.prenom);
+    setVal('a-nom', data.nom);
+    setVal('a-pseudo', data.pseudo);
+    const emailInput = document.getElementById('a-email');
+    if (emailInput) {
+      emailInput.value = email;
+      emailInput.readOnly = true;
+      emailInput.style.background = '#f5f5f5';
+      emailInput.title = "L'email de connexion ne peut pas être modifié depuis cet écran.";
+    }
+    setVal('a-tel', data.telephone);
+    setVal('a-whatsapp', data.whatsapp);
+    setVal('a-sexe', data.sexe);
+    setVal('a-ddn', data.dateNaissance);
+
+    toggleShow('ex-personne', !isOrgRole);
+    toggleShow('ex-joueur', isJoueurRole);
+    toggleShow('ex-org', isOrgRole);
+    toggleShow('ex-off', ['entraineur','arbitre'].includes(role));
+    toggleShow('ex-handisport', isHandisportRole);
+    toggleShow('ex-ancien', isAncienSportifRole);
+    toggleShow('ex-formateur', isFormateurRole);
+    toggleShow('ex-etudiant-scol', isEtudiantRole);
+
+    updateSportOptions(role);
+    setVal('a-sport', data.sport);
+    applyTechLabelsForSport(data.sport || '');
+    setVal('a-ville', data.ville);
+
+    setVal('a-poste', data.poste);
+    setVal('a-niveau', data.niveau);
+    setVal('a-org', data.nomOrganisation);
+    setVal('a-licence', data.licence);
+
+    if (isEtudiantRole) {
+      populateEtablissementSelect();
+      const sel = document.getElementById('a-etablissement');
+      if (sel && data.etablissement) {
+        const opt = Array.from(sel.options).find(o => o.value === data.etablissement);
+        if (opt) { sel.value = data.etablissement; }
+        else { sel.value = '__autre__'; onEtablissementChange(); setVal('a-etablissement-autre', data.etablissement); }
+      }
+      setVal('a-niveau-scolaire', data.niveauScolaire);
+      setVal('a-filiere', data.filiere);
+    }
+
+    if (isJoueurRole) {
+      setVal('a-taille', data.taille);
+      setVal('a-poids', data.poids);
+      setVal('a-pied', data.piedFort);
+      setVal('a-poste2', data.poste2);
+      setVal('a-maillot', data.numMaillot);
+      setVal('a-bio', data.bio);
+      setVal('a-palmares', data.palmares);
+      setVal('a-contrat-type', data.contrat?.type);
+      setVal('a-contrat-debut', data.contrat?.debut);
+      setVal('a-contrat-fin', data.contrat?.fin);
+      setVal('a-agent', data.contrat?.agent);
+      setVal('a-club-actuel', data.contrat?.club || data.club || '');
+      if (data.structureId) { const h = document.getElementById('a-club-structure-id'); if (h) h.value = data.structureId; }
+      loadClubOptionsForSport(data.sport || '').then(() => {
+        const input = document.getElementById('a-club-actuel');
+        const sel = document.getElementById('a-club-select');
+        if (input && input.value && input.style.display === 'none' && (!sel || !sel.value)) {
+          if (sel) sel.value = '__autre__';
+          input.style.display = 'block';
+        }
+      });
+      Object.entries(data.physique || {}).forEach(([field, val]) => setRating(field, val));
+      Object.entries(data.technique || {}).forEach(([field, val]) => setRating(field, val));
+      (data.carriere || []).forEach(entry => addCareerEntry(entry));
+      updateTeamFieldsVisibility();
+    }
+
+    if (isHandisportRole) {
+      setVal('a-hs-categorie', data.handicapCategorie);
+      onHandisportCategorieChange();
+      setVal('a-hs-precision', data.handicapPrecision);
+      setVal('a-hs-classe', data.classeSportive);
+      setVal('a-hs-classificateur', data.organismeClassificateur);
+      setVal('a-hs-cadre', data.cadrePratique);
+      setVal('a-hs-discipline', data.disciplineParaSport);
+      setVal('a-hs-niveau', data.niveauParaSport);
+      setVal('a-hs-club', data.club);
+      const eqSel = document.getElementById('a-hs-equipement');
+      if (eqSel && Array.isArray(data.equipementsAdaptes)) {
+        Array.from(eqSel.options).forEach(o => { o.selected = data.equipementsAdaptes.includes(o.value); });
+      }
+      setVal('a-hs-guide', data.besoinGuide ? 'oui' : 'non');
+      setVal('a-hs-guide-nom', data.nomGuide);
+      setVal('a-hs-licence-num', data.licenceFegoph);
+      setVal('a-hs-carte', data.carteInvalidite ? 'oui' : 'non');
+      setVal('a-hs-bio', data.bio);
+      setVal('a-hs-palmares', data.palmares);
+    }
+
+    if (isAncienSportifRole) {
+      setVal('a-anc-poste', data.poste);
+      setVal('a-anc-niveau', data.niveauCarriere);
+      setVal('a-anc-debut', data.anneeDebutCarriere);
+      setVal('a-anc-fin', data.anneeFinCarriere);
+      setVal('a-anc-clubs', data.clubsRepresentes);
+      const cb = document.getElementById('a-anc-selection');
+      if (cb) { cb.checked = !!data.selectionNationale; onAncienSelectionChange(); }
+      setVal('a-anc-nbselections', data.nbSelections);
+      setVal('a-anc-raison', data.raisonFinCarriere);
+      setVal('a-anc-reconversion', data.reconversionActuelle);
+      setVal('a-anc-structure', data.structureActuelle);
+      const cbm = document.getElementById('a-anc-mentorat');
+      if (cbm) cbm.checked = !!data.disponibiliteMentorat;
+      setVal('a-anc-bio', data.bio);
+      setVal('a-anc-palmares', data.palmares);
+      setVal('a-anc-faits', data.faitsMarquants);
+    }
+
+    if (isFormateurRole) {
+      setVal('a-for-specialite', data.specialiteFormation);
+      setVal('a-for-niveau', data.niveauFormateur);
+      setVal('a-for-organisme', data.organismeCertificateur);
+      setVal('a-for-structure', data.structureRattachement);
+      setVal('a-for-experience', data.anneesExperienceFormation);
+      setVal('a-for-apprenants', data.nbApprenantsFormes);
+      const cbf = document.getElementById('a-for-dispo');
+      if (cbf) cbf.checked = !!data.disponibilitePourFormation;
+      setVal('a-for-bio', data.bio);
+      setVal('a-for-palmares', data.palmares);
+    }
+
+    if (isOrgRole) {
+      setVal('a-org-sigle', data.sigle);
+      setVal('a-org-slogan', data.slogan);
+      setVal('a-annee', data.dateCreation);
+      setVal('a-org-president', data.gouvernance?.president);
+      setVal('a-org-president-tel', data.gouvernance?.presidentTelephone);
+      setVal('a-org-effectif', data.effectifTotal);
+      setVal('a-org-categories', data.categoriesEncadrees);
+      setVal('a-org-siege', data.siegeSocial);
+      if (data.geoloc && typeof data.geoloc.lat === 'number') {
+        setVal('a-org-lat', data.geoloc.lat);
+        setVal('a-org-lng', data.geoloc.lng);
+        setVal('a-org-geoloc', data.geoloc.lat.toFixed(5) + ', ' + data.geoloc.lng.toFixed(5));
+      }
+      setVal('a-org-infra', data.infrastructures);
+      setVal('a-org-whatsapp', data.whatsapp);
+      setVal('a-org-bio', data.bio);
+      setVal('a-org-palmares', data.palmares);
+    }
+
+    show('s2a');
+  }
+
+  async function loadProfile() {
+    show('ploading');
+    try {
+      if (!_sb) throw new Error("Service d'authentification indisponible.");
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session || !session.user) { show('pguard'); return; }
+      const uid = session.user.id;
+      const email = session.user.email || session.user.phone || '';
+      await ensureFirebaseAuthViaSupabase(uid);
+      let tries = 0;
+      while (!db && tries < 25) { await new Promise(r => setTimeout(r, 200)); tries++; }
+      if (!db || !_getDoc || !_doc) throw new Error("Firestore non disponible pour le moment.");
+      const snap = await _getDoc(_doc(db, 'users', uid));
+      if (!snap.exists()) {
+        document.getElementById('perror-msg').textContent = "Aucune fiche trouvée pour votre compte. Contactez l'administration si vous pensez qu'il s'agit d'une erreur.";
+        show('perror');
+        return;
+      }
+      populateFieldsFromProfile(uid, email, snap.data());
+    } catch (e) {
+      console.warn('loadProfile:', e);
+      document.getElementById('perror-msg').textContent = e.message || "Une erreur est survenue lors du chargement de votre profil.";
+      show('perror');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ── SAUVEGARDE DES MODIFICATIONS (mode fusion) ──
+  // ═══════════════════════════════════════════════════════════════
+
+  async function saveProfileEditsToFirestore(uid, profile) {
+    if (!db || !_setDoc || !_doc) throw new Error('Firestore non disponible.');
+    await ensureFirebaseAuthViaSupabase(uid);
+    // merge:true — ne touche jamais aux champs gérés ailleurs (status, gscId,
+    // clubValidation, role, accountType, createdAt…), contrairement à une
+    // écriture complète qui écraserait tout le document.
+    await _setDoc(_doc(db, 'users', uid), profile, { merge: true });
+    try {
+      if (profile.telephone !== undefined) {
+        await _setDoc(_doc(db, 'users', uid, 'private', 'contact'), {
+          telephone: profile.telephone,
+          updatedAt: _serverTimestamp ? _serverTimestamp() : new Date()
+        }, { merge: true });
+      }
+    } catch(e) { console.warn('Firestore private save failed:', e); }
+  }
+
+  async function saveProfileEdits() {
+    document.getElementById('a-err').style.display = 'none';
+    if (!currentUid) { errMsg('a-err', 'Session expirée. Rechargez la page.'); return; }
+    const role = selectedRole;
+    const isOrgRole = ['club','federation','association','organisateur'].includes(role);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(role);
+    const isEtudiantRole = role === 'eleve_etudiant';
+    const isHandisportRole = role === 'handisport';
+    const isAncienSportifRole = role === 'ancien_sportif';
+    const isFormateurRole = role === 'formateur';
+
+    const prenom = document.getElementById('a-prenom').value.trim();
+    const nom    = document.getElementById('a-nom').value.trim();
+    const pseudo = document.getElementById('a-pseudo').value.trim();
+    const tel    = document.getElementById('a-tel').value.trim();
+    const whatsapp = document.getElementById('a-whatsapp')?.value?.trim() || '';
+    const sport  = document.getElementById('a-sport').value;
+    const ville  = document.getElementById('a-ville').value;
+    const sexe   = !isOrgRole ? (document.getElementById('a-sexe')?.value || '') : '';
+    const ddn    = !isOrgRole ? (document.getElementById('a-ddn')?.value || '') : '';
+    const poste  = document.getElementById('a-poste')?.value?.trim() || '';
+    const niveau = document.getElementById('a-niveau')?.value || '';
+    const org    = document.getElementById('a-org')?.value?.trim() || '';
+    const licence= document.getElementById('a-licence')?.value || '';
+
+    const orgSigle       = isOrgRole ? (document.getElementById('a-org-sigle')?.value?.trim() || '') : '';
+    const orgSlogan      = isOrgRole ? (document.getElementById('a-org-slogan')?.value?.trim() || '') : '';
+    const orgDateCreation= isOrgRole ? (document.getElementById('a-annee')?.value || '') : '';
+    const orgPresident   = isOrgRole ? (document.getElementById('a-org-president')?.value?.trim() || '') : '';
+    const orgPresidentTel= isOrgRole ? (document.getElementById('a-org-president-tel')?.value?.trim() || '') : '';
+    const orgEffectif    = isOrgRole ? (document.getElementById('a-org-effectif')?.value || '') : '';
+    const orgCategories  = isOrgRole ? (document.getElementById('a-org-categories')?.value?.trim() || '') : '';
+    const orgSiege       = isOrgRole ? (document.getElementById('a-org-siege')?.value?.trim() || '') : '';
+    const orgGeolocLat   = isOrgRole ? (document.getElementById('a-org-lat')?.value || '') : '';
+    const orgGeolocLng   = isOrgRole ? (document.getElementById('a-org-lng')?.value || '') : '';
+    const orgInfra       = isOrgRole ? (document.getElementById('a-org-infra')?.value?.trim() || '') : '';
+    const orgWhatsapp    = isOrgRole ? (document.getElementById('a-org-whatsapp')?.value?.trim() || '') : '';
+    const orgBio         = isOrgRole ? (document.getElementById('a-org-bio')?.value?.trim() || '').slice(0,500) : '';
+    const orgPalmares    = isOrgRole ? (document.getElementById('a-org-palmares')?.value?.trim() || '') : '';
+
+    const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
+    const poids        = isJoueurRole ? (document.getElementById('a-poids')?.value || '') : '';
+    const piedFort     = isJoueurRole ? (document.getElementById('a-pied')?.value || '') : '';
+    const poste2       = isJoueurRole ? (document.getElementById('a-poste2')?.value?.trim() || '') : '';
+    const numMaillot   = isJoueurRole ? (document.getElementById('a-maillot')?.value || '') : '';
+    const physique     = isJoueurRole ? collectRatings('phys-ratings') : {};
+    const technique    = isJoueurRole ? collectRatings('tech-ratings') : {};
+    const carriere     = isJoueurRole ? collectCareerEntries() : [];
+    const clubActuel   = isJoueurRole ? (document.getElementById('a-club-actuel')?.value?.trim() || '') : '';
+    const contratType  = isJoueurRole ? (document.getElementById('a-contrat-type')?.value || '') : '';
+    const contratDebut = isJoueurRole ? (document.getElementById('a-contrat-debut')?.value || '') : '';
+    const contratFin   = isJoueurRole ? (document.getElementById('a-contrat-fin')?.value || '') : '';
+    const agent        = isJoueurRole ? (document.getElementById('a-agent')?.value?.trim() || '') : '';
+    const bio          = isJoueurRole ? (document.getElementById('a-bio')?.value?.trim() || '').slice(0,500) : '';
+    const palmares     = isJoueurRole ? (document.getElementById('a-palmares')?.value?.trim() || '') : '';
+
+    const niveauScolaire = isEtudiantRole ? (document.getElementById('a-niveau-scolaire')?.value || '') : '';
+    const etabSelectVal  = isEtudiantRole ? (document.getElementById('a-etablissement')?.value || '') : '';
+    const etabAutreVal   = isEtudiantRole ? (document.getElementById('a-etablissement-autre')?.value?.trim() || '') : '';
+    const etablissement  = isEtudiantRole ? (etabSelectVal === '__autre__' ? etabAutreVal : etabSelectVal) : '';
+    const filiere        = isEtudiantRole ? (document.getElementById('a-filiere')?.value?.trim() || '') : '';
+
+    const hsCategorie      = isHandisportRole ? (document.getElementById('a-hs-categorie')?.value || '') : '';
+    const hsPrecision      = isHandisportRole ? (document.getElementById('a-hs-precision')?.value?.trim() || '') : '';
+    const hsClasse         = isHandisportRole ? (document.getElementById('a-hs-classe')?.value?.trim() || '') : '';
+    const hsClassificateur = isHandisportRole ? (document.getElementById('a-hs-classificateur')?.value || '') : '';
+    const hsCadre          = isHandisportRole ? (document.getElementById('a-hs-cadre')?.value || '') : '';
+    const hsDiscipline     = isHandisportRole ? (document.getElementById('a-hs-discipline')?.value || '') : '';
+    const hsNiveau         = isHandisportRole ? (document.getElementById('a-hs-niveau')?.value || '') : '';
+    const hsClub           = isHandisportRole ? (document.getElementById('a-hs-club')?.value?.trim() || '') : '';
+    const hsEquipement     = isHandisportRole ? Array.from(document.getElementById('a-hs-equipement')?.selectedOptions || []).map(o => o.value) : [];
+    const hsGuide          = isHandisportRole ? (document.getElementById('a-hs-guide')?.value || 'non') : 'non';
+    const hsGuideNom       = isHandisportRole ? (document.getElementById('a-hs-guide-nom')?.value?.trim() || '') : '';
+    const hsLicenceNum     = isHandisportRole ? (document.getElementById('a-hs-licence-num')?.value?.trim() || '') : '';
+    const hsCarte          = isHandisportRole ? (document.getElementById('a-hs-carte')?.value || '') : '';
+    const hsBio            = isHandisportRole ? (document.getElementById('a-hs-bio')?.value?.trim() || '').slice(0,500) : '';
+    const hsPalmares       = isHandisportRole ? (document.getElementById('a-hs-palmares')?.value?.trim() || '') : '';
+
+    const ancPoste          = isAncienSportifRole ? (document.getElementById('a-anc-poste')?.value?.trim() || '') : '';
+    const ancNiveau         = isAncienSportifRole ? (document.getElementById('a-anc-niveau')?.value || '') : '';
+    const ancDebut          = isAncienSportifRole ? (document.getElementById('a-anc-debut')?.value || '') : '';
+    const ancFin            = isAncienSportifRole ? (document.getElementById('a-anc-fin')?.value || '') : '';
+    const ancClubs          = isAncienSportifRole ? (document.getElementById('a-anc-clubs')?.value?.trim() || '') : '';
+    const ancSelection      = isAncienSportifRole ? (document.getElementById('a-anc-selection')?.checked || false) : false;
+    const ancNbSelections   = isAncienSportifRole && ancSelection ? (document.getElementById('a-anc-nbselections')?.value || '') : '';
+    const ancRaison         = isAncienSportifRole ? (document.getElementById('a-anc-raison')?.value || '') : '';
+    const ancReconversion   = isAncienSportifRole ? (document.getElementById('a-anc-reconversion')?.value?.trim() || '') : '';
+    const ancStructure      = isAncienSportifRole ? (document.getElementById('a-anc-structure')?.value?.trim() || '') : '';
+    const ancMentorat       = isAncienSportifRole ? (document.getElementById('a-anc-mentorat')?.checked || false) : false;
+    const ancBio            = isAncienSportifRole ? (document.getElementById('a-anc-bio')?.value?.trim() || '').slice(0,500) : '';
+    const ancPalmares       = isAncienSportifRole ? (document.getElementById('a-anc-palmares')?.value?.trim() || '') : '';
+    const ancFaits          = isAncienSportifRole ? (document.getElementById('a-anc-faits')?.value?.trim() || '') : '';
+
+    const forSpecialite     = isFormateurRole ? (document.getElementById('a-for-specialite')?.value?.trim() || '') : '';
+    const forNiveau         = isFormateurRole ? (document.getElementById('a-for-niveau')?.value || '') : '';
+    const forOrganisme      = isFormateurRole ? (document.getElementById('a-for-organisme')?.value?.trim() || '') : '';
+    const forStructure      = isFormateurRole ? (document.getElementById('a-for-structure')?.value?.trim() || '') : '';
+    const forExperience     = isFormateurRole ? (document.getElementById('a-for-experience')?.value || '') : '';
+    const forApprenants     = isFormateurRole ? (document.getElementById('a-for-apprenants')?.value || '') : '';
+    const forDispo          = isFormateurRole ? (document.getElementById('a-for-dispo')?.checked || false) : false;
+    const forBio            = isFormateurRole ? (document.getElementById('a-for-bio')?.value?.trim() || '').slice(0,500) : '';
+    const forPalmares       = isFormateurRole ? (document.getElementById('a-for-palmares')?.value?.trim() || '') : '';
+
+    if (!prenom || !nom)   { errMsg('a-err','Veuillez entrer votre prénom et nom.'); return; }
+    if (!pseudo)           { errMsg('a-err','Veuillez choisir un pseudo.'); return; }
+    if (!sport)            { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
+    if (!ville)            { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
+    if (isOrgRole && !org) { errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
+    if (isOrgRole && !orgPresident) { errMsg('a-err','Veuillez indiquer le nom du président / responsable de la structure.'); return; }
+    if (isHandisportRole && !hsCategorie) { errMsg('a-err','Veuillez sélectionner votre type de déficience.'); return; }
+    if (isEtudiantRole && !etablissement) { errMsg('a-err','Veuillez sélectionner votre université / établissement.'); return; }
+    if (isAncienSportifRole && !ancPoste) { errMsg('a-err','Veuillez indiquer votre poste / spécialité durant votre carrière.'); return; }
+    if (isFormateurRole && !forSpecialite) { errMsg('a-err','Veuillez indiquer votre spécialité de formation.'); return; }
+    if (!db || !_getDocs || !_query || !_collection || !_where) { errMsg('a-err','Service indisponible. Réessayez plus tard.'); return; }
+
+    if (pseudo) {
+      try {
+        const pseudoSnap = await _getDocs(_query(_collection(db,'users'), _where('pseudo','==',pseudo)));
+        const conflict = pseudoSnap.docs.some(d => d.id !== currentUid);
+        if (conflict) { errMsg('a-err','Ce pseudo est déjà utilisé par un autre compte.'); return; }
+      } catch(e) { console.warn('Vérification pseudo:', e); }
+    }
+    if (tel) {
+      try {
+        const telSnap = await _getDocs(_query(_collection(db,'users'), _where('telephone','==',tel)));
+        const conflict = telSnap.docs.some(d => d.id !== currentUid);
+        if (conflict) { errMsg('a-err','Ce numéro de téléphone est déjà utilisé par un autre compte.'); return; }
+      } catch(e) { console.warn('Vérification téléphone:', e); }
+    }
+
+    const btn = document.getElementById('a-btn');
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    try {
+      const clubStructureId = (isJoueurRole && clubActuel)
+        ? await resolveClubStructureId(currentUid, clubActuel, sport, ville)
+        : null;
+
+      const profile = {
+        prenom, nom, pseudo,
+        sport, ville, telephone: tel, whatsapp, sexe, dateNaissance: ddn,
+        poste, niveau, nomOrganisation: org, licence,
+        ...(isJoueurRole && {
+          taille, poids, piedFort, poste2, numMaillot,
+          physique, technique, carriere,
+          contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
+          structureId: clubStructureId || null,
+          bio, palmares
+        }),
+        ...(isEtudiantRole && { niveauScolaire, etablissement, filiere }),
+        ...(isHandisportRole && {
+          handicapCategorie: hsCategorie, handicapPrecision: hsPrecision,
+          classeSportive: hsClasse, organismeClassificateur: hsClassificateur,
+          cadrePratique: hsCadre, disciplineParaSport: hsDiscipline, niveauParaSport: hsNiveau,
+          club: hsClub, equipementsAdaptes: hsEquipement,
+          besoinGuide: hsGuide === 'oui', nomGuide: hsGuideNom,
+          licenceFegoph: hsLicenceNum, carteInvalidite: hsCarte === 'oui',
+          bio: hsBio, palmares: hsPalmares
+        }),
+        ...(isAncienSportifRole && {
+          poste: ancPoste, niveauCarriere: ancNiveau,
+          anneeDebutCarriere: ancDebut, anneeFinCarriere: ancFin,
+          clubsRepresentes: ancClubs, selectionNationale: ancSelection,
+          nbSelections: ancNbSelections, raisonFinCarriere: ancRaison,
+          reconversionActuelle: ancReconversion, structureActuelle: ancStructure,
+          disponibiliteMentorat: ancMentorat,
+          bio: ancBio, palmares: ancPalmares, faitsMarquants: ancFaits
+        }),
+        ...(isFormateurRole && {
+          specialiteFormation: forSpecialite, niveauFormateur: forNiveau,
+          organismeCertificateur: forOrganisme, structureRattachement: forStructure,
+          anneesExperienceFormation: forExperience, nbApprenantsFormes: forApprenants,
+          disponibilitePourFormation: forDispo,
+          bio: forBio, palmares: forPalmares
+        }),
+        ...(isOrgRole && {
+          sigle: orgSigle, slogan: orgSlogan, dateCreation: orgDateCreation,
+          gouvernance: { president: orgPresident, presidentTelephone: orgPresidentTel },
+          effectifTotal: orgEffectif, categoriesEncadrees: orgCategories,
+          siegeSocial: orgSiege,
+          geoloc: (orgGeolocLat && orgGeolocLng) ? { lat: Number(orgGeolocLat), lng: Number(orgGeolocLng) } : null,
+          infrastructures: orgInfra, whatsapp: orgWhatsapp,
+          bio: orgBio, palmares: orgPalmares
+        }),
+        club: clubActuel || '',
+        ...(aPhotoURL && { photoURL: aPhotoURL })
+      };
+
+      await saveProfileEditsToFirestore(currentUid, profile);
+      toast('Profil mis à jour avec succès ✅');
+      show('psaved');
+    } catch (e) {
+      console.warn('saveProfileEdits:', e);
+      errMsg('a-err', e.message || "Une erreur est survenue lors de l'enregistrement.");
+    } finally {
+      btn.disabled = false; btn.textContent = '💾 Enregistrer mes modifications';
+    }
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>
