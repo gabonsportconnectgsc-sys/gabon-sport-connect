@@ -273,6 +273,28 @@
     .side-menu-section-title{font-size:10px;font-weight:700;color:var(--gray-txt);text-transform:uppercase;letter-spacing:.7px;padding:8px 12px 4px;}
     #side-menu-notif.notif-active{color:var(--green-dk);}
     #side-menu-notif.notif-active .smi-ico{filter:none;}
+    .side-menu-item-install{background:linear-gradient(135deg,#009E60,#007a47);color:#fff;box-shadow:0 2px 8px rgba(0,158,96,.3);margin-bottom:2px;}
+    .side-menu-item-install:hover{background:linear-gradient(135deg,#00b56d,#008a52);color:#fff;}
+    .side-menu-item-install:disabled{opacity:.65;cursor:default;background:linear-gradient(135deg,#6b7280,#4b5563);box-shadow:none;}
+
+    /* ── FAB flottant "Installer l'app" ── */
+    .install-fab{position:fixed;right:16px;bottom:150px;z-index:950;display:none;align-items:center;
+      background:#fff;border-radius:30px;box-shadow:0 6px 20px rgba(10,22,40,.22);
+      animation:installFabIn .45s cubic-bezier(.34,1.56,.64,1) both;}
+    .install-fab.show{display:flex;}
+    .install-fab-main{display:flex;align-items:center;gap:8px;border:none;cursor:pointer;
+      padding:12px 18px 12px 16px;border-radius:30px;
+      background:linear-gradient(135deg,#009E60,#007a47);color:#fff;
+      font-family:var(--font-body);font-size:13.5px;font-weight:700;
+      box-shadow:0 2px 10px rgba(0,158,96,.35);white-space:nowrap;}
+    .install-fab-main:active{transform:scale(.96);}
+    .install-fab-icon{font-size:17px;animation:installFabPulse 2.4s ease-in-out infinite;}
+    .install-fab-close{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;
+      border:2px solid #fff;background:var(--navy,#0A1628);color:#fff;font-size:11px;line-height:1;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.25);}
+    @keyframes installFabIn{from{opacity:0;transform:translateY(16px) scale(.85);}to{opacity:1;transform:translateY(0) scale(1);}}
+    @keyframes installFabPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+    @media (min-width:760px){.install-fab{right:28px;bottom:32px;}}
     @media (min-width:760px){.side-menu{width:320px;}}
 
     /* ── HISTORIQUE DE CONNEXION (side-menu compact + modal complète) ── */
@@ -1377,6 +1399,12 @@
     </div>
     <nav class="side-menu-nav">
 
+      <!-- INSTALLER L'APPLICATION -->
+      <button class="side-menu-item side-menu-item-install" id="side-menu-install" onclick="installGSC();closeMenu()">
+        <span class="smi-ico">📲</span><span id="side-menu-install-label">Installer l'application</span>
+      </button>
+      <div class="side-menu-divider" style="margin:6px 0;"></div>
+
       <!-- NAVIGATION PRINCIPALE -->
       <div class="side-menu-section-title">📱 Navigation</div>
       <button class="side-menu-item" onclick="showView('dashboard');closeMenu()"><span class="smi-ico">🏠</span>Accueil / Tableau de bord</button>
@@ -1420,6 +1448,15 @@
       <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth();closeMenu()"><span class="smi-ico">🔑</span><span id="side-menu-account-label">Se connecter</span></button>
     </div>
   </aside>
+
+  <!-- ══ FAB FLOTTANT : Installer l'application (fermable) ══ -->
+  <div id="install-fab" class="install-fab" role="button" tabindex="0" aria-label="Installer l'application">
+    <button class="install-fab-close" id="install-fab-close" onclick="event.stopPropagation();dismissInstallFab();" aria-label="Fermer">✕</button>
+    <button class="install-fab-main" onclick="installGSC()">
+      <span class="install-fab-icon">📲</span>
+      <span class="install-fab-text">Installer l'app</span>
+    </button>
+  </div>
 
   <!-- ══ MODAL: HISTORIQUE DE CONNEXION COMPLET ══ -->
   <div class="modal" id="modal-login-history" onclick="if(event.target===this)closeModal('modal-login-history')">
@@ -9814,17 +9851,64 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 <script src="gsc-community.js"></script>
 
-<!-- ══ PWA INSTALL — Bouton "Installer GSC" ══ -->
+<!-- ══ PWA INSTALL — Boutons "Installer GSC" (accueil + menu latéral + FAB flottant) ══ -->
 <script>
 (function(){
   let deferredPrompt = null;
+  const FAB_DISMISS_KEY = 'gsc_install_fab_dismissed_at';
+  const FAB_SNOOZE_DAYS = 7; // réapparaît après ce délai si toujours non installé
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+  }
+
+  function allInstallButtons(){
+    return [
+      document.getElementById('btn-install-gsc'),
+      document.getElementById('side-menu-install')
+    ].filter(Boolean);
+  }
+
+  function setInstalledState(){
+    allInstallButtons().forEach(function(btn){
+      btn.disabled = true;
+      btn.style.opacity = '.7';
+      const label = btn.querySelector('#side-menu-install-label');
+      if(label){ label.textContent = 'Application installée ✅'; }
+      else { btn.textContent = '✅ Installé !'; }
+    });
+    const fab = document.getElementById('install-fab');
+    if(fab){ fab.classList.remove('show'); fab.style.display = 'none'; }
+  }
+
+  function fabWasRecentlyDismissed(){
+    const ts = localStorage.getItem(FAB_DISMISS_KEY);
+    if(!ts) return false;
+    const days = (Date.now() - parseInt(ts,10)) / 86400000;
+    return days < FAB_SNOOZE_DAYS;
+  }
+
+  function maybeShowFab(){
+    if(isStandalone()) return;
+    if(fabWasRecentlyDismissed()) return;
+    const fab = document.getElementById('install-fab');
+    if(fab){ fab.classList.add('show'); }
+  }
+
+  window.dismissInstallFab = function(){
+    const fab = document.getElementById('install-fab');
+    if(fab){ fab.classList.remove('show'); }
+    try{ localStorage.setItem(FAB_DISMISS_KEY, String(Date.now())); }catch(e){}
+  };
 
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredPrompt = e;
-    // Rendre le bouton plus visible si l'app est installable
     const btn = document.getElementById('btn-install-gsc');
     if(btn){ btn.style.boxShadow = '0 2px 12px rgba(0,158,96,.5)'; }
+    // Une fois l'app réellement installable, on affiche le FAB (léger délai pour ne pas gêner l'arrivée)
+    setTimeout(maybeShowFab, 1800);
   });
 
   window.installGSC = function(){
@@ -9832,21 +9916,33 @@ document.addEventListener('DOMContentLoaded', function(){
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function(result){
         if(result.outcome === 'accepted'){
-          const btn = document.getElementById('btn-install-gsc');
-          if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; }
+          setInstalledState();
         }
         deferredPrompt = null;
       });
     } else {
-      // Fallback : instructions manuelles
-      alert('📲 Pour installer Gabon Sport Connect :\n\nSur Android Chrome :\nMenu ⋮ → "Ajouter à l\'écran d\'accueil"\n\nSur iPhone Safari :\nBouton Partager → "Sur l\'écran d\'accueil"');
+      // Fallback : instructions manuelles (pas encore de Play Store — installation via le navigateur)
+      alert('📲 Pour installer Gabon Sport Connect :\n\nSur Android Chrome :\nMenu ⋮ → "Ajouter à l\'écran d\'accueil" / "Installer l\'application"\n\nSur iPhone Safari :\nBouton Partager ⬆️ → "Sur l\'écran d\'accueil"');
     }
   };
 
-  // Si déjà installée, adapter le bouton
-  window.addEventListener('appinstalled', function(){
-    const btn = document.getElementById('btn-install-gsc');
-    if(btn){ btn.textContent = '✅ Installé !'; btn.disabled = true; btn.style.opacity = '.7'; }
+  // Si déjà installée, adapter tous les boutons
+  window.addEventListener('appinstalled', setInstalledState);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    if(isStandalone()){
+      setInstalledState();
+    } else {
+      // Affiche le FAB après un court délai, même sans beforeinstallprompt (ex. iOS Safari)
+      setTimeout(maybeShowFab, 2500);
+    }
+    // Support clavier sur le FAB (accessibilité)
+    const fab = document.getElementById('install-fab');
+    if(fab){
+      fab.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ installGSC(); }
+      });
+    }
   });
 })();
 </script>
