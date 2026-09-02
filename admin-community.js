@@ -199,7 +199,8 @@
       html += `<button class="btn-view-report-post" data-post-id="${report.postId}" style="padding:4px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;font-size:11px;margin-right:4px;">👁️</button>`;
       if (report.status === 'pending') {
         html += `<button class="btn-approve-report" data-report-id="${report.id}" style="padding:4px 8px;background:#dcfce7;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#166534;margin-right:4px;">✓</button>`;
-        html += `<button class="btn-reject-report" data-report-id="${report.id}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;">✕</button>`;
+        html += `<button class="btn-reject-report" data-report-id="${report.id}" style="padding:4px 8px;background:#fee2e2;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#ef4444;margin-right:4px;">✕</button>`;
+        html += `<button class="btn-delete-post-from-report" data-post-id="${report.postId}" style="padding:4px 8px;background:#fecaca;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:#7f1d1d;">🗑️</button>`;
       }
       html += `</td>`;
       html += `</tr>`;
@@ -308,6 +309,15 @@
       });
     });
 
+    document.querySelectorAll('.btn-delete-post-from-report').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        if (confirm('Supprimer ce post signale ? Cette action est irreversible.')) {
+          deletePostFromReport(postId);
+        }
+      });
+    });
+
     document.querySelectorAll('.btn-view-report-post').forEach(btn => {
       btn.addEventListener('click', function() {
         const postId = this.dataset.postId;
@@ -356,6 +366,25 @@
     } catch (error) {
       console.error('Erreur mise à jour:', error);
       showToast('Erreur lors de la mise à jour', 'error');
+    }
+  }
+
+  async function deletePostFromReport(postId) {
+    try {
+      const { doc, updateDoc } = window;
+      if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+        await window.ensureFirebaseAuthViaSupabase();
+      }
+      await deletePost(postId);
+      const relatedReports = Object.values(_reports).filter(r => r.postId === postId && r.status === 'pending');
+      for (const r of relatedReports) {
+        await updateDoc(doc(window.db, REPORTS_COLLECTION, r.id), { status: 'approved' });
+        _reports[r.id].status = 'approved';
+      }
+      renderReportsTable();
+    } catch (error) {
+      console.error('Erreur suppression post depuis signalement:', error);
+      showToast('Erreur lors de la suppression', 'error');
     }
   }
 
