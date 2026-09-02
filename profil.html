@@ -1349,9 +1349,12 @@
     const btn = document.getElementById('a-btn');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     try {
-      const clubStructureId = (isJoueurRole && clubActuel)
-        ? await resolveClubStructureId(currentUid, clubActuel, sport, ville)
-        : null;
+      // ⚠️ structureId n'est PAS inclus ici volontairement : firestore.rules interdit
+      // à un utilisateur (non-admin) de modifier ce champ sur son propre document — toute
+      // écriture qui le touche est intégralement rejetée (permission-denied), pas seulement
+      // ce champ. Le lien club n'est donc fixé qu'à l'inscription (submitActeur) ou par un
+      // admin ; ici on laisse le champ intact en ne l'envoyant simplement pas dans l'objet
+      // fusionné (merge:true préserve la valeur existante).
 
       const profile = {
         prenom, nom, pseudo,
@@ -1361,7 +1364,6 @@
           taille, poids, piedFort, poste2, numMaillot,
           physique, technique, carriere,
           contrat: { club: clubActuel, type: contratType, debut: contratDebut, fin: contratFin, agent },
-          structureId: clubStructureId || null,
           bio, palmares
         }),
         ...(isEtudiantRole && { niveauScolaire, etablissement, filiere }),
