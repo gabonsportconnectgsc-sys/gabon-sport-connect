@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://gabonsportconnectgsc-sys.github.io/gabon-sport-connect/sitemap.xml
+Sitemap: https://gabon-sport-connect.web.app/sitemap.xml
