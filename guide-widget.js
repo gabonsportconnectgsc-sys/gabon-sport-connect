@@ -11,12 +11,14 @@
     menuLabel: "Comment ça marche",
     menuIcon: "❓",
     toast: { text: "❓ Nouveau ? Touchez pour découvrir comment ça marche", delayMs: 1500, durationMs: 15000, oncePerSession: true },
-    fab: { text: "❓ Guide", position: "bottom-right", showOnAdmin: true }, // jamais affiché sur l'accueil
+    fab: { text: "❓ Guide", position: "bottom-right", showOnAdmin: false }, // bouton permanent désactivé partout
     color: "#0a7d3b",
+    adminEmails: ["gabonsportconnectgsc@gmail.com"], // comptes qui voient le guide Administrateur
+    lockedMessage: "Cet espace guide est réservé à l'administrateur.",
     defaultRole: { normal: "visiteur", admin: "admin" },
     roles: [
       {
-        id: "visiteur", label: "Visiteur",
+        id: "visiteur", label: "Visiteur", color: "#2563eb",
         intro: "Vous découvrez Gabon Sport Connect sans compte.",
         secs: [
           { t: "✅ Ce que je peux faire", p: ["Parcourez l'annuaire des clubs et structures sportives.", "Consultez les actualités et les publications publiques.", "Découvrez les sports pratiqués au Gabon."] },
@@ -26,7 +28,7 @@
         ]
       },
       {
-        id: "membre", label: "Membre",
+        id: "membre", label: "Membre", color: "#0a7d3b",
         intro: "Vous êtes inscrit : joueur, athlète ou supporter.",
         secs: [
           { t: "✅ Ce que je peux faire", p: ["Complétez votre profil sportif.", "Publiez, réagissez et commentez dans la communauté.", "Suivez les clubs et structures de votre choix."] },
@@ -36,7 +38,7 @@
         ]
       },
       {
-        id: "club", label: "Club / Structure",
+        id: "club", label: "Club / Structure", color: "#ea580c",
         intro: "Vous gérez un club ou une structure sportive.",
         secs: [
           { t: "✅ Ce que je peux faire", p: ["Présentez votre structure : bio, infrastructures, palmarès.", "Publiez les actualités de votre club.", "Soyez visible dans l'annuaire."] },
@@ -46,7 +48,7 @@
         ]
       },
       {
-        id: "admin", label: "Administrateur",
+        id: "admin", label: "Administrateur", color: "#7c3aed", adminOnly: true,
         intro: "Vous gérez la plateforme et validez les demandes.",
         secs: [
           { t: "✅ Ce que je peux faire", p: ["Validez ou refusez les clubs et structures.", "Modérez les publications et commentaires.", "Gérez les membres et les contenus."] },
@@ -59,10 +61,10 @@
   };
 
   var path = location.pathname;
-  var isAdmin = CONFIG.adminPathRegex.test(path);
-  var isHome = !isAdmin && CONFIG.homePathRegex.test(path);
+  var isAdminPage = CONFIG.adminPathRegex.test(path);
+  var isHome = !isAdminPage && CONFIG.homePathRegex.test(path);
   var C = CONFIG.color;
-  var current = null;
+  var adminByEmail = false; // renseigné par la détection asynchrone ou GuideWidget.setUser()
 
   function el(tag, props, kids) {
     var e = document.createElement(tag);
@@ -75,6 +77,51 @@
     return e;
   }
 
+  /* ---------- Accès au guide Administrateur ---------- */
+  function emailMatch(e) {
+    if (!e) return false;
+    var x = String(e).toLowerCase();
+    return CONFIG.adminEmails.some(function (a) { return a.toLowerCase() === x; });
+  }
+
+  function isAdminUser() {
+    if (isAdminPage) return true; // les pages admin sont déjà protégées par l'application
+    if (adminByEmail) return true;
+    try { // session Supabase stockée par le navigateur
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (/^sb-.*-auth-token$/.test(k)) {
+          var v = JSON.parse(localStorage.getItem(k) || "null");
+          var u = v && (v.user || (v.currentSession && v.currentSession.user));
+          if (u && emailMatch(u.email)) return true;
+        }
+      }
+    } catch (e) {}
+    try { // variables globales éventuelles de l'application
+      var g = window.currentUser || window.user || (window.GSC && window.GSC.user);
+      if (g && emailMatch(g.email)) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function detectFirebaseUser() { // session Firebase Auth (IndexedDB)
+    try {
+      var req = indexedDB.open("firebaseLocalStorageDb");
+      req.onsuccess = function () {
+        try {
+          var db = req.result;
+          if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); return; }
+          var all = db.transaction("firebaseLocalStorage").objectStore("firebaseLocalStorage").getAll();
+          all.onsuccess = function () {
+            (all.result || []).forEach(function (r) { if (r && r.value && emailMatch(r.value.email)) adminByEmail = true; });
+            db.close();
+          };
+        } catch (e) {}
+      };
+    } catch (e) {}
+  }
+
+  /* ---------- Styles ---------- */
   function injectCss() {
     var s = el("style");
     s.textContent =
@@ -82,19 +129,26 @@
       ".gw-x{position:absolute;right:8px;top:6px;background:none;border:0;color:#fff;font-size:18px;cursor:pointer}" +
       ".gw-fab{position:fixed;bottom:16px;" + (CONFIG.fab.position.indexOf("left") > -1 ? "left" : "right") + ":14px;background:" + C + ";color:#fff;border:0;border-radius:24px;padding:12px 16px;font:600 14px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:99997;cursor:pointer}" +
       ".gw-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px}" +
-      ".gw-box{background:rgba(255,255,255,.74);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.55);box-shadow:0 10px 40px rgba(0,0,0,.35);color:#1b1b1b;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:16px;font:14px/1.45 system-ui,sans-serif}" +
-      ".gw-hd{position:sticky;top:0;z-index:1;background:" + C + "e6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700}" +
+      ".gw-box{--gw-c:" + C + ";background:rgba(255,255,255,.74);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.55);box-shadow:0 10px 40px rgba(0,0,0,.35);color:#1b1b1b;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:16px;font:14px/1.45 system-ui,sans-serif}" +
+      ".gw-hd{position:sticky;top:0;z-index:1;background:var(--gw-c);background:color-mix(in srgb,var(--gw-c) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700}" +
       ".gw-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-bottom:1px solid rgba(0,0,0,.08)}" +
-      ".gw-tab{display:flex;align-items:center;justify-content:center;text-align:center;height:52px;width:100%;box-sizing:border-box;border:1.5px solid " + C + ";background:rgba(255,255,255,.45);color:" + C + ";border-radius:14px;padding:4px 8px;font:600 14px system-ui,sans-serif;cursor:pointer}" +
-      ".gw-tab.on{background:" + C + ";color:#fff}" +
-      ".gw-body{padding:12px 14px}.gw-body h4{margin:14px 0 4px;color:" + C + "}.gw-body ul{margin:0;padding-left:18px}.gw-body li{margin:3px 0}";
+      ".gw-tab{display:flex;align-items:center;justify-content:center;text-align:center;height:52px;width:100%;box-sizing:border-box;border:1.5px solid var(--c);background:rgba(255,255,255,.45);color:var(--c);border-radius:14px;padding:4px 8px;font:600 14px system-ui,sans-serif;cursor:pointer}" +
+      ".gw-tab.on{background:var(--c);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}" +
+      ".gw-body{padding:12px 14px}.gw-body h4{margin:14px 0 4px;color:var(--gw-c)}.gw-body ul{margin:0;padding-left:18px}.gw-body li{margin:3px 0}" +
+      ".gw-lock{text-align:center;padding:28px 12px;font-size:15px}.gw-lock b{display:block;font-size:34px;margin-bottom:8px}";
     document.head.appendChild(s);
   }
 
+  /* ---------- Fenêtre du guide ---------- */
   function renderBody(box, id) {
     var role = CONFIG.roles.filter(function (r) { return r.id === id; })[0] || CONFIG.roles[0];
-    current = role.id;
+    var shell = box.parentNode;
+    if (shell && shell.style) shell.style.setProperty("--gw-c", role.color || C);
     box.innerHTML = "";
+    if (role.adminOnly && !isAdminUser()) {
+      box.appendChild(el("div", { class: "gw-lock" }, [el("b", { text: "🔒" }), el("span", { text: CONFIG.lockedMessage })]));
+      return;
+    }
     box.appendChild(el("p", { text: role.intro, style: "margin:0 0 4px;font-style:italic" }));
     role.secs.forEach(function (sec) {
       box.appendChild(el("h4", { text: sec.t }));
@@ -106,11 +160,13 @@
 
   function open(roleId) {
     if (document.getElementById("gw-ov")) return;
-    var start = roleId || (isAdmin ? CONFIG.defaultRole.admin : CONFIG.defaultRole.normal);
+    var admin = isAdminUser();
+    var start = roleId || (isAdminPage ? CONFIG.defaultRole.admin : CONFIG.defaultRole.normal);
     var body = el("div", { class: "gw-body" });
     var tabs = el("div", { class: "gw-tabs" });
     CONFIG.roles.forEach(function (r) {
-      var b = el("button", { class: "gw-tab", text: r.label, type: "button" });
+      var locked = r.adminOnly && !admin;
+      var b = el("button", { class: "gw-tab", text: (locked ? "🔒 " : "") + r.label, type: "button", style: "--c:" + (r.color || C) });
       b.onclick = function () {
         Array.prototype.forEach.call(tabs.children, function (x) { x.classList.remove("on"); });
         b.classList.add("on");
@@ -131,6 +187,7 @@
     first.click();
   }
 
+  /* ---------- Ligne du menu latéral ---------- */
   function addMenuLine() {
     var a = CONFIG.menuAnchor;
     if (!a) return false;
@@ -169,9 +226,11 @@
     return true;
   }
 
+  /* ---------- Bulle éphémère ---------- */
   function showToast() {
     var T = CONFIG.toast;
-    try { if (T.oncePerSession && sessionStorage.getItem("gw_toast")) return; sessionStorage.setItem("gw_toast", "1"); } catch (e) {}
+    var key = "gw_toast_" + (isAdminPage ? "admin" : "home");
+    try { if (T.oncePerSession && sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch (e) {}
     setTimeout(function () {
       var x = el("button", { class: "gw-x", text: "✕", type: "button", "aria-label": "Fermer" });
       var t = el("div", { class: "gw-toast", text: T.text }, [x]);
@@ -191,7 +250,12 @@
 
   function init() {
     injectCss();
-    if (isAdmin) { if (CONFIG.fab.showOnAdmin) addFab(); return; }
+    detectFirebaseUser();
+    if (isAdminPage) {
+      showToast();
+      if (CONFIG.fab.showOnAdmin) addFab();
+      return;
+    }
     if (isHome) {
       showToast();
       // menu latéral : souvent construit ou rouvert après le chargement → on surveille la page
@@ -204,7 +268,11 @@
     }
   }
 
-  window.GuideWidget = { open: open };
+  window.GuideWidget = {
+    open: open,
+    // Si la détection automatique échoue, l'application peut appeler GuideWidget.setUser(email)
+    setUser: function (email) { adminByEmail = emailMatch(email); }
+  };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
