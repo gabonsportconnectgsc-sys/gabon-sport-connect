@@ -6,10 +6,12 @@
   var CONFIG = {
     homePathRegex: /(^\/$|\/index\.html$|\/gabon-sport-connect\/?$)/i,
     adminPathRegex: /admin/i,
-    menuAnchor: { textRegex: /accueil|home/i, hrefContains: "index" }, // null = ne pas toucher au menu
-    menuLabel: "❓ Comment ça marche",
-    toast: { text: "❓ Nouveau ? Touchez pour découvrir comment ça marche", delayMs: 1500, durationMs: 8000, oncePerSession: true },
-    fab: { text: "❓ Guide", position: "bottom-right" },
+    // Le menu de GSC utilise des <button class="side-menu-item"> (pas des liens <a>)
+    menuAnchor: { selector: "button.side-menu-item, a", textRegex: /accueil\s*\/\s*tableau de bord/i }, // null = ne pas toucher au menu
+    menuLabel: "Comment ça marche",
+    menuIcon: "❓",
+    toast: { text: "❓ Nouveau ? Touchez pour découvrir comment ça marche", delayMs: 1500, durationMs: 15000, oncePerSession: true },
+    fab: { text: "❓ Guide", position: "bottom-right", showOnAdmin: true }, // jamais affiché sur l'accueil
     color: "#0a7d3b",
     defaultRole: { normal: "visiteur", admin: "admin" },
     roles: [
@@ -79,11 +81,11 @@
       ".gw-toast{position:fixed;left:12px;right:12px;bottom:78px;max-width:420px;margin:0 auto;background:" + C + ";color:#fff;padding:12px 40px 12px 14px;border-radius:12px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:99998;cursor:pointer}" +
       ".gw-x{position:absolute;right:8px;top:6px;background:none;border:0;color:#fff;font-size:18px;cursor:pointer}" +
       ".gw-fab{position:fixed;bottom:16px;" + (CONFIG.fab.position.indexOf("left") > -1 ? "left" : "right") + ":14px;background:" + C + ";color:#fff;border:0;border-radius:24px;padding:12px 16px;font:600 14px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:99997;cursor:pointer}" +
-      ".gw-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px}" +
-      ".gw-box{background:#fff;color:#222;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:14px;font:14px/1.45 system-ui,sans-serif}" +
-      ".gw-hd{position:sticky;top:0;background:" + C + ";color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700}" +
-      ".gw-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #eee}" +
-      ".gw-tab{border:1px solid " + C + ";background:#fff;color:" + C + ";border-radius:16px;padding:6px 12px;font-size:13px;cursor:pointer}" +
+      ".gw-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px}" +
+      ".gw-box{background:rgba(255,255,255,.74);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.55);box-shadow:0 10px 40px rgba(0,0,0,.35);color:#1b1b1b;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:16px;font:14px/1.45 system-ui,sans-serif}" +
+      ".gw-hd{position:sticky;top:0;z-index:1;background:" + C + "e6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700}" +
+      ".gw-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-bottom:1px solid rgba(0,0,0,.08)}" +
+      ".gw-tab{display:flex;align-items:center;justify-content:center;text-align:center;height:52px;width:100%;box-sizing:border-box;border:1.5px solid " + C + ";background:rgba(255,255,255,.45);color:" + C + ";border-radius:14px;padding:4px 8px;font:600 14px system-ui,sans-serif;cursor:pointer}" +
       ".gw-tab.on{background:" + C + ";color:#fff}" +
       ".gw-body{padding:12px 14px}.gw-body h4{margin:14px 0 4px;color:" + C + "}.gw-body ul{margin:0;padding-left:18px}.gw-body li{margin:3px 0}";
     document.head.appendChild(s);
@@ -132,21 +134,34 @@
   function addMenuLine() {
     var a = CONFIG.menuAnchor;
     if (!a) return false;
-    var links = document.querySelectorAll("a");
+    var links = document.querySelectorAll(a.selector || "a");
     var target = null;
     for (var i = 0; i < links.length; i++) {
       var l = links[i];
       if (l.closest && l.closest("#gw-ov")) continue;
-      var okText = a.textRegex && a.textRegex.test(l.textContent || "");
-      var okHref = a.hrefContains && (l.getAttribute("href") || "").indexOf(a.hrefContains) > -1;
+      var okText = a.textRegex ? a.textRegex.test(l.textContent || "") : true;
+      var okHref = a.hrefContains ? (l.getAttribute("href") || "").indexOf(a.hrefContains) > -1 : true;
       if (okText && okHref) { target = l; break; }
     }
     if (!target || document.getElementById("gw-menu")) return !!target;
     var line = target.cloneNode(false);
+    line.removeAttribute("onclick");
     line.id = "gw-menu";
-    line.href = "#";
-    line.textContent = CONFIG.menuLabel;
-    line.onclick = function (e) { e.preventDefault(); open(); };
+    if (line.tagName === "A") line.href = "#";
+    var ico = target.querySelector('[class*="ico"]');
+    if (ico) {
+      var si = ico.cloneNode(false);
+      si.textContent = CONFIG.menuIcon;
+      line.appendChild(si);
+      line.appendChild(document.createTextNode(CONFIG.menuLabel));
+    } else {
+      line.textContent = CONFIG.menuIcon + " " + CONFIG.menuLabel;
+    }
+    line.onclick = function (e) {
+      e.preventDefault();
+      try { if (typeof window.closeMenu === "function") window.closeMenu(); } catch (x) {}
+      open();
+    };
     var holder = target.parentNode && target.parentNode.tagName === "LI" ? target.parentNode : target;
     var copy = holder === target ? line : holder.cloneNode(false);
     if (holder !== target) copy.appendChild(line);
@@ -176,18 +191,16 @@
 
   function init() {
     injectCss();
-    if (isAdmin) { addFab(); return; }
+    if (isAdmin) { if (CONFIG.fab.showOnAdmin) addFab(); return; }
     if (isHome) {
       showToast();
-      // menu latéral : parfois construit après le chargement, on réessaie
-      var tries = 0;
-      var iv = setInterval(function () {
-        tries++;
-        if (addMenuLine() || tries > 10) {
-          clearInterval(iv);
-          if (!document.getElementById("gw-menu")) addFab(); // repli si le lien de référence est introuvable
-        }
-      }, 500);
+      // menu latéral : souvent construit ou rouvert après le chargement → on surveille la page
+      addMenuLine();
+      var timer = null;
+      new MutationObserver(function () {
+        if (document.getElementById("gw-menu") || timer) return;
+        timer = setTimeout(function () { timer = null; addMenuLine(); }, 300);
+      }).observe(document.body, { childList: true, subtree: true });
     }
   }
 
