@@ -8,6 +8,8 @@
     adminPathRegex: /admin/i,
     // Le menu de GSC utilise des <button class="side-menu-item"> (pas des liens <a>)
     menuAnchor: { selector: "button.side-menu-item, a", textRegex: /accueil\s*\/\s*tableau de bord/i }, // null = ne pas toucher au menu
+    // Menu admin : boutons <button class="nav-item"> dans .sidebar-nav → la ligne est ajoutée en dernier
+    menuAnchorAdmin: { selector: ".sidebar-nav button.nav-item", last: true },
     menuLabel: "Comment ça marche",
     menuIcon: "❓",
     toast: { text: "❓ Nouveau ? Touchez pour découvrir comment ça marche", delayMs: 1500, durationMs: 15000, oncePerSession: true },
@@ -189,20 +191,22 @@
 
   /* ---------- Ligne du menu latéral ---------- */
   function addMenuLine() {
-    var a = CONFIG.menuAnchor;
+    var a = isAdminPage ? CONFIG.menuAnchorAdmin : CONFIG.menuAnchor;
     if (!a) return false;
     var links = document.querySelectorAll(a.selector || "a");
     var target = null;
     for (var i = 0; i < links.length; i++) {
       var l = links[i];
       if (l.closest && l.closest("#gw-ov")) continue;
+      if (l.id === "gw-menu") continue;
       var okText = a.textRegex ? a.textRegex.test(l.textContent || "") : true;
       var okHref = a.hrefContains ? (l.getAttribute("href") || "").indexOf(a.hrefContains) > -1 : true;
-      if (okText && okHref) { target = l; break; }
+      if (okText && okHref) { target = l; if (!a.last) break; }
     }
     if (!target || document.getElementById("gw-menu")) return !!target;
     var line = target.cloneNode(false);
     line.removeAttribute("onclick");
+    line.classList.remove("active");
     line.id = "gw-menu";
     if (line.tagName === "A") line.href = "#";
     var ico = target.querySelector('[class*="ico"]');
@@ -210,13 +214,20 @@
       var si = ico.cloneNode(false);
       si.textContent = CONFIG.menuIcon;
       line.appendChild(si);
-      line.appendChild(document.createTextNode(CONFIG.menuLabel));
+      var lab = ico.nextElementSibling ? ico.nextElementSibling.cloneNode(false) : null;
+      if (lab) { lab.textContent = CONFIG.menuLabel; line.appendChild(lab); }
+      else line.appendChild(document.createTextNode(CONFIG.menuLabel));
     } else {
       line.textContent = CONFIG.menuIcon + " " + CONFIG.menuLabel;
     }
     line.onclick = function (e) {
       e.preventDefault();
+      e.stopPropagation();
       try { if (typeof window.closeMenu === "function") window.closeMenu(); } catch (x) {}
+      try { // menu latéral de la page admin (mobile)
+        var sb = document.getElementById("sidebar"); if (sb) sb.classList.remove("open");
+        var so = document.getElementById("sidebar-overlay"); if (so) so.classList.remove("open");
+      } catch (x) {}
       open();
     };
     var holder = target.parentNode && target.parentNode.tagName === "LI" ? target.parentNode : target;
@@ -251,13 +262,9 @@
   function init() {
     injectCss();
     detectFirebaseUser();
-    if (isAdminPage) {
+    if (isAdminPage || isHome) {
       showToast();
-      if (CONFIG.fab.showOnAdmin) addFab();
-      return;
-    }
-    if (isHome) {
-      showToast();
+      if (isAdminPage && CONFIG.fab.showOnAdmin) addFab();
       // menu latéral : souvent construit ou rouvert après le chargement → on surveille la page
       addMenuLine();
       var timer = null;
