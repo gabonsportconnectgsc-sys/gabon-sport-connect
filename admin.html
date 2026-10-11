@@ -1675,8 +1675,7 @@ tr.is-demo-row td { opacity: .82; }
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════
-     CONTRÔLEUR ADMIN STRUCTURES (à ajouter avant fermeture <script src="guide-widget.js" defer></script>
-</body>,
+     CONTRÔLEUR ADMIN STRUCTURES (à ajouter avant fermeture </body>,
      APRÈS le chargement de structures-manager.js et des modules
      compliance/infrastructures/archiving)
      ══════════════════════════════════════════════════════════════════ -->
@@ -3115,8 +3114,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div style="font-size:12px;color:#64748b;margin-bottom:16px;">${ROLE_LABELS_QR[role] || role}</div>
         <img src="${canvas.dataset.qrImgUrl}" style="width:220px;height:220px;">
         <div style="font-family:monospace;font-weight:700;color:#009E60;margin-top:14px;letter-spacing:.8px;">${gscId}</div>
-      <script src="guide-widget.js" defer></script>
-</body></html>`);
+      </body></html>`);
       w.document.close();
       setTimeout(() => w.print(), 300);
     };
@@ -4462,8 +4460,7 @@ document.addEventListener('DOMContentLoaded', function(){
         table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ccc;padding:6px 8px;font-size:12px;text-align:left;}
         .meta{color:#666;font-size:12px;margin-bottom:16px;}
       </style></head><body>${bodyHtml}
-      <script>window.onload=function(){window.print();}<\/script><script src="guide-widget.js" defer></script>
-</body></html>`);
+      <script>window.onload=function(){window.print();}<\/script></body></html>`);
     w.document.close();
   }
 

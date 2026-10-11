@@ -15,12 +15,13 @@
    on passe en stratégie "network-first / stale-while-revalidate" pour les
    fichiers JS/CSS de l'app (voir plus bas) afin que ce problème ne se
    reproduise plus à chaque futur correctif. */
-const CACHE_NAME = 'gsc-v8';
+const CACHE_NAME = 'gsc-v9';
 // ── NOUVEAU — cache dédié au Web Share Target (POST), voir handleShareTarget()
 // et le handler 'fetch' plus bas. Séparé de CACHE_NAME pour ne jamais être
 // purgé par la logique de versioning de l'app (activate ci-dessous).
 const SHARE_CACHE = 'gsc-share-target-v1';
 const URLS_TO_CACHE = [
+  './guide-widget.js',
   './',
   './index.html',
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap',
