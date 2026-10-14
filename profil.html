@@ -1181,7 +1181,14 @@
       let tries = 0;
       while (!db && tries < 25) { await new Promise(r => setTimeout(r, 200)); tries++; }
       if (!db || !_getDoc || !_doc) throw new Error("Firestore non disponible pour le moment.");
-      const snap = await _getDoc(_doc(db, 'users', uid));
+      const __s0 = await _getDoc(_doc(db, 'users', uid));
+      /*gsc-prefill*/const snap = await (async () => {
+        if (!__s0.exists()) return __s0;
+        const d = { ...__s0.data() };
+        try { for (const n of ['contact','sensible']) { const x = await _getDoc(_doc(db,'users',uid,'private',n)); if (!x.exists()) continue; const v = x.data(); for (const k of ['telephone', 'whatsapp', 'dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph', 'presidentTelephone']) { if (v[k] === undefined) continue; if (k === 'presidentTelephone') d.gouvernance = { ...(d.gouvernance || {}), presidentTelephone: v[k] }; else d[k] = v[k]; } } }
+        catch (e) { console.warn('prefill private illisible', e); }
+        return { exists: () => true, data: () => d, id: __s0.id, ref: __s0.ref };
+      })();
       if (!snap.exists()) {
         document.getElementById('perror-msg').textContent = "Aucune fiche trouvée pour votre compte. Contactez l'administration si vous pensez qu'il s'agit d'une erreur.";
         show('perror');
@@ -1206,7 +1213,7 @@
     // clubValidation, role, accountType, createdAt…), contrairement à une
     // écriture complète qui écraserait tout le document.
     /*gsc-sens-profil*/
-    const __C=['telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={};
+    const __C=['telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={}; /*gsc-pres*/ __C.push('presidentTelephone');
     const __ok=v=>v!==undefined&&v!==null&&v!=='';
     for(const k of __C){ if(__ok(__pub[k])) __cont[k]=__pub[k]; delete __pub[k]; }
     for(const k of __S){ if(__ok(__pub[k])) __sens[k]=__pub[k]; delete __pub[k]; }
@@ -1405,7 +1412,7 @@
         }),
         ...(isOrgRole && {
           sigle: orgSigle, slogan: orgSlogan, dateCreation: orgDateCreation,
-          gouvernance: { president: orgPresident, presidentTelephone: orgPresidentTel },
+          gouvernance: { president: orgPresident }, presidentTelephone: orgPresidentTel,
           effectifTotal: orgEffectif, categoriesEncadrees: orgCategories,
           siegeSocial: orgSiege,
           geoloc: (orgGeolocLat && orgGeolocLng) ? { lat: Number(orgGeolocLat), lng: Number(orgGeolocLng) } : null,

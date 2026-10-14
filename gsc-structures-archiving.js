@@ -82,8 +82,8 @@
           role: player.role,
           sport: player.sport || '',
           club: player.club,
-          email: player.email,
-          telephone: player.telephone,
+          ...(player.email ? { email: player.email } : {}), /*gsc-arch*/
+          ...(player.telephone ? { telephone: player.telephone } : {}),
           stats: {
             matchsJoues: player.matchsJoues,
             buts: player.buts,

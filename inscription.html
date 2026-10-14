@@ -1227,7 +1227,7 @@
     // réseau...), l'erreur remonte à l'appelant (submitVisiteur/submitActeur) pour
     // empêcher l'affichage de l'écran de succès tant que le profil n'est pas confirmé.
     /*gsc-sens-split*/
-    const __C=['email', 'telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={};
+    const __C=['email', 'telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={}; /*gsc-pres*/ __C.push('presidentTelephone');
     for(const k of __C){ if(k!=='email'&&__pub[k]!==undefined){ __cont[k]=__pub[k]; } delete __pub[k]; }
     for(const k of __S){ if(__pub[k]!==undefined){ __sens[k]=__pub[k]; } delete __pub[k]; }
     if(__sens.dateNaissance){ const y=parseInt(String(__sens.dateNaissance).slice(0,4),10); if(y>1900&&y<2100) __pub.anneeNaissance=y; }
@@ -1516,7 +1516,7 @@
           // Champs enrichis structure — club/fédération/association/organisateur (vides pour les autres rôles)
           ...(isOrgRole && {
             sigle: orgSigle, slogan: orgSlogan, dateCreation: orgDateCreation,
-            gouvernance: { president: orgPresident, presidentTelephone: orgPresidentTel },
+            gouvernance: { president: orgPresident }, presidentTelephone: orgPresidentTel,
             effectifTotal: orgEffectif, categoriesEncadrees: orgCategories,
             siegeSocial: orgSiege,
             geoloc: (orgGeolocLat && orgGeolocLng) ? { lat: Number(orgGeolocLat), lng: Number(orgGeolocLng) } : null,
