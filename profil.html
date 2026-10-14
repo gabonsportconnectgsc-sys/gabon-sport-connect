@@ -1218,6 +1218,7 @@
     for(const k of __C){ if(__ok(__pub[k])) __cont[k]=__pub[k]; delete __pub[k]; }
     for(const k of __S){ if(__ok(__pub[k])) __sens[k]=__pub[k]; delete __pub[k]; }
     if(__sens.dateNaissance){ const y=parseInt(String(__sens.dateNaissance).slice(0,4),10); if(y>1900&&y<2100) __pub.anneeNaissance=y; }
+    /*gsc-hash*/ if(__cont.telephone){ const __hn=String(__cont.telephone).replace(/[^\d+]/g,''); __pub.telephoneHash=(__hn&&window.crypto?.subtle)?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(__hn)))).map(x=>x.toString(16).padStart(2,'0')).join(''):''; }
     await _setDoc(_doc(db, 'users', uid), __pub, { merge: true });
     try {
       if (profile.telephone !== undefined) {
@@ -1358,7 +1359,7 @@
     }
     if (tel) {
       try {
-        const telSnap = await _getDocs(_query(_collection(db,'users'), _where('telephone','==',tel)));
+        const __hn=String(tel||'').replace(/[^\d+]/g,''); const __h=(__hn&&window.crypto?.subtle)?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(__hn)))).map(x=>x.toString(16).padStart(2,'0')).join(''):''; const telSnap = __h ? await _getDocs(_query(_collection(db,'users'), _where('telephoneHash','==',__h))) : { empty: true, docs: [] };
         const conflict = telSnap.docs.some(d => d.id !== currentUid);
         if (conflict) { errMsg('a-err','Ce numéro de téléphone est déjà utilisé par un autre compte.'); return; }
       } catch(e) { console.warn('Vérification téléphone:', e); }
