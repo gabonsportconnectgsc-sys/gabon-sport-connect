@@ -1,0 +1,51 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() { return request.auth != null; }
+
+    function isAdmin() {
+      return signedIn() && (
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)) ||
+        (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function ownsStructure(sid) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.structureId == sid;
+    }
+
+    function validFile(maxMb) {
+      return request.resource.size < maxMb * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf|application/msword|application/vnd\\..*');
+    }
+
+    // Images du theme du site : lecture publique, ecriture admin
+    match /theme-images/{file} {
+      allow read: if true;
+      allow write: if isAdmin() && validFile(5);
+      allow delete: if isAdmin();
+    }
+
+    // Modeles GED : lecture connectee, ecriture admin
+    match /ged-modeles/{entryId}/{file} {
+      allow read: if signedIn();
+      allow write: if isAdmin() && validFile(10);
+      allow delete: if isAdmin();
+    }
+
+    // Fichiers d'une structure (infrastructures, GED) : admin ou structure rattachee
+    match /structures/{structureId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if (isAdmin() || ownsStructure(structureId)) && validFile(10);
+      allow delete: if isAdmin() || ownsStructure(structureId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
