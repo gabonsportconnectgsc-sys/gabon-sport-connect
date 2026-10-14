@@ -33,6 +33,19 @@
      réplique ici exactement le même schéma pour rester cohérent partout.
   ────────────────────────────────────────────────────────────────────────── */
   async function syncStatusToBothLocations(docRef, updates) {
+    /*gsc-sens-admin*/
+    const __SK = ['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'];
+    const __sens = {}, __rest = {};
+    for (const k in updates) { if (__SK.includes(k)) __sens[k] = updates[k]; else __rest[k] = updates[k]; }
+    if (Object.keys(__sens).length) {
+      const __D = window.firebase.firestore.FieldValue.delete();
+      const __rootDel = {}; for (const k in __sens) __rootDel[k] = __D;
+      const __b = window.db.batch();
+      __b.update(docRef, { ...__rest, ...__rootDel, updatedAt: new Date() });
+      __b.set(docRef.collection('private').doc('sensible'), { ...__sens, updatedAt: new Date() }, { merge: true });
+      if ('status' in __rest) __b.set(docRef.collection('private').doc('contact'), { status: __rest.status, updatedAt: new Date() }, { merge: true });
+      return __b.commit();
+    }
     // Si pas de status dans les updates, écrire normalement
     if (!('status' in updates)) {
       return docRef.update(updates);
