@@ -4088,7 +4088,7 @@ async function onSupabaseSignedIn(user, extra){
       // on fusionne (merge) au lieu de remplacer intégralement le document.
       if(db && typeof setDoc==='function'){
         await ensureFirebaseAuthViaSupabase();
-        await setDoc(doc(db,'users',user.id), userProfile, wasLoadError ? {merge:true} : undefined);
+        await setDoc(doc(db,'users',user.id), (function(p){/*gsc-strip*/const o={...p};for(const k of ['email', 'telephone', 'whatsapp', 'dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph']) delete o[k];return o;})(userProfile), wasLoadError ? {merge:true} : undefined);
         await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
         try { localStorage.removeItem('gsc_pending_profile_'+user.id); } catch(e){}
       }

@@ -116,6 +116,23 @@
     }
     return window.db.collection(path).where(field, op, value).onSnapshot(onNext, onErr);
   }
+  /*gsc-wa-priv*/
+  let _privPhones = {}, _privLoaded = false;
+  function phoneOf(u) { const id = u && (u.id || u.uid); return String((id && _privPhones[id]) || (u && u.telephone) || '').trim(); }
+  async function loadPrivPhones() {
+    try {
+      if (!window.db || typeof window.db.collectionGroup !== 'function') return;
+      await withAuth(async () => {
+        const snap = await window.db.collectionGroup('private').get();
+        const m = {};
+        snap.docs.forEach(d => { if (d.id !== 'contact') return; const uid = d.ref.parent.parent && d.ref.parent.parent.id; const t = d.data().telephone; if (uid && t) m[uid] = t; });
+        _privPhones = m;
+      });
+      const todo = getUsers().filter(u => u.whatsappPublic === true && !u.whatsappPublicNumero && phoneOf(u));
+      for (const u of todo) { try { await fsUpdateDoc('users', u.id || u.uid, { whatsappPublicNumero: phoneOf(u) }); } catch (e) { console.warn('[GSCWhatsApp] numero public', e); } }
+      if (typeof renderActeurs === 'function' && document.getElementById(SECTION_ID)?.classList.contains('active') && _activeTab === 'acteurs') renderActeurs();
+    } catch (e) { console.warn('[GSCWhatsApp] telephones prives illisibles', e); }
+  }
   async function fsUpdateDoc(path, id, data) {
     return withAuth(() => fsIsModular()
       ? window.updateDoc(window.doc(window.db, path, id), data)
@@ -344,7 +361,7 @@
       .filter(u => !isRoleFilter || u.role === roleFilter)
       .filter(u => !q || actorName(u).toLowerCase().includes(q) || roleLabel(u.role).toLowerCase().includes(q))
       .map(u => ({
-        nom: actorName(u), sousTitre: roleLabel(u.role), link: waLinkRaw(u.telephone, ''), ordre: 500
+        nom: actorName(u), sousTitre: roleLabel(u.role), link: waLinkRaw(u.whatsappPublicNumero || u.telephone, ''), ordre: 500
       }));
 
     const rows = [...manualRows, ...actorRows].sort((a, b) => a.ordre - b.ordre);
@@ -563,6 +580,7 @@
   let _activeTab = 'acteurs';
 
   function getUsers() {
+    if (!_privLoaded) { _privLoaded = true; loadPrivPhones(); }
     if (window.realtimeSync && typeof window.realtimeSync.getCache === 'function') {
       const cached = window.realtimeSync.getCache('users');
       if (cached && cached.length) return cached;
@@ -697,7 +715,7 @@
     if (!roles.length) { wrap.innerHTML = '<div class="gsc-wa-empty">Aucun acteur trouvé.</div>'; return; }
 
     wrap.innerHTML = roles.map(r => {
-      const list = byRole[r].filter(u => !!(u.telephone || '').trim());
+      const list = byRole[r].filter(u => !!phoneOf(u));
       const activeCount = list.filter(u => u.whatsappPublic === true).length;
       return `
         <div class="gsc-wa-group-head">
@@ -708,12 +726,12 @@
           </span>
         </div>
         ${byRole[r].map(u => {
-          const hasPhone = !!(u.telephone || '').trim();
+          const hasPhone = !!phoneOf(u);
           return `
           <div class="gsc-wa-actor-row">
             <div>
               <div class="gsc-wa-actor-name">${esc(actorName(u))}</div>
-              <div class="gsc-wa-actor-sub">${esc(u.telephone || 'Aucun téléphone enregistré')}${u.sport ? ' · ' + esc(u.sport) : ''}</div>
+              <div class="gsc-wa-actor-sub">${esc(phoneOf(u) || 'Aucun téléphone enregistré')}${u.sport ? ' · ' + esc(u.sport) : ''}</div>
             </div>
             <label class="gsc-wa-toggle" style="${hasPhone ? '' : 'opacity:.4;cursor:not-allowed;'}">
               <input type="checkbox" ${u.whatsappPublic === true ? 'checked' : ''} ${hasPhone ? '' : 'disabled'}
@@ -729,7 +747,8 @@
   async function toggleActor(uid, value) {
     if (!window.db || !uid) return;
     try {
-      await fsUpdateDoc('users', uid, { whatsappPublic: value });
+      const __p = phoneOf(getUsers().find(x => (x.id || x.uid) === uid)); if (value && !__p) { alert('Numéro introuvable, réessayez dans un instant.'); return; }
+      await fsUpdateDoc('users', uid, { whatsappPublic: value, whatsappPublicNumero: value ? __p : '' });
     } catch (err) {
       console.error('[GSCWhatsApp] toggleActor erreur:', err);
       alert('Erreur : ' + (err.message || err));
@@ -737,13 +756,13 @@
   }
 
   async function toggleRole(role, value) {
-    const users = getUsers().filter(u => (u.role || 'autre') === role && !!(u.telephone || '').trim());
+    const users = getUsers().filter(u => (u.role || 'autre') === role && !!phoneOf(u));
     if (!users.length) return;
     if (!confirm(`${value ? 'Activer' : 'Désactiver'} l'affichage WhatsApp public pour les ${users.length} acteur(s) "${roleLabel(role)}" ?`)) return;
     if (!window.db) return;
     let ok = 0, fail = 0;
     for (const u of users) {
-      try { await fsUpdateDoc('users', u.id || u.uid, { whatsappPublic: value }); ok++; }
+      try { await fsUpdateDoc('users', u.id || u.uid, { whatsappPublic: value, whatsappPublicNumero: value ? phoneOf(u) : '' }); ok++; }
       catch (err) { console.error('[GSCWhatsApp] toggleRole erreur pour', u.id, err); fail++; }
     }
     alert(fail ? `${ok} mis à jour, ${fail} échec(s).` : `${ok} acteur(s) mis à jour.`);
@@ -1095,7 +1114,7 @@
     else if (scope === 'discipline') matched = users.filter(u => (u.sport || '').toLowerCase() === scopeValue);
     else if (scope === 'individu') matched = users.filter(u => actorName(u).toLowerCase() === scopeValue || actorName(u).toLowerCase().includes(scopeValue));
 
-    const withPhone = matched.filter(u => !!(u.telephone || '').trim());
+    const withPhone = matched.filter(u => !!phoneOf(u));
     const withEmail = matched.filter(u => !!(u.email || '').trim());
 
     const resWrap = document.getElementById('gsc-wa-d-results');
@@ -1107,7 +1126,7 @@
     // Liens WhatsApp — un par destinataire (ouverture manuelle, une fenêtre ne
     // peut pas envoyer à plusieurs numéros à la fois via wa.me).
     const waRowsHtml = withPhone.map(u => {
-      const link = waLinkRaw(u.telephone, applyPlaceholders(waText, u));
+      const link = waLinkRaw(phoneOf(u), applyPlaceholders(waText, u));
       return `<div class="gsc-wa-send-row">
         <span>${esc(actorName(u))} <span style="color:var(--gray-txt);">(${esc(roleLabel(u.role))})</span></span>
         ${link ? `<a class="gsc-wa-row-btn" href="${esc(link)}" target="_blank" rel="noopener">💬 Envoyer</a>` : '<span style="color:var(--gray-txt);">Numéro invalide</span>'}
