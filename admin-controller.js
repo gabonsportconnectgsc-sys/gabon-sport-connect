@@ -159,6 +159,15 @@
   }
 
   let users = [], matchs = [];
+  /*gsc-merge-priv*/
+  let __rawUsers = [];
+  const __PRIV_KEYS = ['email', 'telephone', 'whatsapp', 'dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph', 'presidentTelephone'];
+  function __mergePriv(arr) {
+    const rows = (window.realtimeSync && window.realtimeSync.getCache && window.realtimeSync.getCache('users_private')) || [];
+    const m = new Map();
+    rows.forEach(r => { if (!r.uid) return; const o = m.get(r.uid) || {}; for (const k of __PRIV_KEYS) { if (r[k] !== undefined && r[k] !== null && r[k] !== '') o[k] = r[k]; } m.set(r.uid, o); });
+    return arr.map(u => { const p = m.get(u.uid || u.id); if (!p) return u; const o = { ...u }; for (const k in p) { if (k === 'presidentTelephone') o.gouvernance = { ...(o.gouvernance || {}), presidentTelephone: p[k] }; else o[k] = p[k]; } return o; });
+  }
   let realUsers = [];
   let sites = [], actualites = [];
   let currentSiteId = null;
@@ -2371,8 +2380,9 @@
     renderDashboard();
 
     window.realtimeSync.onUpdate('users', (data) => {
-      realUsers = data;
-      users = mergeWithDemo(data);
+      __rawUsers = data; realUsers = __mergePriv(data);
+      users = mergeWithDemo(realUsers);
+      if (!window.__gscPrivSub) { window.__gscPrivSub = true; window.realtimeSync.onUpdate('users_private', () => { realUsers = __mergePriv(__rawUsers); users = mergeWithDemo(realUsers); renderDashboard(); }); }
       renderDashboard();
       renderResetRoleChips();
       const active = document.querySelector('.section.active');
