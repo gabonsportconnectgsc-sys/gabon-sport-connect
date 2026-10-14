@@ -1205,7 +1205,13 @@
     // merge:true — ne touche jamais aux champs gérés ailleurs (status, gscId,
     // clubValidation, role, accountType, createdAt…), contrairement à une
     // écriture complète qui écraserait tout le document.
-    await _setDoc(_doc(db, 'users', uid), profile, { merge: true });
+    /*gsc-sens-profil*/
+    const __C=['telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={};
+    const __ok=v=>v!==undefined&&v!==null&&v!=='';
+    for(const k of __C){ if(__ok(__pub[k])) __cont[k]=__pub[k]; delete __pub[k]; }
+    for(const k of __S){ if(__ok(__pub[k])) __sens[k]=__pub[k]; delete __pub[k]; }
+    if(__sens.dateNaissance){ const y=parseInt(String(__sens.dateNaissance).slice(0,4),10); if(y>1900&&y<2100) __pub.anneeNaissance=y; }
+    await _setDoc(_doc(db, 'users', uid), __pub, { merge: true });
     try {
       if (profile.telephone !== undefined) {
         await _setDoc(_doc(db, 'users', uid, 'private', 'contact'), {
@@ -1214,6 +1220,11 @@
         }, { merge: true });
       }
     } catch(e) { console.warn('Firestore private save failed:', e); }
+    try {
+      const __ts = _serverTimestamp ? _serverTimestamp() : new Date();
+      if (Object.keys(__cont).length) await _setDoc(_doc(db, 'users', uid, 'private', 'contact'), { ...__cont, updatedAt: __ts }, { merge: true });
+      if (Object.keys(__sens).length) await _setDoc(_doc(db, 'users', uid, 'private', 'sensible'), { ...__sens, updatedAt: __ts }, { merge: true });
+    } catch(e) { console.warn('Firestore private/sensible save failed:', e); }
   }
 
   async function saveProfileEdits() {
