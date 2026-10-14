@@ -4605,6 +4605,7 @@ async function loadUserProfile(uid){
     const priv=await getPrivateContact(uid);
     userProfile.email = priv?.email ?? userProfile.email ?? currentUser?.email ?? '';
     userProfile.telephone = priv?.telephone ?? userProfile.telephone ?? '';
+    /*gsc-sens-index*/try{ const __sn=await getDoc(doc(db,'users',uid,'private','sensible')); if(__sn.exists()){ const __sd=__sn.data(); for(const __k of ['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph']){ if(__sd[__k]!==undefined) userProfile[__k]=__sd[__k]; } } }catch(e){ console.warn('private/sensible illisible',e); }
   }catch(e){
     userProfile.email = userProfile.email ?? currentUser?.email ?? '';
   }
@@ -5160,7 +5161,7 @@ function openActorDetail(uid){
       html+=`<div class="adm-stats-grid">`;
       if(a.taille) html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.taille)}</div><div class="adm-stat-lbl">Taille cm</div></div>`;
       if(a.poids) html+=`<div class="adm-stat"><div class="adm-stat-val">${esc(a.poids)}</div><div class="adm-stat-lbl">Poids kg</div></div>`;
-      if(a.dateNaissance){const age=new Date().getFullYear()-new Date(a.dateNaissance).getFullYear();html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
+      if(a.anneeNaissance||a.dateNaissance){const age=new Date().getFullYear()-(a.anneeNaissance||new Date(a.dateNaissance).getFullYear());html+=`<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">Âge</div></div>`;}
       html+=`</div></div>`;
     }
     // Stats
@@ -5372,8 +5373,8 @@ function renderProfile(){
   if(isPersonnel){
     document.getElementById('prof-taille').textContent=p.taille||'—';
     document.getElementById('prof-poids').textContent=p.poids||'—';
-    if(p.dateNaissance){
-      const age=new Date().getFullYear()-new Date(p.dateNaissance).getFullYear();
+    if(p.anneeNaissance||p.dateNaissance){
+      const age=new Date().getFullYear()-(p.anneeNaissance||new Date(p.dateNaissance).getFullYear());
       document.getElementById('prof-age').textContent=age;
     } else document.getElementById('prof-age').textContent='—';
     document.getElementById('prof-pied').textContent=p.pied||'—';
@@ -5936,9 +5937,10 @@ async function saveProfile(){
   }
   try{
     await safeFirestoreUpdate(
-      () => updateDoc(doc(db,'users',currentUser.uid),updates),
+      () => updateDoc(doc(db,'users',currentUser.uid),(function(u){const o={...u},sn={};for(const k of ['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph']){ if(k in o){ sn[k]=o[k]; delete o[k]; } } if(sn.dateNaissance!==undefined){ const y=parseInt(String(sn.dateNaissance).slice(0,4),10); if(y>1900&&y<2100) o.anneeNaissance=y; } window.__gscSens=sn; return o;})(updates)),
       'Sauvegarde profil utilisateur'
     );
+    try{ if(window.__gscSens&&Object.keys(window.__gscSens).length){ await setDoc(doc(db,'users',currentUser.uid,'private','sensible'),{...window.__gscSens,updatedAt:serverTimestamp()},{merge:true}); } }catch(e){ console.warn('Sauvegarde private/sensible:',e); }
     try{ await setPrivateContact(currentUser.uid,{telephone:telephoneVal,updatedAt:serverTimestamp()}); }
     catch(e){ console.warn('Sauvegarde téléphone (private/contact):',e); }
     Object.assign(userProfile,updates);
@@ -6645,13 +6647,13 @@ async function loadAdminUsers(){
         const privSnap=await getDocs(collectionGroup(db,'private'));
         const privByUid={};
         privSnap.docs.forEach(d=>{
-          if(d.id!=='contact') return;
+          if(d.id!=='contact' && d.id!=='sensible') return;
           const uid=d.ref.parent.parent?.id;
-          if(uid) privByUid[uid]=d.data();
+          if(uid) privByUid[uid]={...(privByUid[uid]||{}),...d.data()};
         });
         allAdminUsers.forEach(u=>{
           const priv=privByUid[u.uid||u.id];
-          if(priv){ u.email=priv.email||''; u.telephone=priv.telephone||''; }
+          if(priv){ u.email=priv.email??u.email??''; u.telephone=priv.telephone??u.telephone??''; ['whatsapp','dateNaissance','handicapCategorie','handicapPrecision','carteInvalidite','besoinGuide','nomGuide','licenceFegoph'].forEach(k=>{ if(priv[k]!==undefined) u[k]=priv[k]; }); }
         });
       }
     }catch(e){ console.warn('Lecture private/contact (admin):',e); }
@@ -8698,8 +8700,8 @@ function togglePoste(btn){
 window.togglePoste = togglePoste;
 
 function getActorAge(a){
-  if(!a.dateNaissance) return null;
-  return new Date().getFullYear() - new Date(a.dateNaissance).getFullYear();
+  if(!(a.anneeNaissance||a.dateNaissance)) return null;
+  return new Date().getFullYear() - (a.anneeNaissance||new Date(a.dateNaissance).getFullYear());
 }
 function getActorAttrs(a){
   const attrs = new Set();

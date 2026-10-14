@@ -148,6 +148,14 @@
     document.getElementById('pe-ville').value = u.ville || '';
     document.getElementById('pe-sport').value = u.sport || u.discipline || '';
     document.getElementById('pe-telephone').value = u.telephone || u.phone || '';
+    window.__peContactReady = false;
+    window.db.collection('users').doc(uid).collection('private').doc('contact').get().then(function(d){
+      if (_editingUid !== uid) return;
+      var c = d.exists ? d.data() : {};
+      var set = function(id,v){ var el=document.getElementById(id); if(el && v!==undefined && v!==null) el.value=v; };
+      set('pe-telephone', c.telephone); set('pe-org-whatsapp', c.whatsapp); set('pe-org-president-tel', c.presidentTelephone);
+      window.__peContactReady = true;
+    }).catch(function(e){ console.warn('contact prive illisible', e); });
     document.getElementById('pe-status').value = (u.status === 'hidden') ? 'hidden' : 'active';
     document.getElementById('pe-nationalite').value = u.nationalite || '';
     document.getElementById('pe-claimed').checked = !!u.claimed;
@@ -185,7 +193,7 @@
       nomOrganisation: document.getElementById('pe-nomOrg').value.trim(),
       ville: document.getElementById('pe-ville').value.trim(),
       sport: document.getElementById('pe-sport').value.trim(),
-      telephone: document.getElementById('pe-telephone').value.trim(),
+      
       nationalite: document.getElementById('pe-nationalite').value.trim(),
       status: document.getElementById('pe-status').value,
       updatedAt: new Date()
@@ -205,13 +213,13 @@
         dateCreation: document.getElementById('pe-org-datecreation').value,
         gouvernance: {
           president: document.getElementById('pe-org-president').value.trim(),
-          presidentTelephone: document.getElementById('pe-org-president-tel').value.trim()
+          
         },
         effectifTotal: document.getElementById('pe-org-effectif').value,
         categoriesEncadrees: document.getElementById('pe-org-categories').value.trim(),
         siegeSocial: document.getElementById('pe-org-siege').value.trim(),
         geoloc,
-        whatsapp: document.getElementById('pe-org-whatsapp').value.trim(),
+        
         infrastructures: document.getElementById('pe-org-infra').value.trim(),
         bio: document.getElementById('pe-org-bio').value.trim(),
         palmares: document.getElementById('pe-org-palmares').value.trim()
@@ -226,6 +234,10 @@
       // admin.html charge exclusivement le SDK compat — contrairement à index.html/
       // inscription.html qui utilisent le SDK modulaire v9. window.doc/window.updateDoc
       // (v9) n'existent jamais ici : d'où "window.doc is not a function".
+      if (window.__peContactReady !== true) { statusEl.textContent = '❌ Contact privé non chargé, réessayez.'; statusEl.className = 'gsc-pe-status err'; return; }
+      var _ct = { telephone: document.getElementById('pe-telephone').value.trim(), updatedAt: new Date() };
+      if (ORG_ROLES.includes(role)) { _ct.whatsapp = document.getElementById('pe-org-whatsapp').value.trim(); _ct.presidentTelephone = document.getElementById('pe-org-president-tel').value.trim(); }
+      await window.db.collection('users').doc(_editingUid).collection('private').doc('contact').set(_ct, { merge: true });
       await window.db.collection('users').doc(_editingUid).update(fields);
       statusEl.textContent = '✅ Profil mis à jour.';
       statusEl.className = 'gsc-pe-status ok';

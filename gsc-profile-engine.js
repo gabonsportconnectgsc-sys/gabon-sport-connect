@@ -310,8 +310,8 @@
 
   function readVal(profile, field) {
     if (field.derived && field.key === 'dateNaissance') {
-      if (!profile.dateNaissance) return '—';
-      const age = new Date().getFullYear() - new Date(profile.dateNaissance).getFullYear();
+      if(!(profile.anneeNaissance||profile.dateNaissance)) return '—';
+      const age = new Date().getFullYear() - (profile.anneeNaissance||new Date(profile.dateNaissance).getFullYear());
       return isNaN(age) ? '—' : age + ' ans';
     }
     const v = profile[field.key];
@@ -359,8 +359,8 @@
     if (tailleEl) tailleEl.textContent = p.taille || '—';
     if (poidsEl)  poidsEl.textContent  = p.poids || '—';
     if (ageEl) {
-      if (p.dateNaissance) {
-        const age = new Date().getFullYear() - new Date(p.dateNaissance).getFullYear();
+      if(p.anneeNaissance||p.dateNaissance) {
+        const age = new Date().getFullYear() - (p.anneeNaissance||new Date(p.dateNaissance).getFullYear());
         ageEl.textContent = isNaN(age) ? '—' : age;
       } else {
         ageEl.textContent = '—';
@@ -571,7 +571,7 @@
   function buildActorDetailPhysical(a, isVisitor) {
     if (isVisitor) return '';
 
-    const hasPhysical = a.taille || a.poids || a.dateNaissance;
+    const hasPhysical = a.taille || a.poids || a.anneeNaissance || a.dateNaissance;
     if (!hasPhysical) return '';
 
     const sport = a.sport || 'Football';
@@ -581,8 +581,8 @@
     if (a.taille) html += `<div class="adm-stat"><div class="adm-stat-val">${a.taille}</div><div class="adm-stat-lbl">📏 Taille cm</div></div>`;
     if (a.poids)  html += `<div class="adm-stat"><div class="adm-stat-val">${a.poids}</div><div class="adm-stat-lbl">⚖️ Poids kg</div></div>`;
 
-    if (a.dateNaissance) {
-      const age = new Date().getFullYear() - new Date(a.dateNaissance).getFullYear();
+    if(a.anneeNaissance||a.dateNaissance) {
+      const age = new Date().getFullYear() - (a.anneeNaissance||new Date(a.dateNaissance).getFullYear());
       if (!isNaN(age)) html += `<div class="adm-stat"><div class="adm-stat-val">${age}</div><div class="adm-stat-lbl">🎂 Âge</div></div>`;
     }
 

@@ -1226,7 +1226,12 @@
     // Écriture principale : plus jamais avalée. Si elle échoue (permission-denied,
     // réseau...), l'erreur remonte à l'appelant (submitVisiteur/submitActeur) pour
     // empêcher l'affichage de l'écran de succès tant que le profil n'est pas confirmé.
-    await _setDoc(_doc(db, 'users', uid), { uid, email, ...profile, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() });
+    /*gsc-sens-split*/
+    const __C=['email', 'telephone', 'whatsapp'],__S=['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph'],__pub={...profile},__cont={},__sens={};
+    for(const k of __C){ if(k!=='email'&&__pub[k]!==undefined){ __cont[k]=__pub[k]; } delete __pub[k]; }
+    for(const k of __S){ if(__pub[k]!==undefined){ __sens[k]=__pub[k]; } delete __pub[k]; }
+    if(__sens.dateNaissance){ const y=parseInt(String(__sens.dateNaissance).slice(0,4),10); if(y>1900&&y<2100) __pub.anneeNaissance=y; }
+    await _setDoc(_doc(db, 'users', uid), { uid, ...__pub, createdAt: _serverTimestamp ? _serverTimestamp() : new Date() });
 
     // ── Migration en douceur (étape 1/5 — sécurité) : miroir des champs
     // sensibles vers users/{uid}/private/contact (lecture restreinte au
@@ -1240,11 +1245,15 @@
       await _setDoc(_doc(db, 'users', uid, 'private', 'contact'), {
         email,
         ...(telephone !== undefined ? { telephone } : {}),
+        ...__cont,
         ...(status !== undefined ? { status } : {}),
         ...(clubValidation !== undefined ? { clubValidation } : {}),
         updatedAt: _serverTimestamp ? _serverTimestamp() : new Date()
       }, { merge: true });
     } catch(e) { console.warn('Firestore private save failed:', e); }
+    try {
+      if (Object.keys(__sens).length) await _setDoc(_doc(db, 'users', uid, 'private', 'sensible'), { ...__sens, updatedAt: _serverTimestamp ? _serverTimestamp() : new Date() }, { merge: true });
+    } catch(e) { console.warn('Firestore sensible save failed:', e); }
   }
 
   // ── INSCRIPTION VISITEUR ──

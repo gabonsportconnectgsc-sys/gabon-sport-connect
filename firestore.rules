@@ -65,8 +65,9 @@ service cloud.firestore {
 
       match /private/{doc} {
         allow read: if request.auth != null && (request.auth.uid == uid || isAdmin(request.auth.uid));
-        allow create: if request.auth != null && request.auth.uid == uid
-          && request.resource.data.status in ['pending', 'active'];
+        allow create: if request.auth != null && (
+          (request.auth.uid == uid && request.resource.data.status in ['pending', 'active'])
+          || isAdmin(request.auth.uid));
         allow update: if request.auth != null && (
           (request.auth.uid == uid
             && (!('status' in resource.data) || resource.data.status in ['active','pending'])
