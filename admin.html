@@ -3178,7 +3178,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const photoBox = document.getElementById('qrscan-result-photo');
     if (photoBox) {
       photoBox.innerHTML = user.photoURL || user.photo
-        ? `<img src="${user.photoURL || user.photo}" style="width:100%;height:100%;object-fit:cover;">`
+        ? `<img src="${String(user.photoURL || user.photo || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" style="width:100%;height:100%;object-fit:cover;">`
         : `<span>👤</span>`;
     }
     document.getElementById('qrscan-result').style.display = 'block';

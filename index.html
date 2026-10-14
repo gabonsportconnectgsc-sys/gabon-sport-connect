@@ -5466,8 +5466,8 @@ function buildEditForm(p){
   // Always: identité
   h+=`<div class="section-divider green">👤 Identité</div>`;
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div class="form-group"><label>Prénom</label><input type="text" id="edit-prenom" value="${p.prenom||''}" placeholder="Prénom"></div>
-    <div class="form-group"><label>Nom</label><input type="text" id="edit-nom" value="${p.nom||''}" placeholder="Nom"></div>
+    <div class="form-group"><label>Prénom</label><input type="text" id="edit-prenom" value="${esc(p.prenom)}" placeholder="Prénom"></div>
+    <div class="form-group"><label>Nom</label><input type="text" id="edit-nom" value="${esc(p.nom)}" placeholder="Nom"></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
     <div class="form-group"><label>Téléphone</label><input type="tel" id="edit-telephone" value="${p.telephone||''}" placeholder="+241…"></div>
@@ -5551,7 +5551,7 @@ function buildEditForm(p){
     if(!fedManaged){
       h+=`<div class="section-divider green">🏟️ Club & Mandats</div>`;
       h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>Club actuel</label><input type="text" id="edit-club" value="${p.club||''}" placeholder="Nom du club"></div>
+        <div class="form-group"><label>Club actuel</label><input type="text" id="edit-club" value="${esc(p.club)}" placeholder="Nom du club"></div>
         <div class="form-group"><label>Clubs précédents</label><input type="text" id="edit-clubs-prec" value="${p.clubsPrecedents||''}" placeholder="Club A, Club B…"></div>
       </div>`;
       // Mandats
@@ -5565,7 +5565,7 @@ function buildEditForm(p){
       h+=`<button class="btn-add-mandat" onclick="addMandatField()">+ Ajouter un mandat</button>`;
     } else {
       h+=`<div class="fed-notice">${p.editLocked&&p.ownershipStatus!=='owner_self'?`<span>🏢</span><span>Fiche gérée par ${p.ownerRef?.clubName||'votre club/employeur'}. Contactez-le pour toute modification.</span>`:`<span>🏛️</span><span>Club et mandats gérés par la Fédération. Contactez-les pour toute modification.</span>`}</div>`;
-      h+=`<input type="hidden" id="edit-club" value="${p.club||''}">`;
+      h+=`<input type="hidden" id="edit-club" value="${esc(p.club)}">`;
     }
 
     const BALL_TEAM_SPORTS=['Football','Basketball','Handball','Volleyball','Rugby'];
@@ -5766,7 +5766,7 @@ function buildEditForm(p){
 
   // Bio (tous)
   h+=`<div class="section-divider purple">📝 Présentation</div>`;
-  h+=`<div class="form-group"><label>Biographie / Présentation</label><textarea id="edit-bio" placeholder="${isOrg?'Présentation de l\'organisation…':'Votre parcours sportif, ambitions…'}">${p.bio||''}</textarea></div>`;
+  h+=`<div class="form-group"><label>Biographie / Présentation</label><textarea id="edit-bio" placeholder="${isOrg?'Présentation de l\'organisation…':'Votre parcours sportif, ambitions…'}">${esc(p.bio)}</textarea></div>`;
 
   h+=`<button class="btn-save" onclick="saveProfile()">💾 Enregistrer</button>`;
   body.innerHTML=h;
@@ -5778,7 +5778,7 @@ function mandatFieldHtml(m={},i=Date.now()){
   return `<div class="mandat-form-item" id="mandat-${i}">
     <button class="remove-mandat" onclick="removeMandatField('mandat-${i}')">✕</button>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="form-group"><label>Club</label><input type="text" class="mandat-club" value="${m.club||''}" placeholder="Club / Organisation"></div>
+      <div class="form-group"><label>Club</label><input type="text" class="mandat-club" value="${esc(m.club)}" placeholder="Club / Organisation"></div>
       <div class="form-group"><label>Poste</label><input type="text" class="mandat-poste" value="${m.poste||''}" placeholder="Poste occupé"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
