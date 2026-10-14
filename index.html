@@ -3254,6 +3254,11 @@ const ETABLISSEMENTS_GA=[
     const {getFirestore,doc,setDoc,getDoc,updateDoc,collection,
            addDoc,getDocs,query,orderBy,serverTimestamp,deleteDoc,where,limit,onSnapshot,collectionGroup} = fs;
     const app = initializeApp(FIREBASE_CONFIG);
+    /* App Check (Fraud Defense / reCAPTCHA Enterprise) - mode surveillance */
+    try{
+      const ac = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js");
+      window._appCheck = ac.initializeAppCheck(app, { provider: new ac.ReCaptchaEnterpriseProvider('6Le-IO8tAAAAAM1cFa1-bveDlz9B-mI4WnuGm6jm'), isTokenAutoRefreshEnabled: true });
+    }catch(e){ console.warn('[AppCheck] non initialise', e); }
     window._fbApp = app;
     window.db = getFirestore(app);
     // Expose Firestore functions as globals (app code uses them as bare names)
