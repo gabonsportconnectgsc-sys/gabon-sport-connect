@@ -4089,6 +4089,7 @@ async function onSupabaseSignedIn(user, extra){
       if(db && typeof setDoc==='function'){
         await ensureFirebaseAuthViaSupabase();
         await setDoc(doc(db,'users',user.id), (function(p){/*gsc-strip*/const o={...p};for(const k of ['email', 'telephone', 'whatsapp', 'dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph']) delete o[k];return o;})(userProfile), wasLoadError ? {merge:true} : undefined);
+        /*gsc-sens-signup*/try{ const __s={}; for(const __k of ['dateNaissance', 'handicapCategorie', 'handicapPrecision', 'carteInvalidite', 'besoinGuide', 'nomGuide', 'licenceFegoph']){ const __v=userProfile[__k]; if(__v!==undefined&&__v!==null&&__v!=='') __s[__k]=__v; } if(Object.keys(__s).length){ await setDoc(doc(db,'users',user.id,'private','sensible'),{...__s,updatedAt:serverTimestamp?serverTimestamp():new Date()},{merge:true}); const __y=parseInt(String(__s.dateNaissance||'').slice(0,4),10); if(__y>1900&&__y<2100){ userProfile.anneeNaissance=__y; await setDoc(doc(db,'users',user.id),{anneeNaissance:__y},{merge:true}); } } }catch(e){ console.warn('private/sensible (inscription):',e); }
         await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
         try { localStorage.removeItem('gsc_pending_profile_'+user.id); } catch(e){}
       }
