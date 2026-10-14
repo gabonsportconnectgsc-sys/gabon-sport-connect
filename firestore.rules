@@ -128,6 +128,10 @@ service cloud.firestore {
         (resource.data.recipientId == request.auth.uid || isAdmin(request.auth.uid));
     }
 
+    match /notif_state/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /notif_preferences/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }

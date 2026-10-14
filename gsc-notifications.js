@@ -550,7 +550,8 @@
   }
 
   function markAllRead(){
-    _notifications.forEach(n=>{ n.read=true; persistRead(n.id); });
+    _notifications.forEach(n=>{ n.read=true; });
+    saveNotifState({readBefore: Date.now()});
     updateBadge();
     renderList(_currentTab);
     updateZoneBadges();
@@ -567,9 +568,8 @@
 
   function clearAll(){
     if(!confirm('Vider toutes les notifications ?')) return;
-    const ids = _notifications.map(n=>n.id);
     _notifications = [];
-    ids.forEach(persistDismiss);
+    saveNotifState({clearedBefore: Date.now(), readBefore: Date.now()});
     updateBadge();
     renderList(_currentTab);
     updateZoneBadges();
@@ -934,6 +934,46 @@
   let _fsCore = [];   // docs recipientId in [uid, 'all']  — flux garanti
   let _fsRole = [];   // docs recipientId == 'role:xxx'    — flux best-effort
 
+  /* ETAT PAR COMPTE notif_state/{uid} : date de depart, lu et vider durables */
+  var _notifState = null, _notifStateUid = null, _notifStateUnsub = null, _notifSession = Date.now();
+  function _lsReads(){ try{ return JSON.parse(localStorage.getItem('gsc_notif_reads')||'[]'); }catch(e){ return []; } }
+  function applyNotifState(list){
+    if(!_notifState) return [];
+    var st = _notifState, reads = _lsReads(), out = [];
+    list.forEach(function(n){
+      var t = (typeof n.createdAt === 'number') ? n.createdAt : Date.now();
+      if(t <= (st.startAt||0)) return;
+      if(t <= (st.clearedBefore||0)) return;
+      if(n.read || t <= (st.readBefore||0) || reads.indexOf(n.id) !== -1) n.read = true;
+      out.push(n);
+    });
+    return out;
+  }
+  function saveNotifState(patch){
+    if(!_notifState) _notifState = {};
+    for(var k in patch){ _notifState[k] = patch[k]; }
+    var w = window, uid = _notifStateUid;
+    if(!w.db || !uid || typeof w.setDoc !== 'function' || typeof w.doc !== 'function') return;
+    try{ withAuth(function(){ return w.setDoc(w.doc(w.db,'notif_state',uid), patch, {merge:true}); }).catch(function(e){ console.warn('[GSCNotif] notif_state non enregistre', e); }); }catch(e){}
+  }
+  function startNotifState(uid){
+    if(_notifStateUnsub){ try{ _notifStateUnsub(); }catch(e){} _notifStateUnsub = null; }
+    _notifState = null; _notifStateUid = uid;
+    var w = window;
+    if(!w.db || !uid || typeof w.onSnapshot !== 'function' || typeof w.doc !== 'function'){ _notifState = {startAt:0}; return; }
+    try{
+      _notifStateUnsub = w.onSnapshot(w.doc(w.db,'notif_state',uid), function(snap){
+        var ex = (typeof snap.exists === 'function') ? snap.exists() : snap.exists;
+        if(!ex){ _notifState = {startAt: Date.now()}; saveNotifState({startAt: _notifState.startAt}); }
+        else { _notifState = snap.data() || {startAt:0}; }
+        mergeAndRender();
+      }, function(err){
+        console.warn('[GSCNotif] notif_state illisible (regles ?)', err);
+        _notifState = {startAt:0}; mergeAndRender();
+      });
+    }catch(e){ _notifState = {startAt:0}; }
+  }
+
   function mergeAndRender(){
     const prev = _notifications.length;
     const byId = new Map();
@@ -946,8 +986,9 @@
       if(n.createdAt?.seconds) n.createdAt = n.createdAt.seconds*1000;
     });
     /* Nouvelles notifications — toast seulement si je suis le destinataire (pas l'expéditeur) */
+    _notifications = applyNotifState(_notifications);
     if(_notifications.length > prev){
-      const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId);
+      const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId && (n.createdAt||0) > _notifSession);
       if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
     }
     updateBadge();
@@ -967,6 +1008,7 @@
       if(typeof onSnapshot !== 'function') return;
 
       _fsCore = []; _fsRole = [];
+      startNotifState(uid);
       const unsubs = [];
 
       /* ── FLUX PRINCIPAL — recipientId in [uid, 'all'] ──
@@ -1041,6 +1083,7 @@
   }
 
   function unsubscribeFirestore(){
+    if(_notifStateUnsub){ try{ _notifStateUnsub(); }catch(e){} _notifStateUnsub = null; } _notifState = null;
     if(_firestoreUnsub){ _firestoreUnsub(); _firestoreUnsub=null; }
   }
 
