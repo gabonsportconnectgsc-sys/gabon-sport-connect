@@ -49,7 +49,8 @@
 
   let _current = { enabled: false, icon: '🛠️', title: '', message: '', contacts: '' };
 
-  function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function jsa(s) { return esc(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r?\n/g, ' ')); }
   function nl2br(s) { return esc(s).replace(/\n/g, '<br>'); }
 
   /* ══════════════════════════════════════════════════════════════════

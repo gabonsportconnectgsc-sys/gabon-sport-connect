@@ -57,7 +57,8 @@
   const SUPABASE_STORAGE_KEY = 'sb-gsc-admin-auth';
   const GSC_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 
-  function esc(s) { return (s || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function jsa(s) { return esc(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r?\n/g, ' ')); }
 
   /* ══════════════════════════════════════════════════════════════════
    * 1. STYLES
@@ -249,21 +250,21 @@
           <td>
             <div class="gsc-acc-email-cell">
               <span>${esc(email || '—')}</span>
-              ${email ? `<span class="gsc-acc-copy" title="Copier l'email" onclick="GSCAccounts.copyToClipboard('${esc(email)}')">📋</span>` : ''}
+              ${email ? `<span class="gsc-acc-copy" title="Copier l'email" onclick="GSCAccounts.copyToClipboard('${jsa(email)}')">📋</span>` : ''}
             </div>
           </td>
           <td>
             <div class="gsc-acc-phone" id="phone-wrap-${esc(uid)}">
               <span class="gsc-acc-phone-view">${esc(phone || '—')}</span>
               <input type="tel" class="gsc-acc-phone-input" style="display:none;" value="${esc(phone)}" placeholder="+241...">
-              <button type="button" class="btn-sm" onclick="GSCAccounts.editPhone('${esc(uid)}')">✏️</button>
-              <button type="button" class="btn-sm gsc-acc-save" onclick="GSCAccounts.savePhone('${esc(uid)}')">💾</button>
+              <button type="button" class="btn-sm" onclick="GSCAccounts.editPhone('${jsa(uid)}')">✏️</button>
+              <button type="button" class="btn-sm gsc-acc-save" onclick="GSCAccounts.savePhone('${jsa(uid)}')">💾</button>
             </div>
             <div class="gsc-acc-status-msg" id="phone-status-${esc(uid)}"></div>
           </td>
           <td>${esc(status)}</td>
           <td>
-            <button type="button" class="btn-sm" onclick="GSCAccounts.resetPassword('${esc(uid)}','${esc(email)}','${esc(actorName(u, priv))}')">🔑 Réinitialiser</button>
+            <button type="button" class="btn-sm" onclick="GSCAccounts.resetPassword('${jsa(uid)}','${jsa(email)}','${jsa(actorName(u, priv))}')">🔑 Réinitialiser</button>
             <div class="gsc-acc-status-msg" id="reset-status-${esc(uid)}"></div>
           </td>
         </tr>`;
