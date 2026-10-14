@@ -12,7 +12,7 @@
     menuAnchorAdmin: { selector: ".sidebar-nav button.nav-item", last: true },
     menuLabel: "Comment ça marche",
     menuIcon: "❓",
-    toast: { text: "❓ Nouveau ? Touchez pour découvrir comment ça marche", delayMs: 1500, durationMs: 15000, oncePerSession: true },
+    toast: { text: "❓ Comment ça marche", delayMs: 1500, durationMs: 15000, oncePerSession: true },
     fab: { text: "❓ Guide", position: "bottom-right", showOnAdmin: false }, // bouton permanent désactivé partout
     color: "#0a7d3b",
     adminEmails: ["gabonsportconnectgsc@gmail.com"], // comptes qui voient le guide Administrateur
@@ -127,8 +127,8 @@
   function injectCss() {
     var s = el("style");
     s.textContent =
-      ".gw-toast{position:fixed;left:12px;right:12px;bottom:78px;max-width:420px;margin:0 auto;background:" + C + ";color:#fff;padding:12px 40px 12px 14px;border-radius:12px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:99998;cursor:pointer}" +
-      ".gw-x{position:absolute;right:8px;top:6px;background:none;border:0;color:#fff;font-size:18px;cursor:pointer}" +
+      ".gw-toast{position:fixed;left:0;right:0;bottom:78px;width:max-content;max-width:calc(100% - 24px);margin:0 auto;background:" + C + ";color:#fff;padding:8px 32px 8px 12px;border-radius:12px;font:13px/1.4 system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:99998;cursor:pointer}" +
+      ".gw-x{position:absolute;right:6px;top:3px;background:none;border:0;color:#fff;font-size:16px;cursor:pointer}" +
       ".gw-fab{position:fixed;bottom:16px;" + (CONFIG.fab.position.indexOf("left") > -1 ? "left" : "right") + ":14px;background:" + C + ";color:#fff;border:0;border-radius:24px;padding:12px 16px;font:600 14px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:99997;cursor:pointer}" +
       ".gw-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px}" +
       ".gw-box{--gw-c:" + C + ";background:rgba(255,255,255,.74);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.55);box-shadow:0 10px 40px rgba(0,0,0,.35);color:#1b1b1b;width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:16px;font:14px/1.45 system-ui,sans-serif}" +
