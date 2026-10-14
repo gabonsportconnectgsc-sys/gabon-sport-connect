@@ -20,6 +20,10 @@ jobs:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
 
+      - name: Check service account file
+        run: |
+          python3 -c "import json,os;d=json.load(open(os.environ['RUNNER_TEMP']+'/sa.json'));print(d.get('type'),d.get('client_email'),d.get('private_key_id','')[:8],len(d.get('private_key','')))"
+
       - name: Install Firebase Tools
         run: npm install -g firebase-tools
 
