@@ -8347,7 +8347,7 @@ function toggleDivClubs(sportId, ci, di) {
   }
   el.style.display = '';
   el.innerHTML = `<div class="clubs-grid-sport">${div.clubs_list.map(nom => `
-    <div class="club-sport-card" onclick="searchClubInAnnuaire('${nom}')">
+    <div class="club-sport-card" onclick="searchClubInAnnuaire('${nom.replace(/'/g,"\\'")}')">
       <img src="${sport.img}" alt="${nom}" onerror="this.src='${SPORT_IMG.club}'">
       <div>
         <div class="club-sport-name">${nom}</div>
