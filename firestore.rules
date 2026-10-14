@@ -58,6 +58,11 @@ service cloud.firestore {
       );
       allow delete: if request.auth != null && isAdmin(request.auth.uid);
 
+      match /private/sensible {
+        allow read, create, update: if request.auth != null
+          && (request.auth.uid == uid || isAdmin(request.auth.uid));
+      }
+
       match /private/{doc} {
         allow read: if request.auth != null && (request.auth.uid == uid || isAdmin(request.auth.uid));
         allow create: if request.auth != null && request.auth.uid == uid
@@ -70,6 +75,11 @@ service cloud.firestore {
         );
         allow delete: if request.auth != null && isAdmin(request.auth.uid);
       }
+    }
+
+    // Lecture admin des sous-documents private/* (requêtes collectionGroup)
+    match /{path=**}/private/{doc} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
     }
 
     match /clubValidationRequests/{uid} {
