@@ -559,8 +559,9 @@
 
   function dismiss(id, e){
     if(e){ e.stopPropagation(); }
+    var _dn = _notifications.find(x=>x.id===id);
     _notifications = _notifications.filter(x=>x.id!==id);
-    persistDismiss(id);
+    if(_dn && _dn.recipientId !== _currentUserId){ var d=(_notifState&&_notifState.dismissed)||[]; if(d.indexOf(id)===-1){ d=d.concat([id]).slice(-200); } saveNotifState({dismissed:d}); } else { persistDismiss(id); }
     updateBadge();
     renderList(_currentTab);
     updateZoneBadges();
@@ -944,6 +945,7 @@
       var t = (typeof n.createdAt === 'number') ? n.createdAt : Date.now();
       if(t <= (st.startAt||0)) return;
       if(t <= (st.clearedBefore||0)) return;
+      if(st.dismissed && st.dismissed.indexOf(n.id) !== -1) return;
       if(n.read || t <= (st.readBefore||0) || reads.indexOf(n.id) !== -1) n.read = true;
       out.push(n);
     });
