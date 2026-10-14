@@ -1,0 +1,10 @@
+# sécurité
+.env
+.env.*
+*.pem
+*.p12
+*.keystore
+serviceAccount*.json
+*-adminsdk-*.json
+node_modules/
+.firebase/
