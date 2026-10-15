@@ -1215,10 +1215,11 @@
 
   function isEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
-  function sbError(e) {
+  function __gscFixConfirmStep(){ if(window.__gscSess!==true) return; document.querySelectorAll('.ns').forEach(function(n){ if(/Confirmez votre email/i.test(n.textContent||'')) n.style.display='none'; }); }
+function sbError(e) {
     const m = (e && e.message) || '';
     if (/invalid login credentials/i.test(m)) return 'Email ou mot de passe incorrect.';
-    if (/user already registered/i.test(m)) return 'Un compte existe déjà avec cet email.';
+    if (/user already registered/i.test(m)) return 'Cette adresse e-mail est déjà utilisée. Connectez-vous, ou utilisez « Mot de passe oublié ».';
     if (/password should be at least/i.test(m)) return 'Le mot de passe doit contenir au moins 6 caractères.';
     if (/email not confirmed/i.test(m)) return 'Veuillez confirmer votre email avant de vous connecter.';
     if (/rate limit/i.test(m)) return 'Trop de tentatives. Réessayez dans quelques minutes.';
@@ -1288,9 +1289,7 @@
         email, password: pw,
         options: { data: { prenom, nom, role:'visiteur', sport, ville } }
       });
-      if (error) throw error;
-      // Sauvegarder profil Firestore
-      const uid = data.user?.id;
+      if (error) throw error; if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw new Error('user already registered'); window.__gscSess = !!(data && data.session); const uid = data.user?.id;
       if (uid) {
         try {
           const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport, ...(vPhotoURL && { photoURL: vPhotoURL }) };
@@ -1298,14 +1297,14 @@
           await saveProfile(uid, email, vProfile);
           try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
         } catch (saveErr) {
-          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr);
+          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr); if (data && data.session) { try { alert("Compte créé, mais le profil n'a pas pu être enregistré : " + ((saveErr && saveErr.message) || saveErr) + ". Reconnectez-vous : il sera recréé automatiquement."); } catch (_) {} }
         }
       }
       // Afficher succès
       document.getElementById('sv-prenom').textContent = prenom;
       document.getElementById('sv-name').textContent = prenom + ' ' + nom;
       document.getElementById('sv-av').textContent = prenom[0].toUpperCase();
-      show('sv');
+      show('sv'); __gscFixConfirmStep();
     } catch(e) {
       errMsg('v-err', sbError(e));
     } finally {
@@ -1464,9 +1463,7 @@
         email, password: pw,
         options: { data: { prenom, nom, role: selectedRole, sport, ville, tel, sexe, ddn } }
       });
-      if (error) throw error;
-      const uid = data.user?.id;
-      if (uid) {
+      if (error) throw error; if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw new Error('user already registered'); window.__gscSess = !!(data && data.session); const uid = data.user?.id; if (uid) {
         // Génère le GSC-ID avec la même fonction déterministe qu'index.html et admin.html
         // → même uid + même role = même code QR partout dans l'application
         const gscId = generateGscId(uid, selectedRole);
@@ -1542,7 +1539,7 @@
           await saveProfile(uid, email, profile);
           try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
         } catch (saveErr) {
-          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr);
+          console.warn('Sauvegarde différée à la première connexion (email non confirmé) :', saveErr); if (data && data.session) { try { alert("Compte créé, mais le profil n'a pas pu être enregistré : " + ((saveErr && saveErr.message) || saveErr) + ". Reconnectez-vous : il sera recréé automatiquement."); } catch (_) {} }
         }
         // Afficher le GSC-ID généré sur l'écran de succès
         const gscEl = document.getElementById('sa-gscid');
@@ -1550,7 +1547,7 @@
       }
       document.getElementById('sa-prenom').textContent = prenom;
       document.getElementById('sa-role').textContent = ROLE_LABELS[selectedRole] || selectedRole;
-      show('sa');
+      show('sa'); __gscFixConfirmStep();
     } catch(e) {
       errMsg('a-err', sbError(e));
     } finally {
