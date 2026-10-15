@@ -74,7 +74,7 @@
   const DEFAULT_PREFS = {
     mention:true, message:true, follow:true, like:false,
     comment:true, transfer:true, match:true, event:true,
-    news:false, system:true, achievement:true, alert:true,
+    news:false, system:true, achievement:true, alert:true, doc_recu:true,
     pushEnabled: false, soundEnabled: true, vibrationEnabled: true
   };
 
