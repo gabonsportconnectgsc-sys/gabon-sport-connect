@@ -72,7 +72,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
   <!-- Supabase (Authentication uniquement — Firestore/Storage restent sur Firebase) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="gsc-auth-firebase.js"></script>
   <link rel="stylesheet" href="css/filter-luxe-styles.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/qr-scanner.css">
@@ -3796,7 +3796,7 @@ function supabaseAuthErrorMessage(e){
 const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 let _firebaseCustomAuthPromise = null;
 
-async function ensureFirebaseAuthViaSupabase(){
+async function ensureFirebaseAuthViaSupabase(){ return window._gscEnsureAuth();
   // ────────────────────────────────────────────────────────────────────────────
   // VERSION ROBUSTE : Vérification stricte + Retry × 3 + Logs détaillés
   // ────────────────────────────────────────────────────────────────────────────
@@ -6949,7 +6949,7 @@ async function adminDeleteUser(uid){
     try{ await deleteDoc(doc(db,'users',uid,'private','contact')); }catch(e){ console.warn('Suppression private/contact:',e); }
     try{ await deleteDoc(doc(db,'users',uid,'private','sensible')); }catch(e){ console.warn('Suppression private/sensible:',e); }
     let __authOk=false; try{ const __ss=(await window._sb.auth.getSession()).data.session; const __rr=await fetch('https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+__ss.access_token},body:JSON.stringify({targetUid:uid})}); __authOk=__rr.ok; }catch(e){ console.warn('Suppression Auth:',e); }
-    if(!__authOk){ alert("⚠️ Le compte de connexion n'a pas pu être supprimé : cette adresse e-mail restera bloquée. Supprimez-la à la main dans Supabase (Authentication > Users)."); }
+    if(!__authOk){ alert("⚠️ Le compte de connexion n'a pas pu être supprimé : cette adresse e-mail restera bloquée. Supprimez-la à la main dans Firebase (Authentication > Users)."); }
     await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers.splice(idx,1);

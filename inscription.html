@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="gsc-auth-firebase.js"></script>
   <link rel="stylesheet" href="css/ged-public.css">
   <!-- Firebase (Firestore pour le profil) -->
   <link rel="stylesheet" href="css/form-styles.css">
@@ -768,7 +768,7 @@
   // ── Pont d'authentification : Supabase → Firebase Custom Token (via Cloudflare Worker) ──
   // Identique à index.html : permet à request.auth.uid d'être fiable dans les règles Firestore.
   const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
-  async function ensureFirebaseAuthViaSupabase(uid, attempts = 3) {
+  async function ensureFirebaseAuthViaSupabase(uid, attempts = 3) { return window._gscEnsureAuth();
     if (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.uid === uid) {
       return window._fbAuth.currentUser;
     }
