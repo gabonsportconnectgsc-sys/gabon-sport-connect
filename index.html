@@ -3681,12 +3681,12 @@ async function handleSupabaseRegister(){
   const sport=(document.getElementById('auth-register-sport')?.value||'').replace(/^[^\w]+/,'').trim();
   const statut=document.getElementById('auth-register-statut')?.value||'libre';
   const employeur=document.getElementById('auth-register-employeur')?.value.trim()||'';
-  const ORG_ROLES_REG=['club','association','federation','organisateur'];
+  const ORG_ROLES_REG=['club','association','federation','organisateur','ecole_universite'];
   const isSupporterOptIn=!ORG_ROLES_REG.includes(role)&&!!document.getElementById('auth-register-supporter')?.checked;
   const clubSupporteOptIn=isSupporterOptIn?(document.getElementById('auth-register-club-supporte')?.value.trim()||''):'';
   if(!email||!password){ errEl.textContent='Veuillez remplir tous les champs obligatoires.'; errEl.style.display='block'; return; }
   if(password.length<6){ errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.'; errEl.style.display='block'; return; }
-  const ORG_ROLES_SPORT=['club','association','federation','organisateur'];
+  const ORG_ROLES_SPORT=['club','association','federation','organisateur','ecole_universite'];
   if(!ORG_ROLES_SPORT.includes(role) && !sport){ errEl.textContent='Veuillez sélectionner votre sport / discipline.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
   // gsc-direct-signup: plusieurs comptes possibles avec le meme numero (changement de sport ou de profil) ; l'email reste unique (Supabase).
@@ -4119,7 +4119,7 @@ function checkProfileCompletion(){
     }catch(e){}
   }
   // Le sport n'est pertinent que pour les rôles individuels (pas club/association/fédération/organisateur)
-  const ORG_ROLES_CPC=['club','association','federation','organisateur'];
+  const ORG_ROLES_CPC=['club','association','federation','organisateur','ecole_universite'];
   const needsSport = !ORG_ROLES_CPC.includes(userProfile.role) && !userProfile.sport?.trim();
   // N'afficher le modal que si le prénom/nom ou le sport sont vraiment manquants
   if(!userProfile.prenom?.trim() || !userProfile.nom?.trim() || needsSport){
