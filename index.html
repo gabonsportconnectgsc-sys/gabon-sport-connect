@@ -2852,6 +2852,7 @@
       <div class="card fade-up" style="margin-top:16px;">
         <div class="card-body">
           <button class="btn-danger" onclick="handleLogout()">🚪 Se déconnecter</button>
+          <div style="text-align:center;margin-top:14px;"><a href="#" onclick="requestAccountDeletion();return false;" style="font-size:12px;color:#94a3b8;text-decoration:underline;">Supprimer mon compte</a></div>
         </div>
       </div>
     </section>
@@ -4570,6 +4571,21 @@ function enterApp(){
   }
 }
 
+async function requestAccountDeletion(){
+  if(!userProfile || !(userProfile.uid||_uid)){ toast("Connectez-vous pour gérer votre compte.",'error'); return; }
+  if(userProfile.role==='admin'){ toast("Un compte administrateur ne peut pas être supprimé ici.",'error'); return; }
+  const uid=userProfile.uid||_uid;
+  if(!confirm("Supprimer votre compte ?\n\nVotre profil sera masqué immédiatement. Un administrateur confirmera ensuite la suppression définitive de votre compte et de vos données.")) return;
+  const w=prompt("Pour confirmer, tapez SUPPRIMER");
+  if(!w || w.trim().toUpperCase()!=='SUPPRIMER'){ toast("Suppression annulée.",'info'); return; }
+  try{
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',uid),{deletionRequested:true,deletionRequestedAt:serverTimestamp?serverTimestamp():new Date(),status:'hidden',updatedAt:serverTimestamp?serverTimestamp():new Date()});
+    toast("Demande envoyée. Votre compte est masqué et sera supprimé après confirmation de l'administrateur.",'success');
+    setTimeout(function(){ handleLogout(); },1500);
+  }catch(e){ toast("Impossible d'envoyer la demande : "+((e&&e.message)||e),'error'); }
+}
+window.requestAccountDeletion=requestAccountDeletion;
 async function handleLogout(){
   try{ if(window._sb) await window._sb.auth.signOut(); }catch(e){}
   currentUser=null;userProfile=null;_uid=null;
@@ -6931,6 +6947,9 @@ async function adminDeleteUser(uid){
     // suppression. Ce tombstone bloque cette reconstruction.
     try{ await setDoc(doc(db,'deletedAccounts',uid), {deletedAt: serverTimestamp?serverTimestamp():new Date(), deletedBy: userProfile?.uid||'admin'}); }catch(e){ console.warn('Tombstone suppression:',e); }
     try{ await deleteDoc(doc(db,'users',uid,'private','contact')); }catch(e){ console.warn('Suppression private/contact:',e); }
+    try{ await deleteDoc(doc(db,'users',uid,'private','sensible')); }catch(e){ console.warn('Suppression private/sensible:',e); }
+    let __authOk=false; try{ const __ss=(await window._sb.auth.getSession()).data.session; const __rr=await fetch('https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+__ss.access_token},body:JSON.stringify({targetUid:uid})}); __authOk=__rr.ok; }catch(e){ console.warn('Suppression Auth:',e); }
+    if(!__authOk){ alert("⚠️ Le compte de connexion n'a pas pu être supprimé : cette adresse e-mail restera bloquée. Supprimez-la à la main dans Supabase (Authentication > Users)."); }
     await deleteDoc(doc(db,'users',uid));
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers.splice(idx,1);

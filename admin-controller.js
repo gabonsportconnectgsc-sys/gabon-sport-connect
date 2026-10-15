@@ -620,13 +620,13 @@
       const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, role) : ('GSC-' + (uid || '').slice(0, 6).toUpperCase()));
       const qrIdx = qrRowIdx++;
       return `
-      <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''} ${u.status === 'pending' ? 'row-pending-blink' : ''}">
+      <tr data-id="${u.id}" class="${u.isDemo ? 'is-demo-row' : ''} ${(u.status === 'pending' || u.deletionRequested) ? 'row-pending-blink' : ''}">
         <td data-label="ID"><span class="user-gscid-cell">${esc(gscId)}</span></td>
         <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div></td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
         <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td>
         <td data-label="QR"><div class="user-qr-cell" title="QR Code d'identification" data-uid="${esc(uid)}" id="row-qr-${qrIdx}"><canvas id="row-qr-canvas-${qrIdx}" width="26" height="26"></canvas></div></td>
-        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span>${u.editLocked ? (u.ownerUid ? ` <span class="status-badge" style="background:#3b82f620;color:#3b82f6;border:1px solid #3b82f640;" title="Géré par un propriétaire">🏢 Géré</span>` : ` <span class="status-badge" style="background:#f9731620;color:#f97316;border:1px solid #f9731640;" title="En attente de revendication">🔒 Non revendiqué</span>`) : ''}</td>
+        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span>${u.deletionRequested ? ' <span class="status-badge" style="background:#ef444420;color:#ef4444;border:1px solid #ef444440;" title="Suppression demandée par le membre">🗑️ Suppression demandée</span>' : ''}${u.editLocked ? (u.ownerUid ? ` <span class="status-badge" style="background:#3b82f620;color:#3b82f6;border:1px solid #3b82f640;" title="Géré par un propriétaire">🏢 Géré</span>` : ` <span class="status-badge" style="background:#f9731620;color:#f97316;border:1px solid #f9731640;" title="En attente de revendication">🔒 Non revendiqué</span>`) : ''}</td>
         <td data-label="Documents">${renderPinnedDocsBadge(u)}</td>
       </tr>`;
     };
@@ -1061,6 +1061,7 @@
         batch.delete(docRef.collection('private').doc('contact'));
         return batch.commit();
       });
+      try { await withAuth(() => window.db.collection('users').doc(id).collection('private').doc('sensible').delete()); } catch (e) { console.warn('suppression private/sensible:', e); }
       toast(authDeleted
         ? '🗑️ Profil et compte de connexion supprimés définitivement'
         : '🗑️ Profil supprimé — ⚠️ le compte de connexion Auth n\'a pas pu être supprimé (endpoint indisponible), il faudra le faire manuellement',
