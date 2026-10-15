@@ -148,6 +148,17 @@
         try { await addCert(cert); saved++; }
         catch (e) { try { await addCert(cert); saved++; } catch (e2) { console.warn('[Attestation] non enregistrée', e2); } }
       }
+      // Remplacement : retire l'ancien document non conforme une fois le nouveau bien enregistré
+      const rp = window.__gscReplace; window.__gscReplace = null;
+      if (rp && rp.url && Date.now() - rp.ts < 15 * 60 * 1000) {
+        const idx = docs.findIndex(d => d.url === rp.url);
+        const fresh = docs.some(d => d.url !== rp.url && norm(d.label) === norm(rp.label) && String(d.addedAt) >= rp.startIso);
+        if (idx >= 0 && fresh && typeof window.removeOwnDocument === 'function') {
+          const oc = window.confirm; window.confirm = () => true;
+          try { await window.removeOwnDocument(uid, idx); } catch (e) { console.warn('[Attestation] retrait ancien document', e); }
+          finally { window.confirm = oc; }
+        }
+      }
       if (infos.length && saved < infos.length) say('⚠️ Document envoyé, mais l\'attestation n\'a pas pu être enregistrée pour ' + (infos.length - saved) + ' fichier(s).', 'info');
     } catch (e) {
       console.warn('[Attestation]', e);
@@ -156,7 +167,7 @@
 
   // Annulation du sélecteur de fichier : on oublie le titre prérempli
   document.addEventListener('cancel', ev => {
-    if (ev.target && ev.target.id === 'own-document-input') window.__gscDocTitle = null;
+    if (ev.target && ev.target.id === 'own-document-input') window.__gscDocTitle = null; window.__gscReplace = null;
   }, true);
 
   setInterval(inject, 400);
