@@ -4092,7 +4092,7 @@ async function onSupabaseSignedIn(user, extra){
         await setPrivateContact(user.id, {email:emailVal, telephone:telVal, updatedAt: serverTimestamp?serverTimestamp():new Date()});
         try { localStorage.removeItem('gsc_pending_profile_'+user.id); } catch(e){}
       }
-    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); }
+    }catch(e){ console.warn('Création du profil utilisateur impossible.', e); try{ toast('Profil non enregistré : '+((e&&e.message)||e),'error'); }catch(_){} }
     // Garder en mémoire pour l'UI de cette session (pas besoin de re-fetch)
     userProfile.email = emailVal;
     userProfile.telephone = telVal;
