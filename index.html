@@ -4642,7 +4642,11 @@ function renderDashboard(){
   document.getElementById('hero-email-label').textContent=p.email||'';
   document.getElementById('stat-niveau').textContent=p.niveau||'—';
   const pendingNoticeEl=document.getElementById('pending-self-notice');
-  if(pendingNoticeEl) pendingNoticeEl.style.display=(p.status==='pending')?'flex':'none';
+  if(pendingNoticeEl){
+    const _orgPend=(p.validationAdmin==='pending');
+    pendingNoticeEl.style.display=(p.status==='pending'||_orgPend)?'flex':'none';
+    try{ const _sp=pendingNoticeEl.querySelector('span:last-child'); if(_sp) _sp.innerHTML=_orgPend?"Votre structure est <strong>visible dans l'annuaire avec la mention ⏳ « en attente de validation »</strong> jusqu'à la vérification par l'administration GSC.":"Votre fiche est <strong>en attente de validation</strong> par l'administrateur. Elle sera visible dans l'annuaire dès son approbation."; }catch(e){}
+  }
   // Completion bar
   let fields;
   if(['club','association','federation'].includes(p.role)){
@@ -5023,7 +5027,7 @@ function renderActors(actors){
       const qrIdx=qrIndexCounter++;
       return `
         <div class="actor-card" onclick="openActorDetail('${esc(id)}')">
-          <div class="actor-card-header">
+          <div class="actor-card-header">${a.validationAdmin==='pending'?'<div class="gsc-pending-ribbon" title="En attente de validation GSC" style="align-self:stretch;margin:-16px -14px 4px;padding:6px 8px;background:#f97316;color:#fff;font-size:11px;font-weight:800;text-align:center;letter-spacing:.3px">⏳ En attente de validation</div>':''}
             <div class="actor-avatar-wrap">
               <div class="actor-avatar">${photoSrc?`<img src="${esc(sanitizeUrl(photoSrc))}" alt="${esc(name)}" loading="lazy">`:(ROLE_ICONS[roleKey]||esc(initial))}</div>
               <div class="actor-type-dot ${roleKey}" title="${esc(roleName)}">${typeDotIcon}</div>
