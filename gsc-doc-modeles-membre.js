@@ -11,6 +11,11 @@
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
   const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
   const DEBUG = /[?&]gscdebug=1/.test(location.search);
+  function addLabel(n) {
+    n = String(n || 'document').trim() || 'document';
+    const l = (n.length > 1 && n[0] !== n[0].toLowerCase() && n[1] === n[1].toLowerCase()) ? n[0].toLowerCase() + n.slice(1) : n;
+    return '➕ Ajouter ' + l;
+  }
 
   let uid = null, role = '', myDocs = [], models = [], allPublished = [], lastLoad = 0, err = '';
 
@@ -76,7 +81,7 @@
           (m.description ? '<div style="font-size:12px;opacity:.8;margin-top:3px;">' + esc(m.description) + '</div>' : '') +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">' +
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">⬇️ Télécharger le modèle</a>' : '') +
-          (done ? '' : '<button type="button" data-gm="dep" data-i="' + i + '" style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px solid #1b9e5a;background:transparent;color:#1b9e5a;">📎 Déposer ce document</button>') +
+          (done ? '' : '<button type="button" data-gm="dep" data-i="' + i + '" style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px solid #1b9e5a;background:transparent;color:#1b9e5a;">' + esc(addLabel(m.nom)) + '</button>') +
           '</div></div>';
       }).join('');
     }
@@ -101,9 +106,9 @@
         box.addEventListener('click', ev => {
           const b = ev.target.closest('[data-gm="dep"]'); if (!b) return;
           const m = models[parseInt(b.getAttribute('data-i'), 10)]; if (!m) return;
-          const add = Array.from(card.querySelectorAll('button')).find(x => /Ajouter un document/.test(x.textContent));
-          say('Choisissez votre fichier, puis donnez-lui le titre : ' + (m.nom || 'Document'));
-          if (add) add.click();
+          const inp = document.getElementById('own-document-input');
+          window.__gscDocTitle = { t: m.nom || 'Document', ts: Date.now() };
+          if (inp) inp.click();
         });
         btn.parentElement.insertBefore(box, btn);
       }

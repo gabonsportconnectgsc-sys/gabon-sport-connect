@@ -141,6 +141,17 @@ service cloud.firestore {
       allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
+    match /docCertifications/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.certTexte is string
+        && request.resource.data.certTexte.size() < 3000;
+      allow read: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isAdmin(request.auth.uid));
+      allow update, delete: if false;
+    }
+
     match /notif_preferences/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
