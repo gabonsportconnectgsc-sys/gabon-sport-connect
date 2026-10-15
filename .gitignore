@@ -8,3 +8,4 @@ serviceAccount*.json
 *-adminsdk-*.json
 node_modules/
 .firebase/
+*.bak*
