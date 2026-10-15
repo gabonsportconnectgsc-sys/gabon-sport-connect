@@ -21,6 +21,7 @@
     news:        { label:'Actualité',        icon:'📰',  color:'#64748b' },
     system:      { label:'Système',          icon:'🔔',  color:'#FFD700' },
     achievement: { label:'Réalisation',      icon:'🏆',  color:'#d97706' },
+    doc_recu:    { label:'Documents reçus', icon:'📥', color:'#16a34a' },
     alert:       { label:'Alerte admin',     icon:'⚠️',  color:'#dc2626' },
   };
 

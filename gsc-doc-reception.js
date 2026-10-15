@@ -148,6 +148,7 @@
 
   function render() {
     let ov = document.getElementById('gsc-docrec-overlay');
+    updateFab();
     if (!ov) return;
     const list = items.filter(it => showAll || !decisions[it.id]);
     ov.querySelector('#gsc-docrec-body').innerHTML =
@@ -203,6 +204,12 @@
     render();
   }
 
+  function updateFab() {
+    const fab = document.getElementById('gsc-docrec-fab'); if (!fab) return;
+    const n = items.filter(it => !decisions[it.id]).length;
+    fab.textContent = '📥 Documents reçus' + (n ? ' (' + n + ')' : '');
+  }
+
   function build() {
     if (document.getElementById('gsc-docrec-overlay')) return;
     const ov = document.createElement('div');
@@ -233,6 +240,17 @@
     fab.style.cssText = 'position:fixed;left:12px;bottom:76px;z-index:9998;padding:10px 14px;border:0;border-radius:24px;background:#1b5e20;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.3);';
     fab.onclick = async () => { ov.style.display = 'block'; ov.querySelector('#gsc-docrec-body').textContent = 'Chargement…'; await load(); render(); };
     document.body.appendChild(fab);
+
+    // Clic sur une notification « Documents reçus » dans la cloche : ouvre le panneau
+    window.GSCDocReception = { open: () => fab.onclick() };
+    const prev = window.handleNotifLink;
+    window.handleNotifLink = function (link) {
+      if (link && link.section === 'docs_recus') { fab.onclick(); return; }
+      if (typeof prev === 'function') return prev.apply(this, arguments);
+      try { window.dispatchEvent(new CustomEvent('gsc-navigate', { detail: { link: link } })); } catch (e) {}
+    };
+    // Compteur de documents en attente sur le bouton
+    setTimeout(async () => { await load(); updateFab(); }, 3000);
   }
 
   function init() {

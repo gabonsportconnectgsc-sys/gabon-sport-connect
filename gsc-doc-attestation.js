@@ -55,6 +55,50 @@
     throw new Error('API Firestore indisponible');
   }
 
+  async function getAdminUids(self) {
+    try {
+      let ids = [];
+      if (window.getDocs && window.query && window.where && window.collection && window.db) {
+        const s = await window.getDocs(window.query(window.collection(window.db, 'users'), window.where('role', '==', 'admin')));
+        ids = s.docs.map(d => d.id);
+      } else if (window.db && window.db.collection) {
+        const s = await window.db.collection('users').where('role', '==', 'admin').get();
+        ids = s.docs.map(d => d.id);
+      }
+      return ids.filter(x => x && x !== self);
+    } catch (e) { console.warn('[Attestation] liste des admins', e); return []; }
+  }
+
+  async function addNotif(data) {
+    if (window.addDoc && window.collection && window.db) {
+      data.createdAt = window.serverTimestamp ? window.serverTimestamp() : new Date();
+      return window.addDoc(window.collection(window.db, 'notifications'), data);
+    }
+    if (window.db && window.db.collection && window.firebase) {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      return window.db.collection('notifications').add(data);
+    }
+    throw new Error('API Firestore indisponible');
+  }
+
+  // Une notification (type doc_recu) par admin et par document : fait sonner la cloche de l'admin
+  async function notifyAdmins(uid, name, role, labels, replaced) {
+    if (!labels.length) return;
+    const admins = await getAdminUids(uid);
+    for (const a of admins) {
+      for (const l of labels) {
+        try {
+          await addNotif({
+            type: 'doc_recu',
+            title: (replaced ? '🔄 Document remplacé — ' : '📥 Nouveau document reçu — ') + l,
+            body: (name || 'Un membre') + (role ? ' (' + role + ')' : '') + (replaced ? ' a remplacé' : ' a déposé') + ' « ' + l + ' ». À examiner dans « Documents reçus ».',
+            recipientId: a, read: false, senderId: uid, link: { section: 'docs_recus' }
+          });
+        } catch (e) { console.warn('[Attestation] notification admin', e); }
+      }
+    }
+  }
+
   async function sha256(file) {
     try {
       const buf = await file.arrayBuffer();
@@ -133,11 +177,12 @@
       const docs = Array.isArray(u.documents) ? u.documents : [];
       const memberName = [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || '';
       const gscId = u.gscId || u.idGsc || u.gscCode || u.codeGsc || u.matricule || u.actorId || '';
-      let saved = 0;
+      let saved = 0; const newLabels = [];
       for (const it of infos) {
         const mine = docs.filter(d => norm(d.label) === norm(it.title))
           .sort((a, b) => String(b.addedAt).localeCompare(String(a.addedAt)))[0];
         if (!mine) continue;
+        newLabels.push(mine.label || it.title);
         const cert = {
           uid, memberName, role: u.role || '', gscId: String(gscId),
           email: priv.email || (window.currentUser && window.currentUser.email) || '', telephone: priv.telephone || '',
@@ -159,6 +204,7 @@
           finally { window.confirm = oc; }
         }
       }
+      await notifyAdmins(uid, memberName, u.role || '', newLabels, !!(rp && rp.url));
       if (infos.length && saved < infos.length) say('⚠️ Document envoyé, mais l\'attestation n\'a pas pu être enregistrée pour ' + (infos.length - saved) + ' fichier(s).', 'info');
     } catch (e) {
       console.warn('[Attestation]', e);
