@@ -25,8 +25,8 @@
     authDomain: "gabon-sport-connect.firebaseapp.com",
     projectId: "gabon-sport-connect",
     storageBucket: "gabon-sport-connect.appspot.com",
-    messagingSenderId: "760498266017",
-    appId: "1:760498266017:web:ee7a5ed9bf522e34649ee8"
+    messagingSenderId: "76049826617",
+    appId: "1:76049826617:web:ee7a5ed9bf522e34649ee8"
   };
 
   try {
