@@ -3386,7 +3386,8 @@ const ETABLISSEMENTS_GA=[
     window._supabaseReady = false;
     window._sb = null;
   }
-  document.dispatchEvent(new Event('supabase-ready'));
+  (function(){var raw=window.__gscAuthRedirectRaw||'';if(!/error_code=|error=access_denied/.test(raw))return;var k=0;(function go(){var m=document.getElementById('modal-auth');if(m&&typeof switchAuthTab==='function'&&typeof toast==='function'){m.classList.add('open');switchAuthTab('login');toast('Lien expiré ou déjà utilisé. Mot de passe : touchez « Mot de passe oublié ? » pour en recevoir un nouveau. Inscription : connectez-vous directement.','error');}else if(k++<100){setTimeout(go,100);}})();})();
+document.dispatchEvent(new Event('supabase-ready'));
 })();
 </script>
 
