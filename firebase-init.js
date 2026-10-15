@@ -35,6 +35,14 @@
     }
     if (!firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
+      try {
+        if (firebase.appCheck) {
+          var h = location.hostname, dbg = false;
+          try { dbg = localStorage.getItem('gsc_appcheck_debug') === '1'; } catch (_) {}
+          if (dbg || h === 'localhost' || h === '127.0.0.1') self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+          firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider('6Le-IO8tAAAAAM1cFa1-bveDlz9B-mI4WnuGm6jm'), true);
+        }
+      } catch (e) { console.warn('[AppCheck] non initialise', e); }
     }
     window.db = firebase.firestore();
     window.storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
