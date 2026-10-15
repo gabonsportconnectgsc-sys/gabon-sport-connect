@@ -1292,7 +1292,7 @@ function sbError(e) {
       if (error) throw error; if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw new Error('user already registered'); window.__gscSess = !!(data && data.session); const uid = data.user?.id;
       if (uid) {
         try {
-          const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'pending', ville, sport, ...(vPhotoURL && { photoURL: vPhotoURL }) };
+          const vProfile = { prenom, nom, role:'visiteur', accountType:'visiteur', status:'active', ville, sport, ...(vPhotoURL && { photoURL: vPhotoURL }) };
           try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(vProfile)); } catch(e){}
           await saveProfile(uid, email, vProfile);
           try { localStorage.removeItem('gsc_pending_profile_'+uid); } catch(e){}
