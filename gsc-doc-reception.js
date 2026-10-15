@@ -52,7 +52,7 @@
   }
 
   async function load() {
-    if (loading) return; loading = true;
+    if (loading) return; if (!adminUid()) return; loading = true;
     try {
       const [uSnap, dSnap, cSnap] = await Promise.all([
         window.db.collection('users').get(),
@@ -76,7 +76,7 @@
       });
     } catch (e) {
       console.warn('[DocReception] chargement', e);
-      say('❌ Chargement impossible : ' + (e.message || e), 'error');
+      if (e && e.code === 'permission-denied') {} else say('❌ Chargement impossible : ' + (e.message || e), 'error');
     }
     loading = false;
   }
