@@ -4881,6 +4881,10 @@ function buildSecondaryGroups(actorsList, role){
   }));
 }
 
+/* Le signal d'attente n'est jamais montre aux visiteurs : seulement aux comptes connectes */
+function __gscCanSeePending(){
+  try{ return !!window.currentUser && (!window.userProfile || window.userProfile.role!=='visiteur'); }catch(e){ return false; }
+}
 function renderActors(actors){
   window._lastRenderedActors = actors;
   const grid=document.getElementById('actors-grid');
@@ -4915,7 +4919,7 @@ function renderActors(actors){
       return `<div class="actor-compact-row" onclick="openActorDetail('${esc(id)}')">
         <div class="acr-avatar">${avatarHtml}</div>
         <div class="acr-info">
-          <div class="acr-name">${esc(name)}${demoTag}${a.validationAdmin==='pending'?'<span class="gsc-pending-badge" title="En attente de validation GSC" style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:#f97316;color:#fff;font-size:10px;font-weight:800;letter-spacing:.3px;white-space:nowrap;vertical-align:middle">⏳ En attente</span>':''}</div>
+          <div class="acr-name">${esc(name)}${demoTag}${(a.validationAdmin==='pending'&&__gscCanSeePending())?'<span class="gsc-pending-badge" title="En attente de validation GSC" style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:#f97316;color:#fff;font-size:10px;font-weight:800;letter-spacing:.3px;white-space:nowrap;vertical-align:middle">⏳ En attente</span>':''}</div>
           <div class="acr-meta">${esc(meta)}</div>
         </div>
         <span class="acr-badge ${roleKey}">${roleShort}</span>
@@ -5027,7 +5031,7 @@ function renderActors(actors){
       const qrIdx=qrIndexCounter++;
       return `
         <div class="actor-card" onclick="openActorDetail('${esc(id)}')">
-          <div class="actor-card-header">${a.validationAdmin==='pending'?'<div class="gsc-pending-ribbon" title="En attente de validation GSC" style="align-self:stretch;margin:-16px -14px 4px;padding:6px 8px;background:#f97316;color:#fff;font-size:11px;font-weight:800;text-align:center;letter-spacing:.3px">⏳ En attente de validation</div>':''}
+          <div class="actor-card-header">${(a.validationAdmin==='pending'&&__gscCanSeePending())?'<div class="gsc-pending-ribbon" title="En attente de validation GSC" style="align-self:stretch;margin:-16px -14px 4px;padding:6px 8px;background:#f97316;color:#fff;font-size:11px;font-weight:800;text-align:center;letter-spacing:.3px">⏳ En attente de validation</div>':''}
             <div class="actor-avatar-wrap">
               <div class="actor-avatar">${photoSrc?`<img src="${esc(sanitizeUrl(photoSrc))}" alt="${esc(name)}" loading="lazy">`:(ROLE_ICONS[roleKey]||esc(initial))}</div>
               <div class="actor-type-dot ${roleKey}" title="${esc(roleName)}">${typeDotIcon}</div>
@@ -5105,6 +5109,13 @@ function openActorDetail(uid){
   if(coverHint) coverHint.style.display=isOwnerForCover?'flex':'none';
   document.getElementById('adm-name').textContent=name;
   document.getElementById('adm-sub').textContent=(ROLE_LABELS[a.role]||a.role)+(a.sport?' · '+a.sport:'');
+  /* Signal d'attente de validation : visible pour les comptes connectes, jamais pour les visiteurs */
+  try{
+    const _nm=document.getElementById('adm-name');
+    let _pf=document.getElementById('adm-pending-flag');
+    if(_nm&&!_pf){ _pf=document.createElement('div'); _pf.id='adm-pending-flag'; _pf.style.cssText='display:none;margin:0 0 6px;padding:5px 12px;border-radius:12px;background:#f97316;color:#fff;font-size:12px;font-weight:800;letter-spacing:.3px;width:fit-content'; _nm.parentNode.insertBefore(_pf,_nm); }
+    if(_pf){ const _show=(a.validationAdmin==='pending'&&__gscCanSeePending()); _pf.textContent='⏳ En attente de validation'; _pf.style.display=_show?'inline-block':'none'; }
+  }catch(e){}
   // Identifiant GSC + QR Code personnel — affiché pour tous les rôles identifiables (masqué pour visiteurs)
   (function(){
     const roleKey=a.role||'joueur';

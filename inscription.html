@@ -1526,7 +1526,8 @@
           }),
           gscId,
           club: clubActuel || '',
-          status: 'pending',
+          status: 'active',
+          ...(isOrgRole && { validationAdmin: 'pending' }),
           ...(aPhotoURL && { photoURL: aPhotoURL })
         };
         try { localStorage.setItem('gsc_pending_profile_'+uid, JSON.stringify(profile)); } catch(e){}
