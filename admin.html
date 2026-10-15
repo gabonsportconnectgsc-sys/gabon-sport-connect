@@ -861,6 +861,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-joueurs">
           <span class="nav-icon">👥</span><span>Joueurs</span>
         </button>
+        <button class="nav-item" id="nav-clubs" onclick="window.gscGoToFiltered&&window.gscGoToFiltered({roles:'club',title:'Clubs'})">
+          <span class="nav-icon">🏟️</span><span>Clubs</span>
+        </button>
         <button class="nav-item" id="nav-photos">
           <span class="nav-icon">📸</span><span>Photos &amp; Logos</span>
         </button>
@@ -4667,5 +4670,6 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="gsc-sync-comptes-reels.js" defer></script>
 <script src="gsc-actor-profile-editor.js" defer></script>
 <script src="guide-widget.js" defer></script>
+<script src="gsc-pwd-eye.js" defer></script>
 </body>
 </html>
