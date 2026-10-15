@@ -47,13 +47,16 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && (!('role' in request.resource.data) || request.resource.data.role != 'admin');
+        && (!('role' in request.resource.data) || request.resource.data.role != 'admin')
+        && request.resource.data.get('validationAdmin', '') != 'validated';
 
       allow update: if request.auth != null && (
         (request.auth.uid == uid
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
-            ['role', 'structureId', 'documentVerifie', 'editLocked', 'ownershipStatus', 'ownerRef', 'gereParFederation', 'isDemo']
-          ))
+            ['role', 'structureId', 'documentVerifie', 'editLocked', 'ownershipStatus', 'ownerRef', 'gereParFederation', 'isDemo', 'validationAdmin']
+          )
+          && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+               && (resource.data.get('status', 'active') == 'deleted' || resource.data.get('rejectedAt', null) != null)))
         || isAdmin(request.auth.uid)
       );
       allow delete: if request.auth != null && isAdmin(request.auth.uid);

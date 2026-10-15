@@ -3689,22 +3689,7 @@ async function handleSupabaseRegister(){
   const ORG_ROLES_SPORT=['club','association','federation','organisateur'];
   if(!ORG_ROLES_SPORT.includes(role) && !sport){ errEl.textContent='Veuillez sélectionner votre sport / discipline.'; errEl.style.display='block'; return; }
   if(!window._sb){ errEl.textContent='Service d\'inscription indisponible. Réessayez plus tard.'; errEl.style.display='block'; return; }
-  // Vérification doublon téléphone — via empreinte non réversible (telephoneHash),
-  // le numéro en clair n'est jamais lu ni écrit sur le document public.
-  if(tel && db && typeof getDocs==='function'){
-    try{
-      const telHash=await hashPhone(tel);
-      if(telHash){
-        const telSnap=await getDocs(query(collection(db,'users'),where('telephoneHash','==',telHash)));
-        // On ignore les fiches déjà marquées 'deleted' : avec l'ancien système de
-        // suppression (statut posé sans retrait réel du document), une fiche
-        // supprimée pouvait rester en base et bloquer indéfiniment toute
-        // réinscription avec le même numéro.
-        const activeDup = telSnap.docs.some(d => d.data().status !== 'deleted');
-        if(activeDup){ errEl.textContent='Ce numéro de téléphone est déjà utilisé par un autre compte.'; errEl.style.display='block'; return; }
-      }
-    }catch(e){ console.warn('Vérification téléphone:',e); }
-  }
+  // gsc-direct-signup: plusieurs comptes possibles avec le meme numero (changement de sport ou de profil) ; l'email reste unique (Supabase).
   const btn=document.getElementById('auth-register-submit');
   btn.disabled=true; btn.textContent='Création…';
   try{
@@ -4087,6 +4072,15 @@ async function onSupabaseSignedIn(user, extra){
       createdAt:  serverTimestamp ? serverTimestamp() : new Date(),
       ...(pendingProfile || {}),
     });
+    /* gsc-direct-signup : individuels visibles tout de suite ; structures visibles avec validation admin en attente */
+    try{
+      if(wasLoadError){ delete userProfile.status; delete userProfile.validationAdmin; }
+      else{
+        userProfile.status='active';
+        if(['club','association','federation','organisateur','ecole_universite'].includes(userProfile.role)) userProfile.validationAdmin='pending';
+        else delete userProfile.validationAdmin;
+      }
+    }catch(e){}
     try{
       // Si le doc existait déjà mais était juste illisible (_loadError), on ne
       // veut pas écraser un profil potentiellement plus complet côté serveur :
@@ -6672,7 +6666,7 @@ async function loadAdminUsers(){
 }
 
 function updatePendingBanner(){
-  const pending=allAdminUsers.filter(u=>u.status==='pending');
+  const pending=allAdminUsers.filter(u=>u.status==='pending'||u.validationAdmin==='pending');
   const banner=document.getElementById('pending-banner');
   if(!banner) return;
   if(pending.length){
@@ -6684,6 +6678,13 @@ function updatePendingBanner(){
   }
 }
 
+function __gscPhoneCount(hh){
+  try{
+    const L=(typeof allAdminUsers!=='undefined'&&Array.isArray(allAdminUsers))?allAdminUsers:[];
+    if(!window.__gscPhC||window.__gscPhC.n!==L.length){ const m={}; L.forEach(x=>{ if(x&&x.telephoneHash&&x.status!=='deleted') m[x.telephoneHash]=(m[x.telephoneHash]||0)+1; }); window.__gscPhC={n:L.length,m:m}; }
+    return window.__gscPhC.m[hh]||0;
+  }catch(e){ return 0; }
+}
 function renderAdminUsersTable(users){
   const tbody=document.getElementById('admin-users-tbody');
   document.getElementById('admin-users-count').textContent=`(${users.length})`;
@@ -6691,14 +6692,14 @@ function renderAdminUsersTable(users){
   tbody.innerHTML=users.map(u=>{
     const fullname=[u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||u.email?.split('@')[0]||'—';
     const initial=fullname[0]?.toUpperCase()||'?';
-    const isPending=u.status==='pending';
+    const isPending=u.status==='pending'||u.validationAdmin==='pending';
     const statusBadge=isPending?'<span class="status-badge status-pending">⏳ En attente</span>':u.status==='hidden'?'<span class="status-badge status-hidden">Masqué</span>':u.status==='deleted'?'<span class="status-badge status-deleted">Supprimé</span>':'<span class="status-badge status-active">Actif</span>';
     const fedIcon=u.gereParFederation?'🏛️ ':'' ;
     return `<tr class="${isPending?'pending-row':''}">
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="user-row-avatar">${u.photoURL?`<img src="${esc(sanitizeUrl(u.photoURL))}" alt="">`:esc(initial)}</div>
         <div>
-          <div style="font-weight:600;font-size:13px">${fedIcon}${esc(fullname)}</div>
+          <div style="font-weight:600;font-size:13px">${fedIcon}${esc(fullname)}${(u.telephoneHash&&__gscPhoneCount(u.telephoneHash)>1)?('<span title="Numéro partagé avec d\'autres comptes" style="font-size:10px;color:#b45309;font-weight:600"> 📞×'+__gscPhoneCount(u.telephoneHash)+'</span>'):''}</div>
           <div style="font-size:11px;color:var(--gray-txt)">${esc(u.email||'—')}</div>
           <span class="role-badge ${u.role}" style="font-size:9px">${esc(u.role||'—')}</span>
         </div>
@@ -6726,7 +6727,7 @@ async function adminApproveUser(uid){
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   try{
     await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',uid),{status:'active',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    await updateDoc(doc(db,'users',uid),{status:'active',validationAdmin:'validated',validatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     await adminSetPrivateStatus(uid,'active');
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='active';
@@ -6743,7 +6744,7 @@ async function adminRejectUser(uid){
   if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
   try{
     await ensureFirebaseAuthViaSupabase();
-    await updateDoc(doc(db,'users',uid),{status:'hidden',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    await updateDoc(doc(db,'users',uid),{status:'hidden',validationAdmin:'rejected',rejectedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     await adminSetPrivateStatus(uid,'hidden');
     const idx=allAdminUsers.findIndex(u=>(u.uid||u.id)===uid);
     if(idx>=0) allAdminUsers[idx].status='hidden';
