@@ -21,7 +21,7 @@
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyB3pmuvtsBJlvQRJ12GvgA4MKXKiXi14VM",
+    apiKey: "AIzaSyBhHOBnTvABARJ8OdoAjUsjvNn0bO_BiF0",
     authDomain: "gabon-sport-connect.firebaseapp.com",
     projectId: "gabon-sport-connect",
     storageBucket: "gabon-sport-connect.appspot.com",
