@@ -4,7 +4,10 @@
   var COL = 'ged_modeles_acteurs';
   var ROLES = [
     ['joueur', '⚽ Joueur'], ['athlete', '🏃 Athlète'], ['entraineur', '📋 Entraîneur'], ['arbitre', '🟨 Arbitre'],
-    ['club', '🏟️ Club'], ['association', '🤝 Association'], ['federation', '🏛️ Fédération'], ['organisateur', '🎪 Organisateur']
+    ['club', '🏟️ Club'], ['association', '🤝 Association'], ['federation', '🏛️ Fédération'], ['organisateur', '🎪 Organisateur'],
+    ['ecole_universite', '🏫 École / Université'], ['formateur', '🧑‍🏫 Formateur'], ['eleve_etudiant', '🎓 Élève / Étudiant'],
+    ['ancien_sportif', '🎖️ Ancien sportif'], ['handisport', '🦾 Handisport'], ['sportif_etranger', '🌍 Sportif étranger'],
+    ['independant', '🚴 Indépendant'], ['supporter', '💗 Supporter']
   ];
   var ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx';
   var EMET = { organisation: 'Organisation', federation: 'Fédération', administration: 'Administration GSC' };
