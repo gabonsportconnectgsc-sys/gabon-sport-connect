@@ -1160,7 +1160,36 @@
   /* ══════════════════════════════════════════════════════════════════
    * BOOT
    * ══════════════════════════════════════════════════════════════════ */
+  function __gscAdminFab() {
+    if (window.__gscAdminFabDone) return;
+    window.__gscAdminFabDone = true;
+    injectStyles();
+    injectPublicUI();
+    const st = document.createElement('style');
+    st.textContent = '#gsc-wa-fab{display:none !important;left:auto !important;top:auto !important;right:12px !important;bottom:132px !important;z-index:9997 !important;}#gsc-wa-fab.gsc-on{display:flex !important;}';
+    document.head.appendChild(st);
+    const fab = document.getElementById('gsc-wa-fab');
+    if (!fab) return;
+    let last = 0;
+    const onDash = () => {
+      const a = document.querySelector('.nav-item.active, .mn-btn.active');
+      return !!a && /dashboard|tableau de bord/i.test(a.textContent || '');
+    };
+    const fill = async (reload) => {
+      if (reload && Date.now() - last > 300000) { last = Date.now(); try { await loadPrivPhones(); } catch (e) {} }
+      const us = (typeof getUsers === 'function' && getUsers()) || [];
+      _publicActors = us.filter(u => u && u.role !== 'admin' && phoneOf(u)).map(u => Object.assign({}, u, { whatsappPublic: true, whatsappPublicNumero: phoneOf(u), telephone: phoneOf(u) }));
+      _publicManualContacts = Array.isArray(_adminContacts) ? _adminContacts.slice() : [];
+      refreshAllPublicViews();
+    };
+    setInterval(() => fab.classList.toggle('gsc-on', onDash()), 400);
+    fab.addEventListener('click', () => fill(true));
+    setTimeout(() => fill(true), 3000);
+    setInterval(() => fill(false), 60000);
+  }
+
   function bootAdmin() {
+    try { __gscAdminFab(); } catch (e) { console.warn('[GSCWhatsApp] fab admin', e); }
     injectStyles();
     injectAdminNav();
     injectAdminSection();
