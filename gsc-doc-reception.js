@@ -67,7 +67,13 @@
         const u = s.data() || {};
         if (u.isDemo || u.status === 'deleted') return;
         const docs = Array.isArray(u.documents) ? u.documents : [];
-        const name = [u.prenom, u.nom].filter(Boolean).join(' ') || u.nomOrganisation || u.email || s.id;
+        /* __gscNomProprio */
+        const __str = v => (typeof v === 'string' && v.trim()) ? v.trim() : '';
+        const __alt = ['nomComplet','fullName','displayName','name','nomPrenom','nomPrenoms','nomAffichage','pseudo']
+          .map(k => __str(u[k])).find(Boolean) ||
+          Object.keys(u).filter(k => /^(nom|prenom|name|display|full)/i.test(k) && k !== 'nomOrganisation')
+            .map(k => __str(u[k])).filter(Boolean).slice(0, 2).join(' ');
+        const name = [u.prenom, u.nom].filter(Boolean).join(' ') || __alt || u.nomOrganisation || u.email || s.id;
         docs.forEach(d => {
           if (!d || !d.url) return;
           const key = docKey(d.url);
