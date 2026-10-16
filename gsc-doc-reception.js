@@ -152,6 +152,18 @@
       </div>${form}${resHtml}</div>`;
   }
 
+  /* __gscGroupHtml : un cadre par membre */
+  function groupHtml(list) {
+    const g = new Map();
+    list.forEach(it => { if (!g.has(it.uid)) g.set(it.uid, []); g.get(it.uid).push(it); });
+    return Array.from(g.values()).map(arr => {
+      const f = arr[0];
+      return '<div style="border:2px solid #1b9e5a;border-radius:14px;padding:10px;margin-bottom:14px;background:#f6fbf8;">' +
+        '<div style="font-weight:800;margin-bottom:8px;">👤 ' + esc(f.name) + ' <span style="font-size:12px;font-weight:600;color:#666;">· ' + esc(f.role) + ' · ' + arr.length + ' document' + (arr.length > 1 ? 's' : '') + '</span></div>' +
+        arr.map(cardHtml).join('') + '</div>';
+    }).join('');
+  }
+
   function render() {
     let ov = document.getElementById('gsc-docrec-overlay');
     updateFab();
@@ -159,7 +171,7 @@
     const list = items.filter(it => showAll || !decisions[it.id]);
     ov.querySelector('#gsc-docrec-body').innerHTML =
       `<label style="font-size:13px;display:block;margin-bottom:10px;"><input type="checkbox" data-dr="toggle" ${showAll ? 'checked' : ''}> Afficher aussi les documents déjà traités</label>` +
-      (list.length ? list.map(cardHtml).join('') : '<p style="color:#666;">Aucun document en attente. 🎉</p>');
+      (list.length ? groupHtml(list) : '<p style="color:#666;">Aucun document en attente. 🎉</p>');
     if (open) {
       const it = items.find(x => x.id === open.id);
       if (it && !it.tel) {
