@@ -324,6 +324,50 @@ service cloud.firestore {
       allow list: if request.auth != null && isAdmin(request.auth.uid);
     }
 
+    function isStructureOwner(uid, sid) {
+      return sid is string
+        && exists(/databases/$(database)/documents/structuresSportives/$(sid))
+        && (get(/databases/$(database)/documents/structuresSportives/$(sid)).data.addedBy == uid
+            || isLinkedStructureOwner(uid, sid));
+    }
+
+    match /rosters/{rid} {
+      allow read: if (resource.data.validation == 'validated'
+          && (resource.data.visibility == 'public'
+              || (resource.data.visibility == 'membres' && request.auth != null)))
+        || (request.auth != null
+            && (isStructureOwner(request.auth.uid, resource.data.structureId)
+                || isAdmin(request.auth.uid)));
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && isStructureOwner(request.auth.uid, request.resource.data.structureId)
+        && rid.matches(request.resource.data.structureId + '_.*')
+        && request.resource.data.validation in ['draft', 'pending']
+        && request.resource.data.visibility in ['prive', 'membres', 'public'];
+      allow update: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || (isActiveOrLegacy(request.auth.uid)
+                && isStructureOwner(request.auth.uid, resource.data.structureId)
+                && request.resource.data.structureId == resource.data.structureId
+                && request.resource.data.validation in ['draft', 'pending']
+                && request.resource.data.visibility in ['prive', 'membres', 'public']));
+      allow delete: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || isStructureOwner(request.auth.uid, resource.data.structureId));
+    }
+
+    match /rostersPrivate/{rid} {
+      allow read, delete: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || isStructureOwner(request.auth.uid, resource.data.structureId));
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && isStructureOwner(request.auth.uid, request.resource.data.structureId)
+        && rid.matches(request.resource.data.structureId + '_.*');
+      allow update: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || (isStructureOwner(request.auth.uid, resource.data.structureId)
+                && request.resource.data.structureId == resource.data.structureId));
+    }
+
     match /{document=**} {
       allow read: if request.auth != null && isAdmin(request.auth.uid);
       allow create, update: if request.auth != null && isAdmin(request.auth.uid);
