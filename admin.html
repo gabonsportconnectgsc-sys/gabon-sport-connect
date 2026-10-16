@@ -796,6 +796,8 @@ tr.is-demo-row td { opacity: .82; }
 .sidebar{display:flex;flex-direction:column;height:100vh;height:100dvh;}
 .sidebar-nav{flex:1 1 0%;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .sidebar-footer{flex-shrink:0;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+/* __gscFab */
+#gsc-docrec-fab{left:auto !important;right:12px !important;}
 </style>
 </head>
 <body>
@@ -956,7 +958,7 @@ tr.is-demo-row td { opacity: .82; }
         </button>
 
         <div class="nav-label">Session</div>
-        <button class="nav-item" id="nav-logout" onclick="event.stopPropagation();document.getElementById('logout-btn').click()">
+        <button class="nav-item" id="nav-logout" onclick="event.stopImmediatePropagation();document.getElementById('logout-btn').click()">
           <span class="nav-icon">🚪</span><span>Sortir</span>
         </button>
         <div class="nav-label">Application</div>
@@ -2186,6 +2188,7 @@ tr.is-demo-row td { opacity: .82; }
   <button class="mn-btn" id="mnav-signalements"><span class="mn-icon">🚩</span><span>Signalts</span></button>
   <button class="mn-btn" id="mnav-community"><span class="mn-icon">💬</span><span>Forum</span></button>
   <button class="mn-btn" id="mnav-documents"><span class="mn-icon">📁</span><span>Docs</span></button>
+  <button class="mn-btn" id="mnav-logout" onclick="event.stopImmediatePropagation();document.getElementById('logout-btn').click()"><span class="mn-icon">🚪</span><span>Sortir</span></button>
   <button class="mn-btn" id="mnav-verification"><span class="mn-icon">🌍</span><span>Vérif.</span></button>
   <button class="mn-btn" id="mnav-qrscan"><span class="mn-icon">📷</span><span>Scan QR</span></button>
   <button class="mn-btn" id="mnav-cms"><span class="mn-icon">🎨</span><span>CMS</span></button>
@@ -4741,5 +4744,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="gsc-doc-reception.js" defer></script>
 <script src="gsc-qr-fix.js" defer></script>
 <script src="gsc-admin-role-badges.js"></script>
+<script>/* __gscFab */
+(function(){function chk(){var f=document.getElementById("gsc-docrec-fab"),s=document.querySelector(".sidebar");if(!f||!s)return;var a=f.getBoundingClientRect(),b=s.getBoundingClientRect();var hit=b.right>a.left+4&&b.left<a.right-4&&b.bottom>a.top&&b.top<a.bottom;f.style.visibility=hit?"hidden":"visible";}setInterval(chk,300);})();
+</script>
 </body>
 </html>
