@@ -117,8 +117,16 @@
       var snap = await firebase.storage().ref('ged-modeles/' + d.id + '/v' + Date.now() + '_' + safe).put(file, { contentType: file.type });
       var url = await snap.ref.getDownloadURL();
       var v = view(d);
-      await ref().doc(d.id).update({ draft: Object.assign({}, d.draft || {}, { url: url, fileName: file.name, size: file.size, emetteur: emetteur, emetteurNom: emetteurNom, version: (v.version || 0) + 1 }) });
-      alert('✅ Modèle ajouté au brouillon. Pensez à « Enregistrer et déployer ».');
+      /* __gscModeleDirect */
+      var __f = { url: url, fileName: file.name, size: file.size, emetteur: emetteur, emetteurNom: emetteurNom, version: (v.version || 0) + 1 };
+      if (d.publie) {
+        var __up = Object.assign({}, __f, { publieLe: FV().serverTimestamp() });
+        if (d.draft) __up.draft = Object.assign({}, d.draft, __f);
+        await ref().doc(d.id).update(__up);
+      } else {
+        await ref().doc(d.id).update({ draft: Object.assign({}, d.draft || {}, __f) });
+      }
+      alert(d.publie ? '✅ Modèle publié : visible tout de suite par les membres.' : '✅ Modèle ajouté au brouillon. Pensez à « Enregistrer et déployer ».');
     } catch (err) { alert('❌ Erreur import : ' + (err.message || err)); }
     await load();
   }
