@@ -232,6 +232,18 @@
 
     // Infrastructures (lecture seule, sous-collection)
     renderInfrastructuresReadOnly(id);
+
+    // Effectifs : bouton reserve au responsable de la structure ou a l'admin
+    const upR = window.userProfile;
+    if (window.GSCRosterManager && upR && (upR.role === 'admin' || upR.structureId === id)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.style.cssText = 'margin:12px 0;width:100%;padding:10px';
+      btn.textContent = '📋 Gérer l\'effectif';
+      btn.addEventListener('click', function () { window.GSCRosterManager.open(id); });
+      body.appendChild(btn);
+    }
   }
 
   async function renderInfrastructuresReadOnly(structureId) {
