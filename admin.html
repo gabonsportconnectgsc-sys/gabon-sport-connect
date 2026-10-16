@@ -792,6 +792,10 @@ tr.is-demo-row td { opacity: .82; }
 .form-section{margin-bottom:18px;}
 .btn-icon-danger{background:none;border:1px solid var(--gray-bd);color:var(--danger);border-radius:6px;width:28px;height:28px;flex-shrink:0;cursor:pointer;font-size:13px;}
 .btn-icon-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+/* __gscSortir */
+.sidebar{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+.sidebar-nav{flex:1 1 0%;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.sidebar-footer{flex-shrink:0;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
 </style>
 </head>
 <body>
@@ -951,6 +955,10 @@ tr.is-demo-row td { opacity: .82; }
           <span class="nav-icon">📚</span><span>Archivage</span>
         </button>
 
+        <div class="nav-label">Session</div>
+        <button class="nav-item" id="nav-logout" onclick="event.stopPropagation();document.getElementById('logout-btn').click()">
+          <span class="nav-icon">🚪</span><span>Sortir</span>
+        </button>
         <div class="nav-label">Application</div>
         <button class="nav-item" id="nav-open-app" onclick="window.open('index.html', '_blank')" title="Ouvre index.html dans un nouvel onglet pour vérifier vos modifications en direct">
           <span class="nav-icon">🌐</span><span>Ouvrir l'application</span>

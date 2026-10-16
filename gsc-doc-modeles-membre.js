@@ -62,6 +62,17 @@
     }
   }
 
+  // __gscRoleOk
+  const ALL_ROLES = ['tous','tout','all','tous_profils','tous_les_profils','tous_les_roles','general','commun','public','global','*'];
+  function nr(x) { return String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9*]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function ns(x) { return x.length > 3 ? x.replace(/s$/, '') : x; }
+  function roleOk(m, u, role) {
+    const mine = [role, u && u.role, u && u.profileType, u && u.type, u && u.categorie]
+      .concat(Array.isArray(u && u.roles) ? u.roles : []).map(nr).filter(Boolean);
+    const targets = [].concat(m.role, m.roles, m.categorie).map(nr).filter(Boolean);
+    return targets.some(t => ALL_ROLES.includes(t) || mine.some(x => ns(x) === ns(t)));
+  }
+
   async function refresh() {
     uid = currentUid(); if (!uid) return;
     await ensureAuth();
@@ -75,7 +86,7 @@
       myDocs = Array.isArray(u && u.documents) ? u.documents : [];
       allPublished = pub;
       byKey = {}; decs.forEach(d => { byKey[d.docKey] = d; });
-      models = pub.filter(m => !m._suppr && norm(m.role) === norm(role))
+      models = pub.filter(m => !m._suppr && roleOk(m, u, role))
         .sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
       err = '';
     } catch (e) { err = e.message || String(e); console.warn('[ModelesMembre]', e); }
