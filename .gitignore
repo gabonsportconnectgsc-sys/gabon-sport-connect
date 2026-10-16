@@ -9,3 +9,6 @@ serviceAccount*.json
 node_modules/
 .firebase/
 *.bak*
+diag*.txt
+migrer.html
+*.bak*
