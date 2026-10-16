@@ -26,11 +26,12 @@
 
   function currentUid() {
     return (window.currentUser && window.currentUser.uid) ||
-      (window.firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) || null;
+      (window.firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) ||
+      (window.userProfile && (window.userProfile.uid || window.userProfile.id)) || null;
   }
 
   async function getUserDoc(u) {
-    if (window.getDoc && window.doc && window.db) {
+    if (!(window.db && window.db.collection) && window.getDoc && window.doc && window.db) {
       const s = await window.getDoc(window.doc(window.db, 'users', u));
       return s.exists() ? s.data() : null;
     }
@@ -42,7 +43,7 @@
   }
 
   async function queryAll(coll, field, val) {
-    if (window.getDocs && window.query && window.where && window.collection && window.db) {
+    if (!(window.db && window.db.collection) && window.getDocs && window.query && window.where && window.collection && window.db) {
       const s = await window.getDocs(window.query(window.collection(window.db, coll), window.where(field, '==', val)));
       return s.docs.map(d => Object.assign({ id: d.id }, d.data()));
     }
@@ -53,8 +54,17 @@
     throw new Error('API Firestore indisponible');
   }
 
+  // __gscAuthPatch
+  async function ensureAuth() {
+    try { if (window.firebase && firebase.auth && firebase.auth().currentUser) return; } catch (e) {}
+    if (typeof window.ensureFirebaseAuthViaSupabase === 'function') {
+      try { await window.ensureFirebaseAuthViaSupabase(); } catch (e) { console.warn('[ModelesMembre] auth', e); }
+    }
+  }
+
   async function refresh() {
     uid = currentUid(); if (!uid) return;
+    await ensureAuth();
     try {
       const [u, pub, decs] = await Promise.all([
         getUserDoc(uid),

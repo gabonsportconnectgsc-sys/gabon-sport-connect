@@ -1195,6 +1195,7 @@
     .btn-icon-danger{background:none;border:1px solid var(--gray-bd);color:var(--danger);border-radius:6px;width:28px;height:28px;flex-shrink:0;cursor:pointer;font-size:13px;}
     .btn-icon-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
 </style>
+<style>.gsc-ico-user{flex-shrink:0;vertical-align:middle}</style>
 </head>
 <body>
 <!-- ═══ ÉCRAN DE DÉMARRAGE PERSONNALISÉ (après le splash natif de la PWA) ═══
@@ -1380,12 +1381,12 @@
     <div class="topnav-spacer"></div>
     <div class="topnav-icons">
     <div id="nav-visitor-banner" class="visitor-banner" onclick="goToAuth()" title="Mode visiteur — Se connecter">👁️</div>
+    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     <div class="user-chip" id="nav-user-chip" onclick="handleChipClick()" style="display:none;">
       <div class="user-avatar" id="nav-avatar" style="font-size:18px;">?</div>
       <div class="user-name" id="nav-username">…</div>
     </div>
     <button class="btn-icon" id="nav-qr-scan-btn" onclick="openQrScanner()" title="Scanner un QR Code" aria-label="Scanner un QR Code">📷</button>
-    <button class="btn-icon" id="nav-login-btn" onclick="goToAuth()" title="Se connecter" aria-label="Se connecter">👤</button>
     <button class="btn-icon btn-hamburger" id="nav-menu-btn" onclick="toggleMenu()" title="Menu" aria-label="Ouvrir le menu">
       <span class="hamburger-lines"><span></span><span></span><span></span></span>
     </button>
@@ -1447,7 +1448,7 @@
 
     <!-- PIED DU MENU : connexion -->
     <div class="side-menu-footer">
-      <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth();closeMenu()"><span class="smi-ico">🔑</span><span id="side-menu-account-label">Se connecter</span></button>
+      <button class="side-menu-item side-menu-account" id="side-menu-account-btn" onclick="goToAuth();closeMenu()"><span class="smi-ico"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span><span id="side-menu-account-label">Se connecter</span></button>
     </div>
   </aside>
 
@@ -1484,7 +1485,7 @@
 
       <!-- Vue: LOGIN -->
       <div id="auth-view-login">
-        <div class="modal-title" style="margin-bottom:14px;">🔑 Connexion</div>
+        <div class="modal-title" style="margin-bottom:14px;"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-5px;margin-right:8px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>Connexion</div>
         <div class="form-group"><label>Email</label><input type="email" id="auth-login-email" placeholder="votre@email.com" autocomplete="username"></div>
         <div class="form-group"><label>Mot de passe</label><div class="pwd-wrap"><input type="password" id="auth-login-password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('auth-login-password',this)" title="Afficher/masquer">👁️</button></div></div>
         <button class="btn-sm" id="auth-login-submit" onclick="handleSupabaseLogin()" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;">Se connecter</button>
@@ -1905,7 +1906,7 @@
         <button class="quick-btn" onclick="showView('stades')"><img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🗺️</span>'">Carte sportive</button>
         <button class="quick-btn" onclick="showView('actualites')"><img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>📰</span>'">Actualités</button>
         <button class="quick-btn" onclick="goToAuth('register')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🏅</span>'">Intégrer comme acteur sportif</button>
-        <button class="quick-btn" onclick="goToAuth('login')" style="border-color:var(--green);color:var(--green-dk);"><img src="https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=60&h=60&fit=crop&auto=format" class="qb-real-icon" alt="" onerror="this.outerHTML='<span class=qb-icon>🔑</span>'">Se connecter</button>
+        <button class="quick-btn" onclick="goToAuth('login')" style="border-color:var(--green);color:var(--green-dk);"><span class="qb-icon"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>Se connecter</button>
       </div>
 
       <!-- Visionneuse plein écran (photo créateur/porteur de projet) -->
@@ -5185,6 +5186,12 @@ function openActorDetail(uid){
     if(a.publicContactEmail) html+=`<div class="adm-info-row"><span class="adm-info-label">Email</span><span class="adm-info-val">✉️ ${esc(a.publicContactEmail)}</span></div>`;
     if(a.publicContactPhone) html+=`<div class="adm-info-row"><span class="adm-info-label">Téléphone</span><span class="adm-info-val">📞 ${esc(a.publicContactPhone)}</span></div>`;
     html+=`</div>`;
+  }
+  // __gscGaleriePublique : galerie photos en lecture seule sur la fiche
+  if(Array.isArray(a.photos)&&a.photos.length){
+    html+=`<div class="adm-section"><div class="adm-section-title">📸 Galerie photos (${a.photos.length})</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">`;
+    a.photos.slice(0,10).forEach((p,i)=>{const u=sanitizeUrl(p);if(!u)return;html+=`<a href="${esc(u)}" target="_blank" rel="noopener" style="aspect-ratio:1;border-radius:10px;overflow:hidden;display:block;background:#eee;"><img src="${esc(u)}" alt="Photo ${i+1}" loading="lazy" style="width:100%;height:100%;object-fit:cover;"></a>`;});
+    html+=`</div></div>`;
   }
   if(isPersonnel){
     // Physique — masqué pour les visiteurs
@@ -8547,22 +8554,26 @@ function initDashboardClock(){
   // Fetch live weather from Open-Meteo API (no API key needed)
   async function fetchWeather(){
     try {
-      // Get user's approximate location (Gabon center by default)
-      let lat = -1.3521, lon = 25.2332; // Libreville, Gabon
-      
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            lat = pos.coords.latitude;
-            lon = pos.coords.longitude;
-            getWeatherData(lat, lon);
-          },
-          () => { getWeatherData(lat, lon); }, // Fallback if permission denied
-          { timeout: 3000 }
-        );
-      } else {
-        getWeatherData(lat, lon);
-      }
+      // Position par défaut : Libreville. La permission de géolocalisation n'est plus
+      // demandée au chargement : la vraie position n'est utilisée que si elle est déjà accordée.
+      const lat0 = 0.4162, lon0 = 9.4673;
+      let done = false;
+      const useDefault = () => { if(!done){ done = true; getWeatherData(lat0, lon0); } };
+      try {
+        if(navigator.permissions && navigator.geolocation){
+          const st = await navigator.permissions.query({name:'geolocation'});
+          if(st.state === 'granted'){
+            navigator.geolocation.getCurrentPosition(
+              (pos) => { if(!done){ done = true; getWeatherData(pos.coords.latitude, pos.coords.longitude); } },
+              useDefault,
+              { timeout: 3000 }
+            );
+            setTimeout(useDefault, 3500);
+            return;
+          }
+        }
+      } catch(e){}
+      useDefault();
     } catch(e){
       console.log('Weather fetch error:', e);
     }
@@ -9844,6 +9855,11 @@ document.addEventListener('DOMContentLoaded', function(){
        - 'index.html#vue' / '#vue' / 'vue' → navigation générique (comportement existant) */
   function handleNotifLink(link){
     if(!link) return;
+    if(typeof link === 'object'){
+      if(link.section === 'docs_recus'){ location.href = 'admin.html?section=docs_recus'; return; }
+      link = link.section || '';
+      if(!link) return;
+    }
     if(link.indexOf('fil:') === 0){
       const parts = link.slice(4).split(':');
       const postId = parts[0];

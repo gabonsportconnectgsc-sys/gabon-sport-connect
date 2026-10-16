@@ -193,7 +193,7 @@
   let currentPlayerId = null, currentMatchId = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || 'Sans nom'; }
+  function fullName(u) { return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || u.nomOrganisation || u.nomEtablissement || u.name || u.nomComplet || u.fullName || u.displayName || u.pseudo || 'Sans nom'; }
 
   // Trie une liste d'acteurs en faisant systématiquement remonter les fiches
   // "en attente de validation" en tête (les plus anciennes d'abord parmi elles),
@@ -600,7 +600,7 @@
     if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
-      list = list.filter(u => (fullName(u) + ' ' + (u.club || u.nomOrganisation || u.nomEtablissement || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
+      list = list.filter(u => (fullName(u) + ' ' + (u.club || u.nomOrganisation || u.nomEtablissement || u.ownerRef?.clubName || '') + ' ' + (u.email || '')).toLowerCase().includes(t));
     }
 
     const tbody = document.getElementById('players-grid');
@@ -624,7 +624,7 @@
         <td data-label="ID"><span class="user-gscid-cell">${esc(gscId)}</span></td>
         <td data-label="Membre"><div class="user-name-cell"><div class="user-row-avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}">` : esc(fullName(u).charAt(0).toUpperCase())}</div><span class="user-name-txt">${esc(fullName(u))}</span>${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</div></td>
         <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.titrePersonnalise || u.role || '—')}</td>
-        <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || '—')}</td>
+        <td data-label="Club/Org">${esc(u.club || u.nomOrganisation || u.nomEtablissement || u.ownerRef?.clubName || '—')}</td>
         <td data-label="QR"><div class="user-qr-cell" title="QR Code d'identification" data-uid="${esc(uid)}" id="row-qr-${qrIdx}"><canvas id="row-qr-canvas-${qrIdx}" width="26" height="26"></canvas></div></td>
         <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[u.status || 'active'] || 'Actif'}</span>${u.deletionRequested ? ' <span class="status-badge" style="background:#ef444420;color:#ef4444;border:1px solid #ef444440;" title="Suppression demandée par le membre">🗑️ Suppression demandée</span>' : ''}${u.editLocked ? (u.ownerUid ? ` <span class="status-badge" style="background:#3b82f620;color:#3b82f6;border:1px solid #3b82f640;" title="Géré par un propriétaire">🏢 Géré</span>` : ` <span class="status-badge" style="background:#f9731620;color:#f97316;border:1px solid #f9731640;" title="En attente de revendication">🔒 Non revendiqué</span>`) : ''}</td>
         <td data-label="Documents">${renderPinnedDocsBadge(u)}</td>

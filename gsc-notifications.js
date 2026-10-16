@@ -64,6 +64,8 @@
   let _notifications   = [];
   let _unreadCount     = 0;
   let _prefs           = null;
+  let _gscSeen = new Set();    // ids déjà vus (pas de son pour la liste initiale)
+  let _gscArmedAt = Infinity;  // le son ne part qu'après la connexion initiale du flux
   let _firestoreUnsub  = null;
   let _panelOpen       = false;
   let _currentUserId   = null;
@@ -341,7 +343,7 @@
   function injectBell(){
     if(document.getElementById('gsc-notif-bell')) return;
 
-    /* Cloche dans le header — insérée avant l'oeil visiteur */
+    /* Cloche dans le header — insérée juste après l'oeil visiteur */
     const visitorBanner = document.getElementById('nav-visitor-banner');
     if(!visitorBanner) return;
 
@@ -359,7 +361,7 @@
       </button>
       <span class="notif-bell-badge" id="gsc-notif-badge">0</span>
     `;
-    visitorBanner.parentNode.insertBefore(bellWrap, visitorBanner);
+    visitorBanner.parentNode.insertBefore(bellWrap, visitorBanner.nextSibling);
 
     /* Panel principal */
     const panel = document.createElement('div');
@@ -532,22 +534,44 @@
       updateZoneBadges();
     }
     closeAll();
-    if(n.link){
+    var _lk = resolveLink(n);
+    if(_lk){
       /* FIX : cette navigation dupliquait (en plus simple, sans ouvrir les
          commentaires ni gérer un commentId précis) la logique déjà écrite pour
          le clic sur notification push. On délègue maintenant à handleNotifLink
          (défini dans index.html), identique que le clic vienne de la cloche
          in-app ou d'une notification système reçue via le service worker. */
       if(typeof window.handleNotifLink === 'function'){
-        window.handleNotifLink(n.link);
+        window.handleNotifLink(_lk);
       } else if(typeof window.showView === 'function'){
-        const parts = n.link.split(':');
+        const parts = (typeof _lk === 'string' ? _lk : (_lk.section || '')).split(':');
         const view = parts[0] === 'fil' ? 'actualites' : parts[0];
         window.showView(view);
       } else {
-        window.dispatchEvent(new CustomEvent('gsc-navigate', { detail: { link: n.link } }));
+        window.dispatchEvent(new CustomEvent('gsc-navigate', { detail: { link: _lk } }));
       }
     }
+  }
+
+  /* Déduit la destination d'une notification : lien enregistré (texte ou objet),
+     sinon selon le type. Retourne null si rien à ouvrir. */
+  function resolveLink(n){
+    var l = n.link;
+    if(l && (typeof l === 'object' ? l.section : true)) return l;
+    var t = String(n.type || '').toLowerCase();
+    var MAP = {
+      doc_recu:{section:'docs_recus'}, doc_alert:{section:'docs_recus'}, admin:{section:'docs_recus'},
+      doc_decision:{section:'profil'}, realisation:'profil', achievement:'profil',
+      comment:'fil', commentaire:'fil', like:'fil', mention:'fil',
+      follow:'annuaire', abonnement:'annuaire', subscription:'annuaire',
+      message:'messages', match:'matchs', event:'evenements', evenement:'evenements',
+      news:'actualites', actualite:'actualites', transfer:'transferts', transfert:'transferts'
+    };
+    if(MAP[t]){
+      if(MAP[t] === 'fil' && n.postId) return 'fil:' + n.postId + (n.commentId ? ':' + n.commentId : '');
+      return MAP[t];
+    }
+    return null;
   }
 
   function markAllRead(){
@@ -661,9 +685,11 @@
     if(_toastTimer) clearTimeout(_toastTimer);
     _toastTimer = setTimeout(()=>hideToast(), 5000);
     /* Vibration */
-    if(_prefs?.vibrationEnabled && 'vibrate' in navigator) navigator.vibrate([100,50,100]);
+    const _pf = _prefs || DEFAULT_PREFS;
+    const _adm = !!(window.userProfile && window.userProfile.role === 'admin');
+    if(_pf.vibrationEnabled && 'vibrate' in navigator) navigator.vibrate(_adm ? [250,100,250,100,400] : [100,50,100]);
     /* Son */
-    if(_prefs?.soundEnabled) playNotifSound();
+    if(_pf.soundEnabled){ playNotifSound(); if(_adm) setTimeout(playNotifSound, 650); }
   }
 
   function hideToast(){
@@ -990,9 +1016,13 @@
     });
     /* Nouvelles notifications — toast seulement si je suis le destinataire (pas l'expéditeur) */
     _notifications = applyNotifState(_notifications);
-    if(_notifications.length > prev){
-      const newest = _notifications.find(n=>!n.read && n.senderId !== _currentUserId && (n.createdAt||0) > _notifSession);
-      if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
+    {
+      const fresh = _notifications.filter(n=>!_gscSeen.has(n.id));
+      _notifications.forEach(n=>_gscSeen.add(n.id));
+      if(Date.now() >= _gscArmedAt){
+        const newest = fresh.find(n=>!n.read && n.senderId !== _currentUserId && (Date.now() - (n.createdAt||Date.now())) < 120000);
+        if(newest && (_prefs?.[newest.type] !== false)) showToast(newest);
+      }
     }
     updateBadge();
     updateZoneBadges();
@@ -1012,6 +1042,7 @@
 
       _fsCore = []; _fsRole = [];
       startNotifState(uid);
+      _gscSeen = new Set(); _gscArmedAt = Date.now() + 3500;
       const unsubs = [];
 
       /* ── FLUX PRINCIPAL — recipientId in [uid, 'all'] ──

@@ -1,0 +1,391 @@
+        && request.resource.data.get('validationAdmin', '') != 'validated';
+
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+            ['role', 'structureId', 'documentVerifie', 'editLocked', 'ownershipStatus', 'ownerRef', 'gereParFederation', 'isDemo', 'validationAdmin']
+          )
+          && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+               && (resource.data.get('status', 'active') == 'deleted' || resource.data.get('rejectedAt', null) != null)))
+        || isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+
+      match /private/sensible {
+        allow read, create, update: if request.auth != null
+          && (request.auth.uid == uid || isAdmin(request.auth.uid));
+      }
+
+      match /private/{doc} {
+        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin(request.auth.uid));
+        allow create: if request.auth != null && (
+          (request.auth.uid == uid && request.resource.data.status in ['pending', 'active'])
+          || isAdmin(request.auth.uid));
+        allow update: if request.auth != null && (
+          (request.auth.uid == uid
+            && (!('status' in resource.data) || resource.data.status in ['active','pending'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+          || isAdmin(request.auth.uid)
+        );
+        allow delete: if request.auth != null && isAdmin(request.auth.uid);
+      }
+    }
+
+    // Lecture admin des sous-documents private/* (requêtes collectionGroup)
+    match /{path=**}/private/{doc} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /clubValidationRequests/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.status == 'pending';
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && resource.data.status == 'pending'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        || (request.auth.uid == uid
+          && resource.data.status in ['approved', 'rejected']
+          && !('appliedAt' in resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appliedAt']))
+        || isAdmin(request.auth.uid)
+        || (resource.data.structureOwnerUid != null && resource.data.structureOwnerUid == request.auth.uid)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /fraud_alerts/{alertId} {
+      allow create: if request.auth != null
+        && request.resource.data.statut == 'nouveau'
+        && request.resource.data.traitePar == null
+        && request.resource.data.traiteLe == null
+        && request.resource.data.champConflit in ['email','tel','identite']
+        && request.resource.data.keys().hasAll(['id','type','champConflit','motif','statut','tentative','fichExistante','zone','discipline','createdAt']);
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow update: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /notifications/{id} {
+      allow read: if request.auth != null &&
+        (resource.data.recipientId == request.auth.uid ||
+         resource.data.recipientId == 'all' ||
+         resource.data.recipientId == myRoleTag(request.auth.uid));
+      allow create: if request.auth != null &&
+        request.resource.data.senderId == request.auth.uid &&
+        (request.resource.data.recipientId != 'all' ||
+         isAdmin(request.auth.uid) ||
+         isActiveOrLegacy(request.auth.uid));
+      allow update, delete: if request.auth != null &&
+        (resource.data.recipientId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /notif_state/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /docDecisions/{id} {
+      allow read: if request.auth != null &&
+        (resource.data.uid == request.auth.uid || isAdmin(request.auth.uid));
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /docCertifications/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.certTexte is string
+        && request.resource.data.certTexte.size() < 3000;
+      allow read: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isAdmin(request.auth.uid));
+      allow update, delete: if false;
+    }
+
+    match /notif_preferences/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /push_subscriptions/{id} {
+      allow read, write: if request.auth != null && request.auth.uid == id;
+    }
+
+    match /communityPosts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid) &&
+        request.resource.data.authorId == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.authorId == request.auth.uid ||
+        isAdmin(request.auth.uid) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions','commentsCount','sharesCount'])
+      );
+      allow delete: if request.auth != null &&
+        (resource.data.authorId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /communityPosts/{postId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+        (resource.data.authorId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    match /blocages/{id} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.blockerId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.blockerId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.blockerId;
+    }
+
+    match /loginHistory/{id} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+
+    match /actualites/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /sitesSportifs/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && (resource.data.addedBy == request.auth.uid || isAdmin(request.auth.uid));
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /structuresSportives/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && (
+          resource.data.addedBy == request.auth.uid ||
+          isAdmin(request.auth.uid) ||
+          (
+            isLinkedStructureOwner(request.auth.uid, id) &&
+            request.resource.data.nom == resource.data.nom &&
+            request.resource.data.discipline == resource.data.discipline &&
+            request.resource.data.type == resource.data.type &&
+            request.resource.data.addedBy == resource.data.addedBy
+          )
+        );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+
+      match /infrastructures/{infraId} {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
+      }
+      match /archives/{archiveId} {
+        allow read: if true;
+        allow write: if request.auth != null && isAdmin(request.auth.uid);
+      }
+
+      match /conformite/{saisonId} {
+        allow read, write: if request.auth != null && (
+          isAdmin(request.auth.uid) ||
+          isLinkedStructureOwner(request.auth.uid, id) ||
+          get(/databases/$(database)/documents/structuresSportives/$(id)).data.addedBy == request.auth.uid
+        );
+      }
+    }
+
+    match /whatsapp_contacts/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /message_templates/{id} {
+      allow read, create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /signalements/{signalementId} {
+      allow read, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reason is string
+        && (
+          (request.resource.data.reportedBy == request.auth.uid &&
+           request.resource.data.targetUid is string &&
+           request.resource.data.targetUid != request.auth.uid)
+          ||
+          (request.resource.data.reporterId == request.auth.uid &&
+           request.resource.data.targetId is string)
+        );
+    }
+
+    match /ged_catalogue/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /ged_modeles_acteurs/{docId} {
+      allow read: if request.auth != null && (resource.data.publie == true || isAdmin(request.auth.uid));
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /ged_modeles/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /clubClaimOffers/{offerId} {
+      allow read: if request.auth != null && (
+        resource.data.targetUid == request.auth.uid ||
+        resource.data.structureOwnerUid == request.auth.uid ||
+        isAdmin(request.auth.uid)
+      );
+      allow create: if request.auth != null
+        && request.resource.data.structureOwnerUid == request.auth.uid
+        && isOrgRole(request.auth.uid)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid != request.auth.uid;
+      allow update: if request.auth != null && (
+        (resource.data.targetUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt']))
+        || isAdmin(request.auth.uid)
+      );
+      allow delete: if request.auth != null &&
+        (resource.data.structureOwnerUid == request.auth.uid || isAdmin(request.auth.uid));
+    }
+
+    // --- Lectures explicites (audit) ---
+    match /matchs/{id} { allow read: if true; }
+    match /sites/{id} { allow read: if true; }
+    match /annonces/{id} { allow read: if true; }
+    match /conformite-modeles/{id} { allow read: if true; }
+    match /notificationsGlobales/{id} { allow read: if true; }
+    match /{path=**}/likes/{id} { allow read: if true; }
+    match /notifsPrefs/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; }
+    match /players/{id} { allow read: if request.auth != null; }
+    match /coaches/{id} { allow read: if request.auth != null; }
+    match /arbitres/{id} { allow read: if request.auth != null; }
+    match /independents/{id} { allow read: if request.auth != null; }
+
+    match /demandesVisite/{id} {
+      allow read: if request.auth != null && (resource.data.chercheurId == request.auth.uid || resource.data.proprietaireId == request.auth.uid || isAdmin(request.auth.uid));
+      allow create: if request.auth != null && request.resource.data.chercheurId == request.auth.uid;
+    }
+    match /deletedAccounts/{id} {
+      allow get: if true;
+      allow list: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    function isStructureOwner(uid, sid) {
+      return sid is string
+        && exists(/databases/$(database)/documents/structuresSportives/$(sid))
+        && (get(/databases/$(database)/documents/structuresSportives/$(sid)).data.addedBy == uid
+            || isLinkedStructureOwner(uid, sid));
+    }
+
+    match /rosters/{rid} {
+      allow read: if (resource.data.validation == 'validated'
+          && (resource.data.visibility == 'public'
+              || (resource.data.visibility == 'membres' && request.auth != null)))
+        || (request.auth != null
+            && (isStructureOwner(request.auth.uid, resource.data.structureId)
+                || isAdmin(request.auth.uid)));
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && isStructureOwner(request.auth.uid, request.resource.data.structureId)
+        && rid.matches(request.resource.data.structureId + '_.*')
+        && request.resource.data.validation in ['draft', 'pending']
+        && request.resource.data.visibility in ['prive', 'membres', 'public'];
+      allow update: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || (isActiveOrLegacy(request.auth.uid)
+                && isStructureOwner(request.auth.uid, resource.data.structureId)
+                && request.resource.data.structureId == resource.data.structureId
+                && request.resource.data.validation in ['draft', 'pending']
+                && request.resource.data.visibility in ['prive', 'membres', 'public']));
+      allow delete: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || isStructureOwner(request.auth.uid, resource.data.structureId));
+    }
+
+    match /rostersPrivate/{rid} {
+      allow read, delete: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || isStructureOwner(request.auth.uid, resource.data.structureId));
+      allow create: if request.auth != null && isActiveOrLegacy(request.auth.uid)
+        && isStructureOwner(request.auth.uid, request.resource.data.structureId)
+        && rid.matches(request.resource.data.structureId + '_.*');
+      allow update: if request.auth != null
+        && (isAdmin(request.auth.uid)
+            || (isStructureOwner(request.auth.uid, resource.data.structureId)
+                && request.resource.data.structureId == resource.data.structureId));
+    }
+
+    match /{document=**} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow create, update: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+  }
+}
+
+#### storage.rules
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() { return request.auth != null; }
+
+    function isAdmin() {
+      return signedIn() && (
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)) ||
+        (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function ownsStructure(sid) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.structureId == sid;
+    }
+
+    function validFile(maxMb) {
+      return request.resource.size < maxMb * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf|application/msword|application/vnd\\..*');
+    }
+
+    // Images du theme du site : lecture publique, ecriture admin
+    match /theme-images/{file} {
+      allow read: if true;
+      allow write: if isAdmin() && validFile(5);
+      allow delete: if isAdmin();
+    }
+
+    // Modeles GED : lecture connectee, ecriture admin
+    match /ged-modeles/{entryId}/{file} {
+      allow read: if signedIn();
+      allow write: if isAdmin() && validFile(10);
+      allow delete: if isAdmin();
+    }
+
+    // Fichiers d'une structure (infrastructures, GED) : admin ou structure rattachee
+    match /structures/{structureId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if (isAdmin() || ownsStructure(structureId)) && validFile(10);
+      allow delete: if isAdmin() || ownsStructure(structureId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+#### GALERIE
+index.html:2347:          <div class="card-title">📸 Galerie photos</div>
+index.html:7048:// ── GALERIE PHOTOS — max 10 par membre, propriétaire uniquement ──
+gsc-profile-engine.js:11: *  non liées aux fiches (auth, galerie, QR code, admin, carte, actualités).
+gsc-structures-infrastructures.js:7: *  avec galeries photos, aperçus, affichage plein écran, historisation.
+gsc-structures-infrastructures.js:18:  /* État interne : structure actuellement ouverte dans la galerie/modale.
+gsc-structures-infrastructures.js:32:   * 2. RENDU GALERIE — VUE ADMIN
+gsc-structures-infrastructures.js:59:              <button class="ph-btn upload" onclick="event.stopPropagation();GSCInfrastructureModule.openGallery('${esc(infra.id)}','${esc(infra.nom)}')">🖼️ Galeri
+gsc-structures-infrastructures.js:75:   * 3. GALERIE MODALE
+gsc-structures-infrastructures.js:96:              <div class="modal-subtitle">Galerie photos (${photos.length})</div>

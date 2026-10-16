@@ -1,0 +1,212 @@
+#### GALERIE 7040-7160
+    errEl.textContent='Erreur : '+e.message; errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Confirmer';
+  }
+}
+window.handleBecomeSupporter=handleBecomeSupporter;
+
+// ── PHOTO GALLERY ──
+// ── GALERIE PHOTOS — max 10 par membre, propriétaire uniquement ──
+const GALLERY_MAX = 10;
+let _galleryCurrentUrl = null;
+let _galleryCurrentIndex = -1;
+
+function renderGallery(photos=[]){
+  const container=document.getElementById('photo-gallery');
+  if(!container) return;
+  const label=document.getElementById('gallery-count-label');
+  const profilePhoto=userProfile?.photoURL||null;
+  if(label) label.textContent=photos.length+'/'+GALLERY_MAX+' photo'+(photos.length!==1?'s':'');
+  const canAdd = photos.length < GALLERY_MAX;
+  const addBtn = canAdd
+    ? `<div class="gallery-item gallery-add" onclick="document.getElementById('gallery-photo-input').click()" title="Ajouter une photo">📷</div>`
+    : '';
+  const limitMsg = !canAdd
+    ? `<div class="gallery-limit-msg">⚠️ Limite de ${GALLERY_MAX} photos atteinte. Supprimez-en une pour en ajouter.</div>`
+    : '';
+  const items=photos.map((url,i)=>{
+    const isProfile = url === profilePhoto;
+    const safeUrl=sanitizeUrl(url);
+    const urlJs=esc(String(safeUrl).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+    return `<div class="gallery-item">
+      ${isProfile?'<div class="gallery-is-profile-badge">✓ Profil</div>':''}
+      <img src="${esc(safeUrl)}" alt="Photo ${i+1}" loading="lazy" onclick="openGalleryModal('${urlJs}',${i})">
+      <div class="gallery-item-overlay">
+        <div class="gallery-item-actions">
+          <button class="gallery-action-btn" onclick="event.stopPropagation();gallerySetAsProfileDirect(${i})" title="Définir comme photo de profil">⭐</button>
+          <button class="gallery-action-btn" onclick="event.stopPropagation();galleryDownloadDirect('${urlJs}')" title="Télécharger">⬇️</button>
+          <button class="gallery-action-btn danger" onclick="event.stopPropagation();galleryDeleteDirect(${i})" title="Supprimer">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  container.innerHTML=items+addBtn;
+  const limitEl=document.getElementById('gallery-limit-info');
+  if(limitEl) limitEl.innerHTML=limitMsg;
+}
+
+function openGalleryModal(url,idx){
+  const safeUrl=sanitizeUrl(url);
+  _galleryCurrentUrl=safeUrl;
+  _galleryCurrentIndex=idx;
+  document.getElementById('gallery-modal-img').src=safeUrl;
+  document.getElementById('gallery-modal').classList.add('open');
+}
+window.openGalleryModal=openGalleryModal;
+
+function closeGalleryModal(){
+  document.getElementById('gallery-modal').classList.remove('open');
+  document.getElementById('gallery-modal-img').src='';
+  _galleryCurrentUrl=null;
+  _galleryCurrentIndex=-1;
+}
+window.closeGalleryModal=closeGalleryModal;
+
+async function gallerySetAsProfile(){
+  if(_galleryCurrentUrl) await gallerySetAsProfileDirect(_galleryCurrentIndex);
+}
+window.gallerySetAsProfile=gallerySetAsProfile;
+
+async function gallerySetAsProfileDirect(idx){
+  const photos=userProfile?.photos||[];
+  const url=photos[idx];
+  if(!url||!db||!currentUser) return;
+  try{
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{photoURL:url,updatedAt:serverTimestamp()});
+    userProfile.photoURL=url;
+    renderDashboard();renderProfile();
+    toast('✅ Photo de profil mise à jour !','success');
+    closeGalleryModal();
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.gallerySetAsProfileDirect=gallerySetAsProfileDirect;
+
+function galleryDownload(){
+  if(_galleryCurrentUrl) galleryDownloadDirect(_galleryCurrentUrl);
+}
+window.galleryDownload=galleryDownload;
+
+function galleryDownloadDirect(url){
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='photo-gsc.jpg';
+  a.target='_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+window.galleryDownloadDirect=galleryDownloadDirect;
+
+async function galleryDelete(){
+  if(_galleryCurrentIndex>=0) await galleryDeleteDirect(_galleryCurrentIndex);
+}
+window.galleryDelete=galleryDelete;
+
+async function galleryDeleteDirect(idx){
+  if(!confirm('Supprimer cette photo ?')) return;
+  if(!db||!currentUser||!userProfile) return;
+  const photos=[...(userProfile.photos||[])];
+  photos.splice(idx,1);
+  try{
+    await ensureFirebaseAuthViaSupabase();
+    await updateDoc(doc(db,'users',currentUser.uid),{photos,updatedAt:serverTimestamp()});
+    userProfile.photos=photos;
+    renderGallery(photos);
+    toast('🗑️ Photo supprimée.','info');
+    closeGalleryModal();
+  }catch(e){ toast('Erreur : '+e.message,'error'); }
+}
+window.galleryDeleteDirect=galleryDeleteDirect;
+
+
+#### MESDOCS
+index.html:2360:          <div class="card-title">📁 Mes documents</div>
+index.html:2369:          <button class="btn-sm" onclick="document.getElementById('own-document-input').click()" style="margin-top:8px;padding:8px 14px;font-size:12px;border:1.5px solid var(--gray-bd)
+index.html:2370:          <input type="file" id="own-document-input" accept="image/*,application/pdf" multiple style="display:none" onchange="onOwnDocumentFilesSelected(this)">
+index.html:7201:  document.getElementById('own-document-input')?.click();
+index.html:7285:    const input=document.getElementById('own-document-input');
+index.html:7326:  const input=document.getElementById('own-document-input');
+gsc-doc-attestation.js:156:      const input = document.getElementById('own-document-input');
+gsc-doc-attestation.js:216:    if (ev.target && ev.target.id === 'own-document-input') window.__gscDocTitle = null; window.__gscReplace = null;
+gsc-doc-member.js:2:   à côté de chaque document de la carte « 📁 Mes documents ».
+gsc-doc-member.js:57:    const titles = Array.from(document.querySelectorAll('.card-title')).filter(t => /Mes documents/.test(t.textContent));
+gsc-doc-member.js:76:    const inp = document.getElementById('own-document-input'); if (!inp) return;
+gsc-doc-modeles-membre.js:127:    const inp = document.getElementById('own-document-input');
+gsc-doc-modeles-membre.js:134:    const titles = Array.from(document.querySelectorAll('.card-title')).filter(t => /Mes documents/.test(t.textContent));
+gsc-doc-modeles-membre.js:150:            const inp = document.getElementById('own-document-input');
+
+#### PROPRIO
+index.html:3941:// propriétaire et l'admin (règle Firestore dédiée). Le document public
+index.html:4619:  // uniquement par le propriétaire + l'admin). Repli sur d'éventuels champs
+index.html:5118:  // Photo de couverture : zone d'arrière-plan derrière logo/nom/QR, modifiable par le propriétaire du profil
+index.html:5166:  // propriétaire du profil, son club/association employeur, ou l'administrateur.
+index.html:5224:    // Licence — donnée sensible : propriétaire, club employeur ou admin uniquement
+index.html:5246:  // reste une donnée sensible réservée au propriétaire, son club employeur ou l'admin)
+index.html:5320:  // uniquement par le propriétaire, son club/association employeur, ou l'administrateur.
+index.html:6038:// détail d'acteur. Modifiable uniquement par le propriétaire du profil concerné.
+index.html:7048:// ── GALERIE PHOTOS — max 10 par membre, propriétaire uniquement ──
+index.html:7191:// Gestionnaire d'accès : le propriétaire de la fiche, son club/association
+index.html:9051:  // Boutons visibles : propriétaire, admin, ou employeur (club/asso/fédé)
+index.html:9121:  // Sécurité anti-fraude : seuls le propriétaire du QR, un admin, ou l'employeur
+index.html:9151:  // Afficher les boutons Imprimer/Télécharger uniquement pour : propriétaire, employeur (club/asso/fédé) ou admin
+admin-controller.js:458:          if (titleEl) titleEl.textContent = '🏢 Propriétaire / Club';
+admin-controller.js:478:      toast('Cette fiche nécessite un propriétaire — sélectionnez un club/organisation avant de valider.', 'error');
+admin-controller.js:558:      toast('🏢 Propriétaire assigné.', 'success');
+admin-controller.js:629:        <td data-label="Statut"><span class="status-badge status-${u.status || 'active'}">${({ active: 'Actif', pending: 'En attente', hidden: 'Masqué', deleted: 'Supprimé' })[
+admin-controller.js:831:          ? '🏢 Fiche gérée par un club/organisation propriétaire.'
+app.js:230:      ? a.proprietaireCompteType === "entreprise"
+app.js:231:      : a.proprietaireCompteType !== "entreprise");
+app.js:536:    `Bonjour${a.proprietaireNom ? " " + a.proprietaireNom : ""}, je suis intéressé(e) par votre annonce "${a.titre}" (${formatPrix(a.prix)}) sur MALAGA. Pouvez-vous me préciser les modalité
+app.js:548:      ${a.proprietaireCompteType === "entreprise" ? `<a href="entreprise.html?id=${escapeHTML(a.proprietaireId || "")}" style="display:inline-block;margin-top:8px;font-size:12px;color:#fff;
+app.js:604:          ⚠️ Position exacte non renseignée par le propriétaire.
+app.js:615:          Le loyer, la caution, l'avance éventuelle et la durée d'engagement sont à convenir <strong>directement avec le propriétaire</strong>, lors d'une visite ou d'une rencontre en perso
+app.js:620:              <strong>Moyens acceptés par le propriétaire :</strong>
+app.js:625:            <div style="margin-bottom:10px;">Le propriétaire n'a pas encore précisé ses moyens de paiement acceptés.</div>`}
+app.js:626:          Toute transaction se conclut uniquement via le numéro WhatsApp fourni par le propriétaire, après une rencontre en personne. <strong>MALAGA ne collecte, ne gère et ne garantit aucu
+app.js:631:        <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">Contacter le propriétaire</h3>
+app.js:632:        <div style="font-size:13px;margin-bottom:10px;"><strong>${escapeHTML(a.proprietaireNom || "")}</strong></div>
+app.js:635:          ${a.proprietaireTel ? `<a href="tel:${escapeHTML(a.proprietaireTel)}" class="btn btn-bleu">📞 Appeler</a>` : ""}
+
+#### PHOTOS
+988:    /* ── PHOTO GALLERY ── */
+989:    .photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+990:    .gallery-item{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;cursor:pointer;background:var(--gray-bg);}
+991:    .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
+992:    .gallery-item:hover img{transform:scale(1.05);}
+993:    .gallery-item-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+994:    .gallery-item:hover .gallery-item-overlay{display:flex;}
+995:    .gallery-item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+996:    .gallery-action-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;transiti
+997:    .gallery-action-btn:hover{background:rgba(255,255,255,.35);}
+998:    .gallery-action-btn.danger{border-color:#f87171;color:#f87171;}
+999:    .gallery-action-btn.danger:hover{background:rgba(248,113,113,.25);}
+1000:    .gallery-is-profile-badge{position:absolute;top:5px;left:5px;background:var(--green);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;pointer-events:none;}
+1001:    .gallery-add{display:flex;align-items:center;justify-content:center;background:var(--green-lt);border:2px dashed var(--green);font-size:24px;cursor:pointer;transition:background .2s;}
+1002:    .gallery-add:hover{background:#d4f0e4;}
+1003:    .gallery-limit-msg{font-size:11px;color:var(--gray-txt);text-align:center;margin-top:6px;padding:6px;background:var(--gray-bg);border-radius:6px;}
+1004:    .gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;flex-direction:column;align-items:center;justify-content:center;}
+1005:    .gallery-modal.open{display:flex;}
+1006:    .gallery-modal-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:80vh;}
+1007:    .gallery-modal img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:var(--radius-sm);}
+1008:    .gallery-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;disp
+1009:    .gallery-modal-toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+1010:    .gallery-modal-btn{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transi
+1011:    .gallery-modal-btn:hover{background:rgba(255,255,255,.25);}
+1012:    .gallery-modal-btn.danger{border-color:#f87171;color:#f87171;}
+1013:    .gallery-modal-btn.danger:hover{background:rgba(248,113,113,.2);}
+1014:    .gallery-modal-btn.primary{border-color:var(--green);color:#4ade80;}
+1015:    .gallery-modal-btn.primary:hover{background:rgba(0,158,96,.25);}
+2344:      <!-- Photo gallery -->
+2345:      <div class="card mb-16 fade-up" id="prof-gallery-card" style="display:none;">
+2347:          <div class="card-title">📸 Galerie photos</div>
+2348:          <span style="font-size:12px;color:var(--gray-txt);" id="gallery-count-label">0 photos</span>
+2351:          <div class="photo-gallery" id="photo-gallery"></div>
+2352:          <div id="gallery-limit-info"></div>
+2353:          <input type="file" id="gallery-photo-input" accept="image/*" multiple style="display:none" onchange="uploadGalleryPhotos(this)">
+3155:<!-- PHOTO GALLERY MODAL -->
+3156:<div class="gallery-modal" id="gallery-modal" onclick="if(event.target===this)closeGalleryModal()">
+3157:  <button class="gallery-modal-close" onclick="closeGalleryModal()">✕</button>
+3158:  <div class="gallery-modal-img-wrap">
+3159:    <img id="gallery-modal-img" src="" alt="Photo">

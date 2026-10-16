@@ -828,7 +828,7 @@ tr.is-demo-row td { opacity: .82; }
 <div id="forgot-password-screen" style="display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:20px;">
   <div style="width:100%;max-width:360px;background:#fff;border-radius:var(--radius-lg);padding:28px 24px;box-shadow:0 10px 40px rgba(0,0,0,.3);">
     <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:36px;margin-bottom:8px;">🔑</div>
+      <div style="margin-bottom:8px;"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
       <div style="font-family:var(--font-display);font-weight:800;font-size:18px;color:var(--navy);">Réinitialisation</div>
       <div style="font-size:12px;color:var(--gray-txt);margin-top:4px;">Un lien vous sera envoyé par email</div>
     </div>
@@ -2242,6 +2242,7 @@ if ('serviceWorker' in navigator) {
    showSection (déjà défini plus bas dans ce fichier comme filet de sécurité). */
 window.handleNotifLink = function(link){
   if(!link) return;
+  if(typeof link === 'object'){ link = link.section || ''; if(!link) return; }
   if(link.indexOf('fil:') === 0){
     window.open('index.html?goto=' + encodeURIComponent(link), '_blank');
     return;
@@ -2249,6 +2250,20 @@ window.handleNotifLink = function(link){
   const view = link.replace('index.html','').replace('#','').replace('/','');
   if(view && typeof window.showSection === 'function') window.showSection(view);
 };
+
+/* Ouverture directe d'une section via ?section=xxx (depuis la cloche de index.html) */
+(function(){
+  var s = new URLSearchParams(location.search).get('section');
+  if(!s) return;
+  var n = 0, t = setInterval(function(){
+    if(++n > 40){ clearInterval(t); return; }
+    if(s === 'docs_recus'){
+      if(window.GSCDocReception){ window.GSCDocReception.open(); clearInterval(t); }
+    } else if(typeof window.showSection === 'function'){
+      window.showSection(s); clearInterval(t);
+    }
+  }, 500);
+})();
 
 /* Démarrage du système de notifications en mode "visiteur" (avant connexion admin) —
    sera re-synchronisé avec le vrai uid dans showApp() après login. */

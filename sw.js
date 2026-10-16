@@ -270,7 +270,10 @@ self.addEventListener('push', event => {
         tag: data.type || 'general',
         data: { link: data.link || 'index.html', type: data.type },
         actions: data.actions || [],
-        vibrate: [200, 100, 200],
+        vibrate: (data.type === 'alert' || data.type === 'message') ? [300, 100, 300, 100, 500] : [200, 100, 200],
+        renotify: true,
+        silent: false,
+        timestamp: Date.now(),
         requireInteraction: data.type === 'alert' || data.type === 'message',
       });
       /* App fermée = pas de page pour appeler setAppBadge : le SW incrémente
