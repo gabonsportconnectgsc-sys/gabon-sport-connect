@@ -1,4 +1,4 @@
-/* GSC-ROSTER-ADMIN.JS — validation admin des effectifs + badges de comptage */
+/* GSC-ROSTER-ADMIN.JS v2 — validation admin des effectifs (SDK compat ou modulaire) */
 (function (window) {
   'use strict';
   var S = { list: [], started: false, names: {}, errors: 0 };
@@ -15,14 +15,20 @@
     } catch (e) {}
     return null;
   }
+  function compat() { return !!(window.db && typeof window.db.collection === 'function'); }
+  function now() {
+    return (compat() && window.firebase) ? window.firebase.firestore.FieldValue.serverTimestamp() : window.serverTimestamp();
+  }
+  function watch(col, field, val, cb, eb) {
+    if (compat()) return window.db.collection(col).where(field, '==', val).onSnapshot(cb, eb);
+    return window.onSnapshot(window.query(window.collection(window.db, col), window.where(field, '==', val)), cb, eb);
+  }
 
   function injectCss() {
     if (document.getElementById('gsc-ro-css')) return;
     var s = document.createElement('style');
     s.id = 'gsc-ro-css';
     s.textContent =
-      '.gsc-ro-nb{position:absolute;top:-4px;right:-5px;min-width:17px;height:17px;padding:0 4px;background:#ef4444;color:#fff;border:2px solid #fff;border-radius:99px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;pointer-events:none;z-index:50}' +
-      '.sidebar .nav-item,.topbar .btn-menu,.mn-btn{overflow:visible}' +
       '.gsc-ro-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px}' +
       '.gsc-ro-card h3{margin:0 0 4px;font-size:15px;color:#0A1628}' +
       '.gsc-ro-meta{font-size:12px;color:#64748b;margin-bottom:8px}' +
@@ -34,28 +40,21 @@
     document.head.appendChild(s);
   }
 
-  function setBadge(el, n) {
-    if (!el) return;
-    var b = el.querySelector(':scope > .gsc-ro-nb');
-    if (n <= 0) { if (b) b.remove(); return; }
-    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
-    if (!b) { b = document.createElement('span'); b.className = 'gsc-ro-nb'; el.appendChild(b); }
-    b.textContent = n > 99 ? '99+' : String(n);
-  }
   function counts() {
     var n = S.list.length;
+    window.__gscRoCount = n;
+    if (window.GSCAdminHub) window.GSCAdminHub.setCount('effectifs', n);
     var c = document.getElementById('nav-effectifs-count');
     if (c) { c.textContent = n > 99 ? '99+' : String(n); c.style.display = n > 0 ? '' : 'none'; }
-    setBadge(document.querySelector('.topbar .btn-menu'), n);
-    setBadge(document.getElementById('nav-structures'), n);
-    setBadge(document.getElementById('mnav-structures'), n);
   }
 
   async function nameOf(sid) {
     if (!sid) return '';
     if (S.names[sid]) return S.names[sid];
     try {
-      var d = await window.getDoc(window.doc(window.db, 'structuresSportives', sid));
+      var d = compat()
+        ? await window.db.collection('structuresSportives').doc(sid).get()
+        : await window.getDoc(window.doc(window.db, 'structuresSportives', sid));
       var ex = typeof d.exists === 'function' ? d.exists() : d.exists;
       var x = ex ? d.data() : {};
       S.names[sid] = x.nom || x.name || x.nomStructure || sid;
@@ -95,11 +94,13 @@
       if (!reason.trim()) return;
     }
     try {
-      await window.setDoc(window.doc(window.db, 'rosters', id), {
+      var upd = {
         validation: ok ? 'validated' : 'rejected',
-        validatedBy: uid(), validatedAt: window.serverTimestamp(),
+        validatedBy: uid(), validatedAt: now(),
         rejectReason: ok ? '' : reason.trim()
-      }, { merge: true });
+      };
+      if (compat()) await window.db.collection('rosters').doc(id).set(upd, { merge: true });
+      else await window.setDoc(window.doc(window.db, 'rosters', id), upd, { merge: true });
       if (window.GSCNotif && window.GSCNotif.push && r.updatedBy) {
         var nm = S.names[r.structureId] || r.structureId;
         window.GSCNotif.push({
@@ -124,15 +125,14 @@
   }
 
   function start() {
-    if (S.started || S.errors >= 5 || !uid() || !window.db || !window.query || !window.getDocs) return;
+    if (S.started || S.errors >= 5 || !uid() || !window.db) return;
+    if (!compat() && !(window.query && window.onSnapshot && window.collection && window.where)) return;
     S.started = true;
-    var q = window.query(window.collection(window.db, 'rosters'), window.where('validation', '==', 'pending'));
-    function fail(e) { console.warn('[GSC roster-admin]', e); S.started = false; S.errors++; }
-    if (window.onSnapshot) {
-      try { window.onSnapshot(q, onData, fail); return; } catch (e) {}
-    }
-    var poll = function () { window.getDocs(q).then(onData).catch(fail); };
-    poll(); setInterval(poll, 30000);
+    try {
+      watch('rosters', 'validation', 'pending', onData, function (e) {
+        S.errors++; S.started = false; console.warn('[GSC roster-admin]', e && e.message || e);
+      });
+    } catch (e) { S.errors++; S.started = false; console.warn('[GSC roster-admin]', e); }
   }
 
   function inject() {
@@ -144,6 +144,15 @@
     btn.className = 'nav-item'; btn.id = 'nav-effectifs';
     btn.innerHTML = '<span class="nav-icon">👥</span><span>Effectifs clubs</span><span class="nav-badge-count" id="nav-effectifs-count" style="display:none;"></span>';
     after.parentNode.insertBefore(btn, after.nextSibling);
+
+    var mn = document.getElementById('mnav-liaison');
+    if (mn && !document.getElementById('mnav-effectifs')) {
+      var mb = document.createElement('button');
+      mb.className = 'mn-btn'; mb.id = 'mnav-effectifs';
+      mb.innerHTML = '<span class="mn-icon">👥</span><span>Effectifs</span>';
+      mn.parentNode.insertBefore(mb, mn.nextSibling);
+      mb.addEventListener('click', function () { btn.click(); });
+    }
 
     var sec = document.createElement('div');
     sec.id = 'effectifs'; sec.className = 'section';
@@ -157,30 +166,21 @@
     btn.addEventListener('click', function () {
       document.querySelectorAll('.main-content .section').forEach(function (s) { s.classList.remove('active'); });
       sec.classList.add('active');
-      document.querySelectorAll('.sidebar .nav-item').forEach(function (n) { n.classList.remove('active'); });
+      document.querySelectorAll('.sidebar .nav-item, .mn-btn').forEach(function (n) { n.classList.remove('active'); });
       btn.classList.add('active');
       var t = document.getElementById('topbar-title');
-      if (t) t.firstChild.textContent = 'Effectifs clubs';
+      if (t && t.firstChild) t.firstChild.textContent = 'Effectifs clubs';
       var sb = document.getElementById('sidebar'); if (sb) sb.classList.remove('open');
+      var ov = document.getElementById('sidebar-overlay'); if (ov) ov.classList.remove('open');
+      window.scrollTo(0, 0);
       render();
     });
     document.addEventListener('click', function (ev) {
-      if (ev.target.closest('#nav-effectifs')) return;
+      if (ev.target.closest('#nav-effectifs, #mnav-effectifs')) return;
       if (ev.target.closest('.sidebar .nav-item, .mn-btn')) { sec.classList.remove('active'); btn.classList.remove('active'); }
     }, true);
     counts(); render();
     return true;
-  }
-
-  function place() {
-    var btn = document.getElementById('nav-effectifs');
-    if (!btn) return;
-    var anchor = null;
-    document.querySelectorAll('.sidebar .nav-item').forEach(function (n) {
-      if (/Validations?\s+clubs/i.test(n.textContent)) anchor = n;
-    });
-    if (!anchor) anchor = document.getElementById('nav-clubs');
-    if (anchor && btn.previousElementSibling !== anchor) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
   }
 
   var hashDone = false;
@@ -194,7 +194,7 @@
 
   var tries = 0, t = setInterval(function () {
     tries++;
-    inject(); place(); start(); counts(); hashGo();
+    inject(); start(); counts(); hashGo();
     if (tries > 120) clearInterval(t);
   }, 1500);
 })(window);

@@ -80,6 +80,22 @@
     } catch (e) { errs++; console.warn('[GSC roster-badge]', e); started = false; }
   }
 
+  function bindVoir() {
+    var b = document.querySelector('#pending-banner button');
+    if (!b || b._gscVoir) return;
+    b._gscVoir = true;
+    b.onclick = function () {
+      try { if (typeof switchAdminTab === 'function') switchAdminTab('users'); } catch (e) {}
+      var sel = document.getElementById('srch-status'); if (sel) sel.value = 'pending';
+      try { if (typeof filterAdminUsers === 'function') filterAdminUsers(); } catch (e) {}
+      setTimeout(function () {
+        var t = document.getElementById('admin-users-tbody');
+        var box = t && (t.closest('table') || t);
+        if (box) { box.style.scrollMarginTop = '90px'; box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      }, 150);
+    };
+  }
+
   /* Liens de notification : admin.html -> vue admin, index.html -> profil (anciennes notifs incluses) */
   function mapLink(x) {
     if (typeof x !== 'string') return x;
@@ -104,6 +120,6 @@
   var wt = 0, wi = setInterval(function () { wt++; if (wrapLink() || wt > 80) clearInterval(wi); }, 750);
 
   setInterval(function () {
-    if (isAdminUi()) { start(); ensureUi(); refresh(); } else if (started) stop();
+    if (isAdminUi()) { start(); ensureUi(); refresh(); bindVoir(); } else if (started) stop();
   }, 2500);
 })(window);
