@@ -6896,7 +6896,7 @@ function filterAdminUsers(){
     const fullname=([u.prenom,u.nom,u.nomOrganisation].filter(Boolean).join(' ')||'').toLowerCase();
     const uemail=(u.email||'').toLowerCase();
     const roleMatch=!role||(role==='supporter'?(u.isSupporter===true||u.role==='supporter'):(u.role===role));
-    const statusMatch=!statut||((u.status||'active')===statut);
+    const statusMatch=!statut||(statut==='pending'?(u.status==='pending'||u.validationAdmin==='pending'):((u.status||'active')===statut)); /*pending-filter*/
     return (!nom||fullname.includes(nom))&&(!email||uemail.includes(email))&&roleMatch&&statusMatch&&(!sport||u.sport===sport||(u.sports||[]).includes(sport))&&(!ville||u.ville===ville)&&(!niveau||u.niveau===niveau);
   });
   renderAdminUsersTable(filtered);
