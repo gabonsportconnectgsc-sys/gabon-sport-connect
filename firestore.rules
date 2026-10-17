@@ -128,7 +128,8 @@ service cloud.firestore {
       allow read: if request.auth != null &&
         (resource.data.recipientId == request.auth.uid ||
          resource.data.recipientId == 'all' ||
-         resource.data.recipientId == myRoleTag(request.auth.uid));
+         resource.data.recipientId == myRoleTag(request.auth.uid) ||
+         (resource.data.recipientId == 'role:admin' && isAdmin(request.auth.uid)));
       allow create: if request.auth != null &&
         request.resource.data.senderId == request.auth.uid &&
         (request.resource.data.recipientId != 'all' ||
