@@ -6741,6 +6741,7 @@ function __gscPhoneCount(hh){
   }catch(e){ return 0; }
 }
 function renderAdminUsersTable(users){
+  /*pending-first*/ users=(users||[]).slice().sort(function(x,y){var px=(x.status==='pending'||x.validationAdmin==='pending')?1:0,py=(y.status==='pending'||y.validationAdmin==='pending')?1:0;return py-px;});
   const tbody=document.getElementById('admin-users-tbody');
   document.getElementById('admin-users-count').textContent=`(${users.length})`;
   if(!users.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray-txt)">Aucun utilisateur trouvé</td></tr>`;return;}

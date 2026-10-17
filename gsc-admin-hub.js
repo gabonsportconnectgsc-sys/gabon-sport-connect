@@ -227,6 +227,23 @@
     if (!sigOk) C.signalements = (e && e.style.display !== 'none') ? (parseInt(e.textContent, 10) || 0) : 0;
     if (window.__gscRoCount != null) C.effectifs = window.__gscRoCount;
   }
+  var pendObs = null;
+  function floatPending() {
+    var tb = $('players-grid'); if (!tb) return;
+    if (!pendObs) pendObs = new MutationObserver(function () { floatPending(); });
+    pendObs.disconnect();
+    try {
+      var ids = Object.assign({}, sets.a, sets.b);
+      var kids = Array.prototype.slice.call(tb.children).filter(function (r) { return r.tagName === 'TR'; });
+      var isP = function (r) { return !!ids[r.getAttribute('data-id')]; };
+      var seenOther = false, need = false;
+      kids.forEach(function (r) { if (isP(r)) { if (seenOther) need = true; } else seenOther = true; });
+      var rows = kids.filter(isP);
+      rows.forEach(function (r) { r.classList.add('row-pending-blink'); });
+      if (need) rows.slice().reverse().forEach(function (r) { tb.insertBefore(r, tb.firstChild); });
+    } catch (e) { console.warn('[GSC admin-hub] floatPending', e); }
+    pendObs.observe(tb, { childList: true });
+  }
   function ensureFiches() {
     if (!$('gsc-fiches-css')) {
       var st = document.createElement('style'); st.id = 'gsc-fiches-css';
@@ -245,7 +262,7 @@
     nav.appendChild(b);
   }
   function tick() {
-    try { ensureFiches(); organize(); organizeMobile(); ensureHub(); hideDup(); poll(); startWatch(); render(); }
+    try { floatPending(); ensureFiches(); organize(); organizeMobile(); ensureHub(); hideDup(); poll(); startWatch(); render(); }
     catch (e) { console.warn('[GSC admin-hub]', e); }
   }
 
