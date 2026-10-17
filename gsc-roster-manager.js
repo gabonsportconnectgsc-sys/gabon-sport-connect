@@ -42,6 +42,45 @@
     return CATS_DEF;
   }
 
+  /* ---- Lien avec un compte inscrit (ID dans l'app) ---- */
+  function actorUid(a) { return a.uid || a.id; }
+  function actorName(a) { return [a.prenom, a.nom, a.nomOrganisation].filter(Boolean).join(' '); }
+  function computedId(a) {
+    try {
+      return a.gscId || (typeof window.generateGscId === 'function'
+        ? window.generateGscId(actorUid(a), a.role || 'joueur') : '');
+    } catch (e) { return ''; }
+  }
+  async function resolveGscId(txt) {
+    var t = String(txt || '').trim().toUpperCase();
+    if (!t) return { status: 'vide' };
+    var hits = [];
+    (window.allActors || []).forEach(function (a) {
+      if (String(computedId(a)).toUpperCase() === t) hits.push(a);
+    });
+    if (!hits.length && window.db) {
+      try {
+        var snap = await window.getDocs(window.query(window.collection(window.db, 'users'), window.where('gscId', '==', t)));
+        snap.forEach(function (d) { var x = d.data(); x.uid = d.id; hits.push(x); });
+      } catch (e) {}
+    }
+    if (hits.length === 1) return { status: 'ok', uid: actorUid(hits[0]), nom: actorName(hits[0]) };
+    return { status: hits.length ? 'ambigu' : 'introuvable' };
+  }
+  async function resolveItem(x) {
+    var r = await resolveGscId(x.gscId);
+    x.gscUid = r.status === 'ok' ? r.uid : '';
+    x.lienNom = r.status === 'ok' ? r.nom : '';
+    x.lienStatus = r.status;
+  }
+  function lienField(t, i, x) {
+    var h = inp(t, i, 'gscId', x.gscId, "ID dans l'app (optionnel)");
+    if (x.gscUid) h += '<div style="font-size:12px;color:#15803d">✓ Lié : ' + esc(x.lienNom || x.gscUid) + '</div>';
+    else if (x.lienStatus === 'ambigu') h += '<div style="font-size:12px;color:#b91c1c">ID ambigu : plusieurs comptes</div>';
+    else if (x.gscId && x.lienStatus) h += '<div style="font-size:12px;color:#b91c1c">ID introuvable</div>';
+    return h;
+  }
+
   async function loadAll(sid) {
     var q1 = window.query(window.collection(window.db, 'rosters'), window.where('structureId', '==', sid));
     var q2 = window.query(window.collection(window.db, 'rostersPrivate'), window.where('structureId', '==', sid));
@@ -62,11 +101,13 @@
       var q = pm[j.id] || {};
       return { id: j.id, num: j.num || '', prenom: j.prenom || '', nom: q.nom || '',
         poste: j.poste || '', statut: j.statut || 'Actif', annee: q.anneeNaissance || '',
-        consent: !!q.consentementParental, contact: q.contact || '', licence: q.licence || '' };
+        consent: !!q.consentementParental, contact: q.contact || '', licence: q.licence || '',
+        gscId: j.gscId || '', gscUid: j.gscUid || '' };
     });
     S.staff = ((p && p.staff) || []).map(function (s) {
       var q = sm[s.id] || {};
-      return { id: s.id, prenom: s.prenom || '', nom: s.nom || '', role: s.role || '', contact: q.contact || '' };
+      return { id: s.id, prenom: s.prenom || '', nom: s.nom || '', role: s.role || '', contact: q.contact || '',
+        gscId: s.gscId || '', gscUid: s.gscUid || '' };
     });
   }
 
@@ -106,7 +147,7 @@
       h += '<div style="border:1px solid #8884;border-radius:8px;padding:8px;margin:6px 0">' +
         inp('j', i, 'num', j.num, 'N°', 'text', 'width:25%') + inp('j', i, 'prenom', j.prenom, 'Prénom', 'text', 'width:70%') +
         inp('j', i, 'nom', j.nom, 'Nom') + sel('j', i, 'poste', [''].concat(postes), j.poste) +
-        sel('j', i, 'statut', STATUTS, j.statut) +
+        sel('j', i, 'statut', STATUTS, j.statut) + lienField('j', i, j) +
         inp('j', i, 'annee', j.annee, 'Année de naissance (privé)', 'number') +
         inp('j', i, 'contact', j.contact, 'Contact (privé)') + inp('j', i, 'licence', j.licence, 'N° licence (privé)');
       if (mineur) h += '<label style="font-size:12px"><input type="checkbox" data-t="j" data-i="' + i +
@@ -118,7 +159,8 @@
     S.staff.forEach(function (s, i) {
       h += '<div style="border:1px solid #8884;border-radius:8px;padding:8px;margin:6px 0">' +
         inp('s', i, 'prenom', s.prenom, 'Prénom') + inp('s', i, 'nom', s.nom, 'Nom') +
-        sel('s', i, 'role', [''].concat(roles), s.role) + inp('s', i, 'contact', s.contact, 'Contact (privé)') +
+        sel('s', i, 'role', [''].concat(roles), s.role) + lienField('s', i, s) +
+        inp('s', i, 'contact', s.contact, 'Contact (privé)') +
         '<button data-a="dels" data-i="' + i + '">Retirer</button></div>';
     });
     h += '<button data-a="adds">+ Staff</button><p id="gsc-ro-msg" style="min-height:20px"></p>' +
@@ -144,18 +186,35 @@
       if (S.vis === 'public' && mineur && !j.consent)
         return msg('Publication publique impossible : autorisation parentale manquante (joueur ' + (i + 1) + ')');
     }
+    var lst = S.joueurs.map(function (x) { return ['Joueur', x]; })
+      .concat(S.staff.map(function (x) { return ['Staff', x]; }));
+    for (var k = 0; k < lst.length; k++) {
+      var it = lst[k][1];
+      if (it.gscId && it.gscId.trim()) {
+        if (!it.gscUid) await resolveItem(it);
+        if (!it.gscUid) {
+          render();
+          return msg(lst[k][0] + ' ' + (it.prenom || '') + ' : ID dans l\'app ' +
+            (it.lienStatus === 'ambigu' ? 'ambigu' : 'introuvable') + ' (corrige ou vide le champ)');
+        }
+      } else { it.gscUid = ''; it.lienNom = ''; }
+    }
     var id = rid(S.sid, S.saison, S.cat), uid = myUid();
     var pubJ = S.joueurs.map(function (j) {
       var mineur = R() ? R().estMineur(j.annee, n) : true;
       var nm = j.nom.trim();
       var aff = mineur ? (nm ? nm.charAt(0).toUpperCase() + '.' : '') : nm;
-      return { id: j.id, num: String(j.num || ''), prenom: j.prenom.trim(), nomAffiche: aff, poste: j.poste, statut: j.statut };
+      return { id: j.id, num: String(j.num || ''), prenom: j.prenom.trim(), nomAffiche: aff, poste: j.poste, statut: j.statut,
+        gscId: (j.gscId || '').trim().toUpperCase(), gscUid: j.gscUid || '', lienAutorise: !mineur || !!j.consent };
     });
     var privJ = S.joueurs.map(function (j) {
       return { id: j.id, nom: j.nom.trim(), prenom: j.prenom.trim(), anneeNaissance: j.annee ? Number(j.annee) : null,
         contact: j.contact, licence: j.licence, consentementParental: !!j.consent };
     });
-    var pubS = S.staff.map(function (s) { return { id: s.id, prenom: s.prenom.trim(), nom: s.nom.trim(), role: s.role }; });
+    var pubS = S.staff.map(function (s) {
+      return { id: s.id, prenom: s.prenom.trim(), nom: s.nom.trim(), role: s.role,
+        gscId: (s.gscId || '').trim().toUpperCase(), gscUid: s.gscUid || '', lienAutorise: true };
+    });
     var privS = S.staff.map(function (s) { return { id: s.id, contact: s.contact }; });
     var validation = submit ? 'pending' : 'draft';
     try {
@@ -179,7 +238,13 @@
     if (!k) return;
     var val = el.type === 'checkbox' ? el.checked : el.value;
     if (t === 'j' || t === 's') {
-      (t === 'j' ? S.joueurs : S.staff)[Number(el.dataset.i)][k] = val;
+      var item = (t === 'j' ? S.joueurs : S.staff)[Number(el.dataset.i)];
+      item[k] = val;
+      if (k === 'gscId') {
+        item.gscUid = ''; item.lienNom = ''; item.lienStatus = '';
+        if (ev.type === 'change') resolveItem(item).then(render);
+        return;
+      }
       if (ev.type === 'change' && k === 'annee') render();
       return;
     }
@@ -193,8 +258,8 @@
     var a = ev.target.dataset && ev.target.dataset.a, i = Number(ev.target.dataset.i);
     if (!a) return;
     if (a === 'close') return close();
-    if (a === 'addj') S.joueurs.push({ id: newId(), num: '', prenom: '', nom: '', poste: '', statut: 'Actif', annee: '', consent: false, contact: '', licence: '' });
-    if (a === 'adds') S.staff.push({ id: newId(), prenom: '', nom: '', role: '', contact: '' });
+    if (a === 'addj') S.joueurs.push({ id: newId(), num: '', prenom: '', nom: '', poste: '', statut: 'Actif', annee: '', consent: false, contact: '', licence: '', gscId: '', gscUid: '' });
+    if (a === 'adds') S.staff.push({ id: newId(), prenom: '', nom: '', role: '', contact: '', gscId: '', gscUid: '' });
     if (a === 'delj') S.joueurs.splice(i, 1);
     if (a === 'dels') S.staff.splice(i, 1);
     if (a === 'save') return save(false);

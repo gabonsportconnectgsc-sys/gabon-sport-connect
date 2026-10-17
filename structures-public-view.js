@@ -233,6 +233,17 @@
     // Infrastructures (lecture seule, sous-collection)
     renderInfrastructuresReadOnly(id);
 
+    // Effectifs publies : visible par tous
+    if (window.GSCRosterPublic) {
+      const pubBtn = document.createElement('button');
+      pubBtn.type = 'button';
+      pubBtn.className = 'btn';
+      pubBtn.style.cssText = 'margin:12px 0 0;width:100%;padding:10px';
+      pubBtn.textContent = '👥 Voir les effectifs';
+      pubBtn.addEventListener('click', function () { window.GSCRosterPublic.open(id); });
+      body.appendChild(pubBtn);
+    }
+
     // Effectifs : bouton reserve au responsable de la structure ou a l'admin
     const upR = window.userProfile;
     if (window.GSCRosterManager && upR && (upR.role === 'admin' || upR.structureId === id)) {

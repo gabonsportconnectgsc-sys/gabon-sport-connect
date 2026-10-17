@@ -2310,6 +2310,16 @@
         <div class="card-body" id="club-info-display"></div>
       </div>
 
+      <!-- Effectifs (role=club) -->
+      <div class="card mb-16 fade-up" id="prof-effectifs-card" style="display:none;">
+        <div class="card-header"><div class="card-title">📋 Mes effectifs</div></div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--gray-txt);margin:0 0 10px;">Crée et mets à jour tes listes de joueurs et d'encadrement, par saison et catégorie.</p>
+          <button type="button" class="btn" style="width:100%;padding:10px;margin-bottom:8px;" onclick="gscOpenMyRosters()">Gérer mes effectifs</button>
+          <button type="button" class="btn" style="width:100%;padding:10px;" onclick="gscViewMyRosters()">Voir la page publique</button>
+        </div>
+      </div>
+
       <!-- Devenir supporter (shown for individual roles, when not yet isSupporter) -->
       <div class="card mb-16 fade-up" id="prof-become-supporter-card" style="display:none;">
         <div class="card-body" style="text-align:center;padding:18px;">
@@ -5385,6 +5395,7 @@ function renderProfile(){
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
   document.getElementById('prof-stats-card').style.display=(isPersonnel&&p.role!=='ancien_sportif'&&p.role!=='formateur')?'':'none'; // élargi à tous rôles personnels via gsc-profile-engine ; anciens sportifs et formateurs ont leur propre section
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
+  { const _effCard=document.getElementById('prof-effectifs-card'); if(_effCard) _effCard.style.display=(p.role==='club')?'':'none'; }
 
   // Supporter card
   const suppCard=document.getElementById('prof-supporter-card');
@@ -10018,6 +10029,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="disciplines-config-feminin.js"></script>
 <script src="disciplines-config-effectifs.js"></script>
 <script src="gsc-roster-manager.js"></script>
+<script src="gsc-roster-public.js"></script>
 <script src="ged-depot-public.js"></script>
 <script src="gsc-club-claim-player.js"></script>
 <script src="structures-profile-engine.js"></script>
