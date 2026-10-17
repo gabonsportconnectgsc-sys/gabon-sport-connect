@@ -219,7 +219,9 @@
 
     if (P()) {
       const up = window.userProfile;
-      const role = (up && up.role === 'admin') ? 'admin' : (up && up.structureId === id) ? 'manager' : 'public';
+      const _me = up && (up.uid || up.id);
+      const _mine = !!up && (up.structureId === id || (_me && (structure.linkedUserId === _me || structure.addedBy === _me)));
+      const role = (up && up.role === 'admin') ? 'admin' : _mine ? 'manager' : 'public';
       body.innerHTML = P().renderFullProfile(structure, structure.saisonCourante, null, role);
     } else {
       body.innerHTML = '<p>Moteur de profil indisponible.</p>';
@@ -246,7 +248,9 @@
 
     // Effectifs : bouton reserve au responsable de la structure ou a l'admin
     const upR = window.userProfile;
-    if (window.GSCRosterManager && upR && (upR.role === 'admin' || upR.structureId === id)) {
+    const _meR = upR && (upR.uid || upR.id);
+    if (window.GSCRosterManager && upR && (upR.role === 'admin' || upR.structureId === id ||
+        (_meR && (structure.linkedUserId === _meR || structure.addedBy === _meR)))) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn';

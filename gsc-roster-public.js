@@ -208,21 +208,68 @@
     }
   }
 
-  /* ---- Raccourcis de la carte « Mes effectifs » (profil club) ---- */
-  function myStructureId() {
-    var up = window.userProfile;
-    return up && up.structureId ? up.structureId : null;
+  /* ---- Liaison automatique compte club/association <-> fiche structure ---- */
+  var ORG_AUTO = { club: 'Club', association: 'Association' };
+  var ensuring = null;
+
+  function ensureMyStructure() {
+    if (ensuring) return ensuring;
+    ensuring = (async function () {
+      var up = window.userProfile;
+      var uid = up && (up.uid || up.id);
+      if (!up || !uid || !ORG_AUTO[up.role] || !window.db) return null;
+      if (up.structureId) return up.structureId;
+      var sid = null;
+      // 1. une fiche deja liee a ce compte (creee par l'admin ou automatiquement)
+      try {
+        var snap = await window.getDocs(window.query(window.collection(window.db, 'structuresSportives'),
+          window.where('linkedUserId', '==', uid), window.limit(1)));
+        snap.forEach(function (d) { sid = d.id; });
+      } catch (e) {}
+      // 2. sinon creation de la fiche (identifiant fixe : pas de doublon possible)
+      if (!sid) {
+        sid = 'auto_' + uid;
+        var ref = window.doc(window.db, 'structuresSportives', sid);
+        var ex = await window.getDoc(ref);
+        if (!ex.exists()) {
+          var full = [up.prenom, up.nom].filter(Boolean).join(' ');
+          await window.setDoc(ref, {
+            nom: up.nomOrganisation || full || 'Structure sans nom',
+            type: ORG_AUTO[up.role],
+            discipline: up.sport || (Array.isArray(up.sports) ? up.sports[0] : '') || 'Football',
+            ville: up.ville || '',
+            telephone: up.telephone || up.tel || '',
+            email: up.email || '',
+            status: 'active',
+            linkedUserId: uid,
+            source: 'auto-compte',
+            addedBy: uid,
+            createdAt: window.serverTimestamp()
+          });
+        }
+      }
+      // 3. rattachement du compte (necessite la regle Firestore mise a jour ; sans elle la fiche reste utilisable)
+      try {
+        await window.updateDoc(window.doc(window.db, 'users', uid), { structureId: sid });
+        up.structureId = sid;
+      } catch (e) {}
+      return sid;
+    })().catch(function (e) { console.warn('[GSC] liaison structure :', e); return null; })
+      .then(function (r) { ensuring = null; return r; });
+    return ensuring;
   }
-  window.gscOpenMyRosters = function () {
-    var sid = myStructureId();
-    if (!sid) { alert("Ton compte n'est pas encore lié à une fiche structure. Contacte l'administration."); return; }
+
+  window.gscOpenMyRosters = async function () {
+    var sid = await ensureMyStructure();
+    if (!sid) { alert('Impossible de préparer la fiche de ta structure pour le moment. Réessaie dans un instant.'); return; }
     if (window.GSCRosterManager) window.GSCRosterManager.open(sid);
   };
-  window.gscViewMyRosters = function () {
-    var sid = myStructureId();
-    if (!sid) { alert("Ton compte n'est pas encore lié à une fiche structure. Contacte l'administration."); return; }
+  window.gscViewMyRosters = async function () {
+    var sid = await ensureMyStructure();
+    if (!sid) { alert('Impossible de préparer la fiche de ta structure pour le moment. Réessaie dans un instant.'); return; }
     open(sid);
   };
+  window.gscEnsureMyStructure = ensureMyStructure;
 
-  window.GSCRosterPublic = { open: open, close: close };
+  window.GSCRosterPublic = { open: open, close: close, ensureMyStructure: ensureMyStructure };
 })(window);

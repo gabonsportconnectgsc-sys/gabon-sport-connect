@@ -2310,7 +2310,7 @@
         <div class="card-body" id="club-info-display"></div>
       </div>
 
-      <!-- Effectifs (role=club) -->
+      <!-- Effectifs (role=club ou association) -->
       <div class="card mb-16 fade-up" id="prof-effectifs-card" style="display:none;">
         <div class="card-header"><div class="card-title">📋 Mes effectifs</div></div>
         <div class="card-body">
@@ -5395,7 +5395,9 @@ function renderProfile(){
   document.getElementById('prof-physique-card').style.display=isPersonnel?'':'none';
   document.getElementById('prof-stats-card').style.display=(isPersonnel&&p.role!=='ancien_sportif'&&p.role!=='formateur')?'':'none'; // élargi à tous rôles personnels via gsc-profile-engine ; anciens sportifs et formateurs ont leur propre section
   document.getElementById('prof-club-info-card').style.display=isOrg?'':'none';
-  { const _effCard=document.getElementById('prof-effectifs-card'); if(_effCard) _effCard.style.display=(p.role==='club')?'':'none'; }
+  { const _effCard=document.getElementById('prof-effectifs-card'); const _isEff=(p.role==='club'||p.role==='association');
+    if(_effCard) _effCard.style.display=_isEff?'':'none';
+    if(_isEff && typeof window.gscEnsureMyStructure==='function') window.gscEnsureMyStructure(); }
 
   // Supporter card
   const suppCard=document.getElementById('prof-supporter-card');

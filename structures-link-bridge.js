@@ -54,7 +54,8 @@
   /* ── Comptage unifié (dédupliqué) ──────────────────────────────── */
   async function getUnifiedClubCount() {
     const [users, structures] = await Promise.all([loadClubUsers(), loadStructures()]);
-    const unlinkedUsers = users.filter(u => !u.structureId);
+    const linkedIds = new Set(structures.map(s => s.linkedUserId).filter(Boolean));
+    const unlinkedUsers = users.filter(u => !u.structureId && !linkedIds.has(u.uid));
     return {
       total: structures.length + unlinkedUsers.length,
       structures: structures.length,
