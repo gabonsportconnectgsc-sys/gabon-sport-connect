@@ -103,7 +103,7 @@
       if (window.GSCNotif && window.GSCNotif.push && r.updatedBy) {
         var nm = S.names[r.structureId] || r.structureId;
         window.GSCNotif.push({
-          type: 'validate', personal: true, recipientId: r.updatedBy, link: 'index.html',
+          type: 'validate', personal: true, recipientId: r.updatedBy, link: 'profil',
           title: ok ? '✅ Effectif validé' : '❌ Effectif refusé',
           body: nm + ' · ' + (r.categorie || '') + ' ' + (r.saison || '') + (ok ? ' : liste validée.' : ' : ' + reason.trim())
         });
@@ -183,9 +183,18 @@
     if (anchor && btn.previousElementSibling !== anchor) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
   }
 
+  var hashDone = false;
+  function hashGo() {
+    if (hashDone || location.hash !== '#effectifs') return;
+    var btn = document.getElementById('nav-effectifs');
+    if (!btn || !uid()) return;
+    hashDone = true;
+    setTimeout(function () { btn.click(); }, 800);
+  }
+
   var tries = 0, t = setInterval(function () {
     tries++;
-    inject(); place(); start(); counts();
+    inject(); place(); start(); counts(); hashGo();
     if (tries > 120) clearInterval(t);
   }, 1500);
 })(window);

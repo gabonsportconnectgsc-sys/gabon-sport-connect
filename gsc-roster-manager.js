@@ -231,7 +231,7 @@
       /* GSC-ROSTER-NOTIF : prevenir les admins */
       if (submit && window.GSCNotif && window.GSCNotif.push) {
         try {
-          window.GSCNotif.push({ type: 'pending', recipientId: 'role:admin', link: 'admin.html',
+          window.GSCNotif.push({ type: 'pending', recipientId: 'role:admin', link: 'admin',
             title: '👥 Effectif à valider',
             body: 'Liste ' + S.cat + ' ' + S.saison + ' soumise (' + S.joueurs.length + ' joueur(s)).' });
         } catch (e) {}
