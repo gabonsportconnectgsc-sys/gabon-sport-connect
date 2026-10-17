@@ -122,6 +122,7 @@
           st = pill('⏳ En attente', 'wait');
         } else if (dec.status === 'valide') {
           st = pill('✅ Validé', 'ok');
+          if (!mine.locked) action = '<button type="button" data-gm="rep" data-i="' + i + '" style="' + BTN + '">🔄 Modifier ce document</button>';
         } else {
           st = pill('❌ Non conforme', 'bad');
           motifs = (dec.motifs || []).map((x, k) => '<div>Motif ' + (k + 1) + ' : ' + esc(x) + '</div>').join('');
@@ -132,7 +133,7 @@
           (m.description ? '<div style="font-size:12px;opacity:.8;margin-top:3px;">' + esc(m.description) + '</div>' : '') +
           (motifs ? '<div style="font-size:12px;color:#c0392b;margin-top:4px;">' + motifs + '</div>' : '') +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">' +
-          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">👁️ Voir le modèle officiel</a>' : '') +
+          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">👁️ Voir le modèle officiel</a>' + extraBtns(m, link, i) : '') +
           action + '</div></div>';
       }).join('');
     }
@@ -143,7 +144,36 @@
     return h;
   }
 
+  /* __gscModelActions */
+  function dlUrl(u) {
+    return /res\.cloudinary\.com/.test(u) && /\/upload\//.test(u) ? u.replace('/upload/', '/upload/fl_attachment/') : u;
+  }
+  const IMG_EXT = /\.(jpe?g|png|gif|webp|bmp|svg|avif)$/i;
+  function extraBtns(m, link, i) {
+    const fn = esc(m.fileName || m.nom || 'modele');
+    return '<a href="' + esc(dlUrl(link)) + '" download="' + fn + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">⬇️ Télécharger</a>' +
+      '<button type="button" data-gm="print" data-i="' + i + '" style="' + BTN + '">🖨️ Imprimer</button>';
+  }
+  function printModel(m) {
+    const u = safeUrl(m.url); if (!u) return;
+    if (IMG_EXT.test(String(m.fileName || '').split('?')[0])) {
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(m.nom || 'Modèle officiel') + '</title><style>@page{margin:10mm}html,body{margin:0;text-align:center}img{max-width:100%;max-height:98vh}</style></head><body><img src="' + esc(u) + '" onload="setTimeout(function(){window.focus();window.print();},300)"></body></html>');
+        w.document.close();
+        return;
+      }
+    }
+    window.open(u, '_blank');
+  }
+  document.addEventListener('click', function (ev) {
+    const b = ev.target && ev.target.closest ? ev.target.closest('[data-gm="print"]') : null; if (!b) return;
+    const m = models[parseInt(b.getAttribute('data-i'), 10)]; if (!m) return;
+    ev.preventDefault(); ev.stopPropagation(); printModel(m);
+  }, true);
+
   function startReplace(label, url) {
+    try { const __d = byKey[docKey(url)]; window.__gscPrev = { label: label, status: (__d && __d.status) || '', ts: Date.now() }; } catch (e) {}
     if (typeof window.gscStartReplace === 'function') { window.gscStartReplace(label, url); return; }
     const inp = document.getElementById('own-document-input');
     window.__gscDocTitle = { t: label, ts: Date.now() };

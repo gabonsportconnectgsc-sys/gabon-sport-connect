@@ -69,7 +69,23 @@
     } catch (e) { console.warn('[Attestation] liste des admins', e); return []; }
   }
 
+  /* __gscNotifEnrich */
+  function __gscEnrich(data) {
+    var pv = window.__gscPrev, t = String(data.title || '');
+    var when = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    var ex;
+    if (/remplac/i.test(t)) {
+      data.title = t.replace('Document remplacé', 'Document modifié');
+      var old = (pv && Date.now() - pv.ts < 1200000 && pv.label && t.indexOf(pv.label) >= 0) ? pv.status : '';
+      ex = ' Ancien statut : ' + (old === 'valide' ? 'Validé' : (old ? 'Non conforme' : 'En attente')) + ' · Nouveau statut : En attente · ' + when + '.';
+    } else {
+      ex = ' Statut : En attente · ' + when + '.';
+    }
+    data.body = String(data.body || '') + ex;
+  }
+
   async function addNotif(data) {
+    try { if (data && data.type === 'doc_recu') __gscEnrich(data); } catch (e) {}
     if (window.addDoc && window.collection && window.db) {
       data.createdAt = window.serverTimestamp ? window.serverTimestamp() : new Date();
       return window.addDoc(window.collection(window.db, 'notifications'), data);
