@@ -596,7 +596,8 @@
     if (tableWrap) tableWrap.classList.toggle('compact-mode', displayMode === 'compact');
 
     let list = users.filter(u => u.status !== 'deleted');
-    if (statusFilter) list = list.filter(u => (u.status || 'active') === statusFilter);
+    if (statusFilter === 'pending') list = list.filter(u => (u.status || 'active') === 'pending' || u.validationAdmin === 'pending');
+    else if (statusFilter) list = list.filter(u => (u.status || 'active') === statusFilter);
     if (roleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, roleFilter));
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
