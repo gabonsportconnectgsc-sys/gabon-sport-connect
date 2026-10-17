@@ -287,7 +287,7 @@
         window.collection(window.db, NOTIFS_COL),
         window.where('recipientId', 'in', [uid, 'all']),
         window.orderBy('createdAt', 'desc'),
-        window.limit(100)
+        window.limit(50)
       );
       _unsub = window.onSnapshot(q, (snap) => {
         /* Exclure mes propres notifications émises (ex: publication diffusée à 'all') */

@@ -75,6 +75,7 @@
   ];
 
   let _posts = [];
+  let _feedLimit = 40, _hasMore = false;
   let _blockedIds = new Set();
   let _currentCat = 'all';
   let _currentRoleCat = 'all'; // filtre secondaire par type d'acteur
@@ -946,9 +947,9 @@
     _subscribed = true;
     loadBlocked().then(() => {
       try {
-        const q = window.query(window.collection(window.db, POSTS_COL), window.orderBy('createdAt', 'desc'), window.limit(60));
+        const q = window.query(window.collection(window.db, POSTS_COL), window.orderBy('createdAt', 'desc'), window.limit(_feedLimit));
         _unsub = window.onSnapshot(q, (snap) => {
-          _posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          _posts = snap.docs.map(d => ({ id: d.id, ...d.data() })); _hasMore = (snap.docs.length >= _feedLimit && _feedLimit < 200);
           renderFeed();
         }, (err) => { console.warn('GSC Community :', err); });
       } catch (e) { console.warn('GSC Community :', e); }
@@ -965,7 +966,26 @@
   }
 
   /* ═══ RENDU DU FIL ═══ */
+  function loadMorePosts() {
+    if (_feedLimit >= 200 || !ready()) return;
+    _feedLimit += 40;
+    try { if (typeof _unsub === 'function') _unsub(); } catch (e) {}
+    try {
+      const q = window.query(window.collection(window.db, POSTS_COL), window.orderBy('createdAt', 'desc'), window.limit(_feedLimit));
+      _unsub = window.onSnapshot(q, (snap) => {
+        _posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        _hasMore = (snap.docs.length >= _feedLimit && _feedLimit < 200);
+        renderFeed();
+      }, (err) => { console.warn('GSC Community :', err); });
+    } catch (e) { console.warn('GSC Community :', e); }
+  }
+  document.addEventListener('click', function (e) {
+    var b = (e.target && e.target.closest) ? e.target.closest('[data-gsc-more]') : null;
+    if (b) { b.disabled = true; loadMorePosts(); }
+  });
+
   function renderFeed() {
+
     const list = document.getElementById('gsc-feed-list');
     if (!list) return;
     const isAdmin = window.userProfile?.role === 'admin';
@@ -982,7 +1002,8 @@
       list.innerHTML = `<div class="gsc-empty"><div class="e-icon">💬</div>Aucune publication pour le moment.<br>Soyez le premier à partager quelque chose !</div>`;
       return;
     }
-    list.innerHTML = visible.map(postCardHTML).join('');
+    list.innerHTML = visible.map(postCardHTML).join('') + (_hasMore ? '<div style="text-align:center;padding:14px 0;"><button type="button" data-gsc-more="1" style="background:var(--navy);color:var(--white);border:0;border-radius:20px;padding:10px 18px;font-weight:700;cursor:pointer;">Voir plus de publications</button></div>' : '');
+
   }
 
   function reactionSummary(post) {
