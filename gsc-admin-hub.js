@@ -15,7 +15,7 @@
   }
 
   var GROUPS = [
-    { k: 'todo', t: '🔔 À traiter', it: [/Validations?\s+clubs/i, 'nav-effectifs', 'nav-signalements', 'nav-verification'] },
+    { k: 'todo', t: '🔔 À traiter', it: ['nav-fiches', /Validations?\s+clubs/i, 'nav-effectifs', 'nav-signalements', 'nav-verification'] },
     { k: 'mem', t: '👥 Membres & comptes', it: ['nav-joueurs', /Comptes/i, 'nav-clubs'] },
     { k: 'str', t: '🏢 Structures & clubs', it: ['nav-structures', 'nav-liaison', 'nav-infrastructures', 'nav-conformite', 'nav-archivage', /F[ée]minin/i] },
     { k: 'doc', t: '📁 Documents', it: ['nav-documents'] },
@@ -178,12 +178,15 @@
     }
     side(find(/Validations?\s+clubs/i), C.clubs);
     side($('nav-joueurs'), C.profils);
+    side($('nav-fiches'), C.profils);
+    side($('nav-effectifs'), C.effectifs);
     Array.prototype.forEach.call(document.querySelectorAll('#gsc-hub .gsc-t-b'), function (b) {
       var n = C[b.getAttribute('data-c')] || 0;
       b.textContent = n > 99 ? '99+' : n;
       b.style.display = n > 0 ? 'flex' : 'none';
       b.parentNode.classList.toggle('hot', n > 0);
     });
+    if (labels.todo) labels.todo.style.color = '#FB923C';
     if (labels.todo) labels.todo.innerHTML = '🔔 À traiter' + (total ? '<span class="gsc-hub-b">' + total + '</span>' : '');
     put(document.querySelector('.topbar .btn-menu'), total, 'gsc-hub-mb', 'gsc-hub-mb');
     put($('mnav-effectifs'), C.effectifs, 'gsc-hub-mb', 'gsc-hub-mb');
@@ -224,8 +227,25 @@
     if (!sigOk) C.signalements = (e && e.style.display !== 'none') ? (parseInt(e.textContent, 10) || 0) : 0;
     if (window.__gscRoCount != null) C.effectifs = window.__gscRoCount;
   }
+  function ensureFiches() {
+    if (!$('gsc-fiches-css')) {
+      var st = document.createElement('style'); st.id = 'gsc-fiches-css';
+      st.textContent = '.sidebar-nav > .nav-label{color:#FCD116 !important}';
+      document.head.appendChild(st);
+    }
+    if ($('nav-fiches')) return;
+    var nav = document.querySelector('.sidebar-nav');
+    if (!nav || !nav.querySelector('.nav-item')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'nav-item'; b.id = 'nav-fiches';
+    b.innerHTML = '<span class="nav-icon">🧾</span><span>Fiches en attente</span>';
+    b.addEventListener('click', function () {
+      if (window.gscGoToFiltered) window.gscGoToFiltered({ roles: 'all', status: 'pending', title: 'Fiches en attente' });
+    });
+    nav.appendChild(b);
+  }
   function tick() {
-    try { organize(); organizeMobile(); ensureHub(); hideDup(); poll(); startWatch(); render(); }
+    try { ensureFiches(); organize(); organizeMobile(); ensureHub(); hideDup(); poll(); startWatch(); render(); }
     catch (e) { console.warn('[GSC admin-hub]', e); }
   }
 
