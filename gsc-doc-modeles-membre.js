@@ -132,7 +132,7 @@
           (m.description ? '<div style="font-size:12px;opacity:.8;margin-top:3px;">' + esc(m.description) + '</div>' : '') +
           (motifs ? '<div style="font-size:12px;color:#c0392b;margin-top:4px;">' + motifs + '</div>' : '') +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">' +
-          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">⬇️ Télécharger le modèle</a>' : '') +
+          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;">👁️ Voir le modèle officiel</a>' : '') +
           action + '</div></div>';
       }).join('');
     }
