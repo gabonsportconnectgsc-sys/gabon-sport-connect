@@ -28,6 +28,12 @@
     system   : [],          // global seulement
     pending  : ['admin'],   // pour les admins
     validate : ['profil'],
+    doc_recu       : ['profil'],
+    doc_decision   : ['profil'],
+    conformite_ged : ['profil'],
+    message        : ['profil'],
+    achievement    : ['profil'],
+    news           : ['actualites'],
   };
 
   /* ── État interne ── */
