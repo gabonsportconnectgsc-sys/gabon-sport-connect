@@ -9567,7 +9567,7 @@ window.lookupManualGscId = lookupManualGscId;
       if(clubsEl) computeUnifiedClubsCount(rawUsers).then(n=>{ clubsEl.textContent = n; });
     }
     if (typeof window.renderAdminUsersTable === 'function' && document.getElementById('admin-users-tbody')){
-      window.renderAdminUsersTable(rawUsers);
+      if (typeof window.filterAdminUsers === "function") window.filterAdminUsers(); else window.renderAdminUsersTable(rawUsers); /*keep-filter*/
     }
     if (typeof window.updatePendingBanner === 'function') window.updatePendingBanner();
   }
