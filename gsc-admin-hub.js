@@ -3,7 +3,7 @@
   'use strict';
   window.__gscHubActive = true;
   var C = { profils: 0, clubs: 0, effectifs: 0, signalements: 0 };
-  var sets = { a: {}, b: {} }, watching = false, labels = {}, rolesBox = null;
+  var sigOk = false, sets = { a: {}, b: {} }, watching = false, labels = {}, rolesBox = null;
 
   function $(id) { return document.getElementById(id); }
   function navItems() { return Array.prototype.slice.call(document.querySelectorAll('.sidebar .nav-item')); }
@@ -211,11 +211,17 @@
       watch('users', 'status', 'pending', function (s) { sets.a = ids(s); prof(); });
       watch('users', 'validationAdmin', 'pending', function (s) { sets.b = ids(s); prof(); });
       watch('clubValidationRequests', 'status', 'pending', function (s) { C.clubs = s.size; render(); });
+      watch('signalements', 'status', 'pending', function (s) {
+        C.signalements = s.size; sigOk = true;
+        var el = $('nav-signalements-count');
+        if (el) { el.textContent = s.size; el.style.display = s.size > 0 ? 'inline-block' : 'none'; }
+        render();
+      });
     } catch (e) { console.warn('[GSC admin-hub]', e); }
   }
   function poll() {
     var e = $('nav-signalements-count');
-    C.signalements = (e && e.style.display !== 'none') ? (parseInt(e.textContent, 10) || 0) : 0;
+    if (!sigOk) C.signalements = (e && e.style.display !== 'none') ? (parseInt(e.textContent, 10) || 0) : 0;
     if (window.__gscRoCount != null) C.effectifs = window.__gscRoCount;
   }
   function tick() {
