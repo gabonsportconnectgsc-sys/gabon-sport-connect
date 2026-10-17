@@ -10087,5 +10087,42 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="gsc-doc-member.js" defer></script>
 <script src="gsc-doc-modeles-membre.js" defer></script>
 <script src="gsc-doc-attestation.js" defer></script>
+<script>/* __gscTiles */
+(function(){
+  var touched=false;
+  ['touchstart','wheel','keydown','mousedown'].forEach(function(e){window.addEventListener(e,function(){touched=true;},{passive:true,capture:true});});
+  function hdrBottom(){
+    try{
+      var el=document.elementFromPoint(Math.round(window.innerWidth/2),8);
+      while(el&&el!==document.body&&el!==document.documentElement){
+        var p=getComputedStyle(el).position;
+        if(p==='fixed'||p==='sticky'){return el.getBoundingClientRect().bottom;}
+        el=el.parentElement;
+      }
+    }catch(e){}
+    return 0;
+  }
+  function visible(a){return !!a&&a.offsetParent!==null&&a.getClientRects().length>0;}
+  function go(){
+    var a=document.getElementById('dashboard-landing-anchor');
+    if(!visible(a))return false;
+    a.style.scrollMarginTop=Math.round(hdrBottom()+8)+'px';
+    a.scrollIntoView({block:'start',behavior:'instant'});
+    return true;
+  }
+  function hook(){
+    if(typeof window.showView!=='function'||window.showView.__gscT)return;
+    var o=window.showView;
+    var w=function(){var r=o.apply(this,arguments);setTimeout(go,80);setTimeout(go,500);return r;};
+    w.__gscT=true;window.showView=w;
+  }
+  hook();
+  document.addEventListener('DOMContentLoaded',hook);
+  window.addEventListener('load',function(){
+    hook();
+    var n=0,tm=setInterval(function(){n++;if(touched||n>14){clearInterval(tm);return;}go();},400);
+  });
+})();
+</script>
 </body>
 </html>
