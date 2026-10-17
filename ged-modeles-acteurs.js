@@ -112,10 +112,14 @@
     var emetteur = { '1': 'organisation', '2': 'federation', '3': 'administration' }[c];
     var emetteurNom = (prompt("Nom de l'émetteur (facultatif, ex. FEGAFOOT)", '') || '').trim();
     try {
-      if (!window.firebase || !firebase.storage) throw new Error('Firebase Storage non disponible');
-      var safe = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-      var snap = await firebase.storage().ref('ged-modeles/' + d.id + '/v' + Date.now() + '_' + safe).put(file, { contentType: file.type });
-      var url = await snap.ref.getDownloadURL();
+      /* __gscCloudinary */
+      var __fd = new FormData();
+      __fd.append('file', file);
+      __fd.append('upload_preset', 'gsc_admin_uploads');
+      var __rp = await fetch('https://api.cloudinary.com/v1_1/djvzc3vqp/auto/upload', { method: 'POST', body: __fd });
+      var __rj = await __rp.json().catch(function () { return {}; });
+      if (!__rp.ok || !__rj.secure_url) throw new Error('Cloudinary : ' + ((__rj.error && __rj.error.message) || ('HTTP ' + __rp.status)));
+      var url = __rj.secure_url;
       var v = view(d);
       /* __gscModeleDirect */
       var __f = { url: url, fileName: file.name, size: file.size, emetteur: emetteur, emetteurNom: emetteurNom, version: (v.version || 0) + 1 };
