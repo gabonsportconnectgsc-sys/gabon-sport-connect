@@ -172,9 +172,20 @@
     return true;
   }
 
+  function place() {
+    var btn = document.getElementById('nav-effectifs');
+    if (!btn) return;
+    var anchor = null;
+    document.querySelectorAll('.sidebar .nav-item').forEach(function (n) {
+      if (/Validations?\s+clubs/i.test(n.textContent)) anchor = n;
+    });
+    if (!anchor) anchor = document.getElementById('nav-clubs');
+    if (anchor && btn.previousElementSibling !== anchor) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+  }
+
   var tries = 0, t = setInterval(function () {
     tries++;
-    inject(); start(); counts();
+    inject(); place(); start(); counts();
     if (tries > 120) clearInterval(t);
   }, 1500);
 })(window);
