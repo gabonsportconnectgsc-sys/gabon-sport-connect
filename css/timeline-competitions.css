@@ -192,3 +192,28 @@
   .gsc-tl { --gsc-tl-label: clamp(74px, 25vw, 96px); }
   .gsc-tl__label small { display: none; }
 }
+
+/* __fs-v1 : plein ecran, zoom, mois cliquables */
+.gsc-tl__fsbtn { font-size: 1rem; }
+.gsc-tl__zoom { display: none; }
+.gsc-tl__month { cursor: pointer; }
+.gsc-tl__month:hover { background: #e3e8ee; }
+html.gsc-tl-fs-lock, html.gsc-tl-fs-lock body { overflow: hidden !important; }
+.gsc-tl.gsc-tl--fs {
+  position: fixed; inset: 0; z-index: 2147483000; margin: 0; border: 0; border-radius: 0;
+  width: auto; height: auto; max-width: none; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--gsc-tl-bg);
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+.gsc-tl--fs .gsc-tl__head {
+  position: sticky; top: 0; z-index: 30; background: var(--gsc-tl-bg);
+  padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--gsc-tl-border);
+}
+.gsc-tl--fs .gsc-tl__scroll { overflow-x: auto; }
+.gsc-tl--fs .gsc-tl__zoom { display: flex; flex: 1 1 100%; justify-content: center; gap: 6px; }
+.gsc-tl__zoom .gsc-tl__btn.is-on { background: var(--gsc-tl-accent); color: #fff; border-color: var(--gsc-tl-accent); }
+.gsc-tl--fs .gsc-tl__fsbtn { background: #fde4e1; }
+.gsc-tl--fs .gsc-tl__row { min-height: 52px; }
+.gsc-tl--fs .gsc-tl__label { font-size: .8rem; }
+.gsc-tl--fs .gsc-tl__bar { font-size: .72rem; }
+.gsc-tl--fs .gsc-tl__month { font-size: .75rem; }
