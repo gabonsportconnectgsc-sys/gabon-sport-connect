@@ -47,6 +47,7 @@
       { i: '🎨', l: 'CMS', nav: 'nav-cms' },
       { i: '📸', l: 'Photos &amp; Logos', nav: 'nav-photos' } ] },
     { g: '📅 Compétitions &amp; données', items: [
+      { i: '🗓️', l: 'Calendrier', nav: 'nav-calendrier' },
       { i: '📅', l: 'Matchs', nav: 'nav-matchs' },
       { i: '📈', l: 'Rapports', nav: 'nav-rapports' },
       { i: '📷', l: 'Scanner QR', nav: 'nav-qrscan' } ] }

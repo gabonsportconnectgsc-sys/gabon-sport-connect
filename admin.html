@@ -50,6 +50,8 @@
 <link rel="stylesheet" href="structures-modules.css">
 <link rel="stylesheet" href="css/sync-comptes.css">
 <link rel="stylesheet" href="css/ged-admin.css">
+<link rel="stylesheet" href="css/timeline-competitions.css">
+<link rel="stylesheet" href="css/competitions-admin.css">
 <style>
 :root { --green: #009E60; --green-dk: #007a47; --green-lt: #e6f7ef; --yellow: #FFD700; --navy: #0A1628; --navy-md: #1a2d4a; --white: #fff; --gray-bg: #F0F2F5; --gray-bd: #e2e8f0; --gray-txt: #64748b; --danger: #ef4444; --warn: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6; --orange: #f97316; --teal: #0d9488; --sidebar-w: 240px; --topbar-h: 60px; --mobile-nav-h: 62px; --font: 'Inter',system-ui,sans-serif; --font-display: 'Syne',sans-serif; --radius: 12px; --radius-lg: 22px; --shadow: 0 2px 12px rgba(0,0,0,.08); }
 
@@ -917,6 +919,9 @@ tr.is-demo-row td { opacity: .82; }
         <button class="nav-item" id="nav-photos">
           <span class="nav-icon">📸</span><span>Photos &amp; Logos</span>
         </button>
+        <button class="nav-item" id="nav-calendrier">
+          <span class="nav-icon">📅</span><span>Calendrier</span>
+        </button>
         <button class="nav-item" id="nav-matchs">
           <span class="nav-icon">📅</span><span>Matchs</span>
         </button>
@@ -1297,6 +1302,13 @@ tr.is-demo-row td { opacity: .82; }
       </div>
 
       <!-- MATCHS -->
+      <div id="calendrier" class="section">
+        <div class="page-header">
+          <div class="page-title">Calendrier des compétitions</div>
+        </div>
+        <div id="admin-competitions"></div>
+      </div>
+
       <div id="matchs" class="section">
         <div class="page-header">
           <div class="page-title">Gestion des Matchs</div>
@@ -4746,6 +4758,33 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="gsc-doc-reception.js" defer></script>
 <script src="gsc-qr-fix.js" defer></script>
 <script src="gsc-admin-role-badges.js"></script>
+<script src="timeline-competitions.js"></script>
+<script src="competitions-data.js"></script>
+<script src="competitions-service.js"></script>
+<script src="competitions-admin.js"></script>
+<script>/* __gscCalendrierAdmin */
+(function(){
+  var monte=false;
+  function aller(){
+    document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+    var t=document.getElementById('calendrier'); if(t)t.classList.add('active');
+    document.querySelectorAll('.nav-item, .mn-btn').forEach(function(b){b.classList.remove('active');});
+    var nb=document.getElementById('nav-calendrier'); if(nb)nb.classList.add('active');
+    var te=document.getElementById('topbar-title'); if(te&&te.firstChild)te.firstChild.textContent='Calendrier';
+    var sb=document.getElementById('sidebar'); if(sb)sb.classList.remove('open');
+    var so=document.getElementById('sidebar-overlay'); if(so)so.classList.remove('open');
+    if(!monte){
+      monte=true;
+      try{
+        GSCCompetitions.init({db:window.db});
+        GSCCompetitionsAdmin.mount('#admin-competitions');
+      }catch(e){console.warn('Calendrier admin :',e);}
+    }
+  }
+  document.addEventListener('click',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('#nav-calendrier'))aller();
+  });
+})();</script>
 <script>/* __gscFab */
 (function(){function chk(){var f=document.getElementById("gsc-docrec-fab"),s=document.querySelector(".sidebar");if(!f||!s)return;var a=f.getBoundingClientRect(),b=s.getBoundingClientRect();var hit=b.right>a.left+4&&b.left<a.right-4&&b.bottom>a.top&&b.top<a.bottom;f.style.visibility=hit?"hidden":"visible";}setInterval(chk,300);})();
 </script>
