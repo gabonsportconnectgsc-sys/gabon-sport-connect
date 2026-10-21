@@ -1,0 +1,49 @@
+/* ==========================================================
+   GSC — Admin : gestion du calendrier des compétitions
+   Fichier dédié : css/competitions-admin.css
+   ========================================================== */
+.gsc-ca { font-family: inherit; color: #1d2733; background: #fff; border: 1px solid #dfe3e8; border-radius: 12px; padding: 14px; box-sizing: border-box; }
+.gsc-ca *, .gsc-ca *::before, .gsc-ca *::after { box-sizing: border-box; }
+.gsc-ca__head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.gsc-ca__title { font-weight: 700; font-size: 1.05rem; }
+.gsc-ca__sub { font-size: .78rem; color: #6b7785; margin-top: 2px; }
+.gsc-ca__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.gsc-ca__btn {
+  appearance: none; border: 1px solid #dfe3e8; background: #f5f7fa; color: #1d2733; border-radius: 10px;
+  padding: 9px 14px; font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; line-height: 1.1;
+}
+.gsc-ca__btn:hover { background: #e9edf2; }
+/* Bouton vert de synchronisation */
+.gsc-ca__btn--sync { background: #1b9e4b; border-color: #178a41; color: #fff; }
+.gsc-ca__btn--sync:hover { background: #178a41; }
+.gsc-ca__btn--sync:disabled { opacity: .7; cursor: progress; }
+
+.gsc-ca__msg { min-height: 0; font-size: .82rem; margin: 6px 0; }
+.gsc-ca__msg:not(:empty) { padding: 8px 10px; border-radius: 8px; background: #eef1f5; }
+.gsc-ca__msg--ok { background: #e3f4ea !important; color: #0b5d2e; }
+.gsc-ca__msg--err { background: #fde4e1 !important; color: #a1281c; }
+
+.gsc-ca__form { border: 1px solid #dfe3e8; border-radius: 12px; padding: 12px; margin: 10px 0; background: #fafbfc; }
+.gsc-ca__formtitle { font-weight: 700; margin-bottom: 8px; }
+.gsc-ca__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.gsc-ca__grid label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; font-weight: 600; color: #3b4857; }
+.gsc-ca__wide { grid-column: 1 / -1; }
+.gsc-ca__grid input, .gsc-ca__grid select, .gsc-ca__grid textarea {
+  font: inherit; font-size: .9rem; padding: 8px 10px; border: 1px solid #cfd6de; border-radius: 8px; background: #fff; color: #1d2733; width: 100%;
+}
+.gsc-ca__grid input[type="color"] { padding: 2px; height: 38px; }
+.gsc-ca__formbtns { display: flex; gap: 8px; margin-top: 12px; }
+
+.gsc-ca__tablewrap { overflow-x: auto; margin: 10px 0; }
+.gsc-ca__table { width: 100%; border-collapse: collapse; font-size: .84rem; min-width: 640px; }
+.gsc-ca__table th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: #6b7785; padding: 6px 8px; border-bottom: 1px solid #dfe3e8; }
+.gsc-ca__table td { padding: 8px; border-bottom: 1px solid #eef1f5; vertical-align: top; }
+.gsc-ca__table td small { display: block; color: #6b7785; font-size: .72rem; margin-left: 16px; }
+.gsc-ca__dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.gsc-ca__row-actions { white-space: nowrap; }
+.gsc-ca__link { appearance: none; background: none; border: 0; color: #0f7b3f; font: inherit; font-weight: 600; cursor: pointer; padding: 4px 6px; }
+.gsc-ca__link--danger { color: #c62828; }
+.gsc-ca__empty { padding: 16px; text-align: center; color: #6b7785; }
+.gsc-ca__preview { margin-top: 12px; }
+.gsc-ca__preview .gsc-tl { border: 0; padding: 0; }

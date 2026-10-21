@@ -1199,6 +1199,7 @@
 <style>.gsc-ico-user{flex-shrink:0;vertical-align:middle}</style>
 <style>/* __gscWaHide */
 #gsc-wa-fab,.gsc-wa-fab{display:none !important;}</style>
+<link rel="stylesheet" href="css/timeline-competitions.css">
 </head>
 <body>
 <!-- ═══ ÉCRAN DE DÉMARRAGE PERSONNALISÉ (après le splash natif de la PWA) ═══
@@ -2872,6 +2873,10 @@
     </section>
 
     <!-- ── SPORT GABON ── -->
+    <section class="view" id="view-calendrier">
+      <div style="padding:12px 12px 90px;"><div id="page-competitions"></div></div>
+    </section>
+
     <section class="view" id="view-sport">
       <!-- Header -->
       <div class="sport-gabon-header fade-up">
@@ -3068,6 +3073,7 @@
     <button class="bnav-item" id="bnav-sport" onclick="showView('sport')" style="display:none;" data-masque="calendrier-a-venir">
       <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>🏆</span>'">Sport
     </button>
+    <button class="bnav-item" id="bnav-calendrier" onclick="showView('calendrier')"><span class="bnav-icon">📅</span>Calendrier</button>
     <button class="bnav-item" id="bnav-profil" onclick="showView('profil')" style="display:none;">
       <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=44&h=44&fit=crop&auto=format" class="bnav-real-icon" alt="" onerror="this.outerHTML='<span class=bnav-icon>👤</span>'">Profil
     </button>
@@ -10158,5 +10164,37 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
+<script src="timeline-competitions.js"></script>
+<script src="competitions-data.js"></script>
+<script src="competitions-service.js"></script>
+<script src="competitions-page.js"></script>
+<script>/* __gscCalendrier */
+(function(){
+  var monte=false;
+  function branche(){
+    try{
+      if(window.db && typeof window.collection==='function'){
+        GSCCompetitions.init({db:window.db,api:{collection:window.collection,doc:window.doc,getDoc:window.getDoc,getDocs:window.getDocs,setDoc:window.setDoc,deleteDoc:window.deleteDoc}});
+      }
+    }catch(e){console.warn('Calendrier : base non branchee',e);}
+  }
+  function monter(){
+    if(monte)return; monte=true;
+    var n=0;
+    (function essai(){
+      if((window.db&&typeof window.collection==='function')||n++>=10){
+        branche();
+        try{GSCCompetitionsPage.mount('#page-competitions');}catch(e){console.warn('Calendrier :',e);}
+      }else{setTimeout(essai,300);}
+    })();
+  }
+  var sv=window.showView;
+  if(typeof sv==='function'){
+    window.showView=function(nom){var r=sv.apply(this,arguments);if(nom==='calendrier')monter();return r;};
+  }
+  document.addEventListener('click',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('#bnav-calendrier'))monter();
+  });
+})();</script>
 </body>
 </html>
