@@ -166,3 +166,29 @@
 }
 .gsc-cp__chip b { display: block; font-size: 1.05rem; }
 .gsc-cp__foot { font-size: .72rem; color: #6b7785; }
+
+/* __mobile-v1 : adaptation fluide, sans defilement horizontal */
+@media (max-width: 700px) {
+  .gsc-tl { --gsc-tl-label: clamp(84px, 27vw, 128px); padding: 10px; }
+  .gsc-tl__head { justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .gsc-tl__title { flex: 1 1 100%; margin: 0; text-align: center; font-size: 1.02rem; }
+  .gsc-tl__nav { flex: 1 1 100%; justify-content: center; gap: 8px; }
+  .gsc-tl__period { min-width: 96px; }
+  .gsc-tl__select { flex: 1 1 calc(50% - 4px); min-width: 0; text-overflow: ellipsis; }
+  .gsc-tl__scroll { overflow-x: hidden; }
+  .gsc-tl__grid { min-width: 0; }
+  .gsc-tl__row { min-height: 42px; }
+  .gsc-tl__label { font-size: .68rem; padding-right: 6px; }
+  .gsc-tl__label small { font-size: .6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gsc-tl__month { font-size: .6rem; overflow: hidden; }
+  .gsc-tl__bar { font-size: .6rem; padding: 0 4px; top: 5px; height: 20px; line-height: 20px; }
+  .gsc-tl__legend { justify-content: center; gap: 8px 12px; }
+  .gsc-tl__detail { font-size: .8rem; }
+  .gsc-cp__chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .gsc-cp__chip { text-align: center; }
+  .gsc-cp__foot { text-align: center; }
+}
+@media (max-width: 380px) {
+  .gsc-tl { --gsc-tl-label: clamp(74px, 25vw, 96px); }
+  .gsc-tl__label small { display: none; }
+}
