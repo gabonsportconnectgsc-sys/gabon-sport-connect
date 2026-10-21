@@ -67,8 +67,12 @@
   function majBouton(host) {
     var b = q(host, '[data-fs="toggle"]');
     if (!b) return;
-    var t = etat.open ? '✕' : '⛶';
-    if (b.textContent !== t) b.textContent = t;
+    var st = etat.open ? 'open' : 'closed';
+    if (b.getAttribute('data-st') !== st) {
+      b.setAttribute('data-st', st);
+      b.innerHTML = '<span class="gsc-tl__fsico">' + (etat.open ? '✕' : '⛶') + '</span>' +
+        '<span class="gsc-tl__fstxt">' + (etat.open ? 'fermer' : 'plein écran') + '</span>';
+    }
     b.setAttribute('aria-label', etat.open ? 'Quitter le plein écran' : 'Plein écran');
   }
 
