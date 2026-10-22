@@ -1850,15 +1850,6 @@
           <div class="stat-lbl" style="color:#1a2d4a;text-shadow:none;">Sportifs étrangers</div>
         </button>
 
-        <!-- Gabonais de l’étranger -->
-        <button class="stat-card" onclick="showView('annuaire');filterActors('gabonais_diaspora')"
-          style="background:linear-gradient(135deg,#06b6d4,#0e7490);padding:16px 12px;">
-          <img class="stat-wm" data-wm-role="gabonais_diaspora" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
-          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🇬🇦</span>
-          <div class="stat-val" id="stat-total-diaspora">—</div>
-          <div class="stat-lbl">Gabonais de l’étranger</div>
-        </button>
-
         <!-- Sportifs handisport -->
         <button class="stat-card" onclick="showView('annuaire');filterActors('handisport')"
           style="background:linear-gradient(135deg,#b45309,#78350f);padding:16px 12px;">
@@ -1884,6 +1875,15 @@
           <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🧑‍🏫</span>
           <div class="stat-val" id="stat-total-formateurs">—</div>
           <div class="stat-lbl" style="color:#ede9fe;">Formateurs</div>
+        </button>
+
+        <!-- Gabonais de l’étranger -->
+        <button class="stat-card" onclick="showView('annuaire');filterActors('gabonais_diaspora')"
+          style="background:linear-gradient(135deg,#06b6d4,#0e7490);padding:16px 12px;grid-column:1 / -1;">
+          <img class="stat-wm" data-wm-role="gabonais_diaspora" alt="" onload="this.classList.add('is-loaded')" onerror="this.classList.remove('is-loaded');this.removeAttribute('src')">
+          <span style="font-size:46px;margin-bottom:14px;display:inline-block;align-self:flex-end;position:relative;z-index:2;">🇬🇦</span>
+          <div class="stat-val" id="stat-total-diaspora">—</div>
+          <div class="stat-lbl">Gabonais de l’étranger</div>
         </button>
 
       </div>
