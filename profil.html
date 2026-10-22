@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/ged-public.css">
   <!-- Firebase (Firestore pour le profil) -->
   <link rel="stylesheet" href="css/form-styles.css">
+<link rel="stylesheet" href="css/gabonais-diaspora.css">
 </head>
 <body>
 
@@ -561,7 +562,7 @@
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
     handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
-    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
+    supporter:'💗 Supporter', gabonais_diaspora:'🇬🇦 Gabonais sportif à l’étranger', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
     formateur:'🧑‍🏫 Formateur'
   };
 
@@ -997,7 +998,7 @@
   }
   document.getElementById('a-sport')?.addEventListener('change', function() {
     applyTechLabelsForSport(this.value);
-    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
+    if (['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(selectedRole)) {
       loadClubOptionsForSport(this.value);
     }
   });
@@ -1012,7 +1013,7 @@
     const role = data.role || '';
     selectedRole = role;
     const isOrgRole = ['club','federation','association','organisateur'].includes(role);
-    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(role);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(role);
     const isEtudiantRole = role === 'eleve_etudiant';
     const isHandisportRole = role === 'handisport';
     const isAncienSportifRole = role === 'ancien_sportif';
@@ -1247,7 +1248,7 @@
     if (!currentUid) { errMsg('a-err', 'Session expirée. Rechargez la page.'); return; }
     const role = selectedRole;
     const isOrgRole = ['club','federation','association','organisateur'].includes(role);
-    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(role);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(role);
     const isEtudiantRole = role === 'eleve_etudiant';
     const isHandisportRole = role === 'handisport';
     const isAncienSportifRole = role === 'ancien_sportif';
@@ -1444,5 +1445,6 @@
 
   loadProfile();
 </script>
+<script src="gsc-diaspora.js"></script>
 </body>
 </html>

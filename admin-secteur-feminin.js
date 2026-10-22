@@ -34,7 +34,7 @@
     independant: 'Indépendante', association: 'Association (représentante)',
     eleve_etudiant: 'Élève / Étudiante', handisport: 'Sportive handisport',
     organisateur: 'Organisatrice', supporter: 'Supportrice',
-    sportif_etranger: 'Sportive étrangère', ancien_sportif: 'Ancienne sportive',
+    gabonais_diaspora: 'Gabonaise sportive à l’étranger', sportif_etranger: 'Sportive étrangère', ancien_sportif: 'Ancienne sportive',
     formateur: 'Formatrice'
   };
   const ROLES_ENCADREMENT = ['entraineur', 'arbitre', 'formateur', 'organisateur'];

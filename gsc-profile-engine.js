@@ -97,7 +97,7 @@
     }
 
     /* ── INDÉPENDANT / ÉLÈVE / ÉTRANGER ── */
-    if (['independant', 'eleve_etudiant', 'sportif_etranger'].includes(r)) {
+    if (['independant', 'eleve_etudiant', 'gabonais_diaspora', 'sportif_etranger'].includes(r)) {
       return _getAthleteStats(s, poste);
     }
 
@@ -417,7 +417,7 @@
         entraineur: '📋 Profil de l\'entraîneur',
         independant: '🏃 Profil physique',
         eleve_etudiant: '🎓 Profil sportif',
-        sportif_etranger: '🌍 Profil physique',
+        gabonais_diaspora: '🇬🇦 Profil physique', sportif_etranger: '🌍 Profil physique',
         handisport: '🦾 Profil physique adapté',
       };
       cardTitle.textContent = icons[p.role] || '💪 Profil physique';
@@ -700,6 +700,10 @@
       </div>`;
     }
 
+    if (p.role === 'gabonais_diaspora' && window.GSC_DIASPORA) {
+      h += window.GSC_DIASPORA.renderForm(p);
+    }
+
     if (p.role === 'sportif_etranger') {
       h += `<div class="section-divider blue">🌍 Statut international</div>`;
       h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -760,6 +764,10 @@
       if (ns) updates.niveauScolaire = ns.value || '';
       if (et) updates.etablissement = (et.value === '__autre__' ? (etAutre?.value.trim() || '') : et.value) || '';
       if (fi) updates.filiere = fi.value.trim() || '';
+    }
+
+    if (p.role === 'gabonais_diaspora' && window.GSC_DIASPORA) {
+      Object.assign(updates, window.GSC_DIASPORA.readForm());
     }
 
     if (p.role === 'sportif_etranger') {
@@ -829,7 +837,7 @@
           const statsCard = document.getElementById('prof-stats-card');
           if (statsCard && window.userProfile) {
             const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-              'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(window.userProfile.role);
+              'eleve_etudiant', 'ecole_universite', 'gabonais_diaspora', 'sportif_etranger', 'handisport'].includes(window.userProfile.role);
             statsCard.style.display = isPersonnel ? '' : 'none';
             if (isPersonnel) renderSportStats_v2(window.userProfile);
           }
@@ -845,7 +853,7 @@
         _origBuildEditForm.call(this, p);
 
         const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-          'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(p.role);
+          'eleve_etudiant', 'ecole_universite', 'gabonais_diaspora', 'sportif_etranger', 'handisport'].includes(p.role);
         if (!isPersonnel) return;
 
         const target = document.getElementById('edit-form-body');
@@ -954,7 +962,7 @@
     if (!a) return;
 
     const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-      'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(a.role);
+      'eleve_etudiant', 'ecole_universite', 'gabonais_diaspora', 'sportif_etranger', 'handisport'].includes(a.role);
     if (!isPersonnel) return;
 
     /* Remplacer la section stats existante (ancienne) par la nouvelle */
@@ -1024,7 +1032,7 @@
       if (!p) return;
 
       const isPersonnel = ['joueur', 'arbitre', 'entraineur', 'independant',
-        'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport'].includes(p.role);
+        'eleve_etudiant', 'ecole_universite', 'gabonais_diaspora', 'sportif_etranger', 'handisport'].includes(p.role);
       if (!isPersonnel) return;
 
       /* Vérifier si on a déjà injecté nos sections (éviter les boucles) */

@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/ged-public.css">
   <!-- Firebase (Firestore pour le profil) -->
   <link rel="stylesheet" href="css/form-styles.css">
+<link rel="stylesheet" href="css/gabonais-diaspora.css">
 </head>
 <body>
 
@@ -215,6 +216,7 @@
           <div class="role-tile" data-role="organisateur" onclick="pickRole('organisateur',this)"><div class="rt-icon">🎪</div><div class="rt-label">Organisateur</div><div class="rt-desc">Événements et compétitions sportives</div></div>
           <div class="role-tile" data-role="supporter" onclick="pickRole('supporter',this)"><div class="rt-icon">💗</div><div class="rt-label">Supporter</div><div class="rt-desc">Fan d'un club ou d'une discipline</div></div>
           <div class="role-tile" data-role="sportif_etranger" onclick="pickRole('sportif_etranger',this)"><div class="rt-icon">🌍</div><div class="rt-label">Sportif étranger</div><div class="rt-desc">Pratique au Gabon, nationalité étrangère</div></div>
+          <div class="role-tile" data-role="gabonais_diaspora" onclick="pickRole('gabonais_diaspora',this)"><div class="rt-icon">🇬🇦</div><div class="rt-label">Gabonais sportif à l’étranger</div><div class="rt-desc">Pratique au Gabon, nationalité étrangère</div></div>
           <div class="role-tile" data-role="ancien_sportif" onclick="pickRole('ancien_sportif',this)"><div class="rt-icon">🎖️</div><div class="rt-label">Ancien Sportif</div><div class="rt-desc">Carrière terminée, palmarès et reconversion</div></div>
           <div class="role-tile" data-role="formateur" onclick="pickRole('formateur',this)"><div class="rt-icon">🧑‍🏫</div><div class="rt-label">Formateur</div><div class="rt-desc">Formation, certification et transmission de savoir sportif</div></div>
         </div>
@@ -808,12 +810,12 @@
     joueur:'JOU', athlete:'ATH', arbitre:'ARB', entraineur:'ENT', club:'CLB',
     association:'ASS', federation:'FED', independant:'IND',
     admin:'ADM', supporter:'SUP', organisateur:'ORG',
-    eleve_etudiant:'ELE', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP', formateur:'FOR'
+    eleve_etudiant:'ELE', gabonais_diaspora:'DIA', sportif_etranger:'ETR', handisport:'HAN', ancien_sportif:'ASP', formateur:'FOR'
   };
   // Numéro de catégorie court (3 chiffres), identique dans index.html / admin.html / inscription.html.
   const CATEGORY_NUM = {
     joueur:'001', athlete:'002', arbitre:'003', entraineur:'004', independant:'005',
-    eleve_etudiant:'006', sportif_etranger:'007', handisport:'008', ancien_sportif:'009',
+    eleve_etudiant:'006', gabonais_diaspora:'091', sportif_etranger:'007', handisport:'008', ancien_sportif:'009',
     club:'010', federation:'011', association:'012', organisateur:'013',
     formateur:'014', supporter:'015', admin:'016'
   };
@@ -836,7 +838,7 @@
     club:'🏟️ Club sportif', federation:'🏛️ Fédération', independant:'🧍 Indépendant',
     association:'🤝 Association', eleve_etudiant:'🎓 Élève / Étudiant',
     handisport:'🦾 Sportif handisport', organisateur:'🎪 Organisateur',
-    supporter:'💗 Supporter', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
+    supporter:'💗 Supporter', gabonais_diaspora:'🇬🇦 Gabonais sportif à l’étranger', sportif_etranger:'🌍 Sportif étranger', ancien_sportif:'🎖️ Ancien Sportif',
     formateur:'🧑‍🏫 Formateur'
   };
 
@@ -975,7 +977,7 @@
     document.getElementById('a-tag').textContent = '🏅 ' + ROLE_LABELS[selectedRole];
     const isOrgRole = ['club','federation','association','organisateur'].includes(selectedRole);
     document.getElementById('ex-personne').classList.toggle('show', !isOrgRole);
-    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole));
+    document.getElementById('ex-joueur').classList.toggle('show', ['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(selectedRole));
     document.getElementById('ex-org').classList.toggle('show', isOrgRole);
     document.getElementById('ex-off').classList.toggle('show', ['entraineur','arbitre'].includes(selectedRole));
     document.getElementById('ex-handisport').classList.toggle('show', selectedRole === 'handisport');
@@ -985,7 +987,7 @@
     if (selectedRole === 'eleve_etudiant') {
       populateEtablissementSelect();
     }
-    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
+    if (['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(selectedRole)) {
       loadClubOptionsForSport(document.getElementById('a-sport')?.value || '');
     }
     updateTeamFieldsVisibility();
@@ -1135,7 +1137,7 @@
 
   // Recharger la liste des clubs quand le sport change
   document.getElementById('a-sport')?.addEventListener('change', function() {
-    if (['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole)) {
+    if (['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(selectedRole)) {
       loadClubOptionsForSport(this.value);
     }
   });
@@ -1352,7 +1354,7 @@ function sbError(e) {
     const orgBio         = isOrgRole ? (document.getElementById('a-org-bio')?.value?.trim() || '').slice(0,500) : '';
     const orgPalmares    = isOrgRole ? (document.getElementById('a-org-palmares')?.value?.trim() || '') : '';
     // Champs enrichis joueur/athlète
-    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','sportif_etranger'].includes(selectedRole);
+    const isJoueurRole = ['joueur','athlete','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger'].includes(selectedRole);
     const taille       = isJoueurRole ? (document.getElementById('a-taille')?.value || '') : '';
     const poids        = isJoueurRole ? (document.getElementById('a-poids')?.value || '') : '';
     const piedFort     = isJoueurRole ? (document.getElementById('a-pied')?.value || '') : '';
@@ -1705,5 +1707,6 @@ function sbError(e) {
 </script>
 <script src="ged-inscription-preview.js"></script>
 <script src="gsc-pwd-eye.js" defer></script>
+<script src="gsc-diaspora.js"></script>
 </body>
 </html>

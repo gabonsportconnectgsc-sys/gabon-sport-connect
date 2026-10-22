@@ -75,7 +75,7 @@
     independant: '🚴 Indépendant',
     supporter: '💗 Supporter',
     eleve_etudiant: '🎓 Élève / Étudiant',
-    sportif_etranger: '🌍 Sportif étranger',
+    gabonais_diaspora: '🇬🇦 Gabonais sportif à l’étranger', sportif_etranger: '🌍 Sportif étranger',
     ecole_universite: '🏫 École/Université',
     handisport: '🦾 Sportif handisport',
     ancien_sportif: '🎖️ Ancien Sportif',
@@ -90,7 +90,7 @@
   // cf. generateGscId côté index.html/admin.html) : c'est un profil INDIVIDUEL, pas
   // une organisation. Il doit donc suivre le même traitement que PLAYER_ROLES
   // (champs sport/physique/stats), pas ORG_ROLES (nom d'organisation, effectif…).
-  const PLAYER_ROLES = ['joueur', 'athlete', 'independant', 'eleve_etudiant', 'ecole_universite', 'sportif_etranger', 'handisport', 'ancien_sportif'];
+  const PLAYER_ROLES = ['joueur', 'athlete', 'independant', 'eleve_etudiant', 'ecole_universite', 'gabonais_diaspora', 'sportif_etranger', 'handisport', 'ancien_sportif'];
   // Les arbitres participent physiquement sur le terrain (course, endurance…) —
   // ils ont donc des critères physiques pertinents, mais pas de stats de
   // performance joueur (buts/passes décisives n'ont pas de sens pour eux).
@@ -108,7 +108,7 @@
     independant: '#64748b',
     supporter: '#ec4899',
     eleve_etudiant: '#6366f1',
-    sportif_etranger: '#ca8a04',
+    gabonais_diaspora: '#0891b2', sportif_etranger: '#ca8a04',
     ecole_universite: '#059669',
     handisport: '#7c3aed',
     ancien_sportif: '#9f1239',
@@ -117,12 +117,12 @@
   const DASH_ROLES = [
     'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'supporter', 'independant', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif', 'formateur'
+    'gabonais_diaspora', 'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif', 'formateur'
   ];
   const GROUP_ORDER = [
     'joueur', 'athlete', 'entraineur', 'arbitre', 'club', 'federation', 'association',
     'organisateur', 'independant', 'supporter', 'eleve_etudiant',
-    'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif', 'formateur'
+    'gabonais_diaspora', 'sportif_etranger', 'ecole_universite', 'handisport', 'ancien_sportif', 'formateur'
   ];
   const NIVEAU_ORDER = ['International', 'National', 'Regional', 'Amateur'];
   const SECONDARY_GROUP_CONFIG = {
@@ -136,7 +136,7 @@
     association: { getKey: a => a.province || a.ville, label: v => '📍 ' + v, fallback: 'Localisation non précisée' },
     federation: { getKey: a => a.niveau || 'National', label: v => '🏛️ ' + v, fallback: 'Niveau non précisé', order: NIVEAU_ORDER },
     eleve_etudiant: { getKey: a => a.etablissement, label: v => '🎓 ' + v, fallback: 'Établissement non précisé' },
-    sportif_etranger: { getKey: a => a.nationalite, label: v => '🌍 ' + v, fallback: 'Nationalité non précisée' },
+    gabonais_diaspora: { getKey: a => a.paysResidence, label: v => '🇬🇦 ' + v, fallback: 'Pays non précisé' }, sportif_etranger: { getKey: a => a.nationalite, label: v => '🌍 ' + v, fallback: 'Nationalité non précisée' },
     handisport: { getKey: a => a.disciplineParaSport, label: v => '🦾 ' + v, fallback: 'Discipline non précisée' },
     ancien_sportif: { getKey: a => a.sport, label: v => '🎖️ ' + v, fallback: 'Discipline non précisée' },
     supporter: { getKey: a => a.club || a.ville, label: v => '💗 ' + v, fallback: 'Non précisé' },

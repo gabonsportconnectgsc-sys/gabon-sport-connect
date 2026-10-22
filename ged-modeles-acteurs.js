@@ -6,7 +6,7 @@
     ['joueur', '⚽ Joueur'], ['athlete', '🏃 Athlète'], ['entraineur', '📋 Entraîneur'], ['arbitre', '🟨 Arbitre'],
     ['club', '🏟️ Club'], ['association', '🤝 Association'], ['federation', '🏛️ Fédération'], ['organisateur', '🎪 Organisateur'],
     ['ecole_universite', '🏫 École / Université'], ['formateur', '🧑‍🏫 Formateur'], ['eleve_etudiant', '🎓 Élève / Étudiant'],
-    ['ancien_sportif', '🎖️ Ancien sportif'], ['handisport', '🦾 Handisport'], ['sportif_etranger', '🌍 Sportif étranger'],
+    ['ancien_sportif', '🎖️ Ancien sportif'], ['handisport', '🦾 Handisport'], ['gabonais_diaspora', '🇬🇦 Gabonais sportif à l’étranger'], ['sportif_etranger', '🌍 Sportif étranger'],
     ['independant', '🚴 Indépendant'], ['supporter', '💗 Supporter']
   ];
   var ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx';

@@ -91,6 +91,7 @@
     set('stat-total-independants', activeAll.filter(u => u.role === 'independant').length);
     set('stat-total-etudiants', activeAll.filter(u => u.role === 'eleve_etudiant').length);
     set('stat-total-etrangers', activeAll.filter(u => u.role === 'sportif_etranger').length);
+  set('stat-total-diaspora', activeAll.filter(u => u.role === 'gabonais_diaspora').length);
     set('stat-total-handisport', activeAll.filter(u => u.role === 'handisport').length);
     set('stat-total-anciens', activeAll.filter(u => u.role === 'ancien_sportif').length);
     set('stat-total-formateurs', activeAll.filter(u => u.role === 'formateur').length);

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var ROLES = { joueur: 'nav-joueurs', club: 'nav-clubs' };
-  ['athlete','entraineur','arbitre','association','federation','organisateur','supporter','independant','eleve_etudiant','sportif_etranger','handisport','ancien_sportif','ecole_universite','formateur']
+  ['athlete','entraineur','arbitre','association','federation','organisateur','supporter','independant','eleve_etudiant','gabonais_diaspora', 'sportif_etranger','handisport','ancien_sportif','ecole_universite','formateur']
     .forEach(function (r) { ROLES[r] = 'nav-role-' + r; });
   var KEY = 'gsc_admin_role_seen_v1';
   var seen = {}; try { seen = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}

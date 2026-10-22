@@ -65,7 +65,7 @@
     joueur: '⚽ Joueur / Athlète', arbitre: '🟨 Arbitre', entraineur: '📋 Entraîneur',
     independant: '🧍 Sportif indépendant', organisateur: '🎪 Organisateur',
     supporter: '💗 Supporter', eleve_etudiant: '🎓 Élève / Étudiant',
-    sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
+    gabonais_diaspora: '🇬🇦 Gabonais sportif à l’étranger', sportif_etranger: '🌍 Sportif étranger', handisport: '🦾 Sportif handisport',
     ancien_sportif: '🎖️ Ancien Sportif', formateur: '🧑‍🏫 Formateur'
   };
   const ROLE_ORDER = Object.keys(ROLE_LABELS);

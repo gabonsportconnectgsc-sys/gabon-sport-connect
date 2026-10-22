@@ -1,0 +1,8 @@
+/* Gabonais sportifs à l’étranger — rôle gabonais_diaspora (cyan) */
+.role-badge.gabonais_diaspora { background: #0891b2; color: #fff; }
+.actor-type-dot.gabonais_diaspora { background: linear-gradient(135deg, #06b6d4, #155e75); }
+.badge-gabonais_diaspora { background: #cffafe; color: #155e75; }
+.actor-filter-btn[data-type="gabonais_diaspora"] { border-color: #0891b2; color: #155e75; background: rgba(8, 145, 178, .07); }
+.actor-filter-btn[data-type="gabonais_diaspora"].active { background: linear-gradient(135deg, #06b6d4, #155e75); color: #fff; }
+.acr-badge.gabonais_diaspora { background: #cffafe; color: #155e75; }
+.filter-btn.role-gabonais_diaspora.active { background: #0891b2; color: #fff; border-color: #0891b2; }
