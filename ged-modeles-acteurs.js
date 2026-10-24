@@ -32,6 +32,7 @@
       all.sort(function (a, b) { return (a.ordre || 0) - (b.ordre || 0); });
     } catch (e) {
       console.warn('[GMA] lecture impossible', e);
+      if (e && e.code === 'permission-denied' && (window.__gmaRetry = (window.__gmaRetry || 0) + 1) <= 3) { setTimeout(load, 2500 * window.__gmaRetry); return; }
       var b = document.getElementById('gma-body');
       if (b) b.innerHTML = '<p style="color:#b91c1c">Lecture impossible : ' + esc(e.message) + ' (règles Firestore déployées ? admin connecté ?)</p>';
       return;

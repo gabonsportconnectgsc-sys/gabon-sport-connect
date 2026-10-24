@@ -1601,23 +1601,47 @@
       renderDocsArchiveSummary();
       return;
     }
+    list = list.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
+    const collapsed = (window.__gscDocCollapsed = window.__gscDocCollapsed || new Set());
     tbody.innerHTML = list.map(u => {
+      const uid = u.uid || u.id;
       const docs = u.documents || [];
-      const docsHtml = docs.length
-        ? docs.map((d, i) => `
-            <div class="doc-chip" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-bd);border-radius:8px;padding:3px 8px;margin:2px 4px 2px 0;font-size:12px;">
-              <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}
-              ${docChipButtonsHtml(u, d, i)}
-            </div>`).join('')
-        : `<span style="color:var(--danger);font-weight:700;">⚠️ aucun document</span>`;
-      return `
-        <tr class="${u.isDemo ? 'is-demo-row' : ''}">
-          <td data-label="Acteur"><span class="user-gscid-cell" style="margin-right:8px;">${esc(u.gscId || (window.gscGenerateId ? window.gscGenerateId(u.uid || u.id, u.role || 'joueur') : ''))}</span>${esc(fullName(u))}${u.isDemo ? '<span class="demo-pill">DÉMO</span>' : ''}</td>
-          <td data-label="Rôle">${esc(ROLE_LABELS[u.role] || u.role || '—')}</td>
-          <td data-label="Documents archivés">${docsHtml}</td>
-          <td data-label="Actions">${docs.length} doc(s)</td>
+      const shut = collapsed.has(uid);
+      const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, u.role || 'joueur') : '');
+      const head = `
+        <tr class="doc-owner-row ${u.isDemo ? 'is-demo-row' : ''}" data-owner="${esc(uid)}" style="cursor:pointer;background:var(--gray-bg);">
+          <td colspan="4" style="padding:10px 12px;border-top:2px solid var(--gray-bd);">
+            <span class="doc-owner-arrow" style="display:inline-block;width:16px;">${shut ? '▸' : '▾'}</span>
+            <strong>👤 ${esc(fullName(u))}</strong>
+            <span class="user-gscid-cell" style="margin-left:8px;">${esc(gscId)}</span>
+            <span style="color:var(--gray-txt);font-size:12px;margin-left:8px;">${esc(ROLE_LABELS[u.role] || u.role || '—')} · ${docs.length} document${docs.length > 1 ? 's' : ''}</span>
+          </td>
         </tr>`;
+      const lines = docs.length
+        ? docs.map((d, i) => `
+        <tr class="doc-line" data-owner-of="${esc(uid)}" style="${shut ? 'display:none;' : ''}">
+          <td colspan="3" data-label="Document" style="padding-left:34px;"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}</td>
+          <td data-label="Actions">${docChipButtonsHtml(u, d, i)}</td>
+        </tr>`).join('')
+        : `
+        <tr class="doc-line" data-owner-of="${esc(uid)}" style="${shut ? 'display:none;' : ''}">
+          <td colspan="4" style="padding-left:34px;color:var(--danger);font-weight:700;">⚠️ aucun document</td>
+        </tr>`;
+      return head + lines;
     }).join('');
+    if (!tbody.dataset.groupBound) {
+      tbody.dataset.groupBound = '1';
+      tbody.addEventListener('click', ev => {
+        const row = ev.target.closest('.doc-owner-row');
+        if (!row) return;
+        const uid = row.dataset.owner;
+        const set = window.__gscDocCollapsed;
+        const nowShut = !set.has(uid);
+        if (nowShut) set.add(uid); else set.delete(uid);
+        row.querySelector('.doc-owner-arrow').textContent = nowShut ? '▸' : '▾';
+        tbody.querySelectorAll('.doc-line').forEach(tr => { if (tr.dataset.ownerOf === uid) tr.style.display = nowShut ? 'none' : ''; });
+      });
+    }
     renderDocsArchiveSummary();
   }
 
