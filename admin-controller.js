@@ -1587,6 +1587,15 @@
       : `<span style="color:var(--danger);font-weight:700;">⚠️ ${withoutDocs.length}/${real.length} acteur(s) réel(s) n'ont AUCUN document archivé — à vérifier avant toute réinitialisation.</span>`;
   }
 
+  const DOC_CAT_ORDER = ['joueur','club','athlete','entraineur','arbitre','federation','association','organisateur','ecole_universite','formateur','eleve_etudiant','ancien_sportif','handisport','gabonais_diaspora','sportif_etranger','independant','supporter'];
+  const DOC_CAT_LABELS = {
+    joueur: '⚽ Joueurs', club: '🏟️ Clubs', athlete: '🏃 Athlètes', entraineur: '📋 Entraîneurs', arbitre: '🟨 Arbitres',
+    federation: '🏛️ Fédérations', association: '🤝 Associations', organisateur: '🎪 Organisateurs', ecole_universite: '🏫 Écoles / Universités',
+    formateur: '🧑‍🏫 Formateurs', eleve_etudiant: '🎓 Élèves / Étudiants', ancien_sportif: '🎖️ Anciens sportifs', handisport: '🦾 Handisport',
+    gabonais_diaspora: '🇬🇦 Gabonais de l’étranger', sportif_etranger: '🌍 Sportifs étrangers', independant: '🚴 Indépendants', supporter: '💗 Supporters',
+    admin: '🛡️ Administrateurs', visiteur: '👁️ Visiteurs'
+  };
+
   function renderDocuments() {
     let list = users.filter(u => u.status !== 'deleted');
     if (docRoleFilter !== 'all') list = list.filter(u => matchesRoleFilter(u, docRoleFilter));
@@ -1601,43 +1610,80 @@
       renderDocsArchiveSummary();
       return;
     }
-    list = list.slice().sort((a, b) => fullName(a).localeCompare(fullName(b), 'fr'));
-    const collapsed = (window.__gscDocCollapsed = window.__gscDocCollapsed || new Set());
-    tbody.innerHTML = list.map(u => {
-      const uid = u.uid || u.id;
-      const docs = u.documents || [];
-      const shut = collapsed.has(uid);
-      const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, u.role || 'joueur') : '');
-      const head = `
-        <tr class="doc-owner-row ${u.isDemo ? 'is-demo-row' : ''}" data-owner="${esc(uid)}" style="cursor:pointer;background:var(--gray-bg);">
+    const sansNom = u => (/^sans nom$/i.test(fullName(u)) ? 1 : 0);
+    list = list.slice().sort((a, b) => sansNom(a) - sansNom(b) || fullName(a).localeCompare(fullName(b), 'fr'));
+    const groups = new Map();
+    list.forEach(u => { const r = u.role || 'autre'; if (!groups.has(r)) groups.set(r, []); groups.get(r).push(u); });
+    const keys = Array.from(groups.keys()).sort((a, b) => {
+      const ia = DOC_CAT_ORDER.indexOf(a), ib = DOC_CAT_ORDER.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || String(a).localeCompare(String(b), 'fr');
+    });
+    const owners = (window.__gscDocCollapsed = window.__gscDocCollapsed || new Set());
+    const cats = (window.__gscDocCatCollapsed = window.__gscDocCatCollapsed || new Set());
+    tbody.innerHTML = keys.map(r => {
+      const members = groups.get(r);
+      const nDocs = members.reduce((s, u) => s + (u.documents || []).length, 0);
+      const catShut = cats.has(r);
+      const catLabel = DOC_CAT_LABELS[r] || ('📂 ' + (ROLE_LABELS[r] || r));
+      const catRow = `
+        <tr class="doc-cat-row" data-cat="${esc(r)}" style="cursor:pointer;background:var(--navy,#0f2a47);color:#fff;">
+          <td colspan="4" style="padding:12px;font-weight:800;font-size:14px;">
+            <span class="doc-cat-arrow" style="display:inline-block;width:18px;">${catShut ? '▸' : '▾'}</span>${esc(catLabel)}
+            <span style="font-weight:600;opacity:.85;font-size:12px;margin-left:10px;">${members.length} membre${members.length > 1 ? 's' : ''} · ${nDocs} document${nDocs > 1 ? 's' : ''}</span>
+          </td>
+        </tr>`;
+      const rows = members.map(u => {
+        const uid = u.uid || u.id;
+        const docs = u.documents || [];
+        const shut = owners.has(uid);
+        const hideHead = catShut ? 'display:none;' : '';
+        const hideLine = (catShut || shut) ? 'display:none;' : '';
+        const gscId = u.gscId || (window.gscGenerateId ? window.gscGenerateId(uid, u.role || 'joueur') : '');
+        const head = `
+        <tr class="doc-owner-row ${u.isDemo ? 'is-demo-row' : ''}" data-cat="${esc(r)}" data-owner="${esc(uid)}" style="cursor:pointer;background:var(--gray-bg);${hideHead}">
           <td colspan="4" style="padding:10px 12px;border-top:2px solid var(--gray-bd);">
             <span class="doc-owner-arrow" style="display:inline-block;width:16px;">${shut ? '▸' : '▾'}</span>
             <strong>👤 ${esc(fullName(u))}</strong>
             <span class="user-gscid-cell" style="margin-left:8px;">${esc(gscId)}</span>
-            <span style="color:var(--gray-txt);font-size:12px;margin-left:8px;">${esc(ROLE_LABELS[u.role] || u.role || '—')} · ${docs.length} document${docs.length > 1 ? 's' : ''}</span>
+            <span style="color:var(--gray-txt);font-size:12px;margin-left:8px;">${docs.length} document${docs.length > 1 ? 's' : ''}</span>
           </td>
         </tr>`;
-      const lines = docs.length
-        ? docs.map((d, i) => `
-        <tr class="doc-line" data-owner-of="${esc(uid)}" style="${shut ? 'display:none;' : ''}">
+        const lines = docs.length
+          ? docs.map((d, i) => `
+        <tr class="doc-line" data-cat="${esc(r)}" data-owner-of="${esc(uid)}" style="${hideLine}">
           <td colspan="3" data-label="Document" style="padding-left:34px;"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label || 'Document')}</a>${d.locked ? ' 🔒' : ''}</td>
           <td data-label="Actions">${docChipButtonsHtml(u, d, i)}</td>
         </tr>`).join('')
-        : `
-        <tr class="doc-line" data-owner-of="${esc(uid)}" style="${shut ? 'display:none;' : ''}">
+          : `
+        <tr class="doc-line" data-cat="${esc(r)}" data-owner-of="${esc(uid)}" style="${hideLine}">
           <td colspan="4" style="padding-left:34px;color:var(--danger);font-weight:700;">⚠️ aucun document</td>
         </tr>`;
-      return head + lines;
+        return head + lines;
+      }).join('');
+      return catRow + rows;
     }).join('');
-    if (!tbody.dataset.groupBound) {
-      tbody.dataset.groupBound = '1';
+    if (!tbody.dataset.catBound) {
+      tbody.dataset.catBound = '1';
       tbody.addEventListener('click', ev => {
+        if (ev.target.closest('a,button')) return;
+        const catRow = ev.target.closest('.doc-cat-row');
+        if (catRow) {
+          const key = catRow.dataset.cat, cs = window.__gscDocCatCollapsed, os = window.__gscDocCollapsed;
+          const nowShut = !cs.has(key);
+          if (nowShut) cs.add(key); else cs.delete(key);
+          catRow.querySelector('.doc-cat-arrow').textContent = nowShut ? '▸' : '▾';
+          tbody.querySelectorAll('tr[data-cat]').forEach(tr => {
+            if (tr.dataset.cat !== key || tr.classList.contains('doc-cat-row')) return;
+            if (nowShut) tr.style.display = 'none';
+            else tr.style.display = (tr.classList.contains('doc-line') && os.has(tr.dataset.ownerOf)) ? 'none' : '';
+          });
+          return;
+        }
         const row = ev.target.closest('.doc-owner-row');
         if (!row) return;
-        const uid = row.dataset.owner;
-        const set = window.__gscDocCollapsed;
-        const nowShut = !set.has(uid);
-        if (nowShut) set.add(uid); else set.delete(uid);
+        const uid = row.dataset.owner, os = window.__gscDocCollapsed;
+        const nowShut = !os.has(uid);
+        if (nowShut) os.add(uid); else os.delete(uid);
         row.querySelector('.doc-owner-arrow').textContent = nowShut ? '▸' : '▾';
         tbody.querySelectorAll('.doc-line').forEach(tr => { if (tr.dataset.ownerOf === uid) tr.style.display = nowShut ? 'none' : ''; });
       });
