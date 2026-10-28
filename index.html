@@ -1924,7 +1924,7 @@
         <button class="quick-btn" onclick="goToAuth('login')" style="border-color:var(--green);color:var(--green-dk);"><span class="qb-icon"><svg class="gsc-ico-user" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>Se connecter</button>
       </div>
 
-      <!-- Visionneuse plein écran (photo créateur/porteur de projet) -->
+      <!-- Visionneuse plein écran (photo créateur) -->
       <div class="modal" id="modal-fullscreen-photo" onclick="if(event.target===this)closeModal('modal-fullscreen-photo')" style="align-items:center;background:rgba(0,0,0,.92);">
         <img id="fullscreen-photo-img" src="" alt="" style="max-width:92vw;max-height:88vh;border-radius:8px;object-fit:contain;">
         <button onclick="closeModal('modal-fullscreen-photo')" aria-label="Fermer" style="position:fixed;top:18px;right:18px;width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;">✕</button>
@@ -1942,11 +1942,6 @@
         </div>
 
         <div class="lf-team">
-          <div class="lf-person" onclick="showView('legal');setTimeout(()=>{switchLegalTab('contact',{target:document.querySelector('.legal-tab:nth-child(3)')});document.getElementById('info-porteur')?.scrollIntoView({behavior:'smooth',block:'center'})},150);" style="cursor:pointer;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
-            <div class="lf-role">🏆 Porteur de projet</div>
-            <div class="lf-name">NKOGHE EVOUNA WILFRIED</div>
-            <div class="lf-sub">Prof. EPS · Master Management Sport</div>
-          </div>
           <div class="lf-person" onclick="showView('legal');setTimeout(()=>{switchLegalTab('contact',{target:document.querySelector('.legal-tab:nth-child(3)')});document.getElementById('info-createur')?.scrollIntoView({behavior:'smooth',block:'center'})},150);" style="cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:12px;" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
             <img src="img/createur-technique.jpg" alt="Photo de Kozangue Essono Patrick Bertin" loading="lazy"
               onclick="event.stopPropagation();openFullscreenPhoto(this.src, this.alt)"
@@ -3017,10 +3012,6 @@
             <p>Pour demander un accès Fédération ou signaler un problème, contactez l'administration GSC.</p>
             <h3>Équipe du projet</h3>
             <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
-              <p id="info-porteur" style="margin-bottom:8px;"><strong>🏆 Porteur de projet</strong><br>
-              NKOGHE EVOUNA WILFRIED<br>
-              <span style="font-size:12px;color:var(--gray-txt);">Professeur d'EPS · Master en Management des Organisations Sportives · Master Technique en Management des Sports</span></p>
-              <hr style="border:none;border-top:1px solid var(--gray-bd);margin:10px 0;">
               <p id="info-createur"><strong>💻 Créateur technique</strong><br>
               KOZANGUE ESSONO PATRICK BERTIN<br>
               <span style="font-size:12px;color:var(--gray-txt);">Informaticien · Fondateur & Président PCINFORMATIQUE · Créateur : AMBIGAB(241), MAGERANTE, MALAGA, GSC</span></p>
@@ -3032,9 +3023,6 @@
             <h3>Éditeur de la plateforme</h3>
             <p><strong>Gabon Sport Connect (GSC)</strong><br>
             Plateforme nationale de gestion sportive — République Gabonaise 🇬🇦</p>
-            <h3>Porteur de projet</h3>
-            <p><strong>NKOGHE EVOUNA WILFRIED</strong><br>
-            Professeur d'EPS, Master en Management des Organisations Sportives et Master Technique en Management des Sports.</p>
             <h3>Responsable technique</h3>
             <p><strong>KOZANGUE ESSONO PATRICK BERTIN</strong><br>
             Informaticien, Fondateur & Président de PCINFORMATIQUE. Créateur des plateformes AMBIGAB(241), MAGERANTE, MALAGA et GSC.<br>
@@ -3055,11 +3043,6 @@
       <div class="legal-footer fade-up">
         <div class="legal-footer-title">🇬🇦 Gabon Sport Connect · © 2026</div>
         <div class="lf-team">
-          <div class="lf-person">
-            <div class="lf-role">🏆 Porteur de projet</div>
-            <div class="lf-name">NKOGHE EVOUNA WILFRIED</div>
-            <div class="lf-sub">Prof. EPS · Master Management Sport</div>
-          </div>
           <div class="lf-person">
             <div class="lf-role">💻 Créateur technique</div>
             <div class="lf-name">KOZANGUE ESSONO PATRICK BERTIN</div>

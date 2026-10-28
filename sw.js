@@ -2,7 +2,7 @@
    SW.JS — Service Worker Gabon Sport Connect v4
    + Badge PWA temps réel + Push Notifications
    ═══════════════════════════════════════════════════════════════ */
-/* FIX MAJEUR : CACHE_NAME était figé sur 'gsc-v6' depuis longtemps. Le
+/* FIX MAJEUR : CACHE_NAME était figé sur 'gsc-v7' depuis longtemps. Le
    handler fetch ci-dessous servait TOUS les fichiers .js/.css de l'app
    (gsc-notifications.js compris) en "cache-first" : dès qu'un appareil
    avait mis un fichier en cache une fois, il ne récupérait plus JAMAIS la
