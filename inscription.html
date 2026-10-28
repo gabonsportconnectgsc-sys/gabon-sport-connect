@@ -281,7 +281,7 @@
           </select>
           <div class="form-hint" id="a-sport-hint" style="display:none;"></div>
         </div>
-        <div class="fg">
+        <div class="fg" id="fg-ville-gabon">
           <label>Ville / Province *</label>
           <select id="a-ville">
             <option value="">Sélectionner</option>
@@ -291,6 +291,8 @@
             <option>Makokou</option><option>Autre</option>
           </select>
         </div>
+        <div id="dia-wrap" style="display:none;"></div>
+        <div id="etr-wrap" style="display:none;"><div class="fg"><label>Nationalité *</label><input type="text" id="etr-nat" placeholder="ex: Camerounaise, Sénégalaise, Française…" autocomplete="off"></div></div>
         <!-- Champs joueur/indépendant/étudiant — FORMULAIRE ENRICHI -->
         <div class="extra" id="ex-joueur">
 
@@ -1426,6 +1428,8 @@ function sbError(e) {
     if (!isEmail(email)) { errMsg('a-err','Adresse email invalide.'); return; }
     if (pw.length < 6)   { errMsg('a-err','Le mot de passe doit contenir au moins 6 caractères.'); return; }
     if (!sport)          { errMsg('a-err','Veuillez choisir votre sport principal.'); return; }
+    if (selectedRole === 'gabonais_diaspora' && !(window.gscDiaCollect && window.gscDiaCollect(selectedRole).paysResidence)) { errMsg('a-err','Veuillez indiquer votre pays de résidence.'); return; }
+    if (selectedRole === 'sportif_etranger' && !(window.gscDiaCollect && window.gscDiaCollect(selectedRole).nationalite)) { errMsg('a-err','Veuillez indiquer votre nationalité.'); return; }
     if (!ville)          { errMsg('a-err','Veuillez sélectionner votre ville.'); return; }
     if (isOrgRole && !org) {
                            errMsg('a-err','Veuillez entrer le nom de votre organisation.'); return; }
@@ -1478,7 +1482,7 @@ function sbError(e) {
 
         const profile = {
           prenom, nom, pseudo, role: selectedRole, accountType: 'acteur',
-          sport, ville, telephone: tel, whatsapp, sexe, dateNaissance: ddn,
+          sport, ville, telephone: tel, whatsapp, sexe, dateNaissance: ddn, ...(window.gscDiaCollect ? window.gscDiaCollect(selectedRole) : {}),
           poste, niveau, nomOrganisation: org, licence,
           // Champs enrichis joueur/athlète (vides pour les autres rôles)
           ...(isJoueurRole && {
@@ -1708,5 +1712,6 @@ function sbError(e) {
 <script src="ged-inscription-preview.js"></script>
 <script src="gsc-pwd-eye.js" defer></script>
 <script src="gsc-diaspora.js"></script>
+<script src="gsc-diaspora-inscription.js"></script>
 </body>
 </html>
