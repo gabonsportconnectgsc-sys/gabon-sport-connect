@@ -1952,8 +1952,10 @@
               <div class="lf-sub">Informaticien · Fondateur PCINFORMATIQUE</div>
             </div>
           </div>
-          <div class="lf-person" style="margin-top:8px;">
-            <div class="lf-avatar" role="img" aria-label="Photo à venir" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;"><svg viewBox="0 0 24 24" width="29" height="29" fill="rgba(255,255,255,.75)" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c0-4.6 3.8-8 8.5-8s8.5 3.4 8.5 8z"/></svg></div>
+          <div class="lf-person" onclick="showView('legal');setTimeout(()=>{switchLegalTab('contact',{target:document.querySelector('.legal-tab:nth-child(3)')});document.getElementById('info-expert')?.scrollIntoView({behavior:'smooth',block:'center'})},150);" style="margin-top:8px;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:12px;" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+            <img src="img/expert-sportif.jpg" alt="Photo de Brice-Léger Ntsong Mvé" loading="lazy"
+              onclick="event.stopPropagation();openFullscreenPhoto(this.src, this.alt)"
+              style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.4);box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:zoom-in;">
             <div style="flex:1;min-width:0;">
               <div class="lf-role">🏅 Expertise sportive</div>
               <div class="lf-name">BRICE-LÉGER NTSONG MVÉ</div>
@@ -3019,12 +3021,13 @@
             <p>🌐 <a href="https://gabon-sport-connect.web.app/" target="_blank" style="color:var(--green);">gabonsportconnectgsc-sys.github.io/gabon-sport-connect</a></p>
             <p>Pour demander un accès Fédération ou signaler un problème, contactez l'administration GSC.</p>
             <h3>Équipe du projet</h3>
-            <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
-              <p id="info-createur"><strong>💻 Créateur technique</strong><br>
+            <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:8px;display:flex;gap:12px;align-items:center;">
+              <img src="img/createur-technique.jpg" alt="Photo de Kozangue Essono Patrick Bertin" loading="lazy" onclick="openFullscreenPhoto(this.src, this.alt)" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--green);cursor:zoom-in;">
+              <p id="info-createur" style="margin:0;flex:1;min-width:0;"><strong>💻 Créateur technique</strong><br>
               KOZANGUE ESSONO PATRICK BERTIN<br>
               <span style="font-size:12px;color:var(--gray-txt);">Informaticien · Fondateur & Président PCINFORMATIQUE · Créateur : AMBIGAB(241), MAGERANTE, MALAGA, GSC</span></p>
             </div>
-            <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:10px;display:flex;gap:12px;align-items:center;"><div class="lf-avatar" role="img" aria-label="Photo à venir" style="width:56px;height:56px;border-radius:50%;flex-shrink:0;border:2px solid var(--green);background:#dff3e8;display:flex;align-items:center;justify-content:center;overflow:hidden;"><svg viewBox="0 0 24 24" width="38" height="38" fill="#5b8f73" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c0-4.6 3.8-8 8.5-8s8.5 3.4 8.5 8z"/></svg></div><p style="margin:0;flex:1;min-width:0;"><strong>🏅 Expertise sportive</strong><br>BRICE-LÉGER NTSONG MVÉ<br><span style="font-size:12px;color:var(--gray-txt);">Professeur d’EPS · Entraîneur Licence B CAF · Éducateur Futsal · Diplômé Manager du Sport · Manager du sport / Entraîneur</span></p></div>
+            <div style="background:#f0faf5;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-top:10px;display:flex;gap:12px;align-items:center;"><img src="img/expert-sportif.jpg" alt="Photo de Brice-Léger Ntsong Mvé" loading="lazy" onclick="openFullscreenPhoto(this.src, this.alt)" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--green);cursor:zoom-in;"><p id="info-expert" style="margin:0;flex:1;min-width:0;"><strong>🏅 Expertise sportive</strong><br>BRICE-LÉGER NTSONG MVÉ<br><span style="font-size:12px;color:var(--gray-txt);">Professeur d’EPS · Entraîneur Licence B CAF · Éducateur Futsal · Diplômé Manager du Sport · Manager du sport / Entraîneur</span></p></div>
           </div>
           <div class="legal-pane" id="legal-mentions">
             <h3>⚖️ Mentions légales</h3>
