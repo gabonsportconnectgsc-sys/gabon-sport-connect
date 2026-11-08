@@ -3838,7 +3838,7 @@ function supabaseAuthErrorMessage(e){
 const GSC_AUTH_WORKER_URL = 'https://gsc-auth-bridge.gabonsportconnectgsc.workers.dev';
 let _firebaseCustomAuthPromise = null;
 
-async function ensureFirebaseAuthViaSupabase(){ return window._gscEnsureAuth();
+async function ensureFirebaseAuthViaSupabase(){ /*offline-auth*/ if(!navigator.onLine && window._fbAuth && window._fbAuth.currentUser) return window._fbAuth.currentUser; return window._gscEnsureAuth();
   // ────────────────────────────────────────────────────────────────────────────
   // VERSION ROBUSTE : Vérification stricte + Retry × 3 + Logs détaillés
   // ────────────────────────────────────────────────────────────────────────────
