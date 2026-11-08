@@ -4007,6 +4007,7 @@ async function setPrivateContact(uid,data){
 // status affiché côté public. Sans ça, un utilisateur validé par l'admin
 // resterait bloqué pour poster dans la communauté, etc.
 async function adminSetPrivateStatus(uid,status){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db||typeof setDoc!=='function'||!uid) return;
   try{ await setDoc(doc(db,'users',uid,'private','contact'),{status},{merge:true}); }
   catch(e){ console.warn('adminSetPrivateStatus:',e); }
@@ -4257,7 +4258,9 @@ async function checkSupabaseSession(){
   if(session && session.user){
     await onSupabaseSignedIn(session.user);
   }else{
-    enterAsVisitor(true);
+    /*offline-session*/ let __off=null;
+    try{ if(!navigator.onLine){ const __raw=JSON.parse(localStorage.getItem('sb-gsc-player-auth')||'null'); const __s=__raw&&(__raw.user?__raw:__raw.currentSession); if(__s && __s.user && __s.user.id) __off=__s.user; } }catch(e){}
+    if(__off){ await onSupabaseSignedIn(__off); } else { enterAsVisitor(true); }
   }
 }
 
@@ -6827,6 +6830,7 @@ function renderAdminUsersTable(users){
 
 // ── Validation des fiches en attente ──
 async function adminApproveUser(uid){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   try{
     await ensureFirebaseAuthViaSupabase();
@@ -6843,6 +6847,7 @@ async function adminApproveUser(uid){
 window.adminApproveUser=adminApproveUser;
 
 async function adminRejectUser(uid){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Rejeter cette fiche ? Elle restera masquée et non visible publiquement.')) return;
   try{
@@ -6918,6 +6923,7 @@ window.renderAdminReports=renderAdminReports;
 
 // Admin can toggle federation management for pro players
 async function adminToggleFederation(uid,current){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
@@ -6965,6 +6971,7 @@ function adminEditUser(uid){
   document.getElementById('modal-edit-user').classList.add('open');
 }
 async function adminSaveUser(){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const uid=document.getElementById('admin-edit-uid').value;
   if(!uid) return;
@@ -6991,6 +6998,7 @@ async function adminSaveUser(){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 async function adminToggleHide(uid,currentStatus){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newStatus=currentStatus==='hidden'?'active':'hidden';
   try{
@@ -7006,6 +7014,7 @@ async function adminToggleHide(uid,currentStatus){
   }catch(e){ toast('Erreur : '+e.message,'error'); }
 }
 async function adminDeleteUser(uid){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer DÉFINITIVEMENT cet utilisateur ?\n\nCette action est irréversible : le profil sera effacé de la base de données et disparaîtra de tous les écrans (Annuaire, Joueurs, Comptes & Accès…).\n\n⚠️ Le compte de connexion Firebase Auth associé n\'est pas supprimé automatiquement (nécessite un accès Admin SDK côté serveur) — seul l\'accès à ce backend applicatif est retiré.')) return;
   try{
@@ -7054,6 +7063,7 @@ async function loadAdminSites(){
   }catch(e){ toast('Erreur chargement sites : '+e.message,'error'); }
 }
 async function adminDeleteSite(id){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   if(!confirm('Supprimer ce site sportif ?')) return;
   try{
@@ -7066,6 +7076,7 @@ async function adminDeleteSite(id){
 
 // ── ADMIN TOGGLE SUPPORTER ──
 async function adminToggleSupporter(uid,current){
+  /*offline-guard*/ if(!navigator.onLine){ toast('Hors ligne : action d’administration impossible (connexion requise).','error'); return; }
   if(!db || typeof collection !== 'function'){ toast('⚠️ Firebase non disponible. Ouvrez via un serveur web.','error'); return; }
   const newVal=!current;
   try{
