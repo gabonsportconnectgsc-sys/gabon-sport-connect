@@ -15,7 +15,7 @@
    on passe en stratégie "network-first / stale-while-revalidate" pour les
    fichiers JS/CSS de l'app (voir plus bas) afin que ce problème ne se
    reproduise plus à chaque futur correctif. */
-const CACHE_NAME = 'gsc-v66';
+const CACHE_NAME = 'gsc-v67';
 // ── NOUVEAU — cache dédié au Web Share Target (POST), voir handleShareTarget()
 // et le handler 'fetch' plus bas. Séparé de CACHE_NAME pour ne jamais être
 // purgé par la logique de versioning de l'app (activate ci-dessous).
@@ -94,6 +94,10 @@ self.addEventListener('fetch', event => {
       !request.url.includes('jsdelivr') &&
       !url.hostname.endsWith('tile.openstreetmap.org')) return;
 
+  /* HORS LIGNE : les API Firebase sont gérées par le SDK, jamais par le service worker */
+  if (/(^|\.)(firestore|identitytoolkit|securetoken|firebaseinstallations|content-firebaseappcheck)\.googleapis\.com$/.test(url.hostname)) return;
+  /* HORS LIGNE : pages avec délai de 6 s puis repli sur le cache */
+  if (request.mode === 'navigate') { event.respondWith(navOffline(request)); return; }
   const isHTML = request.mode === 'navigate' || request.destination === 'document';
   if (isHTML) {
     event.respondWith(
@@ -154,6 +158,18 @@ self.addEventListener('fetch', event => {
    requête multipart, les stocke dans SHARE_CACHE (vidé à chaque nouveau
    partage pour ne jamais mélanger deux partages successifs), puis redirige
    vers l'app normale avec un marqueur ?shared_post=1 dans l'URL. ────── */
+async function navOffline(request) {
+  const c = await caches.open(CACHE_NAME);
+  try {
+    const res = await Promise.race([fetch(request), new Promise((_, j) => setTimeout(j, 6000))]);
+    if (res && res.status === 200) c.put(request, res.clone());
+    return res;
+  } catch (e) {
+    const m = (await c.match(request)) || (await c.match(request, { ignoreSearch: true })) || (await c.match('./index.html')) || (await c.match('./'));
+    return m || fetch(request).catch(() => new Response('Hors ligne', { status: 503, headers: { 'Content-Type': 'text/plain' } }));
+  }
+}
+
 async function handleShareTarget(event) {
   try {
     const formData = await event.request.formData();
